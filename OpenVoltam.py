@@ -1,9 +1,15 @@
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QPixmap
+from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
     QMainWindow,
-    QDialog
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QLabel,
+    QFrame
 )
 
 
@@ -12,9 +18,35 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("OpenVoltam")
+        self.setWindowTitle("OpenVoltam | Welcome")
+        self.setMinimumWidth(360)
+        
+        layout0 = QVBoxLayout()
+        layout1 = QHBoxLayout()
 
-        menu = self.menuBar()
+        lbl_about = QLabel("Welcome to <a href='https://github.com/ask53/openVoltam'>OpenVoltam</a>!<br>v0.0 | 2025<br><br>An open source project by Caminos de Agua and IO Rodeo")
+        lbl_about.setWordWrap(True)
+        lbl_about.setOpenExternalLinks(True)
+
+        lbl_icon = QLabel()
+        lbl_icon.setPixmap(QPixmap("icons/folder.png"))
+        lbl_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        
+        layout1.addWidget(lbl_icon)
+        layout1.addWidget(lbl_about)
+        
+        layout0.addLayout(layout1)
+        layout0.addWidget(QPushButton("New sample"))
+        layout0.addWidget(QPushButton("Open sample"))
+        layout0.addWidget(QPushButton("New run configuration"))
+        layout0.addWidget(QPushButton("Open run configuration"))
+
+        widget = QWidget()
+        widget.setLayout(layout0)
+        self.setCentralWidget(widget)
+
+        '''menu = self.menuBar()
 
         but_action_new_sample = QAction("New sample", self)
         but_action_new_sample.triggered.connect(self.open_window_new_sample)
@@ -40,6 +72,7 @@ class MainWindow(QMainWindow):
         file_menu = menu.addMenu("&Run configurations")
         file_menu.addAction(but_action_new_config)
         file_menu.addAction(but_action_open_config)
+        '''
 
     def open_window_new_sample(self):
         print("opening window to add a new sample")
