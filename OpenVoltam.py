@@ -9,7 +9,8 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QLabel,
-    QFrame
+    QFrame,
+    QGroupBox
 )
 
 
@@ -21,29 +22,37 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("OpenVoltam | Welcome")
         self.setMinimumWidth(360)
         
-        layout0 = QVBoxLayout()
-        layout1 = QHBoxLayout()
-
-        lbl_about = QLabel("Welcome to <a href='https://github.com/ask53/openVoltam'>OpenVoltam</a>!<br>v0.0 | 2025<br><br>An open source project by Caminos de Agua and IO Rodeo")
+        layout_pane = QVBoxLayout()
+        layout_top = QHBoxLayout()
+        layout_sample = QHBoxLayout()
+        layout_config = QHBoxLayout()
+        
+        lbl_about = QLabel("Welcome to <a href='https://github.com/ask53/openVoltam'>OpenVoltam</a>!<br><br>An open source project by <a href='https://www.caminosdeagua.org'>Caminos de Agua</a> and <a href='https://www.iorodeo.com'>IO Rodeo</a><br><br>v0.0 | 2025")
         lbl_about.setWordWrap(True)
         lbl_about.setOpenExternalLinks(True)
 
         lbl_icon = QLabel()
-        lbl_icon.setPixmap(QPixmap("icons/folder.png"))
-        lbl_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl_icon.setPixmap(QPixmap("icons/icon_v1.png"))
 
+        layout_top.addWidget(lbl_icon)
+        layout_top.addWidget(lbl_about)
+
+        layout_sample.addWidget(QPushButton("New sample"))
+        layout_sample.addWidget(QPushButton("Open sample"))
+        groupbox_sample = QGroupBox("Samples")
+        groupbox_sample.setLayout(layout_sample)
+
+        layout_config.addWidget(QPushButton("New config"))
+        layout_config.addWidget(QPushButton("Open config"))
+        groupbox_config = QGroupBox("Sweep configurations")
+        groupbox_config.setLayout(layout_config)
         
-        layout1.addWidget(lbl_icon)
-        layout1.addWidget(lbl_about)
-        
-        layout0.addLayout(layout1)
-        layout0.addWidget(QPushButton("New sample"))
-        layout0.addWidget(QPushButton("Open sample"))
-        layout0.addWidget(QPushButton("New run configuration"))
-        layout0.addWidget(QPushButton("Open run configuration"))
+        layout_pane.addLayout(layout_top)
+        layout_pane.addWidget(groupbox_sample)
+        layout_pane.addWidget(groupbox_config)
 
         widget = QWidget()
-        widget.setLayout(layout0)
+        widget.setLayout(layout_pane)
         self.setCentralWidget(widget)
 
         '''menu = self.menuBar()
