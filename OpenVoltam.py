@@ -74,7 +74,7 @@ class WindowHome(QMainWindow):
 
         # Create the graphic
         lbl_icon = QLabel()
-        lbl_icon.setPixmap(QPixmap("icons/icon_v1.png"))
+        lbl_icon.setPixmap(QPixmap("external/icons/icon_v1.png"))
 
         # Create all buttons
         but_sample_new = QPushButton(l.new_sample[g.L])
@@ -328,7 +328,7 @@ class WindowViewConfig(QMainWindow):
 
 g.L = g.ENG            #set language
 app = QApplication([])
-with open("styles.css", "r") as file:
+with open("external/styles/styles.css", "r") as file:
     app.setStyleSheet(file.read())
 
 
