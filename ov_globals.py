@@ -1,0 +1,36 @@
+#ov_globals.py
+
+# Keys for sample dictionary
+S_NAME = "sample_name"
+S_DATE_ENTERED = "date_first_saved"
+S_DATE_COLLECTED = "date_sample_collected"
+S_LOC_COLLECTED = "location_collected"
+S_CONTACT = "contact_info"
+S_COLLECTED_BY = "collected_by"
+S_NOTES = "sample_comments"
+S_SWEEPS = "sweeps"
+S_RAW = "raw_data"
+S_PROCESSED = "processed_data"
+
+S_BLANK_ARRAYS = [S_SWEEPS, S_RAW, S_PROCESSED]
+
+# Language globals 
+ENG = 0
+ESP = 1
+
+HEADER_DIVIDER = ' | '
+CUSTOM_NAME_FLAG = 'ov_'
+
+DATE_DISPLAY_FORMAT = 'dd-MMM-yyyy'
+DATE_STORAGE_FORMAT = 'yyyy-MM-dd'
+DATETIME_STORAGE_FORMAT = DATE_STORAGE_FORMAT+' hh:mmap'
+SAMPLE_NAME_MIN_LENGTH = 3
+
+#File system navigation
+DEFAULT_EXT = '.json'
+FILE_TYPES = '*'+DEFAULT_EXT
+
+
+# Globals changed by program
+L = ENG  		# default lang, changed by program
+BASEDIR = ''	# stores base directory for application executable file
