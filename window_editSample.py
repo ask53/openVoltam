@@ -257,7 +257,7 @@ class WindowEditSample(QMainWindow):
                 - if discard is selected, the window is closed
                 - if cancel is selected, the close action is blocked
         """
-
+        print(self.window)
         if not self.saved:                                      # if there is unsaved content:
 
             confirm = saveMessageBox(self)                      # init a dialog asking the user if they're sure

@@ -12,10 +12,11 @@ from window_viewConfig import WindowViewConfig
 from os.path import join as joindir
 from functools import partial
 from tkinter.filedialog import askopenfilename as askOpenFileName
+from json import dumps, loads
 
 # import necessary tools from PyQt6
 from PyQt6.QtGui import QAction, QPixmap, QIcon
-from PyQt6.QtCore import QSize, Qt, QDateTime
+from PyQt6.QtCore import QSize, Qt, QDateTime, QDate
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
@@ -30,13 +31,16 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QDateEdit,
     QTextEdit,
-    QMessageBox
+    QMessageBox,
+    QFrame
 )
 
 # Define class for Home window
 class WindowHome(QMainWindow):
     def __init__(self):
         super().__init__()
+
+        self.data = {}
         
         # set the window parameters
         self.setWindowTitle(l.window_home[g.L])
@@ -137,29 +141,36 @@ class WindowHome(QMainWindow):
 
         return w
 
-    def sampleWidget(self):
+    def sampleWidget(self, path):
         but_back = QPushButton("Go back...")
         but_back.clicked.connect(self.go_back)
 
-        # Create the text intro label
-        lbl_about = QLabel(l.info_msg[g.L])
-        lbl_about.setWordWrap(True)
-        lbl_about.setOpenExternalLinks(True)
+        with open(path, "r") as file:    # open the stylesheet
+            content = file.read()
+            self.data = loads(content)
 
-        # Create the graphic
-        lbl_icon = QLabel()
-        lbl_icon.setPixmap(QPixmap(joindir(g.BASEDIR, "icons/icon_v1.png")))
+        print(self.data)
+        
+        self.lbl_sample_name = TitleLbl(self.data)
+        but_edit = QPushButton('edit sample info')
+        but_edit.clicked.connect(partial(self.edit_sample, path))
+        hline_1 = QHLine()
+        
+        layout_top = QHBoxLayout()
+        layout_top.addWidget(self.lbl_sample_name)
+        layout_top.addWidget(but_edit)
+        layout_top.addStretch()
+        
 
         # layout screen into three horizontal layouts grouped together vertically
         layout_pane = QVBoxLayout()
-        layout_top = QHBoxLayout()
+        layout_mid = QHBoxLayout()
         layout_bot = QHBoxLayout()
         # add icon and intro text message into 1st layout
-        layout_top.addWidget(lbl_icon)
-        layout_top.addWidget(lbl_about)
         layout_bot.addWidget(but_back)
         # add all three horizontal layouts to the vertical layout
         layout_pane.addLayout(layout_top)
+        layout_pane.addWidget(hline_1)
         layout_pane.addLayout(layout_bot)
 
         w = QWidget()
@@ -175,22 +186,26 @@ class WindowHome(QMainWindow):
             self.w_edit_sample.activateWindow()             #   bring it to front of screen
 
     def open_sample(self):
-        self.setCentralWidget(self.sampleWidget())
+        path = askOpenFileName(filetypes = [(l.filetype_lbl[g.L], g.FILE_TYPES)])
+        try:
+            self.setCentralWidget(self.sampleWidget(path))
+        except Exception as e:
+            print(e)
         self.showMaximized()
-        print("opening a saved sample!")
+               
 
     def edit_sample(self, path):
         if (self.w_edit_sample.isHidden()):                 # check if window is hidden. If so:
             if path:                                        # if a path has been passed
-                self.load_sample_from_file(path)                 #   open the sample from the given path
+                self.edit_sample_from_file(path)                 #   open the sample from the given path
             else:                                           # if a path has not been passed, ask the user to select a file
                 path = askOpenFileName(filetypes = [(l.filetype_lbl[g.L], g.FILE_TYPES)])
                 if path:                                    # if the user has selected a file (instead, say, of selecting "cancel")
-                    self.load_sample_from_file(path)        # load the sample from the selected file       
+                    self.edit_sample_from_file(path)        # load the sample from the selected file       
         else:                                               # if window is already showing
             self.w_edit_sample.activateWindow()             #   bring it to front of screen
         
-    def load_sample_from_file(self, path):
+    def edit_sample_from_file(self, path):
         self.w_edit_sample = WindowEditSample(path)   #   Create a new edit sample window with data from path
         self.w_edit_sample.show()                       #   and show it!
 
@@ -217,3 +232,41 @@ class WindowHome(QMainWindow):
     def go_back(self):
         self.setCentralWidget(self.homeWidget())
         self.showNormal()
+
+class QHLine(QFrame):
+    def __init__(self):
+        super(QHLine, self).__init__()
+        self.setFrameShape(QFrame.Shape.HLine)
+        self.setFrameShadow(QFrame.Shadow.Sunken)
+
+class TitleLbl(QLabel):
+    def __init__(self, data):
+        super(QLabel, self).__init__()
+        self.setObjectName(encodeCustomName(g.S_NAME))
+        self.setText(data[g.S_NAME])
+        
+
+    def enterEvent(self, QEvent):
+        try:
+            self.QToolTip.setText(self.getToolTipText())
+        except Exception as e:
+            print(e)
+
+    def leaveEvent(self, QEvent):
+        self.QToolTip.hideText()
+        # here the code for mouse leave
+        pass
+
+    def updateTitleLbl(self):
+        self.setText(data[g.S_NAME])
+        self.setToolTip(self.getToolTipText())
+
+    def getToolTipText(self):
+        try:
+            print(QDate.fromString(data[g.S_DATE_COLLECTED],g.DATE_STORAGE_FORMAT))
+            s = '<b>'+l.s_edit_date_c[g.L]+'</b>: '+QDate.fromString(data[g.S_DATE_COLLECTED],g.DATE_STORAGE_FORMAT).toString(g.DATE_DISPLA_YFORMAT)
+            
+        except Exception as e:
+            s = "there was an error parsing the sample's info, please try to reload" + '|' + str(e)
+        
+        return s 
