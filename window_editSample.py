@@ -35,9 +35,10 @@ from PyQt6.QtWidgets import (
 )
 
 class WindowEditSample(QMainWindow):
-    def __init__(self, path):                       # if path, load sample deets, else load empty edit window for new sample
+    def __init__(self, path, parent):               # if path, load sample deets, else load empty edit window for new sample
         super().__init__()
         self.path = path                            # create an empty string for holding the filepath
+        self.parent = parent                        # store the parent object in object-wide scope
         self.data = {}                              # create an empty dict to hold data read from a file
         self.saved = False                          # reset flag to indicate current data shown in pane hasn't been saved
         self.setObjectName("window-edit-sample")    # create a name for modifying styles from QSS
@@ -54,34 +55,34 @@ class WindowEditSample(QMainWindow):
         self.w_date_collected.setDisplayFormat(g.DATE_DISPLAY_FORMAT)                       # set input properties
         self.w_date_collected.setCalendarPopup(True)                                
         self.w_date_collected.setObjectName(encodeCustomName(g.S_DATE_COLLECTED))           # add name to input for data mgmt
-        layouts.append(self.horizontalize([w_lbl_date_collected, self.w_date_collected]))   # add horizontal layout of label and input
+        layouts.append(horizontalize([w_lbl_date_collected, self.w_date_collected]))   # add horizontal layout of label and input
                                                                                             #   to list of horizontal layouts
         # the location collected field
         w_lbl_loc = QLabel(l.s_edit_loc[g.L])
         self.w_loc = QLineEdit()
         self.w_loc.setMaxLength(63)
         self.w_loc.setObjectName(encodeCustomName(g.S_LOC_COLLECTED))
-        layouts.append(self.horizontalize([w_lbl_loc, self.w_loc]))
+        layouts.append(horizontalize([w_lbl_loc, self.w_loc]))
 
         # the contact info field
         w_lbl_contact = QLabel(l.s_edit_contact[g.L])
         self.w_contact = QLineEdit()
         self.w_contact.setMaxLength(63)
         self.w_contact.setObjectName(encodeCustomName(g.S_CONTACT))
-        layouts.append(self.horizontalize([w_lbl_contact, self.w_contact]))
+        layouts.append(horizontalize([w_lbl_contact, self.w_contact]))
 
         # the collected by field
         w_lbl_sampler = QLabel(l.s_edit_sampler[g.L])
         self.w_sampler = QLineEdit()
         self.w_sampler.setMaxLength(63)
         self.w_sampler.setObjectName(encodeCustomName(g.S_COLLECTED_BY))
-        layouts.append(self.horizontalize([w_lbl_sampler, self.w_sampler]))
+        layouts.append(horizontalize([w_lbl_sampler, self.w_sampler]))
 
         # the notes field
         w_lbl_notes = QLabel(l.s_edit_notes[g.L])
         self.w_notes = QTextEdit()
         self.w_notes.setObjectName(encodeCustomName(g.S_NOTES))
-        layouts.append(self.horizontalize([w_lbl_notes, self.w_notes]))
+        layouts.append(horizontalize([w_lbl_notes, self.w_notes]))
 
         # the save (and save as) button(s)
         but_save = QPushButton(l.s_edit_save[g.L])                          # create 'save' button
@@ -116,15 +117,6 @@ class WindowEditSample(QMainWindow):
             self.w_name.setPlaceholderText(l.s_edit_name[g.L])
   
         self.setCentralWidget(w)
-
-    def horizontalize(self, widgetlist):
-        """
-        takes in a list of widgets and adds them all sequentially to a horizontal layout. Returns the layout
-        """
-        layout = QHBoxLayout()
-        for widget in widgetlist:
-            layout.addWidget(widget)
-        return layout
 
     def startSave(self, save_type):
         if self.validate():
@@ -257,7 +249,6 @@ class WindowEditSample(QMainWindow):
                 - if discard is selected, the window is closed
                 - if cancel is selected, the close action is blocked
         """
-        print(self.window)
         if not self.saved:                                      # if there is unsaved content:
 
             confirm = saveMessageBox(self)                      # init a dialog asking the user if they're sure
@@ -273,8 +264,10 @@ class WindowEditSample(QMainWindow):
                 event.accept()                                  #   allow the close action to complete
             else:                                               # if the user selects "cancel" (or anything else)
                 event.ignore()                                  #   block the close action
-        else:                                               # if there is no unsaved content
-            event.accept()                                  #   allow the close event to proceed
+        else:                                               # if there is no unsaved content                                 
+            self.parent.open_sample(self.path)              #   open the recently saved sample
+            event.accept()                                  #   then allow the close event to proceed
+                                        
 
 
 class saveMessageBox(QMessageBox):

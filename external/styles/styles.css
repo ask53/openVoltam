@@ -1,6 +1,6 @@
 /*styles.css*/
 
-QMainWindow#window-edit-sample QLineEdit#ov_sample_name {
+WindowEditSample QLineEdit#ov_sample_name {
 	font-size: 18pt;
 	border: 0;
 	background-color: rgba(0,0,0,0);
@@ -8,12 +8,14 @@ QMainWindow#window-edit-sample QLineEdit#ov_sample_name {
 
 QLabel#ov_sample_name {
 	font-size: 18pt;
-	border-radius: 5px;
-	background-color: #fce3fc;
-	padding-left: 2px;
 	padding-right: 2px;
 }
 
-QLabel#ov_sample_name:hover {
-	background-color: #fcb3fc;
+QMainWindow#window-view-sample QLabel#ov_sample_name {
+	padding-left: 0;
+}
+
+WindowViewSample QTextEdit {
+	background-color: #eeeeee;
+	border: 0;
 }

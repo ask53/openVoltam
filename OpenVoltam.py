@@ -9,7 +9,7 @@ from os.path import dirname
 from os.path import join as joindir
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
-
+    
 # set the base directory. this lets us find media regardless of where the program is run from
 g.BASEDIR = dirname(__file__) # by setting location to joindir(basedir, [relative path from base directory])
 
@@ -32,5 +32,6 @@ with open(joindir(g.BASEDIR,"external/styles/styles.css"), "r") as file:    # op
 window = WindowHome()               # create a new home window object
 window.show()                       # show the home window (when the app is run)
 app.exec()                          # run the app!
+
 
 

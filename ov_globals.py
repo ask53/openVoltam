@@ -32,5 +32,6 @@ FILE_TYPES = '*'+DEFAULT_EXT
 
 
 # Globals changed by program
-L = ENG  		# default lang, changed by program
-BASEDIR = ''	# stores base directory for application executable file
+L = ENG  				# default lang, changed by program
+BASEDIR = ''			# stores base directory for application executable file
+HOME = False			# will hold the object of the homescreen at any given time
