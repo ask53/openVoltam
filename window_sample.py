@@ -14,6 +14,7 @@ import ov_lang as l
 from ov_functions import *
 
 from window_viewSample import WindowViewSample
+from window_runConfig import WindowRunConfig
 
 # import other necessary python tools
 from os.path import join as joindir
@@ -21,17 +22,19 @@ from functools import partial
 from tkinter.filedialog import askopenfilename as askOpenFileName
 from json import dumps, loads
 
-from PyQt6.QtGui import QAction, QFont
+from PyQt6.QtGui import QAction, QFont, QIcon
 from PyQt6.QtCore import QDate
 from PyQt6.QtWidgets import (
     QMainWindow,
     QPushButton,
     QVBoxLayout,
     QHBoxLayout,
+    QTableWidget,
     QWidget,
     QLabel,
     QFrame,
-    QToolTip
+    QToolTip,
+    QHeaderView
     
 )
 
@@ -43,6 +46,7 @@ class WindowSample(QMainWindow):
         self.parent = parent
         self.data = {}
         self.w_view_sample = False
+        self.config_pane_displayed = False
 
         #print(self.data)
             
@@ -57,7 +61,6 @@ class WindowSample(QMainWindow):
         # add labels ("actions") for menu bar
         action_new_sample = QAction(l.new_sample[g.L], self)
         action_open_sample = QAction(l.open_sample[g.L], self)
-        action_edit_sample = QAction(l.edit_sample[g.L], self)
         action_new_config = QAction(l.new_config[g.L], self)
         action_open_config = QAction(l.open_config[g.L], self)
         action_edit_config = QAction(l.edit_config[g.L], self)
@@ -65,7 +68,6 @@ class WindowSample(QMainWindow):
         # connect menu bar labels with slots 
         action_new_sample.triggered.connect(parent.new_sample)                      # this first group of menu functions come from the home window (parent)
         action_open_sample.triggered.connect(parent.open_sample)
-        action_edit_sample.triggered.connect(partial(parent.edit_sample, False))
         action_new_config.triggered.connect(parent.new_config)
         action_open_config.triggered.connect(parent.open_config)
         action_edit_config.triggered.connect(parent.edit_config)
@@ -74,8 +76,6 @@ class WindowSample(QMainWindow):
         file_menu = menu.addMenu(l.menu_sample[g.L])
         file_menu.addAction(action_new_sample)
         file_menu.addAction(action_open_sample)
-        file_menu.addSeparator()
-        file_menu.addAction(action_edit_sample)
         
         file_menu = menu.addMenu(l.menu_config[g.L])
         file_menu.addAction(action_new_config)
@@ -104,29 +104,85 @@ class WindowSample(QMainWindow):
         self.lbl_sample_name = TitleLbl(self.data)
         but_view = QPushButton('view info')
         but_edit = QPushButton('edit info')
+        but_config = QPushButton('new run')
         but_view.clicked.connect(self.view_sample_info)
         but_edit.clicked.connect(partial(self.parent.edit_sample, self.path))
-        hline_1 = QHLine()
+        but_config.clicked.connect(self.config_run)
         
-        layout_top = QHBoxLayout()
-        layout_top.addWidget(self.lbl_sample_name)
-        layout_top.addWidget(but_view)
-        layout_top.addWidget(but_edit)
-        layout_top.addStretch()
+        hline = QHLine()
+        vline = QVLine()
+        
+        l_top_inner = QHBoxLayout()
+        l_top_inner.addWidget(self.lbl_sample_name)
+        l_top_inner.addWidget(but_view)
+        l_top_inner.addWidget(but_edit)
+        l_top_inner.addWidget(vline)
+        l_top_inner.addWidget(but_config)
+        l_top_inner.addStretch()
+        l_top_outer = QVBoxLayout()
+        l_top_outer.addLayout(l_top_inner)
+        l_top_outer.addWidget(hline)
 
-        but_back = QPushButton('button')
+        run_history_table = self.getRunHistoryAsTable()
+        
+
         layout_pane = QVBoxLayout()
-        layout_pane.addLayout(layout_top)
-        layout_pane.addWidget(but_back)
-        w = QWidget()
-        w.setLayout(layout_pane)
-        self.setCentralWidget(w)
+        layout_pane.addLayout(l_top_outer)
+        layout_pane.addWidget(run_history_table)
+        
+        self.w = QWidget()
+        self.w.setLayout(layout_pane)
+        self.setCentralWidget(self.w)
 
         self.w_view_sample = WindowViewSample(self.data)
 
     def view_sample_info(self):
         self.w_view_sample = WindowViewSample(self.data)
         self.w_view_sample.show()
+
+    def config_run(self):
+        w = WindowRunConfig(self)
+        w.exec()
+
+    def getRunHistoryAsTable(self):
+
+        table = QTableWidget()
+        cols = 9
+        rows = 4
+        table.setRowCount(rows)
+        table.setColumnCount(cols)
+        table.setHorizontalHeaderLabels(["Type", "Name", "Sweep configuration", "Run began", "Note", "Analysis", "Results", "Export CSV", "View sweep configuration"])
+        for i in range(0,rows):
+
+            table.setCellWidget(i,0,QLabel("run type"+str(i)))
+            table.setCellWidget(i,1,QLabel("run name"+str(i)))
+            table.setCellWidget(i,2,QLabel("config used"+str(i)))
+            table.setCellWidget(i,3,QLabel("run datetime"+str(i)))
+            table.setCellWidget(i,4,QLabel("CommentCommentCommentComment"+str(i)))
+            but1 = QPushButton()
+            but1.setIcon(QIcon(joindir(g.BASEDIR,'external/icons/icon.png')))
+            but2 = QPushButton()
+            but2.setIcon(QIcon(joindir(g.BASEDIR,'external/icons/icon.png')))
+            but3 = QPushButton()
+            but3.setIcon(QIcon(joindir(g.BASEDIR,'external/icons/icon.png')))
+            but4 = QPushButton()
+            but4.setIcon(QIcon(joindir(g.BASEDIR,'external/icons/icon.png')))
+            table.setCellWidget(i,5,but1)
+            table.setCellWidget(i,6,but2)
+            table.setCellWidget(i,7,but3)
+            table.setCellWidget(i,8,but4)
+            
+        table.setAlternatingRowColors(True)                                     # alternate row colors
+        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)   # when any cell is selected, entire row is selected
+        table.verticalHeader().setVisible(False)                                # hide left index column
+        table.setShowGrid(False)                                                # hide gridlines
+        for col in range(0,cols):                                               # loop thru all columns, resizing to contents (prevents user from adjusting width)
+            table.horizontalHeader().setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
+        table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch) # then add stretch to comments column
+
+        return table
+
+
         
 
 
@@ -145,4 +201,10 @@ class QHLine(QFrame):
     def __init__(self):
         super(QHLine, self).__init__()
         self.setFrameShape(QFrame.Shape.HLine)
+        self.setFrameShadow(QFrame.Shadow.Sunken)
+
+class QVLine(QFrame):
+    def __init__(self):
+        super(QVLine, self).__init__()
+        self.setFrameShape(QFrame.Shape.VLine)
         self.setFrameShadow(QFrame.Shadow.Sunken)

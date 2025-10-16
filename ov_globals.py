@@ -8,11 +8,12 @@ S_LOC_COLLECTED = "location_collected"
 S_CONTACT = "contact_info"
 S_COLLECTED_BY = "collected_by"
 S_NOTES = "sample_comments"
-S_SWEEPS = "sweeps"
+S_CONFIGS = "sweep_configs"
+S_RUNS = "runs"
 S_RAW = "raw_data"
 S_PROCESSED = "processed_data"
 
-S_BLANK_ARRAYS = [S_SWEEPS, S_RAW, S_PROCESSED]
+S_BLANK_ARRAYS = [S_CONFIGS, S_RUNS, S_RAW, S_PROCESSED]
 
 # Language globals 
 ENG = 0

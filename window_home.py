@@ -104,35 +104,6 @@ class WindowHome(QMainWindow):
         w.setLayout(layout_pane)
         self.setCentralWidget(w)
 
-    '''def sampleWidget(self, path):
-        
-        self.lbl_sample_name = TitleLbl(self.data)
-        but_edit = QPushButton('edit sample info')
-        but_edit.clicked.connect(partial(parent.edit_sample, self.path))
-        hline_1 = QHLine()
-        
-        layout_top = QHBoxLayout()
-        layout_top.addWidget(self.lbl_sample_name)
-        layout_top.addWidget(but_edit)
-        layout_top.addStretch()
-        
-
-        # layout screen into three horizontal layouts grouped together vertically
-        layout_pane = QVBoxLayout()
-        layout_mid = QHBoxLayout()
-        layout_bot = QHBoxLayout()
-        # add icon and intro text message into 1st layout
-        layout_bot.addWidget(but_back)
-        # add all three horizontal layouts to the vertical layout
-        layout_pane.addLayout(layout_top)
-        layout_pane.addWidget(hline_1)
-        layout_pane.addLayout(layout_bot)
-
-        w = QWidget()
-        w.setLayout(layout_pane)
-
-        return w'''
-
     def new_sample(self):
         if (self.w_edit_sample.isHidden()):                 # check if winow is hidden. If so:
             self.w_edit_sample = WindowEditSample(False, self)    #   Create a new empty edit sample window, with this as parent
