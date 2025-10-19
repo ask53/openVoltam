@@ -1,16 +1,20 @@
-# guizero saving and opening text docs, simple text editor with guizero
+# 10-14-2025 guizero saving and opening text docs, simple text editor with guizero
+
+# original GUI, json file handling added
 
 from guizero import *
 import os
 import easygui as g
 import csv
 import matplotlib.pyplot as plt
+import json
 
-app = App(title = "AST file writing and editing, version 7-Sep-2025", 
-          width=1000, height=600)    
+app = App(title = "AST & json file writing and editing, \
+          version 18-Oct-2025", width=1000, height=600)    
 
 # Functions -------------------
 
+# -----------------------------------------------------
 # Create new plot of active file
 def plot_me():
   x_plot = []
@@ -50,6 +54,7 @@ def plot_me():
   plt.ylabel("Volts")  
   plt.show()
       
+# -----------------------------------------------------
 # update the working line string that goes into the data file
 def update_wlc():
   par = cmds_btn_grp.value
@@ -115,6 +120,7 @@ def update_wlc():
   
   hints.value = hint
  
+# -----------------------------------------------------
 # insert the working line below selected line in listbox  
 def insert_sel_line():
   sel_item = lstbx_data.value
@@ -125,6 +131,7 @@ def insert_sel_line():
   except ValueError:
     g.msgbox("No line in active file selected")
 
+# -----------------------------------------------------
 # delete the selected line in the listbox
 def del_sel_line():
   sel_item = lstbx_data.value
@@ -138,13 +145,36 @@ def del_sel_line():
   except ValueError:
     g.msgbox("No line in active file selected")
 
-# save the listbox to the disk
-def save_file():
+# -----------------------------------------------------
+# save the listbox to the disk as .json
+def save_file_json():
   file_to_save = g.filesavebox()
+  if file_to_save[-5:] != '.json':
+    file_to_save += '.json'
+
+  dict = {}  # build the data into a dictionary
+  i = 0
+  for vals in lstbx_data.items:
+    i += 1
+    line = 'line' + str(i)   # this will be dict key
+    vals2 = vals.split(',')
+    dict[line] = vals2
+
+  with open(file_to_save, 'w') as f:
+    json.dump(dict, f, indent=2)   # save as json file
+
+# -----------------------------------------------------
+# save the listbox to the disk as .ast
+def save_file_ast():
+  file_to_save = g.filesavebox()
+  if file_to_save[-4:] != '.ast':
+    file_to_save += '.ast'
+
   with open(file_to_save, 'w') as file:
     for line in lstbx_data.items:
       file.write(line + '\n')
 
+# -----------------------------------------------------
 # clear the listbox then add starting lines for new working file
 def new_file():
   verify = g.choicebox(msg='Are you sure?', title='Clear and NEW File', 
@@ -156,25 +186,49 @@ def new_file():
     lstbx_data.append("dt   ,  .05")  
     lstbx_data.append("PotParams,   2,   3")  
     
-# get file from disk and put it in the listbox
+# -----------------------------------------------------
+# open from disk and put it in the listbox
 def get_file():
   lstbx_data.clear()          
-  file_name = g.fileopenbox(filetypes=["*.ast"])
+  file_name = g.fileopenbox()
+
   file_name_area.value = 'Active File:  ' + file_name
   file_name_area.set_text_size = 20
   lstbx_data.clear()
-  with open(file_name, "r") as csvfile:
-    csv_reader = csv.reader(csvfile)
-    for rows in csv_reader:
-       prow = ""
-       for row in rows:
-         prow += row + " , "
-       prow = prow[0:-3]  
-       lstbx_data.append(prow)
-       print(row[0])
-       
-      
+  
+#  print ('debug: ', file_name[-5:])
+  if file_name[-4:] == '.ast': 
+    with open(file_name, "r") as csvfile:
+      csv_reader = csv.reader(csvfile)
+      for rows in csv_reader:
+         prow = ""
+         for row in rows:
+           prow += row + " , "
+         prow = prow[0:-3]  
+         lstbx_data.append(prow)
+         print(row[0])         
+  elif file_name[-5:] == '.json': 
+    with open(file_name, 'r') as f:
+      dict = json.load(f)
+  else:
+    print('File type not recognized')
+
+# I am assuming that the dictionary may have been scrambled
+  nrKeys = len(dict)
+  for keyNr in range(1, nrKeys+1):
+    lineNr = 'line' + str(keyNr)
+    print ('key nr, line nr: ', keyNr, '  ', lineNr)
+  
+  for rowNr in range(1, nrKeys+1):
+    lineNr = 'line' + str(rowNr)
+    myRow = ""
+    for item in dict[lineNr]:
+      myRow += item + ','
+    myRow = myRow[:-1]
     
+    lstbx_data.append(myRow)
+
+#  -------------------------------------------    
 # Widgets -------------------------------------       
 
 saving_box = Box(app, width='fill')
@@ -188,17 +242,22 @@ for i in range(10):
     
 btn_box = Box(saving_box, layout='grid')
 
-btn1 = PushButton(btn_box, text='Open Existing File', command = get_file, 
+btn1 = PushButton(btn_box, text='Open Existing File'
+      + '\n .ast or .json', command = get_file, 
                   grid=[0,0])
 btn1.bg = 'Light Yellow'
 
-btn2 = PushButton(btn_box, text='Save Active File', grid=[1,0],
-                  command=save_file)
+btn2 = PushButton(btn_box, text='Save Active File as .ast', grid=[1,0],
+                  command=save_file_ast)
 btn2.bg = 'Light Yellow'
 
-btn3 = PushButton(btn_box, text='New File', grid=[2,0],
-                  command=new_file)
+btn3 = PushButton(btn_box, text='Save Active File as .json', grid=[2,0],
+                  command=save_file_json)
 btn3.bg = 'Light Yellow'
+
+btn4 = PushButton(btn_box, text='New File', grid=[3,0],
+                  command=new_file)
+btn4.bg = 'Light Yellow'
 
 Text(saving_box, text = " ")
 
@@ -220,7 +279,6 @@ btn11 = PushButton(edit_box, text= 'Insert Working Line Below Selected Line',
 btn12 = PushButton(edit_box, text='Show/Update Plot of Active File', grid=[2,3],
                    command=plot_me)
 
-
 Text(edit_box, text="Commands", grid=[7,1])
 cmds_btn_grp = ButtonGroup(edit_box, options=[["Comment","# "],
         ["dt","dt"], ["PotParams","PotParams"],
@@ -236,8 +294,6 @@ inbx2 = TextBox(edit_box,grid=[5,5], width=8, command = update_wlc)
 inbx3 = TextBox(edit_box,grid=[6,5], width=8, command = update_wlc)
 inbx4 = TextBox(edit_box,grid=[7,5], width=8, command = update_wlc)
 working_line_final = Text(edit_box,grid=[3,6], text="# ")
-
-
 
 hints_box = Box(app, width='fill', layout="grid")    
     
