@@ -25,13 +25,14 @@ except ImportError:
 g.L = g.ENG
 
 #
-app = QApplication([])                                                      # create a PyQt app
-app.setWindowIcon(QIcon(joindir(g.BASEDIR,'external/icons/icon.png')))      # set the display icon for the app
+g.APP = QApplication([])                                                      # create a PyQt app
+g.APP.setWindowIcon(QIcon(joindir(g.BASEDIR,'external/icons/icon.png')))      # set the display icon for the app
 with open(joindir(g.BASEDIR,"external/styles/styles.css"), "r") as file:    # open the stylesheet
-    app.setStyleSheet(file.read())                                          # and set it as the app's stylesheet
+    g.STYLES = file.read()
+applyStyles()                       # and set it as the app's stylesheet
 window = WindowHome()               # create a new home window object
 window.show()                       # show the home window (when the app is run)
-app.exec()                          # run the app!
+g.APP.exec()                        # run the app!
 
 
 

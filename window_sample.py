@@ -161,6 +161,15 @@ class WindowSample(QMainWindow):
         but_view_results = QPushButton('Results')
         but_export_results = QPushButton('Export')
 
+        but_view_config.setObjectName(g.RUNS_BUT_ANY_NAME)
+        but_edit.setObjectName(g.RUNS_BUT_ONE_NAME)
+        but_del.setObjectName(g.RUNS_BUT_ANY_NAME)
+        but_export_raw.setObjectName(g.RUNS_BUT_ANY_NAME)
+        but_view_plots.setObjectName(g.RUNS_BUT_ANY_NAME)
+        but_analyze.setObjectName(g.RUNS_BUT_ANY_NAME)
+        but_view_results.setObjectName(g.RUNS_BUT_ANY_NAME)
+        but_export_results.setObjectName(g.RUNS_BUT_ANY_NAME)
+
         l_run_header.addWidget(self.cb_all)
         l_run_header.addWidget(lbl_cb_all)
 
@@ -189,9 +198,9 @@ class WindowSample(QMainWindow):
         l_run_header.addWidget(gb_res)
         l_run_header.addStretch()
 
-        w_run_header = QWidget()                    # create a widget to hold the layout (which can be styled)
-        w_run_header.setLayout(l_run_header)        # add the layout to the widget
-        w_run_header.setObjectName("run-header-row")# add a name to target with QSS
+        self.w_run_header = QWidget()                    # create a widget to hold the layout (which can be styled)
+        self.w_run_header.setLayout(l_run_header)        # add the layout to the widget
+        self.w_run_header.setObjectName("run-header-row")# add a name to target with QSS
 
 
         # Grab the run history as a widget
@@ -199,8 +208,11 @@ class WindowSample(QMainWindow):
 
         # Add all of these three widgets to our vertical layout
         lay.addWidget(w_sample_header)
-        lay.addWidget(w_run_header)
+        lay.addWidget(self.w_run_header)
         lay.addWidget(w_run_history)
+
+        # make sure all buttons are appropriately enabled/disabled to start
+        self.update_button_states()
 
         # Display! 
         w = QWidget()
@@ -279,9 +291,9 @@ class WindowSample(QMainWindow):
             w_comment.mouseReleaseEvent = partial(self.row_clicked, w_comment)
             w_time.mouseReleaseEvent = partial(self.row_clicked, w_time)
             if (i%2 == 0):
-                obj_name ='run-cell-odd'
+                obj_name =g.RUNS_ODD_ROW_NAME
             else:
-                obj_name ='run-cell-even'
+                obj_name =g.RUNS_EVEN_ROW_NAME
 
             w_type.setObjectName(obj_name)
             w_sweep.setObjectName(obj_name)
@@ -334,37 +346,36 @@ class WindowSample(QMainWindow):
     def row_toggle(self, w, state):
         run_id = w.objectName()
         if (state == Qt.CheckState.Checked.value):              # if the checkbox is now checked
-            if run_id not in self.selected:             #  and if that row is not already listed as selected (altho this should be redundant)
-                self.selected.append(run_id)            #   add the current run uid to the list of selected runs     
+            if run_id not in self.selected:                     #  and if that row is not already listed as selected (altho this should be redundant)
+                self.selected.append(run_id)                    #   add the current run uid to the list of selected runs     
                 self.highlight_row(w)                           #   and highlight the row
                 if (len(self.selected) == self.num_runs):       #   if this is the final row now selected (all rows are selected)
                     if (self.cb_all.checkState() == Qt.CheckState.Unchecked):
                         self.cb_all.toggle()
-        elif run_id in self.selected:                           # if the the checkbox is now not checked and the row is currently listed as selected
-            self.selected.remove(run_id)                        #  remove it from the selected list,
-            self.unhighlight_row(w)                             #  remove the highlighting,
+        elif run_id in self.selected:                               # if the the checkbox is now not checked and the row is currently listed as selected
+            self.selected.remove(run_id)                            #  remove it from the selected list,
+            self.unhighlight_row(w)                                 #  remove the highlighting,
             if (self.cb_all.checkState() == Qt.CheckState.Checked): # and if the 'select-all' box is checked
                 self.prog_check_flag = True                         # set the flag that we modified a checkbox programatically
                 self.cb_all.toggle()                                # and uncheck the "select all" checkbox
+        self.update_button_states()
 
 
-    def highlight_row(self, w):
-        row = self.get_row_ws(w)
-        for w in row:
-            if not isinstance(w, QCheckBox):
-                w.setStyleSheet("""background-color: #fcdf88;""")
+    def highlight_row(self, w):                                             # Highlights the row that contains the widget w        
+        row = self.get_row_ws(w)                                            # find all widgets in row that contains w                                             
+        for w in row:                                                       # loop through them
+            if not isinstance(w, QCheckBox):                                # for all widgets that are not checkboxes
+                w.setObjectName(w.objectName()+g.RUNS_ROW_SELECTED_SUFFIX)  #   update the widget name to indicate it sholud display as selected
+        applyStyles()                                                       # when complete, update the styles across the app
 
-
-    def unhighlight_row(self, w):
-        row = self.get_row_ws(w)
-        for w in row:
-            if not isinstance(w, QCheckBox):
-                if (w.objectName() == 'run-cell-even'):  
-                    w.setStyleSheet("""background-color: white;""")
-                else:
-                    w.setStyleSheet("""background-color: #f8f8f8;""")
-
-               
+    def unhighlight_row(self, w):                                                       # Unhighlights the row that contains the widget w 
+        row = self.get_row_ws(w)                                                        # find all widgets in row that contains w 
+        for w in row:                                                                   # loop through them
+            if not isinstance(w, QCheckBox):                                            # for all widgets that are not checkboxes
+                w.setObjectName(w.objectName().replace(g.RUNS_ROW_SELECTED_SUFFIX,''))  #   update the widget name to indicate it sholud no longer be highlighted
+        applyStyles()                                                                   # when complete, update the styles across the app
+ 
+                    
     def get_row_ws(self, widget_to_find):
         '''Takes in a widget that is on the table of runs
         loops through that table and returns a list of all
@@ -385,6 +396,27 @@ class WindowSample(QMainWindow):
                 found_row = True
 
         return row_ws
+
+    def update_button_states(self):
+        rows = len(self.selected)
+        enable_buts = []
+        disable_buts = []
+        if rows == 0:
+            disable_buts = self.w_run_header.findChildren(QPushButton)
+        elif rows == 1:
+            enable_buts = self.w_run_header.findChildren(QPushButton)
+        elif rows > 1:
+            disable_buts = self.w_run_header.findChildren(QPushButton, g.RUNS_BUT_ONE_NAME)
+            enable_buts = self.w_run_header.findChildren(QPushButton, g.RUNS_BUT_ANY_NAME)
+            
+        for but in disable_buts:
+            but.setEnabled(False)
+        for but in enable_buts:
+            but.setEnabled(True)
+            
+        #print(rows)
+        #print(self.w_run_header.findChildren(QPushButton, g.RUNS_BUT_ANY_NAME))
+        
             
         
         

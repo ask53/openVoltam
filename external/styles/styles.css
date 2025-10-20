@@ -42,10 +42,15 @@ QWidget#runs-container QLabel#run-cell-even {
 	background-color: white;
 }
 
-
 QWidget#runs-container QLabel#run-cell-odd {
 	background-color: #f8f8f8;
 }
+
+QWidget#runs-container QLabel#run-cell-even-selected, QWidget#runs-container QLabel#run-cell-odd-selected{
+	background-color: #fcdf88;
+}
+	
+
 
 QWidget#runs-container QCheckBox {
 	padding-right: 8px;

@@ -38,12 +38,20 @@ DATE_STORAGE_FORMAT = 'yyyy-MM-dd'
 DATETIME_STORAGE_FORMAT = DATE_STORAGE_FORMAT+' hh:mmap'
 SAMPLE_NAME_MIN_LENGTH = 3
 
+# Widget name mgmt (for targeting with QSS)
+RUNS_EVEN_ROW_NAME = 'run-cell-even'
+RUNS_ODD_ROW_NAME = 'run-cell-odd'
+RUNS_ROW_SELECTED_SUFFIX = '-selected'
+RUNS_BUT_ONE_NAME = 'run-but-single'
+RUNS_BUT_ANY_NAME = 'run-but-any'
+
 #File system navigation
 DEFAULT_EXT = '.json'
 FILE_TYPES = '*'+DEFAULT_EXT
-
 
 # Globals changed by program
 L = ENG  				# default lang, changed by program
 BASEDIR = ''			# stores base directory for application executable file
 HOME = False			# will hold the object of the homescreen at any given time
+STYLES = False                  # will hold all the QSS for updating
+APP = False                     # will hold the app object
