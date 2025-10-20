@@ -15,6 +15,17 @@ S_PROCESSED = "processed_data"
 
 S_BLANK_ARRAYS = [S_CONFIGS, S_RUNS, S_RAW, S_PROCESSED]
 
+# Keys for run dictionary
+R_UID_SELF = 'uid'
+R_UID_SP = 'sweep_profile'
+R_NAME = 'run_name'
+R_TYPE = 'run_type'
+R_NOTES = 'notes'
+#
+#
+#
+##### ADD MORE RUN PARAMS HERE 
+
 # Language globals 
 ENG = 0
 ESP = 1

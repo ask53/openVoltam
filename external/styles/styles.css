@@ -23,3 +23,33 @@ WindowViewSample QTextEdit {
 QTableWidget::item QLabel {
 	padding: 2px 6px;
 }
+
+WindowSample #sample-header {
+	background-color: pink;
+	border: 1px solid grey;
+}
+
+QWidget#runs-container QLabel  {
+	background-color: none;
+	padding: 2px 8px;	
+}
+
+QWidget#runs-container QLabel#run-col-header {
+	font-weight: bold;
+}
+
+QWidget#runs-container QLabel#run-cell-even {
+	background-color: white;
+}
+
+
+QWidget#runs-container QLabel#run-cell-odd {
+	background-color: #f8f8f8;
+}
+
+QWidget#runs-container QCheckBox {
+	padding-right: 8px;
+}
+
+
+
