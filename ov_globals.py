@@ -45,6 +45,9 @@ RUNS_ROW_SELECTED_SUFFIX = '-selected'
 RUNS_BUT_ONE_NAME = 'run-but-single'
 RUNS_BUT_ANY_NAME = 'run-but-any'
 
+# Realtime styling
+PADDING = 4
+
 #File system navigation
 DEFAULT_EXT = '.json'
 FILE_TYPES = '*'+DEFAULT_EXT

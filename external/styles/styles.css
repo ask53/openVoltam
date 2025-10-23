@@ -31,7 +31,7 @@ WindowSample #sample-header {
 
 QWidget#runs-container QLabel  {
 	background-color: none;
-	padding: 2px 8px;	
+	padding: 2px 8px;
 }
 
 QWidget#runs-container QLabel#run-col-header {
@@ -49,12 +49,9 @@ QWidget#runs-container QLabel#run-cell-odd {
 QWidget#runs-container QLabel#run-cell-even-selected, QWidget#runs-container QLabel#run-cell-odd-selected{
 	background-color: #fcdf88;
 }
-	
-
 
 QWidget#runs-container QCheckBox {
 	padding-right: 8px;
 }
-
 
 

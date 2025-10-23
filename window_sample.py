@@ -22,8 +22,9 @@ from functools import partial
 from tkinter.filedialog import askopenfilename as askOpenFileName
 from json import dumps, loads
 
+from PyQt6.QtTest import QTest
 from PyQt6.QtGui import QAction, QFont, QIcon
-from PyQt6.QtCore import QDate
+from PyQt6.QtCore import QDate, Qt
 from PyQt6.QtWidgets import (
     QMainWindow,
     QPushButton,
@@ -43,9 +44,11 @@ from PyQt6.QtWidgets import (
 )
 
 # Define class for Home window
-class WindowSample(QMainWindow):
+class WindowSample(QMainWindow):  
+
     def __init__(self, path, parent):
         super().__init__()
+        
         self.path = path
         self.parent = parent
         self.data = {}
@@ -93,15 +96,17 @@ class WindowSample(QMainWindow):
 
         file_menu = menu.addMenu(l.menu_run[g.L])
 
+
         #####################
         #                   #
         #   page layout     #
         #                   #
         #####################
-
+        
         self.load_sample_info()                                                 # reads sample info into self.data
+        self.set_sample_info()
 
-        self.setWindowTitle(self.data[g.S_NAME])
+        
 
         lay = QVBoxLayout()                             # this is the main vertical layout we'll add things to
 
@@ -109,12 +114,13 @@ class WindowSample(QMainWindow):
         #   Define the top row ("sample header")
         #
         
-        self.lbl_sample_name = TitleLbl(self.data)
+        
         but_view = QPushButton('Sample info')
         but_edit = QPushButton('Edit sample')
         but_config = QPushButton('NEW RUN')
         but_calc = QPushButton('Calculate')
         but_res_sample = QPushButton('Sample results')
+
         but_view.clicked.connect(self.view_sample_info)
         but_edit.clicked.connect(partial(self.parent.edit_sample, self.path))
         but_config.clicked.connect(self.config_run)
@@ -139,7 +145,7 @@ class WindowSample(QMainWindow):
         w_sample_header.setLayout(l_sample_header)          # add the layout to the widget
         w_sample_header.setObjectName("sample-header")      # add a name to target with QSS
 
-
+    
         #
         #   Define the second row ("run header")
         #
@@ -204,20 +210,22 @@ class WindowSample(QMainWindow):
 
 
         # Grab the run history as a widget
-        w_run_history = self.getRunHistoryAsWidget()
-
+        self.widgetize_run_history()
+        
         # Add all of these three widgets to our vertical layout
         lay.addWidget(w_sample_header)
         lay.addWidget(self.w_run_header)
-        lay.addWidget(w_run_history)
+        lay.addWidget(self.w_run_history_area)
 
         # make sure all buttons are appropriately enabled/disabled to start
         self.update_button_states()
 
         # Display! 
-        w = QWidget()
-        w.setLayout(lay)
-        self.setCentralWidget(w)
+        self.w = QWidget()
+        self.w.setLayout(lay)
+        self.setCentralWidget(self.w)
+        
+        
 
     def select_all_lbl_clicked(self, event):        # this exists so that the "select all" label can be clicked
         self.cb_all.toggle()                        #   as well as the checkbox itself
@@ -227,18 +235,36 @@ class WindowSample(QMainWindow):
         if self.path:                                # if there is a path, read in the data
             with open(self.path, "r") as file:    
                 self.data = loads(file.read())
-        self.w_view_sample = WindowViewSample(self.data)
+
+    def set_sample_info(self):
+        self.w_view_sample = WindowViewSample(self.data)        # Update info in view sample pane (even if hidden)
+        sample_name = self.data[g.S_NAME]                       
+        self.setWindowTitle(sample_name)                        # Set the sample window title to the sample name
+        try:
+            self.lbl_sample_name.updateTitleLbl(sample_name)    # Set the Title label to the sample name...if this 
+        except:                                                 #   throws and error, there is not yet a title label
+            self.lbl_sample_name = TitleLbl(sample_name)        #   so create one! 
+
 
 
     def view_sample_info(self):
         self.w_view_sample = WindowViewSample(self.data)
         self.w_view_sample.show()
 
+    def update_displayed_info(self):
+        self.load_sample_info()                                             # reload the sample info from file
+        self.set_sample_info()                                          
+        self.selected = []                                                  # re-init selected list b/c we have reloaded all runs and none 
+                                                                            #   are selected to start.
+        self.w_run_history_area.setParent(None)                             # remove run history pane from layout
+        self.widgetize_run_history()                                        # get updated run history as a widget    
+        self.centralWidget().layout().addWidget(self.w_run_history_area)    # add the updated run history back to layout                                      # and adjust the size to match the window
+
     def config_run(self):
         w = WindowRunConfig(self)
         w.exec()
 
-    def getRunHistoryAsWidget(self):
+    def widgetize_run_history(self):
         demo = [{
             'name': 'run_1',
             'type':'blank',
@@ -260,14 +286,14 @@ class WindowSample(QMainWindow):
             'sweep':'20s As ramp -1.7 to 0.4V w background',
             'timestamp': '2025-10-15 09:32pm',
             'comment':'No diultion'}]
-        area = QScrollArea()
-        lay_v = QVBoxLayout()
-        lay_h = QHBoxLayout()
+        self.w_run_history_area = QScrollArea()
+        self.w_run_history_area.resizeEvent = self.scroll_area_resized
+
         grid = QGridLayout()
         grid.setHorizontalSpacing(0)
         grid.setVerticalSpacing(0)
         headers = ['Run began','Type', 'Sweep profile','Notes']
-        w_heads = [0,0,0,0,0]
+        w_heads = [0,0,0,0]
         for i, header in enumerate(headers):
             w_heads[i] = QLabel(header)
             w_heads[i].setObjectName('run-col-header')
@@ -286,10 +312,12 @@ class WindowSample(QMainWindow):
             w_sweep = QLabel(run['sweep'])
             w_comment = QLabel(run['comment'])
             w_time = QLabel(run['timestamp'])
+
             w_type.mouseReleaseEvent = partial(self.row_clicked, w_type)
             w_sweep.mouseReleaseEvent = partial(self.row_clicked, w_sweep)
             w_comment.mouseReleaseEvent = partial(self.row_clicked, w_comment)
             w_time.mouseReleaseEvent = partial(self.row_clicked, w_time)
+
             if (i%2 == 0):
                 obj_name =g.RUNS_ODD_ROW_NAME
             else:
@@ -307,18 +335,13 @@ class WindowSample(QMainWindow):
             grid.addWidget(w_time, i+1, 1)
 
         self.num_runs = i+1
+        grid.setColumnStretch(4,1)
 
-        lay_h.addLayout(grid)
-        lay_h.addStretch()      # add horizontal stretch to compress data left-right
-        lay_v.addLayout(lay_h)
-        lay_v.addStretch()      # add vertical stretch to compress data up-down
-        area.setLayout(lay_v)   # add vertical layout to our scroll area
-        self.w_container = QWidget()
-        self.w_container.setLayout(lay_v)
-        self.w_container.setObjectName('runs-container')
-        area.setWidget(self.w_container)
-
-        return area
+        self.w_run_history_container = QWidget()
+        self.w_run_history_container.setLayout(grid)
+        self.w_run_history_container.setObjectName('runs-container')
+        self.w_run_history_area.setWidget(self.w_run_history_container)
+        
 
     def row_clicked(self, w, event):
         ws = self.get_row_ws(w)
@@ -326,7 +349,6 @@ class WindowSample(QMainWindow):
             if isinstance(w, QCheckBox):
                 w.toggle()
                 break
-
 
     def select_all_toggle(self, w):
         if self.prog_check_flag:                        # if the select all checkbox has been modified programatically
@@ -338,11 +360,10 @@ class WindowSample(QMainWindow):
             if (state == Qt.CheckState.Checked):
                 state_to_set = Qt.CheckState.Checked
 
-            for w in self.w_container.children():       # loop thru all the widgets in the grid
+            for w in self.w_run_history_container.children():       # loop thru all the widgets in the grid
                 if isinstance(w, QCheckBox):            # for each checkbox
                     w.setCheckState(state_to_set)         # set the checkbox to the state determined above
                     
-
     def row_toggle(self, w, state):
         run_id = w.objectName()
         if (state == Qt.CheckState.Checked.value):              # if the checkbox is now checked
@@ -359,7 +380,6 @@ class WindowSample(QMainWindow):
                 self.prog_check_flag = True                         # set the flag that we modified a checkbox programatically
                 self.cb_all.toggle()                                # and uncheck the "select all" checkbox
         self.update_button_states()
-
 
     def highlight_row(self, w):                                             # Highlights the row that contains the widget w        
         row = self.get_row_ws(w)                                            # find all widgets in row that contains w                                             
@@ -381,7 +401,7 @@ class WindowSample(QMainWindow):
         loops through that table and returns a list of all
         widgets on the same row as the given widget, in order
         from left to right'''
-        all_ws = self.w_container.children()    # grab all table widgets
+        all_ws = self.w_run_history_container.children()    # grab all table widgets
         row_ws = []                             
         found_row = False
         for w in all_ws:    
@@ -413,36 +433,32 @@ class WindowSample(QMainWindow):
             but.setEnabled(False)
         for but in enable_buts:
             but.setEnabled(True)
-            
-        #print(rows)
-        #print(self.w_run_header.findChildren(QPushButton, g.RUNS_BUT_ANY_NAME))
-        
-            
-        
-        
-            
+
+    
+
+
+    def scroll_area_resized(self, event):
+        QScrollArea.resizeEvent(self.w_run_history_area, event) # Because this fn intercepts the resizeEvent, call the actual resizeEvent
+                                                                # (this checks whether to add/remove scroll bars, etc.
+                                                                # Then adjust the inner widget to fit well within the scroll area:
+        outer_width = self.w_run_history_area.width()           #   get width of parent (container) widget
+        v_bar_width = 0 
+        v_bar = self.w_run_history_area.verticalScrollBar()     #   get the vertical scrollbar widget
+        if v_bar.isVisible():                                   #   if its visible
+            v_bar_width = v_bar.width()                         #   account for its width
+        self.w_run_history_container.setFixedWidth(outer_width-g.PADDING-v_bar_width)
         
 
 
 class TitleLbl(QLabel):
-    def __init__(self, data):
+    def __init__(self, name):
         super(QLabel, self).__init__()
         self.setObjectName(encodeCustomName(g.S_NAME))
-        self.setText(data[g.S_NAME])
-        self.data = data
+        self.setText(name)
                  
-    def updateTitleLbl(self):
-        self.setText(data[g.S_NAME])
+    def updateTitleLbl(self, new_name):
+        self.setText(new_name)
         
-'''
-class QHLine(QFrame):
-    def __init__(self, t):
-        super(QHLine, self).__init__()
-        self.setFrameShape(QFrame.Shape.HLine)
-        self.setFrameShadow(QFrame.Shadow.Sunken)
-        self.setLineWidth(0)
-        self.setMidLineWidth(t)                     # t is the line thickness
-'''
 
 class QVLine(QFrame):
     def __init__(self):

@@ -36,6 +36,19 @@ from PyQt6.QtWidgets import (
     QFrame
 )
 
+##############3
+#
+#   FOR TESTING ONLY
+#
+##############
+
+import traceback
+
+
+
+
+
+
 # Define class for Home window
 class WindowHome(QMainWindow):
     def __init__(self):
@@ -115,20 +128,25 @@ class WindowHome(QMainWindow):
         if not path:                # if no path is passed, ask the user to pick a file path
             path = askOpenFileName(filetypes = [(l.filetype_lbl[g.L], g.FILE_TYPES)])
         if path:                    # if the path is passed or if the user selected a valid path:
-            try:
-                w = False                               # placeholder for the current sample window
-                if len(self.w_samples) > 0:             # if there are current sample windows
-                    for w_sample in self.w_samples:     #   loop through them 
-                        if w_sample.path == path:       #   if we find one where the path matches our current path
-                            w = w_sample                #   store the object in our placeholder
-                if w:                                   # if we found a matching window
-                    w.load_sample_info()                #   update sample info
-                    w.activateWindow()                  #   and activate window
-                else:                                   # if we didn't find a match
-                    self.create_sample_window(path)     #   create a sample window from the path    
-                self.close()                            # close the home window if open
-            except Exception as e:
-                print(e)
+            w = False                               # placeholder for the current sample window
+            if len(self.w_samples) > 0:             # if there are current sample windows
+                for w_sample in self.w_samples:     #   loop through them 
+                    if w_sample.path == path:       #   if we find one where the path matches our current path
+                        w = w_sample                #   store the object in our placeholder
+            if w:                                   # if we found a matching window
+                try:
+                    w.update_displayed_info()           #   update sample info
+                except Exception as e:
+                    print(e)
+                w.activateWindow()                  #   and activate window
+            else:                                   # if we didn't find a match
+                try:
+                    self.create_sample_window(path)     #   create a sample window from the path
+                except Exception as e:
+                    print(e)
+                
+            self.close()                            # close the home window if open
+            
 
     def create_sample_window(self, path):
         self.w_samples.append(WindowSample(path, self))     # create new window for sample, append to list
