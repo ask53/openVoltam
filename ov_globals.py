@@ -26,6 +26,9 @@ R_NOTES = 'notes'
 #
 ##### ADD MORE RUN PARAMS HERE 
 
+RC_REPS_MIN = 1
+RC_REPS_MAX = 99
+
 # Language globals 
 ENG = 0
 ESP = 1

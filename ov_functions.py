@@ -20,13 +20,15 @@ def decodeCustomName(encoded_name):
 def custText(arr):
     return arr[g.L]
 
-def horizontalize(widgetlist):
+def horizontalize(widgetlist, stretch=False):
     """
     takes in a list of widgets and adds them all sequentially to a horizontal layout. Returns the layout
     """
     layout = QHBoxLayout()
     for widget in widgetlist:
         layout.addWidget(widget)
+    if stretch:
+        layout.addStretch()
     return layout
 
 def makeLabelsSelectable(w):

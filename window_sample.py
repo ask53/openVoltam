@@ -261,8 +261,12 @@ class WindowSample(QMainWindow):
         self.centralWidget().layout().addWidget(self.w_run_history_area)    # add the updated run history back to layout                                      # and adjust the size to match the window
 
     def config_run(self):
-        w = WindowRunConfig(self)
-        w.exec()
+        try:
+            self.w_run_config = WindowRunConfig(self)
+            self.w_run_config.show()
+        except Exception as e:
+            print(e)
+        
 
     def widgetize_run_history(self):
         demo = [{

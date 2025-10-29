@@ -39,6 +39,12 @@ c_edit_header_new = ['New sweep configuration', 'Ajuste de voltametría nueva']
 s_view_info = ['View info','Ver datos']
 s_edit_info = ['Edit info','Modificar datos']
 
+# Window: run configuration
+rc_window_title = ['Configure run(s)','TEXTO']
+rc_type_blank = ['Blank','TEXTO']
+rc_type_sample = ['Sample','TEXTO']
+rc_type_stdadd = ['Standard addition','TEXTO']
+rc_select = ['Select...','TEXTO']
 
 
 #Alerts
