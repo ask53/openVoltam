@@ -5,7 +5,8 @@ import ov_globals as g
 from PyQt6.QtCore import Qt 
 from PyQt6.QtWidgets import (
     QHBoxLayout,
-    QLabel
+    QLabel,
+    QMessageBox
 )
 
 def encodeCustomName(custom_name):
@@ -39,5 +40,11 @@ def makeLabelsSelectable(w):
 
 def applyStyles():
     g.APP.setStyleSheet(g.STYLES)
+
+def show_alert(obj, title, msg):
+    dlg = QMessageBox(obj)
+    dlg.setWindowTitle(title)
+    dlg.setText(msg)
+    dlg.exec()
     
     

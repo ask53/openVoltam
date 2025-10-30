@@ -33,7 +33,7 @@ from PyQt6.QtWidgets import (
     QDateEdit,
     QTextEdit,
     QMessageBox,
-    QFrame
+    QFrame    
 )
 
 ##############3
@@ -43,8 +43,6 @@ from PyQt6.QtWidgets import (
 ##############
 
 import traceback
-
-
 
 
 
@@ -126,7 +124,7 @@ class WindowHome(QMainWindow):
 
     def open_sample(self, path=False):
         if not path:                # if no path is passed, ask the user to pick a file path
-            path = askOpenFileName(filetypes = [(l.filetype_lbl[g.L], g.FILE_TYPES)])
+            path = askOpenFileName(filetypes = [(l.filetype_lbl[g.L], g.SAMPLE_FILE_TYPES)])
         if path:                    # if the path is passed or if the user selected a valid path:
             w = False                               # placeholder for the current sample window
             if len(self.w_samples) > 0:             # if there are current sample windows
@@ -159,7 +157,7 @@ class WindowHome(QMainWindow):
             if path:                                        # if a path has been passed
                 self.edit_sample_from_file(path)                 #   open the sample from the given path
             else:                                           # if a path has not been passed, ask the user to select a file
-                path = askOpenFileName(filetypes = [(l.filetype_lbl[g.L], g.FILE_TYPES)])
+                path = askOpenFileName(filetypes = [(l.filetype_lbl[g.L], g.SAMPLE_FILE_TYPES)])
                 if path:                                    # if the user has selected a file (instead, say, of selecting "cancel")
                     self.edit_sample_from_file(path)        # load the sample from the selected file       
         else:                                               # if window is already showing

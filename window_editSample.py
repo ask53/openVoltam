@@ -135,10 +135,7 @@ class WindowEditSample(QMainWindow):
         If no error, returns True
         """
         if len(self.w_name.text()) < g.SAMPLE_NAME_MIN_LENGTH:
-            dlg = QMessageBox(self)
-            dlg.setWindowTitle(l.alert_header[g.L])
-            dlg.setText(l.alert_s_edit_name[g.L])
-            dlg.exec()
+            show_alert(self, l.alert_header[g.L], l.alert_s_edit_name[g.L])
             return False
         else:
             return True
@@ -176,8 +173,8 @@ class WindowEditSample(QMainWindow):
 
         # get the actual filename and path from user
         self.path = askSaveAsFileName(                           # open a save file dialog which returns the file object
-            filetypes=[(l.filetype_lbl[g.L], g.FILE_TYPES)],
-            defaultextension=g.DEFAULT_EXT,
+            filetypes=[(l.filetype_lbl[g.L], g.SAMPLE_FILE_TYPES)],
+            defaultextension=g.SAMPLE_EXT,
             confirmoverwrite=True,
             initialfile=f_guess)
 
@@ -226,12 +223,9 @@ class WindowEditSample(QMainWindow):
                 self.close()                                        # close the new sample window
                 
             except Exception as e:
-                print(e)
-                self.saved = False                              # make sure that the save flag is not set (so window doesn't close)
-                dlg = QMessageBox(self)                         # show an alert to user
-                dlg.setWindowTitle(l.alert_header[g.L])         # that save was unsuccessful
-                dlg.setText(l.alert_s_edit_save_error[g.L])
-                dlg.exec()
+                print(e)                    # make sure that the save flag is not set (so window doesn't close)
+                self.saved = False          # show an alert to user that save was unsuccessful 
+                show_alert(self, l.alert_header[g.L],l.alert_s_edit_save_error[g.L])
 
     def closeEvent(self, event):
         """

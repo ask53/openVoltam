@@ -52,7 +52,7 @@ alert_header = ['Alert!', '¡Alerta!']
 alert_s_edit_name = ['The name is too short.\nPlease enter a sample name that contains at least three characters.','El nombre es demaciado corto.\nFavor de ingresar un nombre de la muestra que contiene al menos tres carácteres.']
 alert_s_edit_save_error = ['There was and issue saving the file, please try again.','Había un error en el proceso de guardar el archivo. Favor de intentar otra vez.']
 # File system navigation
-filetype_lbl = ['OV Sample', 'Muestra de OV']
+filetype_lbl = ['OpenVoltam Sample', 'Muestra de OpenVoltam']
 
 
 

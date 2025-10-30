@@ -1,5 +1,8 @@
 #ov_globals.py
 
+# PyQt globals
+QT_NOTHING_SELECTED_INDEX = -1
+
 # Keys for sample dictionary
 S_NAME = "sample_name"
 S_DATE_ENTERED = "date_first_saved"
@@ -8,19 +11,27 @@ S_LOC_COLLECTED = "location_collected"
 S_CONTACT = "contact_info"
 S_COLLECTED_BY = "collected_by"
 S_NOTES = "sample_comments"
-S_CONFIGS = "sweep_configs"
+S_CONFIGS = "sweep_profiles"
+S_RUN_CONFIGS = "run_configs"
 S_RUNS = "runs"
-S_RAW = "raw_data"
 S_PROCESSED = "processed_data"
 
-S_BLANK_ARRAYS = [S_CONFIGS, S_RUNS, S_RAW, S_PROCESSED]
+
+S_BLANK_ARRAYS = [S_CONFIGS, S_RUN_CONFIGS, S_RUNS, S_PROCESSED]
 
 # Keys for run dictionary
 R_UID_SELF = 'uid'
 R_UID_SP = 'sweep_profile'
-R_NAME = 'run_name'
 R_TYPE = 'run_type'
 R_NOTES = 'notes'
+R_RUN_TYPE_BLANK = "blank"
+R_RUN_TYPE_SAMPLE = "sample"
+R_RUN_TYPE_STDADD = "standard_addition"
+R_RUN_UID_PREFIX = "run-"
+R_SAMPLE_VOL = "sample_vol_mL"
+R_TOTAL_VOL = "total_vol_mL"
+R_STD_ADDED_VOL = "standard_vol_mL"
+R_STD_CONC = "standard_conc_ppb"
 #
 #
 #
@@ -52,8 +63,10 @@ RUNS_BUT_ANY_NAME = 'run-but-any'
 PADDING = 4
 
 #File system navigation
-DEFAULT_EXT = '.json'
-FILE_TYPES = '*'+DEFAULT_EXT
+SAMPLE_EXT = '.ovs'
+CONFIG_EXT = '.ovc'
+SAMPLE_FILE_TYPES = '*'+SAMPLE_EXT
+CONFIG_FILE_TYPES = '*'+SAMPLE_EXT
 
 # Globals changed by program
 L = ENG  				# default lang, changed by program
