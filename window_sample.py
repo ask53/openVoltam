@@ -262,7 +262,7 @@ class WindowSample(QMainWindow):
 
     def config_run(self):
         try:
-            self.w_run_config = WindowRunConfig(self)
+            self.w_run_config = WindowRunConfig(self, 'run-0')
             self.w_run_config.show()
         except Exception as e:
             print(e)

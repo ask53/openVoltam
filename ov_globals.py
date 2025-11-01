@@ -11,27 +11,39 @@ S_LOC_COLLECTED = "location_collected"
 S_CONTACT = "contact_info"
 S_COLLECTED_BY = "collected_by"
 S_NOTES = "sample_comments"
-S_CONFIGS = "sweep_profiles"
-S_RUN_CONFIGS = "run_configs"
+S_SWEEP_PROFILES = "sweep_profiles"
 S_RUNS = "runs"
 S_PROCESSED = "processed_data"
 
+S_BLANK_ARRAYS = [S_SWEEP_PROFILES, S_RUNS, S_PROCESSED]
 
-S_BLANK_ARRAYS = [S_CONFIGS, S_RUN_CONFIGS, S_RUNS, S_PROCESSED]
+# Keys for sweep profile dictionary
+SP_UID_SELF = 'uid'
+SP_NOTES = 'notes'          ##### THIS IS JUST A PLACEHOLDER, WE WONT HAVE A NOTES FEATURE HERE
+SP_UID_PREFIX = 'sp-'
 
 # Keys for run dictionary
 R_UID_SELF = 'uid'
 R_UID_SP = 'sweep_profile'
 R_TYPE = 'run_type'
 R_NOTES = 'notes'
+R_REPLICATES = 'replicates'
 R_RUN_TYPE_BLANK = "blank"
 R_RUN_TYPE_SAMPLE = "sample"
 R_RUN_TYPE_STDADD = "standard_addition"
-R_RUN_UID_PREFIX = "run-"
 R_SAMPLE_VOL = "sample_vol_mL"
 R_TOTAL_VOL = "total_vol_mL"
 R_STD_ADDED_VOL = "standard_vol_mL"
 R_STD_CONC = "standard_conc_ppb"
+R_TIMESTAMP = "created"
+R_STATUS = 'status'
+R_DATA = 'data'
+R_STATUS_PENDING = "pending"
+R_STATUS_ERROR = "run_error"
+R_STATUS_RAN = "run_success"
+R_STATUS_ANALYZED = "analyzed"
+R_RUN_UID_PREFIX = "run-"
+R_REPLICATE_UID_PREFIX = "rep-"
 #
 #
 #
