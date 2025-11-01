@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
     QMainWindow
     )
 
-class WindowViewConfig(QMainWindow):
+class WindowViewSweepProfile(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.view_config_full[g.L])

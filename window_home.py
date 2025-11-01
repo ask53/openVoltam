@@ -5,8 +5,8 @@ from ov_functions import *
 
 # import custom window objects
 from window_editSample import WindowEditSample
-from window_editConfig import WindowEditConfig
-from window_viewConfig import WindowViewConfig
+from window_editSweepProfile import WindowEditSweepProfile
+from window_viewSweepProfile import WindowViewSweepProfile
 from window_sample import WindowSample
 
 # import other necessary python tools
@@ -59,7 +59,7 @@ class WindowHome(QMainWindow):
         
         # define possible popup windows (not modals)
         self.w_edit_sample = WindowEditSample(False, self)
-        self.w_edit_config = WindowEditConfig(False)
+        self.w_edit_config = WindowEditSweepProfile(False)
         self.w_samples = []
         self.ws_view_config = []
         
@@ -169,20 +169,20 @@ class WindowHome(QMainWindow):
 
     def new_config(self):
         if (self.w_edit_config.isHidden()):                 # check if winow is hidden. If so:
-            self.w_edit_config = WindowEditConfig(False)    #   Create a new empty edit config window
+            self.w_edit_config = WindowEditSweepProfile(False)    #   Create a new empty edit config window
             self.w_edit_config.show()                       #   and show it!
         else:                                               # if window is already showing
             self.w_edit_config.activateWindow()             #   bring it to front of screen
 
     def open_config(self):
-        self.ws_view_config.append(WindowViewConfig())
+        self.ws_view_config.append(WindowViewSweepProfile())
         self.ws_view_config[-1].show()
 
     def edit_config(self):
         ### HOWEVER WE SORTED "edit_sample(self, path) PLEASE UPDATE
         ### THIS FUNCTION TO MATCH FUNCTIONALLY
         if (self.w_edit_config.isHidden()):                 # check if winow is hidden. If so:
-            self.w_edit_config = WindowEditConfig("path")   #   Create a new empty edit config window
+            self.w_edit_config = WindowEditSweepProfile("path")   #   Create a new empty edit config window
             self.w_edit_config.show()                       #   and show it!
         else:                                               # if window is already showing
             self.w_edit_config.activateWindow()             #   bring it to front of screen
