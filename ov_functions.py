@@ -109,7 +109,22 @@ def sweep_profiles_match(sp1, sp2):
     #
     ################################################################################################
 
-
+def get_row_ws(w_parent, i):
+    """Accepts:
+    - w_parent: a widget that contains a grid layout
+    - i: the row, indexed from 0, of interest
+    Loops through the w_parent and returns a list of all
+    child widgets in row i.
+    """
+    try:
+        row_ws = []
+        ws = w_parent.findChildren(QLabel)
+        for w in ws:
+            if w.property('row') == i:
+                row_ws.append(w)
+        return row_ws
+    except Exception as e:
+        print(e)
     
         
     

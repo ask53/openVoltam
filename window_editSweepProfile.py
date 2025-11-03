@@ -40,6 +40,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QStackedLayout,
+    QGridLayout,
     QGroupBox,
     QScrollArea,
     QComboBox,
@@ -51,6 +52,8 @@ class WindowEditSweepProfile(QMainWindow):
     def __init__(self, path=False, uid=False):
         super().__init__()
         self.path = False
+        self.steps = []
+        self.selected = []
 
         if path:
             self.path = path
@@ -95,41 +98,41 @@ class WindowEditSweepProfile(QMainWindow):
         self.step_type.addItems(['Constant voltage','Voltage ramp'])
         self.step_type.currentIndexChanged.connect(self.step_type_changed)
 
-        w_const_v_lbl = QLabel('Voltage [V]')
-        self.w_const_v = QDoubleSpinBox()
-        w_const_t_lbl = QLabel('Duration [s]')
-        self.w_const_t = QDoubleSpinBox()
+        const_v_lbl = QLabel('Voltage [V]')
+        self.const_v = QDoubleSpinBox()
+        const_t_lbl = QLabel('Duration [s]')
+        self.const_t = QDoubleSpinBox()
         s1v1g = QGroupBox('Data collection')
         self.const_data_collect_start = QCheckBox('Begin collecting data')
         self.const_data_collect_start.setObjectName('const-collect-start')
         self.const_data_collect_start.stateChanged.connect(partial(self.collection_state_changed,self.const_data_collect_start))
         self.const_data_collect_end = QCheckBox('Stop collecting data')
+        self.const_data_collect_end.setObjectName('const-collect-end')
+        self.const_data_collect_end.stateChanged.connect(partial(self.collection_state_changed,self.const_data_collect_end))
         const_begin_measure_lbl = QLabel('Begin collection at [s]')
         self.const_begin_measure = QDoubleSpinBox()
         const_end_measure_lbl = QLabel('Stop collection at [s]')
         self.const_end_measure = QDoubleSpinBox()
 
         ###################################### THIS CODE WORKS, PLEASE MAKE IT READABLE! ################
-        bar = QWidget()
-        bar.setLayout(horizontalize([const_begin_measure_lbl, self.const_begin_measure]))
-        bar.setObjectName('const-collect-start-layout')
-        #################################################################################################
-        
+        self.w_const_begin_measure = QWidget()
+        self.w_const_begin_measure.setLayout(horizontalize([const_begin_measure_lbl, self.const_begin_measure]))
+        self.w_const_begin_measure.setObjectName('const-collect-start-layout')
+        self.w_const_end_measure = QWidget()
+        self.w_const_end_measure.setLayout(horizontalize([const_end_measure_lbl, self.const_end_measure]))
+        self.w_const_end_measure.setObjectName('const-collect-end-layout')
+
         v_const_measure.addWidget(self.const_data_collect_start)
-
-        #v_const_measure.addLayout(horizontalize([const_begin_measure_lbl, self.const_begin_measure]))
-        v_const_measure.addWidget(bar)
-
-        
+        v_const_measure.addWidget(self.w_const_begin_measure)
         v_const_measure.addWidget(self.const_data_collect_end)
-        v_const_measure.addLayout(horizontalize([const_end_measure_lbl, self.const_end_measure]))
+        v_const_measure.addWidget(self.w_const_end_measure)
         g_const_measure.setLayout(v_const_measure)
         
         
 
         
-        v_const.addLayout(horizontalize([w_const_v_lbl, self.w_const_v]))
-        v_const.addLayout(horizontalize([w_const_t_lbl, self.w_const_t]))
+        v_const.addLayout(horizontalize([const_v_lbl, self.const_v]))
+        v_const.addLayout(horizontalize([const_t_lbl, self.const_t]))
         v_const.addWidget(g_const_measure)
         w_const = QWidget()
         w_const.setLayout(v_const)
@@ -164,7 +167,7 @@ class WindowEditSweepProfile(QMainWindow):
         policy.setRetainSizeWhenHidden(True)    # modify policy so that g1 takes up space regardless of whether shown or hidden
         self.g1.setSizePolicy(policy)           # set g1's size policy to the modified version.
 
-        self.prof_chart = QScrollArea()
+        self.profile_chart = QScrollArea()
 
         but_up = QPushButton()
         but_down = QPushButton()
@@ -184,10 +187,14 @@ class WindowEditSweepProfile(QMainWindow):
         but_edit.setToolTip('Edit step')
         but_dup.setToolTip('Duplicate step(s)')
         but_del.setToolTip('Delete step(s)')
-        
-
+        but_up.clicked.connect(self.row_move_up)
+        but_down.clicked.connect(self.row_move_down)
         but_add.clicked.connect(self.edit_new_step)
-        v3.addWidget(self.prof_chart)
+        but_edit.clicked.connect(self.row_edit)
+        but_dup.clicked.connect(self.row_duplicate)
+        but_del.clicked.connect(self.row_delete)
+        
+        v3.addWidget(self.profile_chart)
         v3.addLayout(horizontalize([but_up, but_down]))
         v3.addLayout(horizontalize([but_add, but_edit, but_dup, but_del]))
         
@@ -217,10 +224,139 @@ class WindowEditSweepProfile(QMainWindow):
         v1.addLayout(h1)
         v1.addWidget(self.builder)
         v1.addWidget(but_save)
+
+        self.init_form_values()
         
         w = QWidget()
         w.setLayout(v1)
         self.setCentralWidget(w)
+
+    def init_form_values(self):
+        self.step_name.setText('')
+        self.w_const_begin_measure.hide()
+        self.w_const_end_measure.hide()
+
+    def refresh_list(self):
+        try:
+            self.clear_list()
+            self.build_new_list()
+            self.update_highlights()
+        except Exception as e:
+            print(e)
+
+    def clear_list(self):
+        w = self.profile_chart.findChild(QWidget)
+        lay = w.layout()
+        try:
+            for i in reversed(range(lay.count())): 
+                lay.itemAt(i).widget().setParent(None)
+        except:
+            return
+
+
+    def build_new_list(self):
+
+        grid = QGridLayout()
+        grid.setHorizontalSpacing(0)
+        grid.setVerticalSpacing(0)
+        
+        for i, step in enumerate(self.steps):
+            #### TO ADD MORE WIDGETS TO THIS LAYOUT, DEFINE THEM HERE
+            w_name = QLabel(step['name'])
+            w_stir = QLabel(str(step['stir']))
+            ws = [w_name, w_stir]
+            ####### THEN ADD THEM TO THE ws LIST. THATS IT YAYYYYY 
+
+            if (i%2 == 0):
+                obj_name = g.STEP_ODD_ROW_NAME
+            else:
+                obj_name = g.STEP_EVEN_ROW_NAME
+
+            for j, w in enumerate(ws):
+                w.mouseReleaseEvent = partial(self.row_clicked, w)
+                w.setObjectName(obj_name)
+                w.setProperty('row', i)
+                grid.addWidget(w, i, j)
+         
+        w_pc = QWidget()
+        w_pc.setObjectName('steps-container')
+        w_pc.setLayout(grid)
+        self.profile_chart.setWidget(w_pc)
+
+    def row_clicked(self, w, event):
+        try:
+            i = w.property('row')
+            if i in self.selected:
+                self.selected.remove(i)
+                self.change_row_highlight(i, False)
+            else:
+                self.selected.append(i)
+                self.change_row_highlight(i, True)
+        except Exception as e:
+            print(e)
+
+    def change_row_highlight(self, i, highlight):
+        row_ws = get_row_ws(self.profile_chart, i)
+        for w in row_ws:
+            if highlight:
+                w.setObjectName(w.objectName()+g.RUNS_ROW_SELECTED_SUFFIX)
+            else:
+                w.setObjectName(w.objectName().replace(g.RUNS_ROW_SELECTED_SUFFIX,''))
+        applyStyles()
+
+    def update_highlights(self):
+        for i in self.selected:
+            self.change_row_highlight(i, True)
+        
+        
+
+    def row_move_up(self):
+        indices = sorted(self.selected)         # goes from top of list down
+        new_selected = []
+        if indices[0] == 0:                     # if top step is selected, do nothing (it can't go any higher!)
+            return
+        else:
+            for i in indices:
+                row = self.steps[i]
+                self.steps.remove(row)
+                self.steps.insert(i-1, row)
+                new_selected.append(i-1)
+            self.selected = new_selected
+            self.refresh_list()      
+            
+    def row_move_down(self):
+        indices = sorted(self.selected)
+        indices.reverse()                           # go from bottom of list up
+        new_selected = []
+        if indices[0] == len(self.steps)-1:         # if the final step is included, do nothing (it can't move down further!)
+            return
+        else:
+            for i in indices:
+                row = self.steps[i]
+                self.steps.remove(row)
+                self.steps.insert(i+1, row)
+                new_selected.append(i+1)
+            self.selected = new_selected
+            self.refresh_list()
+            
+    ################################# HERE #########################################################
+    # FINISH
+    # FUNCTIONALITY
+    # FOR
+    #   - DUPLICATE
+    #   - EDIT
+    #   - DELETE
+    
+    def row_duplicate(self):
+        print('duplicate!')
+    def row_edit(self):
+        print('edit!')
+    def row_delete(self):
+        print('delete!')
+
+    ###################################################################################################
+        
+        
 
     def step_type_changed(self, i):
         self.s1.setCurrentIndex(i+1) # the +1 allows for the 0th screen
@@ -240,7 +376,18 @@ class WindowEditSweepProfile(QMainWindow):
         self.g1.show()
 
     def add_step(self):
-        print('adding step!')
+        name = self.step_name.text()
+        stir = 'stir OFF'
+        if self.stirrer.checkState() == Qt.CheckState.Checked:
+            stir = 'stir ON'
+        self.steps.append({
+            'name': name,
+            'stir': stir
+            })
+        self.refresh_list()
+        self.g1.hide()
+        self.init_form_values()
+        print(self.steps)
 
     def cancel_step(self):
         self.g1.hide()

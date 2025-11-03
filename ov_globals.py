@@ -70,6 +70,8 @@ RUNS_ODD_ROW_NAME = 'run-cell-odd'
 RUNS_ROW_SELECTED_SUFFIX = '-selected'
 RUNS_BUT_ONE_NAME = 'run-but-single'
 RUNS_BUT_ANY_NAME = 'run-but-any'
+STEP_EVEN_ROW_NAME = 'step-cell-even'
+STEP_ODD_ROW_NAME = 'step-cell-odd'
 
 # Realtime styling
 PADDING = 4

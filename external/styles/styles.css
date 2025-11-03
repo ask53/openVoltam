@@ -29,7 +29,7 @@ WindowSample #sample-header {
 	border: 1px solid grey;
 }
 
-QWidget#runs-container QLabel  {
+QWidget#runs-container QLabel, QWidget#steps-container QLabel  {
 	background-color: none;
 	padding: 2px 8px;
 }
@@ -38,15 +38,15 @@ QWidget#runs-container QLabel#run-col-header {
 	font-weight: bold;
 }
 
-QWidget#runs-container QLabel#run-cell-even {
+QWidget#runs-container QLabel#run-cell-even, QWidget#steps-container QLabel#step-cell-even {
 	background-color: white;
 }
 
-QWidget#runs-container QLabel#run-cell-odd {
-	background-color: #f8f8f8;
+QWidget#runs-container QLabel#run-cell-odd, QWidget#steps-container QLabel#step-cell-odd {
+	background-color: #dddddd;
 }
 
-QWidget#runs-container QLabel#run-cell-even-selected, QWidget#runs-container QLabel#run-cell-odd-selected{
+QWidget#runs-container QLabel#run-cell-even-selected, QWidget#runs-container QLabel#run-cell-odd-selected, QWidget#steps-container QLabel#step-cell-even-selected, QWidget#steps-container QLabel#step-cell-odd-selected {
 	background-color: #fcdf88;
 }
 

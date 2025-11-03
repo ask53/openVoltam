@@ -399,7 +399,10 @@ class WindowSample(QMainWindow):
                 w.setObjectName(w.objectName().replace(g.RUNS_ROW_SELECTED_SUFFIX,''))  #   update the widget name to indicate it sholud no longer be highlighted
         applyStyles()                                                                   # when complete, update the styles across the app
  
-                    
+    ###################### REDO THE GET ROW, HIGHLIGHT, AND SELECTION FUNCTIONS
+        # USING THE GLOBAL FUNCTIONS AND THE FACT THAT WE CAN ADD A
+        # ROW PROPERTY TO EACH WIDGET WHEN WE PLACE IT IN THE GRIDDDD
+        ###################################################################################################################################################################################################
     def get_row_ws(self, widget_to_find):
         '''Takes in a widget that is on the table of runs
         loops through that table and returns a list of all
