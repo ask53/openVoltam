@@ -318,7 +318,7 @@ class WindowEditSweepProfile(QMainWindow):
         else:
             for i in indices:
                 row = self.steps[i]
-                self.steps.remove(row)
+                del self.steps[i]
                 self.steps.insert(i-1, row)
                 new_selected.append(i-1)
             self.selected = new_selected
@@ -333,7 +333,7 @@ class WindowEditSweepProfile(QMainWindow):
         else:
             for i in indices:
                 row = self.steps[i]
-                self.steps.remove(row)
+                del self.steps[i]
                 self.steps.insert(i+1, row)
                 new_selected.append(i+1)
             self.selected = new_selected
@@ -343,16 +343,51 @@ class WindowEditSweepProfile(QMainWindow):
     # FINISH
     # FUNCTIONALITY
     # FOR
-    #   - DUPLICATE
     #   - EDIT
-    #   - DELETE
+    #  
     
     def row_duplicate(self):
-        print('duplicate!')
+        indices = sorted(self.selected)             # sort selected indices
+        index_blocks = self.blockify(indices)       # create an array of arrays to group consecutive indices
+        new_selected = []
+        rows_added = 0
+        for block in index_blocks:                                                  # for each consecutive block of indices                  
+            for i in block:                                                         # loop thru the indices
+                new_selected.append(i+rows_added+len(block))                        #   store the index of where the new row will be
+                self.steps.insert(i+rows_added+len(block), self.steps[i+rows_added])#   insert the duplicate row there!
+            rows_added = rows_added + len(block)                                    # add the adjustment for going forwards thru th list
+        self.selected = new_selected
+        self.refresh_list()
+        
     def row_edit(self):
         print('edit!')
+        
     def row_delete(self):
-        print('delete!')
+        indices = sorted(self.selected)
+        indices.reverse()
+        for i in indices:
+            del self.steps[i]
+        self.selected = []
+        self.refresh_list()
+
+    def blockify(self, i_list):
+
+        """ Takes in a list of integers. Returns a list of lists where all consecutive integers
+        have been grouped together in sub-lists, in the same order that the original list was
+        passed. For example, if the passed list is:
+        [2,3,5,6,7,12,72,73,15,99,12,11,10,1]
+        The following will be returned
+        [[2,3],[5,6,7],[12],[72,73],[15],[99],[12,11,10],[1]]"""
+        
+        block_list = []
+        block = []
+        for j, val in enumerate(i_list):
+            block.append(val)
+            if (j == len(i_list)-1 or abs(i_list[j]-i_list[j+1]) != 1):
+                block_list.append(block)
+                block = []
+        return block_list
+
 
     ###################################################################################################
         
