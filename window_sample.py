@@ -20,7 +20,6 @@ from window_runConfig import WindowRunConfig
 from os.path import join as joindir
 from functools import partial
 from tkinter.filedialog import askopenfilename as askOpenFileName
-from json import dumps, loads
 
 from PyQt6.QtTest import QTest
 from PyQt6.QtGui import QAction, QFont, QIcon
@@ -233,8 +232,7 @@ class WindowSample(QMainWindow):
     def load_sample_info(self):                     # this grabs all data from file and lays it out on the window
                                                     # this can be called to update the window when the file has been updated
         if self.path:                                # if there is a path, read in the data
-            with open(self.path, "r") as file:    
-                self.data = loads(file.read())
+            self.data = get_data_from_file(self.path)
 
     def set_sample_info(self):
         self.w_view_sample = WindowViewSample(self.data)        # Update info in view sample pane (even if hidden)

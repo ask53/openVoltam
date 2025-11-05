@@ -20,8 +20,6 @@ import ov_globals as g
 import ov_lang as l
 from ov_functions import *
 
-from json import dumps, loads
-
 from PyQt6.QtCore import Qt, QDateTime
 from PyQt6.QtWidgets import (
     QMainWindow,

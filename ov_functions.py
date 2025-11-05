@@ -1,7 +1,7 @@
 # ov_functions.py
 #		
 
-from json import dumps, loads
+from tabularjson import parse, stringify, StringifyOptions
 
 import ov_globals as g
 from PyQt6.QtCore import Qt 
@@ -53,7 +53,7 @@ def get_data_from_file(path):
     try:
         with open(path, 'r') as file:
             content = file.read()
-            data = loads(content)
+            data = parse(content)
         return data
     except Exception as e:
         print(e)
@@ -62,8 +62,10 @@ def get_data_from_file(path):
 def write_data_to_file(path, data):
     try:
         with open(path, 'w') as file:                            
-            json_to_write = dumps(data, indent=4, ensure_ascii=False)       #   convert dictionary to json string
-            file.write(json_to_write)                                       #   write json string to file
+            
+            options: StringifyOptions = {"indentation": 4, "trailingCommas": False}
+            tab_json_to_write = stringify(data, options)       #   convert dictionary to json string
+            file.write(tab_json_to_write)                                       #   write json string to file
             file.close()                                                    #   close the file (to avoid taking up too much memory)
         return True
     except Exception as e:

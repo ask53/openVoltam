@@ -45,6 +45,7 @@ from PyQt6.QtWidgets import (
     QScrollArea,
     QComboBox,
     QTabWidget,
+    QApplication
     
     )
 
@@ -237,6 +238,7 @@ class WindowEditSweepProfile(QMainWindow):
         self.w_const_end_measure.hide()
 
     def refresh_list(self):
+        """ Clears the sweep list and rebuilds it"""
         try:
             self.clear_list()
             self.build_new_list()
@@ -245,6 +247,7 @@ class WindowEditSweepProfile(QMainWindow):
             print(e)
 
     def clear_list(self):
+        """ Erases the content of the current sweep list"""
         w = self.profile_chart.findChild(QWidget)
         lay = w.layout()
         try:
@@ -284,16 +287,20 @@ class WindowEditSweepProfile(QMainWindow):
         self.profile_chart.setWidget(w_pc)
 
     def row_clicked(self, w, event):
-        try:
-            i = w.property('row')
+        keys = QApplication.keyboardModifiers()
+        i = w.property('row')
+        if keys == Qt.KeyboardModifier.ControlModifier:   
             if i in self.selected:
                 self.selected.remove(i)
                 self.change_row_highlight(i, False)
             else:
                 self.selected.append(i)
                 self.change_row_highlight(i, True)
-        except Exception as e:
-            print(e)
+        else:
+            self.selected = [i]
+            self.refresh_list()
+            
+
 
     def change_row_highlight(self, i, highlight):
         row_ws = get_row_ws(self.profile_chart, i)
@@ -303,6 +310,7 @@ class WindowEditSweepProfile(QMainWindow):
             else:
                 w.setObjectName(w.objectName().replace(g.RUNS_ROW_SELECTED_SUFFIX,''))
         applyStyles()
+        
 
     def update_highlights(self):
         for i in self.selected:
@@ -419,7 +427,8 @@ class WindowEditSweepProfile(QMainWindow):
             'name': name,
             'stir': stir
             })
-        self.refresh_list()
+        self.selected = []          # clears selection and will clear highlights when list is refreshe
+        self.refresh_list()         # refresh the list (to add new row and clear highlights)
         self.g1.hide()
         self.init_form_values()
         print(self.steps)

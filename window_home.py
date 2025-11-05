@@ -13,7 +13,6 @@ from window_sample import WindowSample
 from os.path import join as joindir
 from functools import partial
 from tkinter.filedialog import askopenfilename as askOpenFileName
-from json import dumps, loads
 
 # import necessary tools from PyQt6
 from PyQt6.QtGui import QAction, QPixmap, QIcon

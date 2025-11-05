@@ -15,7 +15,6 @@ import ov_globals as g
 import ov_lang as l
 from ov_functions import *
 
-from json import dumps, loads
 from tkinter.filedialog import asksaveasfilename as askSaveAsFileName
 from re import sub
 from functools import partial
@@ -141,9 +140,7 @@ class WindowEditSample(QMainWindow):
             return True
 
     def setTextFromFile(self, widget):
-        with open(self.path, 'r') as file:
-            content = file.read()
-            self.data = loads(content)
+        self.data = get_data_from_file(self.path)
         
         textedits = widget.findChildren(QLineEdit) + widget.findChildren(QTextEdit) # grab all line and text edit objects from form
         dateedits = widget.findChildren(QDateEdit)                                  # grab all date edit objects from form
@@ -167,7 +164,7 @@ class WindowEditSample(QMainWindow):
         
         # Make a best-guess at the desired filename
         f_guess = self.w_name.text()                       # grab text from name field
-        f_guess = sub('[^A-Za-z0-9" "\-\_]+', '', f_guess)# remove all characters other than a-z, numbers, and spaces
+        f_guess = sub('[^A-Za-z0-9" "-_]+', '', f_guess)# remove all characters other than a-z, numbers, and spaces
         f_guess = ' '.join(f_guess.split())               # convert all sequential blankspace to a single space
         f_guess = f_guess.replace(' ', '-')               # replace all spaces with em-dashes
 
@@ -181,51 +178,42 @@ class WindowEditSample(QMainWindow):
         self.saveFile()                                 # save the file!
 
     def saveFile(self):
-        with open(self.path, 'w') as file:
-            lineedits = self.findChildren(QLineEdit)            # grab all line edit objects from form
-            dateedits = self.findChildren(QDateEdit)            # grab all date edit objects from form
-            textedits = self.findChildren(QTextEdit)            # grab all paragraph text edit objects from form
-            newSample = True
-            if self.data:
-                newSample = False
+        lineedits = self.findChildren(QLineEdit)            # grab all line edit objects from form
+        dateedits = self.findChildren(QDateEdit)            # grab all date edit objects from form
+        textedits = self.findChildren(QTextEdit)            # grab all paragraph text edit objects from form
+        newSample = True
+        if self.data:
+            newSample = False
                 
 
-            # loop through all line edit elements, saving entered text
-            for el in lineedits:
-                if isCustomName(el.objectName()):
-                    self.data.update({decodeCustomName(el.objectName()): el.text()})
+        # loop through all line edit elements, saving entered text
+        for el in lineedits:
+            if isCustomName(el.objectName()):
+                self.data.update({decodeCustomName(el.objectName()): el.text()})
 
-            # loop through all date elements, saving date
-            for el in dateedits:
-                if isCustomName(el.objectName()):
-                    self.data.update({decodeCustomName(el.objectName()): el.date().toString(g.DATE_STORAGE_FORMAT)})
+        # loop through all date elements, saving date
+        for el in dateedits:
+            if isCustomName(el.objectName()):
+                self.data.update({decodeCustomName(el.objectName()): el.date().toString(g.DATE_STORAGE_FORMAT)})
 
-            # loop through all paragraph edit(textedit) elements, saving text
-            for el in textedits:
-                if isCustomName(el.objectName()):
-                    self.data.update({decodeCustomName(el.objectName()): el.toPlainText()})
+        # loop through all paragraph edit(textedit) elements, saving text
+        for el in textedits:
+            if isCustomName(el.objectName()):
+                self.data.update({decodeCustomName(el.objectName()): el.toPlainText()})
 
-            if newSample:
-                # append current datetime
-                self.data.update({g.S_DATE_ENTERED: QDateTime.currentDateTime().toString(g.DATETIME_STORAGE_FORMAT)})
+        if newSample:
+            # append current datetime
+            self.data.update({g.S_DATE_ENTERED: QDateTime.currentDateTime().toString(g.DATETIME_STORAGE_FORMAT)})
         
-                # append empty arrays for future data
-                for key in g.S_BLANK_ARRAYS:
-                    self.data.update({key:[]})
+            # append empty arrays for future data
+            for key in g.S_BLANK_ARRAYS:
+                self.data.update({key:[]})
 
 
-            # convert dict to json and write to file
-            try:
-                j = dumps(self.data, indent=4, ensure_ascii=False)  #convert dictionary to json string
-                file.write(j)                                       # write json string to file
-                file.close()                                        # close the file (to avoid taking up too much memory)
-                self.saved = True                                   # set flag that file has been successfully saved
-                self.close()                                        # close the new sample window
-                
-            except Exception as e:
-                print(e)                    # make sure that the save flag is not set (so window doesn't close)
-                self.saved = False          # show an alert to user that save was unsuccessful 
-                show_alert(self, l.alert_header[g.L],l.alert_s_edit_save_error[g.L])
+        # write dict to file
+        write_data_to_file(self.path, self.data)
+        self.saved = True                                   # set flag that file has been successfully saved
+        self.close()                                        # close the new sample window
 
     def closeEvent(self, event):
         """
