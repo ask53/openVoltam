@@ -142,21 +142,15 @@ class WindowEditSweepProfile(QMainWindow):
         self.s1.addWidget(w_const)
         self.s1.addWidget(QLabel('this is for RAMPS! Yum onionssss'))
 
-        but_add_step = QPushButton('Add')
-        but_cancel_step = QPushButton('Cancel')
-
+        but_add_step = QPushButton('Add') 
         but_add_step.clicked.connect(self.add_step)
-        but_cancel_step.clicked.connect(self.cancel_step)
 
-        
-
-        
         v4.addLayout(horizontalize([step_name_lbl,self.step_name]))
         v4.addWidget(self.stirrer)
         v4.addWidget(self.vibrator)
         v4.addLayout(horizontalize([step_type_lbl,self.step_type]))
         v4.addLayout(self.s1)
-        v4.addLayout(horizontalize([but_add_step, but_cancel_step]))
+        v4.addWidget(but_add_step)
 
         
                           
@@ -172,32 +166,32 @@ class WindowEditSweepProfile(QMainWindow):
 
         but_up = QPushButton()
         but_down = QPushButton()
-        but_add = QPushButton()
+        self.but_add = QPushButton()
         but_edit = QPushButton()
         but_dup = QPushButton()
         but_del = QPushButton()
-        but_up.setIcon(QIcon('external/icons/up.png'))
-        but_down.setIcon(QIcon('external/icons/down.png'))
-        but_add.setIcon(QIcon('external/icons/add.png'))
-        but_edit.setIcon(QIcon('external/icons/edit.png'))
-        but_dup.setIcon(QIcon('external/icons/duplicate.png'))
-        but_del.setIcon(QIcon('external/icons/trash.png'))
+        but_up.setIcon(QIcon(g.ICON_UP))
+        but_down.setIcon(QIcon(g.ICON_DOWN))
+        self.but_add.setIcon(QIcon(g.ICON_PLUS))
+        but_edit.setIcon(QIcon(g.ICON_EDIT))
+        but_dup.setIcon(QIcon(g.ICON_DUP))
+        but_del.setIcon(QIcon(g.ICON_TRASH))
         but_up.setToolTip('Raise')
         but_down.setToolTip('Lower')
-        but_add.setToolTip('Add new step')
+        self.but_add.setToolTip('Add new step')
         but_edit.setToolTip('Edit step')
         but_dup.setToolTip('Duplicate step(s)')
         but_del.setToolTip('Delete step(s)')
         but_up.clicked.connect(self.row_move_up)
         but_down.clicked.connect(self.row_move_down)
-        but_add.clicked.connect(self.edit_new_step)
+        self.but_add.clicked.connect(self.edit_new_step)
         but_edit.clicked.connect(self.row_edit)
         but_dup.clicked.connect(self.row_duplicate)
         but_del.clicked.connect(self.row_delete)
         
         v3.addWidget(self.profile_chart)
         v3.addLayout(horizontalize([but_up, but_down]))
-        v3.addLayout(horizontalize([but_add, but_edit, but_dup, but_del]))
+        v3.addLayout(horizontalize([self.but_add, but_edit, but_dup, but_del]))
         
         h2.addWidget(self.g1)
         h2.addLayout(v3)
@@ -227,6 +221,7 @@ class WindowEditSweepProfile(QMainWindow):
         v1.addWidget(but_save)
 
         self.init_form_values()
+        self.hide_new_step_pane()
         
         w = QWidget()
         w.setLayout(v1)
@@ -375,7 +370,12 @@ class WindowEditSweepProfile(QMainWindow):
         indices.reverse()
         for i in indices:
             del self.steps[i]
-        self.selected = []
+        if i<len(self.steps):
+            self.selected = [i]
+        elif len(self.steps)>0:
+            self.selected = [len(self.steps)-1]
+        else:
+            self.selected = []
         self.refresh_list()
 
     def blockify(self, i_list):
@@ -416,7 +416,23 @@ class WindowEditSweepProfile(QMainWindow):
         
 
     def edit_new_step(self):
+        if self.g1.isHidden():
+            self.show_new_step_pane()
+        else:
+            self.hide_new_step_pane()
+            #######
+            #
+            # RESET self.g1!
+            #
+            #################################
+
+    def show_new_step_pane(self):
         self.g1.show()
+        self.but_add.setIcon(QIcon(g.ICON_X))
+
+    def hide_new_step_pane(self):
+        self.g1.hide()
+        self.but_add.setIcon(QIcon(g.ICON_PLUS))
 
     def add_step(self):
         name = self.step_name.text()
@@ -429,14 +445,10 @@ class WindowEditSweepProfile(QMainWindow):
             })
         self.selected = []          # clears selection and will clear highlights when list is refreshe
         self.refresh_list()         # refresh the list (to add new row and clear highlights)
-        self.g1.hide()
+        self.hide_new_step_pane()
         self.init_form_values()
         print(self.steps)
 
-    def cancel_step(self):
-        self.g1.hide()
-        #####
-        ####    RESET g1 FORM HERE
-        #####
+
         
         

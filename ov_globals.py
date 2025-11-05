@@ -47,7 +47,15 @@ R_REPLICATE_UID_PREFIX = "rep-"
 #
 #
 #
-##### ADD MORE RUN PARAMS HERE 
+##### ADD MORE RUN PARAMS HERE
+
+ICON_PLUS = 'external/icons/add.png'
+ICON_UP = 'external/icons/up.png'
+ICON_DOWN = 'external/icons/down.png'
+ICON_EDIT = 'external/icons/edit.png'
+ICON_DUP = 'external/icons/duplicate.png'
+ICON_TRASH = 'external/icons/trash.png'
+ICON_X = 'external/icons/x.png'
 
 RC_REPS_MIN = 1
 RC_REPS_MAX = 99
