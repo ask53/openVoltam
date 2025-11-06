@@ -1,6 +1,6 @@
 /*styles.css*/
 
-WindowEditSample QLineEdit#ov_sample_name {
+WindowEditSample QLineEdit#ov_sample_name, WindowEditSweepProfile QLineEdit#ov-profile-name {
 	font-size: 18pt;
 	border: 0;
 	background-color: rgba(0,0,0,0);
@@ -53,5 +53,4 @@ QWidget#runs-container QLabel#run-cell-even-selected, QWidget#runs-container QLa
 QWidget#runs-container QCheckBox {
 	padding-right: 8px;
 }
-
 

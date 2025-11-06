@@ -21,6 +21,22 @@ S_BLANK_ARRAYS = [S_SWEEP_PROFILES, S_RUNS, S_PROCESSED]
 SP_UID_SELF = 'uid'
 SP_NOTES = 'notes'          ##### THIS IS JUST A PLACEHOLDER, WE WONT HAVE A NOTES FEATURE HERE
 SP_UID_PREFIX = 'sp-'
+SP_NAME = 'name'
+SP_STIR = 'stir'
+SP_VIBRATE = 'vibrate'
+SP_TYPE = 'type'
+SP_CONSTANT = 'constant'
+SP_RAMP = 'ramp'
+SP_TYPES = [SP_CONSTANT, SP_RAMP]   # This dicates the order they appear in the menu          
+SP_T = 'duration'
+SP_START_COLLECT = 'collection-start'
+SP_END_COLLECT = 'collection-stop'
+SP_START_COLLECT_T = 'collection-start-time'
+SP_END_COLLECT_T = 'collection-stop-time'
+SP_CONST_V = 'V'
+SP_RAMP_V1 = 'V1'
+SP_RAMP_V2 = 'V2'
+
 
 # Keys for run dictionary
 R_UID_SELF = 'uid'
@@ -59,6 +75,8 @@ ICON_X = 'external/icons/x.png'
 
 RC_REPS_MIN = 1
 RC_REPS_MAX = 99
+SP_V_MIN = -99.99
+SP_T_MAX = 9999
 
 # Language globals 
 ENG = 0

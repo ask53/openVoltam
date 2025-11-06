@@ -72,19 +72,18 @@ class WindowEditSweepProfile(QMainWindow):
         v4 = QVBoxLayout()
         self.s1 = QStackedLayout()
 
-        v_const = QVBoxLayout()
-        v_const_measure = QVBoxLayout()
-        g_const_measure = QGroupBox('Data collection')
-        v_ramp = QVBoxLayout()
-        v_ramp_measure = QVBoxLayout()
-        g_ramp_measure = QGroupBox('Data collection')
+        
         
         
         
 
         self.graph = QScrollArea()
-        name_lbl = QLabel('Profile name')
         self.name = QLineEdit()
+        self.name.setObjectName('ov-profile-name')
+        self.name.setPlaceholderText('Profile name')
+
+        dt_lbl = QLabel('dt')
+        self.dt = QDoubleSpinBox()
 
         step_name_lbl = QLabel('Step name')
         self.step_name = QLineEdit()
@@ -94,55 +93,135 @@ class WindowEditSweepProfile(QMainWindow):
         self.vibrator = QCheckBox('Vibrator on during step?')
         
         step_type_lbl = QLabel('Step type')
-        self.step_type = QComboBox()
-        self.step_type.setPlaceholderText('Select...')
-        self.step_type.addItems(['Constant voltage','Voltage ramp'])
-        self.step_type.currentIndexChanged.connect(self.step_type_changed)
+        self.step_type = QComboBox()                                        # Create dropdown menu
+        self.step_type.setPlaceholderText('Select...')                      # Add placeholder text for when nothing is selected
+        for sp_type in g.SP_TYPES:                                          # Loop thru types (defined in globals)
+            self.step_type.addItem(l.sp_types[sp_type][g.L])                # Add each type to the dropdown menu
+        self.step_type.currentIndexChanged.connect(self.step_type_changed)  # Each time the dropdown selection is changed, connect to fn
 
+
+        # Set up type-specific parameters if the user selects CONSTANT VOLTAGE'
+        v_const = QVBoxLayout()
+        v_const_collect = QVBoxLayout()
+        g_const_collect = QGroupBox('Data collection')
+        
         const_v_lbl = QLabel('Voltage [V]')
         self.const_v = QDoubleSpinBox()
+        self.const_v.setMinimum(g.SP_V_MIN)
         const_t_lbl = QLabel('Duration [s]')
-        self.const_t = QDoubleSpinBox()
-        s1v1g = QGroupBox('Data collection')
-        self.const_data_collect_start = QCheckBox('Begin collecting data')
-        self.const_data_collect_start.setObjectName('const-collect-start')
-        self.const_data_collect_start.stateChanged.connect(partial(self.collection_state_changed,self.const_data_collect_start))
-        self.const_data_collect_end = QCheckBox('Stop collecting data')
-        self.const_data_collect_end.setObjectName('const-collect-end')
-        self.const_data_collect_end.stateChanged.connect(partial(self.collection_state_changed,self.const_data_collect_end))
-        const_begin_measure_lbl = QLabel('Begin collection at [s]')
-        self.const_begin_measure = QDoubleSpinBox()
-        const_end_measure_lbl = QLabel('Stop collection at [s]')
-        self.const_end_measure = QDoubleSpinBox()
-
-        ###################################### THIS CODE WORKS, PLEASE MAKE IT READABLE! ################
-        self.w_const_begin_measure = QWidget()
-        self.w_const_begin_measure.setLayout(horizontalize([const_begin_measure_lbl, self.const_begin_measure]))
-        self.w_const_begin_measure.setObjectName('const-collect-start-layout')
-        self.w_const_end_measure = QWidget()
-        self.w_const_end_measure.setLayout(horizontalize([const_end_measure_lbl, self.const_end_measure]))
-        self.w_const_end_measure.setObjectName('const-collect-end-layout')
-
-        v_const_measure.addWidget(self.const_data_collect_start)
-        v_const_measure.addWidget(self.w_const_begin_measure)
-        v_const_measure.addWidget(self.const_data_collect_end)
-        v_const_measure.addWidget(self.w_const_end_measure)
-        g_const_measure.setLayout(v_const_measure)
+        const_t = QDoubleSpinBox()
+        const_t.setMaximum(g.SP_T_MAX)
         
-        
+        const_collect_start = QCheckBox('Begin collecting data')
+        const_collect_start.setObjectName('const-collect-start')
+        const_collect_start.stateChanged.connect(partial(self.collection_state_changed, const_collect_start))
+        const_collect_end = QCheckBox('Stop collecting data')
+        const_collect_end.setObjectName('const-collect-end')
+        const_collect_end.stateChanged.connect(partial(self.collection_state_changed, const_collect_end))
+        const_collect_start_t_lbl = QLabel('Begin collection at [s]')
+        const_collect_start_t = QDoubleSpinBox()
+        const_collect_start_t.setMaximum(g.SP_T_MAX)
+        const_collect_end_t_lbl = QLabel('Stop collection at [s]')
+        const_collect_end_t = QDoubleSpinBox()
+        const_collect_end_t.setMaximum(g.SP_T_MAX)
 
+        w_const_collect_start = QWidget()
+        w_const_collect_start.setLayout(horizontalize([const_collect_start_t_lbl, const_collect_start_t]))
+        w_const_collect_start.setObjectName('const-collect-start-layout')
+        w_const_collect_end = QWidget()
+        w_const_collect_end.setLayout(horizontalize([const_collect_end_t_lbl, const_collect_end_t]))
+        w_const_collect_end.setObjectName('const-collect-end-layout')
+
+        v_const_collect.addWidget(const_collect_start)
+        v_const_collect.addWidget(w_const_collect_start)
+        v_const_collect.addWidget(const_collect_end)
+        v_const_collect.addWidget(w_const_collect_end)
+        v_const_collect.addStretch()
+        g_const_collect.setLayout(v_const_collect)
         
         v_const.addLayout(horizontalize([const_v_lbl, self.const_v]))
-        v_const.addLayout(horizontalize([const_t_lbl, self.const_t]))
-        v_const.addWidget(g_const_measure)
+        v_const.addLayout(horizontalize([const_t_lbl, const_t]))
+        v_const.addWidget(g_const_collect)
+        v_const.addStretch()
         w_const = QWidget()
         w_const.setLayout(v_const)
         
+
+        # Set up type-specific parameters if the user selects VOLTAGE RAMP (Ramps from V1 to V2 over time)
+        v_ramp = QVBoxLayout()
+        v_ramp_collect = QVBoxLayout()
+        g_ramp_collect = QGroupBox('Data collection')
+        
+        ramp_v_start_lbl = QLabel('Start voltage [V]')
+        self.ramp_v_start = QDoubleSpinBox()
+        self.ramp_v_start.setMinimum(g.SP_V_MIN)
+        ramp_v_end_lbl = QLabel('End voltage [V]')
+        self.ramp_v_end = QDoubleSpinBox()
+        self.ramp_v_end.setMinimum(g.SP_V_MIN)
+        ramp_t_lbl = QLabel('Duration [s]')
+        ramp_t = QDoubleSpinBox()
+        ramp_t.setMaximum(g.SP_T_MAX)
+        
+        ramp_collect_start = QCheckBox('Begin collecting data')
+        ramp_collect_start.setObjectName('ramp-collect-start')
+        ramp_collect_start.stateChanged.connect(partial(self.collection_state_changed,ramp_collect_start))
+        ramp_collect_end = QCheckBox('Stop collecting data')
+        ramp_collect_end.setObjectName('ramp-collect-end')
+        ramp_collect_end.stateChanged.connect(partial(self.collection_state_changed,ramp_collect_end))
+        ramp_collect_start_v_lbl = QLabel('Begin collection at [V]')
+        ramp_collect_start_v = QDoubleSpinBox()
+        ramp_collect_start_v.setMinimum(g.SP_V_MIN)
+        ramp_collect_end_v_lbl = QLabel('Stop collection at [V]')
+        ramp_collect_end_v = QDoubleSpinBox()
+        ramp_collect_end_v.setMinimum(g.SP_V_MIN)
+
+        w_ramp_collect_start = QWidget()
+        w_ramp_collect_start.setLayout(horizontalize([ramp_collect_start_v_lbl, ramp_collect_start_v]))
+        w_ramp_collect_start.setObjectName('ramp-collect-start-layout')
+        w_ramp_collect_end = QWidget()
+        w_ramp_collect_end.setLayout(horizontalize([ramp_collect_end_v_lbl, ramp_collect_end_v]))
+        w_ramp_collect_end.setObjectName('ramp-collect-end-layout')
+
+        v_ramp_collect.addWidget(ramp_collect_start)
+        v_ramp_collect.addWidget(w_ramp_collect_start)
+        v_ramp_collect.addWidget(ramp_collect_end)
+        v_ramp_collect.addWidget(w_ramp_collect_end)
+        v_ramp_collect.addStretch()
+        g_ramp_collect.setLayout(v_ramp_collect)
+        
+        v_ramp.addLayout(horizontalize([ramp_v_start_lbl, self.ramp_v_start]))
+        v_ramp.addLayout(horizontalize([ramp_v_end_lbl, self.ramp_v_end]))
+        v_ramp.addLayout(horizontalize([ramp_t_lbl, ramp_t]))
+        v_ramp.addWidget(g_ramp_collect)
+        v_ramp.addStretch()
+        w_ramp = QWidget()
+        w_ramp.setLayout(v_ramp)
+
+        # Organize measurement widgets into lists to itterate over
+
+        self.ts = {g.SP_CONSTANT: const_t,
+                   g.SP_RAMP: ramp_t}
+        self.measure_starts = {g.SP_CONSTANT: const_collect_start,
+                               g.SP_RAMP: ramp_collect_start}
+        self.measure_stops = {g.SP_CONSTANT: const_collect_end,
+                              g.SP_RAMP: ramp_collect_end}
+        self.measure_start_ts = {g.SP_CONSTANT: const_collect_start_t,
+                                 g.SP_RAMP: ramp_collect_start_v}
+        self.measure_stop_ts = {g.SP_CONSTANT: const_collect_end_t,
+                                g.SP_RAMP: ramp_collect_end_v}
+        
+
+        self.hidden_inputs = [w_const_collect_start,
+                              w_const_collect_end,
+                              w_ramp_collect_start,
+                              w_ramp_collect_end]
+
+        # Load the widgets into the stacked layout in order 
         self.s1.addWidget(QWidget())
         self.s1.addWidget(w_const)
-        self.s1.addWidget(QLabel('this is for RAMPS! Yum onionssss'))
+        self.s1.addWidget(w_ramp)
 
-        but_add_step = QPushButton('Add') 
+        but_add_step = QPushButton('Add')
         but_add_step.clicked.connect(self.add_step)
 
         v4.addLayout(horizontalize([step_name_lbl,self.step_name]))
@@ -188,6 +267,7 @@ class WindowEditSweepProfile(QMainWindow):
         but_edit.clicked.connect(self.row_edit)
         but_dup.clicked.connect(self.row_duplicate)
         but_del.clicked.connect(self.row_delete)
+        self.but_add.setObjectName('ov-btn-add')
         
         v3.addWidget(self.profile_chart)
         v3.addLayout(horizontalize([but_up, but_down]))
@@ -209,9 +289,10 @@ class WindowEditSweepProfile(QMainWindow):
         
         but_save = QPushButton('Save')
 
-        v2.addWidget(name_lbl)
         v2.addWidget(self.name)
         v2.addStretch()
+        v2.addLayout(horizontalize([dt_lbl, self.dt], True))
+        
         
         h1.addLayout(v2)
         h1.addWidget(self.graph)
@@ -228,9 +309,36 @@ class WindowEditSweepProfile(QMainWindow):
         self.setCentralWidget(w)
 
     def init_form_values(self):
+        # Reset all values common to all runs
         self.step_name.setText('')
-        self.w_const_begin_measure.hide()
+        self.stirrer.setCheckState(Qt.CheckState.Unchecked)
+        self.vibrator.setCheckState(Qt.CheckState.Unchecked)
+        self.step_type.setCurrentIndex(g.QT_NOTHING_SELECTED_INDEX)
+
+        # Reset values specific to constant voltage steps
+
+        self.const_v.setValue(0)
+
+        # Reset values specific to voltage ramp steps
+        self.ramp_v_start.setValue(0)
+        self.ramp_v_end.setValue(0)
+
+        # Reset values related to measurement
+        for sp_type in g.SP_TYPES:
+            self.ts[sp_type].setValue(0)
+            self.measure_starts[sp_type].setCheckState(Qt.CheckState.Unchecked)
+            self.measure_stops[sp_type].setCheckState(Qt.CheckState.Unchecked)
+            self.measure_start_ts[sp_type].setValue(0)
+            self.measure_stop_ts[sp_type].setValue(0)
+
+        # Hide inputs that only appear when checkbox is selected
+        for w in self.hidden_inputs:
+            w.hide()
+        '''self.w_const_begin_measure.hide()
         self.w_const_end_measure.hide()
+        self.w_ramp_begin_measure.hide()
+        self.w_ramp_end_measure.hide()'''
+        
 
     def refresh_list(self):
         """ Clears the sweep list and rebuilds it"""
@@ -314,8 +422,12 @@ class WindowEditSweepProfile(QMainWindow):
         
 
     def row_move_up(self):
+        if len(self.selected) == 0:             # if there is nothing selected, return
+            return
+
         indices = sorted(self.selected)         # goes from top of list down
         new_selected = []
+        
         if indices[0] == 0:                     # if top step is selected, do nothing (it can't go any higher!)
             return
         else:
@@ -328,6 +440,8 @@ class WindowEditSweepProfile(QMainWindow):
             self.refresh_list()      
             
     def row_move_down(self):
+        if len(self.selected) == 0:             # if there is nothing selected, return
+            return
         indices = sorted(self.selected)
         indices.reverse()                           # go from bottom of list up
         new_selected = []
@@ -350,6 +464,8 @@ class WindowEditSweepProfile(QMainWindow):
     #  
     
     def row_duplicate(self):
+        if len(self.selected) == 0:             # if there is nothing selected, return
+            return
         indices = sorted(self.selected)             # sort selected indices
         index_blocks = self.blockify(indices)       # create an array of arrays to group consecutive indices
         new_selected = []
@@ -363,9 +479,13 @@ class WindowEditSweepProfile(QMainWindow):
         self.refresh_list()
         
     def row_edit(self):
+        if len(self.selected) == 0:             # if there is nothing selected, return
+            return
         print('edit!')
         
     def row_delete(self):
+        if len(self.selected) == 0:             # if there is nothing selected, return
+            return
         indices = sorted(self.selected)
         indices.reverse()
         for i in indices:
@@ -394,19 +514,24 @@ class WindowEditSweepProfile(QMainWindow):
             if (j == len(i_list)-1 or abs(i_list[j]-i_list[j+1]) != 1):
                 block_list.append(block)
                 block = []
-        return block_list
-
-
-    ###################################################################################################
-        
-        
+        return block_list  
 
     def step_type_changed(self, i):
-        self.s1.setCurrentIndex(i+1) # the +1 allows for the 0th screen
-        # to be completely empty, so the nth option in the list
-        # correponds to the n+1th widget in the stacked layout.
+        self.s1.setCurrentIndex(i+1) # the +1 allows for the 0th screen to be empty
+
 
     def collection_state_changed(self, checkbox, state):
+        
+        """This runs when a checkbox is supposed to hide/display some other
+        content each time it is toggled. Works by finding the layout to
+        toggle based on the checkbox's assigned name and the layout's corresponding
+        name. More specifically, the layout must
+            (a) be wrapped in a QWidget and
+            (b) have the name: [checkbox name]-layout.
+        So if the checkbox's name is 'steve', then the QWidget that wraps the
+        layout must be named 'steve-layout'. If the checkbox is selected, then the
+        layout will be shown. Otherwise it will be hidden"""
+        
         lay = self.findChild(QWidget, checkbox.objectName()+'-layout')
         if state == Qt.CheckState.Checked.value:
             lay.show()
@@ -414,12 +539,12 @@ class WindowEditSweepProfile(QMainWindow):
             lay.hide()
         
         
-
     def edit_new_step(self):
         if self.g1.isHidden():
             self.show_new_step_pane()
         else:
             self.hide_new_step_pane()
+            
             #######
             #
             # RESET self.g1!
@@ -431,24 +556,136 @@ class WindowEditSweepProfile(QMainWindow):
         self.but_add.setIcon(QIcon(g.ICON_X))
 
     def hide_new_step_pane(self):
-        self.g1.hide()
-        self.but_add.setIcon(QIcon(g.ICON_PLUS))
+        self.g1.hide()                              # hide the pane
+        self.but_add.setIcon(QIcon(g.ICON_PLUS))    # make sure the add icon is a + (instead of an x) 
+        self.init_form_values()                     # and wipe the form                
+        
 
     def add_step(self):
-        name = self.step_name.text()
-        stir = 'stir OFF'
-        if self.stirrer.checkState() == Qt.CheckState.Checked:
-            stir = 'stir ON'
-        self.steps.append({
-            'name': name,
-            'stir': stir
-            })
-        self.selected = []          # clears selection and will clear highlights when list is refreshe
-        self.refresh_list()         # refresh the list (to add new row and clear highlights)
-        self.hide_new_step_pane()
-        self.init_form_values()
-        print(self.steps)
+        if self.validate_step():
+            step_type = g.SP_TYPES[self.step_type.currentIndex()]
+            self.convert_measurement_voltages_to_time()
 
+            # Grab the data that all steps contain   
+            data_general = {
+                g.SP_NAME: self.step_name.text(),
+                g.SP_STIR: self.is_checked(self.stirrer),
+                g.SP_VIBRATE: self.is_checked(self.vibrator),
+                g.SP_TYPE: step_type
+                }
+            
+            # Grab the data related to measurement 
+            data_measurement = {
+                g.SP_START_COLLECT: self.is_checked(self.measure_starts[step_type]),
+                g.SP_END_COLLECT: self.is_checked(self.measure_stops[step_type]),
+                g.SP_T: self.ts[step_type].value()
+                }
+            if data_measurement[g.SP_START_COLLECT]:
+                data_measurement[g.SP_START_COLLECT_T] = self.measure_start_ts[step_type].value()
+            if data_measurement[g.SP_END_COLLECT]:
+                data_measurement[g.SP_END_COLLECT_T] = self.measure_stop_ts[step_type].value() 
 
+            ############################################ IF ADDING ANOTHER STEP TYPE, ADD ANOTHER ELIF TO THE CODE BELOW ############
+            data_specific = {}                                                                                                      #
+            if step_type == g.SP_CONSTANT:                                                                                          #
+                data_specific = {                                                                                                   #
+                    g.SP_CONST_V: self.const_v.value()                                                                              #                                                                                 #
+                    }                                                                                                               #
+                                                                                                                                    #
+            elif step_type == g.SP_RAMP:                                                                                            #
+                data_specific = {                                                                                                   #
+                    g.SP_RAMP_V1: self.ramp_v_start.value(),                                                                        #
+                    g.SP_RAMP_V2: self.ramp_v_end.value()                                                                           #
+                    }                                                                                                               #
+            #########################################################################################################################
+
+            # combine all of the above created dictionaries and store them
+            self.steps.append(data_general | data_measurement | data_specific)
+            self.selected = []          # clears selection and will clear highlights when list is refreshed
+            self.refresh_list()         # refresh the list (to visualize the new row and clear stale highlights)
+            self.hide_new_step_pane()   # close the pane that allows the user to add a new step
+            self.init_form_values()     # reset the hidden pane to initial values
+            print(self.steps)
         
+
+    def is_checked(self, checkbox):
+        if checkbox.checkState() == Qt.CheckState.Checked:
+            return True
+        return False
+
+    def validate_step(self):
+        #########################33##########
+        #
+        #   FOR TESTING ONLY, COMMENT TO RUN
+        return True
+        #
+        #
+        #####################################
         
+        if self.step_type.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:    # make sure there is a type selected
+            show_alert(self, 'Error!', 'Please select a type of run')
+            return False
+        step_type = g.SP_TYPES[self.step_type.currentIndex()]
+        if self.ts[step_type].value() == 0:                                   # make sure there is a duration
+            show_alert(self, 'Error!', 'Please set a duration longer than 0 for this step')
+            return False
+        if step_type == g.SP_CONSTANT:
+            t = self.ts[step_type].value()
+            if self.is_checked(self.measure_starts[step_type]):
+                if self.measure_start_ts[step_type].value() > t:
+                    show_alert(self, 'Error!', 'Please check the measurement start time, it seems to be longer than the duration of this step.')
+                    return False
+            if self.is_checked(self.measure_stops[step_type]):
+                if self.measure_stop_ts[step_type].value() > t:
+                    show_alert(self, 'Error!', 'Please check the measurement stop time, it seems to be longer than the duration of this step.')
+                    return False
+        if step_type == g.SP_RAMP:
+            v1 = self.ramp_v_start.value()
+            v2 = self.ramp_v_end.value()
+            if v1 == v2:
+                show_alert(self, 'Error!', 'The endpoints of this ramp have the same value, if this is what you want, please consider a constant volutage. Otherwise...typo?')
+                return False
+            if self.is_checked(self.measure_starts[step_type]):
+                if not self.is_between(self.measure_start_ts[step_type].value(), v1, v2):
+                    show_alert(self, 'Error!', 'Please check the measurement start voltage, its out of the voltage range of this step.')
+                    return False
+            if self.is_checked(self.measure_stops[step_type]):
+                if not self.is_between(self.measure_stop_ts[step_type].value(), v1, v2):
+                    show_alert(self, 'Error!', 'Please check the measurement stop voltage, its out of the voltage range of this step.')
+                    return False
+        if self.is_checked(self.measure_starts[step_type]) and self.is_checked(self.measure_stops[step_type]):
+            if self.measure_start_ts[step_type].value() == self.measure_stop_ts[step_type].value():
+                show_alert(self, 'Error!', 'It is very challenging to both begin and stop collecting data at the exact same time, please check those parameters.')
+                return False
+        return True
+
+    def calc_time_from_voltage(self, v1, v2, vm, t):
+        return t*(vm-v1)/(v2-v1)
+
+    def is_between(self, val, x1, x2):
+        """returns true if val is between x1 and x2, inclusive.
+        Otherwise, returns false"""
+        
+        v1 = min(x1, x2)
+        v2 = max(x1, x2)
+        if (val >= v1 and val <= v2):
+            return True
+        return False
+    
+
+    def convert_measurement_voltages_to_time(self):
+        """ Asumes form is filled out correctly (ie. has been validated"""
+        step_type = g.SP_TYPES[self.step_type.currentIndex()]
+
+        if step_type == g.SP_RAMP:
+            v1 = self.ramp_v_start.value()                                                                        
+            v2 = self.ramp_v_end.value()
+            t = self.ts[step_type].value()
+            if self.is_checked(self.measure_starts[step_type]):
+                vm = self.measure_start_ts[step_type].value()
+                self.measure_start_ts[step_type].setValue(self.calc_time_from_voltage(v1, v2, vm, t))
+            if self.is_checked(self.measure_stops[step_type]):
+                vm = self.measure_stop_ts[step_type].value()
+                self.measure_stop_ts[step_type].setValue(self.calc_time_from_voltage(v1, v2, vm, t))
+
+      

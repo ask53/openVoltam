@@ -1,4 +1,5 @@
 #lang.py
+import ov_globals as g
 
 # Window: Home
 new_sample = ['New sample', 'Muestra nueva']
@@ -45,6 +46,13 @@ rc_type_blank = ['Blank','TEXTO']
 rc_type_sample = ['Sample','TEXTO']
 rc_type_stdadd = ['Standard addition','TEXTO']
 rc_select = ['Select...','TEXTO']
+
+# Window: sweep profile builder/editer
+sp_types = {
+    g.SP_CONSTANT: ['Voltage: constant','TEXTO'],
+    g.SP_RAMP: ['Voltage: ramp','TEXTO']
+    }
+
 
 
 #Alerts
