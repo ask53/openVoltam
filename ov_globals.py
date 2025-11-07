@@ -72,6 +72,8 @@ ICON_EDIT = 'external/icons/edit.png'
 ICON_DUP = 'external/icons/duplicate.png'
 ICON_TRASH = 'external/icons/trash.png'
 ICON_X = 'external/icons/x.png'
+ICON_STIR = 'external/icons/stirer.png'
+ICON_VIB = 'external/icons/vibrator.png'
 
 RC_REPS_MIN = 1
 RC_REPS_MAX = 99

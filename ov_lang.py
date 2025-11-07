@@ -52,6 +52,10 @@ sp_types = {
     g.SP_CONSTANT: ['Voltage: constant','TEXTO'],
     g.SP_RAMP: ['Voltage: ramp','TEXTO']
     }
+sp_add_step = ['Add step','TEXTO']
+sp_edit_step = ['Edit step','TEXTO']
+sp_add_btn = ['Add','TEXTO']
+sp_edit_btn = ['Apply edits','TEXTO']
 
 
 

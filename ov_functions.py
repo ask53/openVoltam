@@ -8,7 +8,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
-    QMessageBox
+    QMessageBox,
+    QScrollArea
 )
 
 def encodeCustomName(custom_name):
@@ -127,6 +128,22 @@ def get_row_ws(w_parent, i):
         return row_ws
     except Exception as e:
         print(e)
+
+def scroll_area_resized(outer, inner, event):
+    print('---')
+    print('HERE!')
+    QScrollArea.resizeEvent(outer, event)   # Because this fn intercepts the resizeEvent, call the actual resizeEvent
+                                            # (this checks whether to add/remove scroll bars, etc.
+                                            # Then adjust the inner widget to fit well within the scroll area:
+    outer_width = outer.width()             #   get width of the scroll area
+    v_bar_width = 0 
+    v_bar = outer.verticalScrollBar()       #   get the vertical scrollbar widget
+    if v_bar.isVisible():                   #   if its visible
+        v_bar_width = v_bar.width()         #   account for its width
+    inner.setFixedWidth(outer_width-g.PADDING-v_bar_width)
+    print(outer_width)
+    print(inner.width())
+
     
         
     

@@ -28,7 +28,7 @@ from window_sample import QVLine
 
 from functools import partial
 
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -55,6 +55,8 @@ class WindowEditSweepProfile(QMainWindow):
         self.path = False
         self.steps = []
         self.selected = []
+        self.editing = False
+        self.adding = False
 
         if path:
             self.path = path
@@ -68,7 +70,7 @@ class WindowEditSweepProfile(QMainWindow):
         v2 = QVBoxLayout()
         h2 = QHBoxLayout()
         v3 = QVBoxLayout()
-        self.g1 = QGroupBox("Add step")
+        self.g1 = QGroupBox(l.sp_add_step[g.L])
         v4 = QVBoxLayout()
         self.s1 = QStackedLayout()
 
@@ -99,7 +101,7 @@ class WindowEditSweepProfile(QMainWindow):
             self.step_type.addItem(l.sp_types[sp_type][g.L])                # Add each type to the dropdown menu
         self.step_type.currentIndexChanged.connect(self.step_type_changed)  # Each time the dropdown selection is changed, connect to fn
 
-
+        
         # Set up type-specific parameters if the user selects CONSTANT VOLTAGE'
         v_const = QVBoxLayout()
         v_const_collect = QVBoxLayout()
@@ -196,7 +198,7 @@ class WindowEditSweepProfile(QMainWindow):
         v_ramp.addStretch()
         w_ramp = QWidget()
         w_ramp.setLayout(v_ramp)
-
+        
         # Organize measurement widgets into lists to itterate over
 
         self.ts = {g.SP_CONSTANT: const_t,
@@ -221,15 +223,15 @@ class WindowEditSweepProfile(QMainWindow):
         self.s1.addWidget(w_const)
         self.s1.addWidget(w_ramp)
 
-        but_add_step = QPushButton('Add')
-        but_add_step.clicked.connect(self.add_step)
+        self.but_add_step = QPushButton(l.sp_add_btn[g.L])
+        self.but_add_step.clicked.connect(self.add_step)
 
         v4.addLayout(horizontalize([step_name_lbl,self.step_name]))
         v4.addWidget(self.stirrer)
         v4.addWidget(self.vibrator)
         v4.addLayout(horizontalize([step_type_lbl,self.step_type]))
         v4.addLayout(self.s1)
-        v4.addWidget(but_add_step)
+        v4.addWidget(self.but_add_step)
 
         
                           
@@ -240,38 +242,44 @@ class WindowEditSweepProfile(QMainWindow):
         policy = self.g1.sizePolicy()           # get existing size policy of g1
         policy.setRetainSizeWhenHidden(True)    # modify policy so that g1 takes up space regardless of whether shown or hidden
         self.g1.setSizePolicy(policy)           # set g1's size policy to the modified version.
-
-        self.profile_chart = QScrollArea()
-
+        
+        self.profile_chart = QScrollArea()          # Initialize scroll area
+        
         but_up = QPushButton()
         but_down = QPushButton()
         self.but_add = QPushButton()
-        but_edit = QPushButton()
+        self.but_edit = QPushButton()
         but_dup = QPushButton()
         but_del = QPushButton()
         but_up.setIcon(QIcon(g.ICON_UP))
         but_down.setIcon(QIcon(g.ICON_DOWN))
         self.but_add.setIcon(QIcon(g.ICON_PLUS))
-        but_edit.setIcon(QIcon(g.ICON_EDIT))
+        self.but_edit.setIcon(QIcon(g.ICON_EDIT))
         but_dup.setIcon(QIcon(g.ICON_DUP))
         but_del.setIcon(QIcon(g.ICON_TRASH))
         but_up.setToolTip('Raise')
         but_down.setToolTip('Lower')
         self.but_add.setToolTip('Add new step')
-        but_edit.setToolTip('Edit step')
+        self.but_edit.setToolTip('Edit step')
         but_dup.setToolTip('Duplicate step(s)')
         but_del.setToolTip('Delete step(s)')
         but_up.clicked.connect(self.row_move_up)
         but_down.clicked.connect(self.row_move_down)
-        self.but_add.clicked.connect(self.edit_new_step)
-        but_edit.clicked.connect(self.row_edit)
+        self.but_add.clicked.connect(self.add_new_step)
+        self.but_edit.clicked.connect(self.edit_step)
         but_dup.clicked.connect(self.row_duplicate)
         but_del.clicked.connect(self.row_delete)
         self.but_add.setObjectName('ov-btn-add')
+
+        # Create lists of buttons for managing enabled/greyed-out status
+        self.buts_one_selected = [self.but_edit]
+        self.buts_mult_selected = [but_up, but_down, but_dup, but_del]
+        self.buts_inactive_while_editing = [self.but_add, but_up, but_down, but_dup, but_del]
+        self.buts_inactive_while_adding = [self.but_edit]
         
         v3.addWidget(self.profile_chart)
         v3.addLayout(horizontalize([but_up, but_down]))
-        v3.addLayout(horizontalize([self.but_add, but_edit, but_dup, but_del]))
+        v3.addLayout(horizontalize([self.but_add, self.but_edit, but_dup, but_del]))
         
         h2.addWidget(self.g1)
         h2.addLayout(v3)
@@ -285,7 +293,7 @@ class WindowEditSweepProfile(QMainWindow):
         self.builder.addTab(w_custom, 'custom')
         self.builder.addTab(w_standard, 'standard')
 
-        ############################################################
+        
         
         but_save = QPushButton('Save')
 
@@ -307,8 +315,13 @@ class WindowEditSweepProfile(QMainWindow):
         w = QWidget()
         w.setLayout(v1)
         self.setCentralWidget(w)
+        self.update_buttons()
 
     def init_form_values(self):
+        # Modify title and button text
+        self.g1.setTitle(l.sp_add_step[g.L])
+        self.but_add_step.setText(l.sp_add_btn[g.L])
+        
         # Reset all values common to all runs
         self.step_name.setText('')
         self.stirrer.setCheckState(Qt.CheckState.Unchecked)
@@ -334,23 +347,32 @@ class WindowEditSweepProfile(QMainWindow):
         # Hide inputs that only appear when checkbox is selected
         for w in self.hidden_inputs:
             w.hide()
-        '''self.w_const_begin_measure.hide()
-        self.w_const_end_measure.hide()
-        self.w_ramp_begin_measure.hide()
-        self.w_ramp_end_measure.hide()'''
+
+    def set_form_values(self, step):
+        # Modify title and button text
+        self.g1.setTitle(l.sp_edit_step[g.L])
+        self.but_add_step.setText(l.sp_edit_btn[g.L])
+
+        ##################################################
+        #
+        #   HERE, FINISH PUTTING VALUES INTO THE FORM
+        #
+        ############################################################################################
+
         
 
     def refresh_list(self):
         """ Clears the sweep list and rebuilds it"""
         try:
-            self.clear_list()
+            self.erase_list_visualization()
             self.build_new_list()
             self.update_highlights()
+            self.update_buttons()
         except Exception as e:
             print(e)
 
-    def clear_list(self):
-        """ Erases the content of the current sweep list"""
+    def erase_list_visualization(self):
+        """ Erases the content of the current sweep list that is displayed"""
         w = self.profile_chart.findChild(QWidget)
         lay = w.layout()
         try:
@@ -359,18 +381,68 @@ class WindowEditSweepProfile(QMainWindow):
         except:
             return
 
+    def update_buttons(self):
+        buts_to_enable = []
+        buts_to_disable = []
+        if self.editing:
+            buts_to_disable = self.buts_inactive_while_editing
+        elif self.adding:
+            buts_to_disable = self.buts_inactive_while_adding
+        elif len(self.selected) == 0:
+            buts_to_disable = self.buts_one_selected + self.buts_mult_selected
+            buts_to_enable = [self.but_add]
+        elif len(self.selected) == 1:
+            buts_to_enable = self.buts_one_selected + self.buts_mult_selected  + [self.but_add]
+        else:
+            buts_to_disable = self.buts_one_selected
+            buts_to_enable = self.buts_mult_selected
+        
+        for but in buts_to_disable:
+            but.setEnabled(False)
+        for but in buts_to_enable:
+            but.setEnabled(True)
+
+            
+                
+
 
     def build_new_list(self):
 
         grid = QGridLayout()
         grid.setHorizontalSpacing(0)
         grid.setVerticalSpacing(0)
+
         
         for i, step in enumerate(self.steps):
             #### TO ADD MORE WIDGETS TO THIS LAYOUT, DEFINE THEM HERE
-            w_name = QLabel(step['name'])
-            w_stir = QLabel(str(step['stir']))
-            ws = [w_name, w_stir]
+            step_type = step[g.SP_TYPE]
+            w_name = QLabel(step[g.SP_NAME])
+            
+            
+            w_volt = QLabel()
+            if step_type == g.SP_CONSTANT:
+                w_volt = QLabel('const: '+str(step[g.SP_CONST_V])+'V')
+            elif step_type == g.SP_RAMP:
+                w_volt.setText('ramp: '+str(step[g.SP_RAMP_V1])+'V'+' --> '+str(step[g.SP_RAMP_V2])+'V')
+            
+
+            w_t = QLabel(str(step[g.SP_T])+'s')
+
+            w_stir = QLabel()
+            w_stir.setToolTip('Stirrer OFF')
+            if step[g.SP_STIR]:
+                w_stir.setPixmap(QPixmap(g.ICON_STIR))
+                w_stir.setToolTip('Stirrer ON')
+
+            w_vib = QLabel()
+            w_vib.setToolTip('Vibrator OFF')
+            if step[g.SP_VIBRATE]:
+                w_vib.setPixmap(QPixmap(g.ICON_VIB))
+                w_vib.setToolTip('Vibrator ON')
+
+            w_collect = QLabel('m')
+            
+            ws = [w_name, w_volt, w_t, w_stir, w_vib, w_collect]
             ####### THEN ADD THEM TO THE ws LIST. THATS IT YAYYYYY 
 
             if (i%2 == 0):
@@ -383,41 +455,54 @@ class WindowEditSweepProfile(QMainWindow):
                 w.setObjectName(obj_name)
                 w.setProperty('row', i)
                 grid.addWidget(w, i, j)
+
+        grid.setColumnStretch(4,1)
          
-        w_pc = QWidget()
-        w_pc.setObjectName('steps-container')
-        w_pc.setLayout(grid)
-        self.profile_chart.setWidget(w_pc)
+        self.w_pc = QWidget()                       # Initialize widget that sits within scroll area
+        self.w_pc.setLayout(grid)
+        self.w_pc.setObjectName('steps-container')
+        self.profile_chart.setWidget(self.w_pc)
 
     def row_clicked(self, w, event):
+        if self.editing:                                            # If there is an edit in process, 
+            return                                                  # block the user from modifying the rows at all
         keys = QApplication.keyboardModifiers()
         i = w.property('row')
-        if keys == Qt.KeyboardModifier.ControlModifier:   
-            if i in self.selected:
+        if keys == Qt.KeyboardModifier.ControlModifier:             # If this is a ctrl+click  
+            if i in self.selected:                                  # If the clicked row is already selected
                 self.selected.remove(i)
-                self.change_row_highlight(i, False)
-            else:
-                self.selected.append(i)
-                self.change_row_highlight(i, True)
-        else:
-            self.selected = [i]
-            self.refresh_list()
-            
+            else:                                                   # If it was not already selected 
+                self.selected.append(i) 
+        else:                                                       # If this is a regular click
+            if (len(self.selected) == 1 and (i in self.selected)):  # If there is exactly one row selected and it was clicked
+                self.selected = []
+            else:                                                   # Otherwise
+                self.selected = [i]                                 #   Set the clicked row as the only one selected
+        self.update_highlights()                                    # update the highlights of the whole list
+        self.update_buttons()                                       # update which buttons are greyed out
 
 
-    def change_row_highlight(self, i, highlight):
-        row_ws = get_row_ws(self.profile_chart, i)
-        for w in row_ws:
-            if highlight:
-                w.setObjectName(w.objectName()+g.RUNS_ROW_SELECTED_SUFFIX)
-            else:
-                w.setObjectName(w.objectName().replace(g.RUNS_ROW_SELECTED_SUFFIX,''))
-        applyStyles()
+    def update_highlights(self):                    
+        for i,step in enumerate(self.steps):            # Loop thru all steps
+            if i in self.selected:                      # IF the step has been selected
+                self.change_row_highlight(i, True)      # Make sure it is highlighted
+            else:                                       # Otherwise
+                self.change_row_highlight(i,False)      # Make sure it is not highlighted
+        applyStyles()                                   # Apply styles (this is a processing-intensive step, good to only do as often as necessary)
+
+    def change_row_highlight(self, i, to_highlight):
+        row_ws = get_row_ws(self.profile_chart, i)                                      # Get all widgets in row i
+        highlighted = self.widget_is_highlighted(row_ws[0])                             # Check if the row is already highlighted
+        for w in row_ws:                                                                # Loop thru all widgets in row
+            if to_highlight and not highlighted:                                        # If we're supposed to highlight and it is currently unhighlighted
+                w.setObjectName(w.objectName()+g.RUNS_ROW_SELECTED_SUFFIX)              # Change the widget's object name to indicate highlighting
+            elif not to_highlight and highlighted:                                      # IF we're suppose to unhighlight and it is currently highlighted
+                w.setObjectName(w.objectName().replace(g.RUNS_ROW_SELECTED_SUFFIX,''))  # Change the widget's object name to indicate not highlighted
         
-
-    def update_highlights(self):
-        for i in self.selected:
-            self.change_row_highlight(i, True)
+    def widget_is_highlighted(self, w):
+        if g.RUNS_ROW_SELECTED_SUFFIX in w.objectName():    # To check whether a widget is highlighted
+            return True                                     # Check whether its object name contains the selected suffix
+        return False
         
         
 
@@ -454,14 +539,7 @@ class WindowEditSweepProfile(QMainWindow):
                 self.steps.insert(i+1, row)
                 new_selected.append(i+1)
             self.selected = new_selected
-            self.refresh_list()
-            
-    ################################# HERE #########################################################
-    # FINISH
-    # FUNCTIONALITY
-    # FOR
-    #   - EDIT
-    #  
+            self.refresh_list() 
     
     def row_duplicate(self):
         if len(self.selected) == 0:             # if there is nothing selected, return
@@ -477,11 +555,33 @@ class WindowEditSweepProfile(QMainWindow):
             rows_added = rows_added + len(block)                                    # add the adjustment for going forwards thru th list
         self.selected = new_selected
         self.refresh_list()
+    ###############################################################################################################################################    
+    def edit_step(self):
+        try:
+            if self.g1.isHidden():
+                self.show_edit_step()
+            else:
+                self.hide_edit_step()
+                
+        except Exception as e:
+            print(e)
+
+    def show_edit_step(self):
+        self.editing = True
+        self.update_buttons()
+        self.but_edit.setIcon(QIcon(g.ICON_X))
+        step = self.steps[self.selected[0]]
+        self.set_form_values(step)
+        self.g1.show()
         
-    def row_edit(self):
-        if len(self.selected) == 0:             # if there is nothing selected, return
-            return
-        print('edit!')
+
+    def hide_edit_step(self):
+        self.but_edit.setIcon(QIcon(g.ICON_EDIT))
+        self.g1.hide()                              # hide the add/edit step pane
+        self.init_form_values()                     # and wipe the form 
+        self.editing = False
+        self.update_buttons()
+        
         
     def row_delete(self):
         if len(self.selected) == 0:             # if there is nothing selected, return
@@ -539,26 +639,26 @@ class WindowEditSweepProfile(QMainWindow):
             lay.hide()
         
         
-    def edit_new_step(self):
+    def add_new_step(self):
         if self.g1.isHidden():
             self.show_new_step_pane()
         else:
             self.hide_new_step_pane()
-            
-            #######
-            #
-            # RESET self.g1!
-            #
-            #################################
 
     def show_new_step_pane(self):
+        self.adding = True
+        self.update_buttons()
         self.g1.show()
         self.but_add.setIcon(QIcon(g.ICON_X))
 
     def hide_new_step_pane(self):
         self.g1.hide()                              # hide the pane
         self.but_add.setIcon(QIcon(g.ICON_PLUS))    # make sure the add icon is a + (instead of an x) 
-        self.init_form_values()                     # and wipe the form                
+        self.but_edit.setIcon(QIcon(g.ICON_EDIT))    # make sure the add icon is a + (instead of an x) 
+        self.adding = False
+        self.editing = False
+        self.init_form_values()                     # and wipe the form
+        self.update_buttons()
         
 
     def add_step(self):
@@ -600,7 +700,13 @@ class WindowEditSweepProfile(QMainWindow):
             #########################################################################################################################
 
             # combine all of the above created dictionaries and store them
-            self.steps.append(data_general | data_measurement | data_specific)
+
+            new_step = data_general | data_measurement | data_specific
+            if self.adding:
+                self.steps.append(new_step)
+            elif self.editing:
+                i = self.selected[0]
+                self.steps[i] = new_step
             self.selected = []          # clears selection and will clear highlights when list is refreshed
             self.refresh_list()         # refresh the list (to visualize the new row and clear stale highlights)
             self.hide_new_step_pane()   # close the pane that allows the user to add a new step
@@ -659,8 +765,7 @@ class WindowEditSweepProfile(QMainWindow):
                 return False
         return True
 
-    def calc_time_from_voltage(self, v1, v2, vm, t):
-        return t*(vm-v1)/(v2-v1)
+    
 
     def is_between(self, val, x1, x2):
         """returns true if val is between x1 and x2, inclusive.
@@ -671,7 +776,9 @@ class WindowEditSweepProfile(QMainWindow):
         if (val >= v1 and val <= v2):
             return True
         return False
-    
+
+    def calc_time_from_voltage(self, v1, v2, vm, t):
+        return t*(vm-v1)/(v2-v1)
 
     def convert_measurement_voltages_to_time(self):
         """ Asumes form is filled out correctly (ie. has been validated"""
@@ -688,4 +795,11 @@ class WindowEditSweepProfile(QMainWindow):
                 vm = self.measure_stop_ts[step_type].value()
                 self.measure_stop_ts[step_type].setValue(self.calc_time_from_voltage(v1, v2, vm, t))
 
+    '''def resize(self, event):
+        try:
+            outer = self.profile_chart
+            inner = self.w_pc
+            scroll_area_resized(outer, inner, event)
+        except Exception as e:
+            print(e)'''
       

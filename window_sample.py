@@ -289,7 +289,7 @@ class WindowSample(QMainWindow):
             'timestamp': '2025-10-15 09:32pm',
             'comment':'No diultion'}]
         self.w_run_history_area = QScrollArea()
-        self.w_run_history_area.resizeEvent = self.scroll_area_resized
+        self.w_run_history_area.resizeEvent = self.resize
 
         grid = QGridLayout()
         grid.setHorizontalSpacing(0)
@@ -442,17 +442,10 @@ class WindowSample(QMainWindow):
     
 
 
-    def scroll_area_resized(self, event):
-        QScrollArea.resizeEvent(self.w_run_history_area, event) # Because this fn intercepts the resizeEvent, call the actual resizeEvent
-                                                                # (this checks whether to add/remove scroll bars, etc.
-                                                                # Then adjust the inner widget to fit well within the scroll area:
-        outer_width = self.w_run_history_area.width()           #   get width of parent (container) widget
-        v_bar_width = 0 
-        v_bar = self.w_run_history_area.verticalScrollBar()     #   get the vertical scrollbar widget
-        if v_bar.isVisible():                                   #   if its visible
-            v_bar_width = v_bar.width()                         #   account for its width
-        self.w_run_history_container.setFixedWidth(outer_width-g.PADDING-v_bar_width)
-        
+    def resize(self, event):
+        outer = self.w_run_history_area
+        inner = self.w_run_history_container
+        scroll_area_resized(outer, inner, event)
 
 
 class TitleLbl(QLabel):
