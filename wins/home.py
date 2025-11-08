@@ -4,10 +4,10 @@ import ov_lang as l
 from ov_functions import *
 
 # import custom window objects
-from window_editSample import WindowEditSample
-from window_editSweepProfile import WindowEditSweepProfile
-from window_viewSweepProfile import WindowViewSweepProfile
-from window_sample import WindowSample
+from wins.editSample import WindowEditSample
+from wins.editSweepProfile import WindowEditSweepProfile
+from wins.viewSweepProfile import WindowViewSweepProfile
+from wins.sample import WindowSample
 
 # import other necessary python tools
 from os.path import join as joindir

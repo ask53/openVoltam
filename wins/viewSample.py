@@ -10,7 +10,7 @@ import ov_globals as g
 import ov_lang as l
 from ov_functions import *
 
-from window_editSample import horizontalize
+from wins.editSample import horizontalize
 
 from PyQt6.QtCore import QDate
 from PyQt6.QtWidgets import (

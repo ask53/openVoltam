@@ -13,8 +13,8 @@ import ov_globals as g
 import ov_lang as l
 from ov_functions import *
 
-from window_viewSample import WindowViewSample
-from window_runConfig import WindowRunConfig
+from wins.viewSample import WindowViewSample
+from wins.runConfig import WindowRunConfig
 
 # import other necessary python tools
 from os.path import join as joindir

@@ -24,7 +24,7 @@ import ov_globals as g
 import ov_lang as l
 from ov_functions import *
 
-from window_sample import QVLine
+from wins.sample import QVLine
 
 from functools import partial
 
@@ -348,10 +348,62 @@ class WindowEditSweepProfile(QMainWindow):
         for w in self.hidden_inputs:
             w.hide()
 
-    def set_form_values(self, step):
+    def set_form_values_for_editing(self, step):
+        self.init_form_values()                     # initialize all form values
+        
         # Modify title and button text
         self.g1.setTitle(l.sp_edit_step[g.L])
         self.but_add_step.setText(l.sp_edit_btn[g.L])
+
+        # Set top values to values from step
+        self.step_name.setText(step[g.SP_NAME])
+        if step[g.SP_STIR]:
+            self.stirrer.setCheckState(Qt.CheckState.Checked)
+
+        if step[g.SP_VIBRATE]:
+            self.vibrator.setCheckState(Qt.CheckState.Checked)
+
+        this_type = step[g.SP_TYPE]
+        self.step_type.setCurrentIndex(g.SP_TYPES.index(this_type))
+
+        # Set step-type specific properties
+        t_tot = step[g.SP_T]
+        self.ts[this_type].setValue(t_tot)
+
+        if step[g.SP_START_COLLECT]:
+            self.measure_starts[this_type].setCheckState(Qt.CheckState.Checked)
+            self.measure_start_ts[this_type].setValue(step[g.SP_START_COLLECT_T])
+
+        if step[g.SP_END_COLLECT]:
+            self.measure_stops[this_type].setCheckState(Qt.CheckState.Checked)
+            self.measure_stop_ts[this_type].setValue(step[g.SP_END_COLLECT_T])
+
+        if this_type == g.SP_CONSTANT:
+            self.const_v.setValue(step[g.SP_CONST_V])
+
+        elif this_type == g.SP_RAMP:
+            v1 = step[g.SP_RAMP_V1]
+            v2 = step[g.SP_RAMP_V2]
+            self.ramp_v_start.setValue(v1)
+            self.ramp_v_end.setValue(v2)
+            
+            if step[g.SP_START_COLLECT]:
+                tm = step[g.SP_START_COLLECT_T]
+                print('start:')
+                print(tm)
+                vm = self.calc_v_from_t(v1, v2, t_tot, tm)
+                print(vm)
+                
+                self.measure_start_ts[this_type].setValue(vm)
+
+            if step[g.SP_END_COLLECT]:
+                tm = step[g.SP_END_COLLECT_T]
+                print('stop:')
+                print(tm)
+                
+                vm = self.calc_v_from_t(v1, v2, t_tot, tm)
+                print(vm)
+                self.measure_stop_ts[this_type].setValue(vm)
 
         ##################################################
         #
@@ -571,7 +623,7 @@ class WindowEditSweepProfile(QMainWindow):
         self.update_buttons()
         self.but_edit.setIcon(QIcon(g.ICON_X))
         step = self.steps[self.selected[0]]
-        self.set_form_values(step)
+        self.set_form_values_for_editing(step)
         self.g1.show()
         
 
@@ -662,7 +714,9 @@ class WindowEditSweepProfile(QMainWindow):
         
 
     def add_step(self):
-        if self.validate_step():
+        
+        #if self.validate_step():
+        try:
             step_type = g.SP_TYPES[self.step_type.currentIndex()]
             self.convert_measurement_voltages_to_time()
 
@@ -712,6 +766,8 @@ class WindowEditSweepProfile(QMainWindow):
             self.hide_new_step_pane()   # close the pane that allows the user to add a new step
             self.init_form_values()     # reset the hidden pane to initial values
             print(self.steps)
+        except Exception as e:
+            print(e)
         
 
     def is_checked(self, checkbox):
@@ -777,8 +833,11 @@ class WindowEditSweepProfile(QMainWindow):
             return True
         return False
 
-    def calc_time_from_voltage(self, v1, v2, vm, t):
+    def calc_t_from_v(self, v1, v2, vm, t):
         return t*(vm-v1)/(v2-v1)
+
+    def calc_v_from_t(self, v1, v2, t_tot, tm):
+        return v1+(tm*(v2-v1)/t_tot)
 
     def convert_measurement_voltages_to_time(self):
         """ Asumes form is filled out correctly (ie. has been validated"""
@@ -790,11 +849,12 @@ class WindowEditSweepProfile(QMainWindow):
             t = self.ts[step_type].value()
             if self.is_checked(self.measure_starts[step_type]):
                 vm = self.measure_start_ts[step_type].value()
-                self.measure_start_ts[step_type].setValue(self.calc_time_from_voltage(v1, v2, vm, t))
+                self.measure_start_ts[step_type].setValue(self.calc_t_from_v(v1, v2, vm, t))
             if self.is_checked(self.measure_stops[step_type]):
                 vm = self.measure_stop_ts[step_type].value()
-                self.measure_stop_ts[step_type].setValue(self.calc_time_from_voltage(v1, v2, vm, t))
+                self.measure_stop_ts[step_type].setValue(self.calc_t_from_v(v1, v2, vm, t))
 
+    
     '''def resize(self, event):
         try:
             outer = self.profile_chart

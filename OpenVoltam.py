@@ -2,7 +2,7 @@
 import ov_globals as g
 import ov_lang as l
 from ov_functions import *
-from window_home import WindowHome
+from wins.home import WindowHome
 
 # import other python functions (be as specific as possible to keep filesize down)
 from os.path import dirname
