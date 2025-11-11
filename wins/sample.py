@@ -33,7 +33,6 @@ from PyQt6.QtWidgets import (
     QTableWidget,
     QWidget,
     QLabel,
-    QFrame,
     QToolTip,
     QHeaderView,
     QCheckBox,
@@ -456,10 +455,3 @@ class TitleLbl(QLabel):
                  
     def updateTitleLbl(self, new_name):
         self.setText(new_name)
-        
-
-class QVLine(QFrame):
-    def __init__(self):
-        super(QVLine, self).__init__()
-        self.setFrameShape(QFrame.Shape.VLine)
-        self.setFrameShadow(QFrame.Shadow.Sunken)

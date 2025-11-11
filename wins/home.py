@@ -122,8 +122,10 @@ class WindowHome(QMainWindow):
             self.w_edit_sample.activateWindow()             #   bring it to front of screen'''
 
     def open_sample(self, path=False):
+        
         if not path:                # if no path is passed, ask the user to pick a file path
-            path = askOpenFileName(filetypes = [(l.filetype_lbl[g.L], g.SAMPLE_FILE_TYPES)])
+            path = askOpenFileName(filetypes = [(l.filetype_sample_lbl[g.L], g.SAMPLE_FILE_TYPES)])
+        error = False        
         if path:                    # if the path is passed or if the user selected a valid path:
             w = False                               # placeholder for the current sample window
             if len(self.w_samples) > 0:             # if there are current sample windows
@@ -132,17 +134,20 @@ class WindowHome(QMainWindow):
                         w = w_sample                #   store the object in our placeholder
             if w:                                   # if we found a matching window
                 try:
-                    w.update_displayed_info()           #   update sample info
+                    w.update_displayed_info()       #   update sample info
                 except Exception as e:
                     print(e)
+                    error = True
                 w.activateWindow()                  #   and activate window
             else:                                   # if we didn't find a match
                 try:
-                    self.create_sample_window(path)     #   create a sample window from the path
+                    self.create_sample_window(path) #   create a sample window from the path
                 except Exception as e:
                     print(e)
-                
-            self.close()                            # close the home window if open
+                    show_alert(self, "Error", "Uh oh, there was an issue opening the selected file, please try again. If the problem persists, the file may be corrupted.")
+                    error = True
+            if not error:
+                self.close()                            # close the home window if open
             
 
     def create_sample_window(self, path):
@@ -174,17 +179,31 @@ class WindowHome(QMainWindow):
             self.w_edit_config.activateWindow()             #   bring it to front of screen
 
     def open_config(self):
-        self.ws_view_config.append(WindowViewSweepProfile())
-        self.ws_view_config[-1].show()
+        '''self.ws_view_config.append(WindowViewSweepProfile())
+        self.ws_view_config[-1].show()'''
 
-    def edit_config(self):
-        ### HOWEVER WE SORTED "edit_sample(self, path) PLEASE UPDATE
-        ### THIS FUNCTION TO MATCH FUNCTIONALLY
-        if (self.w_edit_config.isHidden()):                 # check if winow is hidden. If so:
-            self.w_edit_config = WindowEditSweepProfile("path")   #   Create a new empty edit config window
-            self.w_edit_config.show()                       #   and show it!
-        else:                                               # if window is already showing
-            self.w_edit_config.activateWindow()             #   bring it to front of screen
+        # FOR TESTING ONLY
+        #
+        self.edit_config('C:\\Users\\aaronkrupp\\Desktop\\TO DELETE\\TEST.ovp')
+        #
+        ###############################
+    def edit_config(self, path=False):
+        try:
+            if (self.w_edit_config.isHidden()):                 # check if winow is hidden. If so:
+                if not path:                                    # if no path is passed, ask the user to pick a file path
+                    path = askOpenFileName(filetypes = [(l.filetype_sp_lbl[g.L], g.SWEEP_PROFILE_FILE_TYPES)])
+                    
+                if path:                                    # if the path is passed or if the user selected a valid path:                        
+                    try:
+                        self.w_edit_config = WindowEditSweepProfile(path)   #   Create a new empty edit config window
+                        self.w_edit_config.show()                           #   and show it!
+                    except Exception as e:
+                        print(e)
+                        show_alert(self, "Error", "Uh oh, there was an issue opening the selected file, please try again. If the problem persists, the file may be corrupted.")      
+            else:                                               # if window is already showing
+                self.w_edit_config.activateWindow()             #   bring it to front of screen
+        except Exception as e:
+            print(e)
 
     def go_back(self):
         self.setCentralWidget(self.homeWidget())

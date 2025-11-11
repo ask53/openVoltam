@@ -25,8 +25,10 @@ import ov_lang as l
 from ov_functions import *
 
 from wins.sample import QVLine
+from embeds.sweepProfilePlot import SweepProfilePlot
 
 from functools import partial
+from tkinter.filedialog import asksaveasfilename as askSaveAsFileName
 
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import (
@@ -79,7 +81,7 @@ class WindowEditSweepProfile(QMainWindow):
         
         
 
-        self.graph = QScrollArea()
+        self.graph = SweepProfilePlot(self.steps)
         self.name = QLineEdit()
         self.name.setObjectName('ov-profile-name')
         self.name.setPlaceholderText('Profile name')
@@ -91,6 +93,7 @@ class WindowEditSweepProfile(QMainWindow):
         self.step_name = QLineEdit()
         self.step_name.setMaxLength(8)
 
+        self.data_collect = QCheckBox('Collect data during step?')
         self.stirrer = QCheckBox('Stirrer on during step?')
         self.vibrator = QCheckBox('Vibrator on during step?')
         
@@ -104,8 +107,6 @@ class WindowEditSweepProfile(QMainWindow):
         
         # Set up type-specific parameters if the user selects CONSTANT VOLTAGE'
         v_const = QVBoxLayout()
-        v_const_collect = QVBoxLayout()
-        g_const_collect = QGroupBox('Data collection')
         
         const_v_lbl = QLabel('Voltage [V]')
         self.const_v = QDoubleSpinBox()
@@ -114,36 +115,8 @@ class WindowEditSweepProfile(QMainWindow):
         const_t = QDoubleSpinBox()
         const_t.setMaximum(g.SP_T_MAX)
         
-        const_collect_start = QCheckBox('Begin collecting data')
-        const_collect_start.setObjectName('const-collect-start')
-        const_collect_start.stateChanged.connect(partial(self.collection_state_changed, const_collect_start))
-        const_collect_end = QCheckBox('Stop collecting data')
-        const_collect_end.setObjectName('const-collect-end')
-        const_collect_end.stateChanged.connect(partial(self.collection_state_changed, const_collect_end))
-        const_collect_start_t_lbl = QLabel('Begin collection at [s]')
-        const_collect_start_t = QDoubleSpinBox()
-        const_collect_start_t.setMaximum(g.SP_T_MAX)
-        const_collect_end_t_lbl = QLabel('Stop collection at [s]')
-        const_collect_end_t = QDoubleSpinBox()
-        const_collect_end_t.setMaximum(g.SP_T_MAX)
-
-        w_const_collect_start = QWidget()
-        w_const_collect_start.setLayout(horizontalize([const_collect_start_t_lbl, const_collect_start_t]))
-        w_const_collect_start.setObjectName('const-collect-start-layout')
-        w_const_collect_end = QWidget()
-        w_const_collect_end.setLayout(horizontalize([const_collect_end_t_lbl, const_collect_end_t]))
-        w_const_collect_end.setObjectName('const-collect-end-layout')
-
-        v_const_collect.addWidget(const_collect_start)
-        v_const_collect.addWidget(w_const_collect_start)
-        v_const_collect.addWidget(const_collect_end)
-        v_const_collect.addWidget(w_const_collect_end)
-        v_const_collect.addStretch()
-        g_const_collect.setLayout(v_const_collect)
-        
         v_const.addLayout(horizontalize([const_v_lbl, self.const_v]))
         v_const.addLayout(horizontalize([const_t_lbl, const_t]))
-        v_const.addWidget(g_const_collect)
         v_const.addStretch()
         w_const = QWidget()
         w_const.setLayout(v_const)
@@ -151,8 +124,6 @@ class WindowEditSweepProfile(QMainWindow):
 
         # Set up type-specific parameters if the user selects VOLTAGE RAMP (Ramps from V1 to V2 over time)
         v_ramp = QVBoxLayout()
-        v_ramp_collect = QVBoxLayout()
-        g_ramp_collect = QGroupBox('Data collection')
         
         ramp_v_start_lbl = QLabel('Start voltage [V]')
         self.ramp_v_start = QDoubleSpinBox()
@@ -164,37 +135,9 @@ class WindowEditSweepProfile(QMainWindow):
         ramp_t = QDoubleSpinBox()
         ramp_t.setMaximum(g.SP_T_MAX)
         
-        ramp_collect_start = QCheckBox('Begin collecting data')
-        ramp_collect_start.setObjectName('ramp-collect-start')
-        ramp_collect_start.stateChanged.connect(partial(self.collection_state_changed,ramp_collect_start))
-        ramp_collect_end = QCheckBox('Stop collecting data')
-        ramp_collect_end.setObjectName('ramp-collect-end')
-        ramp_collect_end.stateChanged.connect(partial(self.collection_state_changed,ramp_collect_end))
-        ramp_collect_start_v_lbl = QLabel('Begin collection at [V]')
-        ramp_collect_start_v = QDoubleSpinBox()
-        ramp_collect_start_v.setMinimum(g.SP_V_MIN)
-        ramp_collect_end_v_lbl = QLabel('Stop collection at [V]')
-        ramp_collect_end_v = QDoubleSpinBox()
-        ramp_collect_end_v.setMinimum(g.SP_V_MIN)
-
-        w_ramp_collect_start = QWidget()
-        w_ramp_collect_start.setLayout(horizontalize([ramp_collect_start_v_lbl, ramp_collect_start_v]))
-        w_ramp_collect_start.setObjectName('ramp-collect-start-layout')
-        w_ramp_collect_end = QWidget()
-        w_ramp_collect_end.setLayout(horizontalize([ramp_collect_end_v_lbl, ramp_collect_end_v]))
-        w_ramp_collect_end.setObjectName('ramp-collect-end-layout')
-
-        v_ramp_collect.addWidget(ramp_collect_start)
-        v_ramp_collect.addWidget(w_ramp_collect_start)
-        v_ramp_collect.addWidget(ramp_collect_end)
-        v_ramp_collect.addWidget(w_ramp_collect_end)
-        v_ramp_collect.addStretch()
-        g_ramp_collect.setLayout(v_ramp_collect)
-        
         v_ramp.addLayout(horizontalize([ramp_v_start_lbl, self.ramp_v_start]))
         v_ramp.addLayout(horizontalize([ramp_v_end_lbl, self.ramp_v_end]))
         v_ramp.addLayout(horizontalize([ramp_t_lbl, ramp_t]))
-        v_ramp.addWidget(g_ramp_collect)
         v_ramp.addStretch()
         w_ramp = QWidget()
         w_ramp.setLayout(v_ramp)
@@ -203,20 +146,6 @@ class WindowEditSweepProfile(QMainWindow):
 
         self.ts = {g.SP_CONSTANT: const_t,
                    g.SP_RAMP: ramp_t}
-        self.measure_starts = {g.SP_CONSTANT: const_collect_start,
-                               g.SP_RAMP: ramp_collect_start}
-        self.measure_stops = {g.SP_CONSTANT: const_collect_end,
-                              g.SP_RAMP: ramp_collect_end}
-        self.measure_start_ts = {g.SP_CONSTANT: const_collect_start_t,
-                                 g.SP_RAMP: ramp_collect_start_v}
-        self.measure_stop_ts = {g.SP_CONSTANT: const_collect_end_t,
-                                g.SP_RAMP: ramp_collect_end_v}
-        
-
-        self.hidden_inputs = [w_const_collect_start,
-                              w_const_collect_end,
-                              w_ramp_collect_start,
-                              w_ramp_collect_end]
 
         # Load the widgets into the stacked layout in order 
         self.s1.addWidget(QWidget())
@@ -227,8 +156,11 @@ class WindowEditSweepProfile(QMainWindow):
         self.but_add_step.clicked.connect(self.add_step)
 
         v4.addLayout(horizontalize([step_name_lbl,self.step_name]))
+        v4.addWidget(self.data_collect)
+        v4.addWidget(QHLine())
         v4.addWidget(self.stirrer)
         v4.addWidget(self.vibrator)
+        v4.addWidget(QHLine())
         v4.addLayout(horizontalize([step_type_lbl,self.step_type]))
         v4.addLayout(self.s1)
         v4.addWidget(self.but_add_step)
@@ -296,6 +228,12 @@ class WindowEditSweepProfile(QMainWindow):
         
         
         but_save = QPushButton('Save')
+        but_save_as = QPushButton('Save as')
+        if self.path:
+            but_save.clicked.connect(partial(self.start_save, 'save'))
+            but_save_as.clicked.connect(partial(self.start_save, 'save-as'))
+        else:
+            but_save.clicked.connect(partial(self.start_save, 'save-as'))
 
         v2.addWidget(self.name)
         v2.addStretch()
@@ -307,10 +245,16 @@ class WindowEditSweepProfile(QMainWindow):
         
         v1.addLayout(h1)
         v1.addWidget(self.builder)
-        v1.addWidget(but_save)
+        
+        if self.path:
+            v1.addLayout(horizontalize([but_save, but_save_as]))
+        else:
+            v1.addWidget(but_save)
 
         self.init_form_values()
         self.hide_new_step_pane()
+        if self.path:
+            self.set_values_from_file()
         
         w = QWidget()
         w.setLayout(v1)
@@ -324,30 +268,33 @@ class WindowEditSweepProfile(QMainWindow):
         
         # Reset all values common to all runs
         self.step_name.setText('')
+        self.data_collect.setCheckState(Qt.CheckState.Unchecked)
         self.stirrer.setCheckState(Qt.CheckState.Unchecked)
         self.vibrator.setCheckState(Qt.CheckState.Unchecked)
         self.step_type.setCurrentIndex(g.QT_NOTHING_SELECTED_INDEX)
 
         # Reset values specific to constant voltage steps
-
         self.const_v.setValue(0)
 
         # Reset values specific to voltage ramp steps
         self.ramp_v_start.setValue(0)
         self.ramp_v_end.setValue(0)
 
-        # Reset values related to measurement
+        # Reset duration values (this could maybe move to "values common to all runs" but keeping
+        #   it separate for now in case we want to implement a different way of determining the
+        #   duration of some steps i.e. measuring in terms of samples per voltage or total
+        #   data points collected instead of time).
         for sp_type in g.SP_TYPES:
             self.ts[sp_type].setValue(0)
-            self.measure_starts[sp_type].setCheckState(Qt.CheckState.Unchecked)
-            self.measure_stops[sp_type].setCheckState(Qt.CheckState.Unchecked)
-            self.measure_start_ts[sp_type].setValue(0)
-            self.measure_stop_ts[sp_type].setValue(0)
 
-        # Hide inputs that only appear when checkbox is selected
-        for w in self.hidden_inputs:
-            w.hide()
-
+    def set_values_from_file(self):
+        data = get_data_from_file(self.path)
+        self.name.setText(data[g.SP_SP_NAME])
+        self.dt.setValue(data[g.SP_DT])
+        self.steps = data[g.SP_STEPS]
+        self.refresh_list()  
+        
+        
     def set_form_values_for_editing(self, step):
         self.init_form_values()                     # initialize all form values
         
@@ -356,7 +303,11 @@ class WindowEditSweepProfile(QMainWindow):
         self.but_add_step.setText(l.sp_edit_btn[g.L])
 
         # Set top values to values from step
-        self.step_name.setText(step[g.SP_NAME])
+        self.step_name.setText(step[g.SP_STEP_NAME])
+        
+        if step[g.SP_DATA_COLLECT]:
+            self.data_collect.setCheckState(Qt.CheckState.Checked)
+        
         if step[g.SP_STIR]:
             self.stirrer.setCheckState(Qt.CheckState.Checked)
 
@@ -370,49 +321,13 @@ class WindowEditSweepProfile(QMainWindow):
         t_tot = step[g.SP_T]
         self.ts[this_type].setValue(t_tot)
 
-        if step[g.SP_START_COLLECT]:
-            self.measure_starts[this_type].setCheckState(Qt.CheckState.Checked)
-            self.measure_start_ts[this_type].setValue(step[g.SP_START_COLLECT_T])
-
-        if step[g.SP_END_COLLECT]:
-            self.measure_stops[this_type].setCheckState(Qt.CheckState.Checked)
-            self.measure_stop_ts[this_type].setValue(step[g.SP_END_COLLECT_T])
-
         if this_type == g.SP_CONSTANT:
             self.const_v.setValue(step[g.SP_CONST_V])
 
         elif this_type == g.SP_RAMP:
-            v1 = step[g.SP_RAMP_V1]
-            v2 = step[g.SP_RAMP_V2]
-            self.ramp_v_start.setValue(v1)
-            self.ramp_v_end.setValue(v2)
-            
-            if step[g.SP_START_COLLECT]:
-                tm = step[g.SP_START_COLLECT_T]
-                print('start:')
-                print(tm)
-                vm = self.calc_v_from_t(v1, v2, t_tot, tm)
-                print(vm)
-                
-                self.measure_start_ts[this_type].setValue(vm)
-
-            if step[g.SP_END_COLLECT]:
-                tm = step[g.SP_END_COLLECT_T]
-                print('stop:')
-                print(tm)
-                
-                vm = self.calc_v_from_t(v1, v2, t_tot, tm)
-                print(vm)
-                self.measure_stop_ts[this_type].setValue(vm)
-
-        ##################################################
-        #
-        #   HERE, FINISH PUTTING VALUES INTO THE FORM
-        #
-        ############################################################################################
-
+            self.ramp_v_start.setValue(step[g.SP_RAMP_V1])
+            self.ramp_v_end.setValue(step[g.SP_RAMP_V2])
         
-
     def refresh_list(self):
         """ Clears the sweep list and rebuilds it"""
         try:
@@ -468,7 +383,7 @@ class WindowEditSweepProfile(QMainWindow):
         for i, step in enumerate(self.steps):
             #### TO ADD MORE WIDGETS TO THIS LAYOUT, DEFINE THEM HERE
             step_type = step[g.SP_TYPE]
-            w_name = QLabel(step[g.SP_NAME])
+            w_name = QLabel(step[g.SP_STEP_NAME])
             
             
             w_volt = QLabel()
@@ -492,7 +407,11 @@ class WindowEditSweepProfile(QMainWindow):
                 w_vib.setPixmap(QPixmap(g.ICON_VIB))
                 w_vib.setToolTip('Vibrator ON')
 
-            w_collect = QLabel('m')
+            w_collect = QLabel()
+            w_collect.setToolTip('Data collection OFF')
+            if step[g.SP_DATA_COLLECT]:
+                w_collect.setPixmap(QPixmap(g.ICON_MEASURE))
+                w_collect.setToolTip('Data collection ON')
             
             ws = [w_name, w_volt, w_t, w_stir, w_vib, w_collect]
             ####### THEN ADD THEM TO THE ws LIST. THATS IT YAYYYYY 
@@ -607,7 +526,7 @@ class WindowEditSweepProfile(QMainWindow):
             rows_added = rows_added + len(block)                                    # add the adjustment for going forwards thru th list
         self.selected = new_selected
         self.refresh_list()
-    ###############################################################################################################################################    
+
     def edit_step(self):
         try:
             if self.g1.isHidden():
@@ -715,30 +634,19 @@ class WindowEditSweepProfile(QMainWindow):
 
     def add_step(self):
         
-        #if self.validate_step():
-        try:
+        if self.validate_step():
             step_type = g.SP_TYPES[self.step_type.currentIndex()]
-            self.convert_measurement_voltages_to_time()
-
+            
             # Grab the data that all steps contain   
             data_general = {
-                g.SP_NAME: self.step_name.text(),
+                g.SP_STEP_NAME: self.step_name.text(),
+                g.SP_DATA_COLLECT: self.is_checked(self.data_collect),
                 g.SP_STIR: self.is_checked(self.stirrer),
                 g.SP_VIBRATE: self.is_checked(self.vibrator),
-                g.SP_TYPE: step_type
-                }
-            
-            # Grab the data related to measurement 
-            data_measurement = {
-                g.SP_START_COLLECT: self.is_checked(self.measure_starts[step_type]),
-                g.SP_END_COLLECT: self.is_checked(self.measure_stops[step_type]),
+                g.SP_TYPE: step_type,
                 g.SP_T: self.ts[step_type].value()
                 }
-            if data_measurement[g.SP_START_COLLECT]:
-                data_measurement[g.SP_START_COLLECT_T] = self.measure_start_ts[step_type].value()
-            if data_measurement[g.SP_END_COLLECT]:
-                data_measurement[g.SP_END_COLLECT_T] = self.measure_stop_ts[step_type].value() 
-
+            
             ############################################ IF ADDING ANOTHER STEP TYPE, ADD ANOTHER ELIF TO THE CODE BELOW ############
             data_specific = {}                                                                                                      #
             if step_type == g.SP_CONSTANT:                                                                                          #
@@ -755,7 +663,8 @@ class WindowEditSweepProfile(QMainWindow):
 
             # combine all of the above created dictionaries and store them
 
-            new_step = data_general | data_measurement | data_specific
+            new_step = data_general | data_specific
+
             if self.adding:
                 self.steps.append(new_step)
             elif self.editing:
@@ -766,8 +675,6 @@ class WindowEditSweepProfile(QMainWindow):
             self.hide_new_step_pane()   # close the pane that allows the user to add a new step
             self.init_form_values()     # reset the hidden pane to initial values
             print(self.steps)
-        except Exception as e:
-            print(e)
         
 
     def is_checked(self, checkbox):
@@ -783,7 +690,9 @@ class WindowEditSweepProfile(QMainWindow):
         #
         #
         #####################################
-        
+        if self.step_name.text() == '':    # make sure there is a name selected
+            show_alert(self, 'Error!', 'Please name your step')
+            return False
         if self.step_type.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:    # make sure there is a type selected
             show_alert(self, 'Error!', 'Please select a type of run')
             return False
@@ -791,75 +700,47 @@ class WindowEditSweepProfile(QMainWindow):
         if self.ts[step_type].value() == 0:                                   # make sure there is a duration
             show_alert(self, 'Error!', 'Please set a duration longer than 0 for this step')
             return False
-        if step_type == g.SP_CONSTANT:
-            t = self.ts[step_type].value()
-            if self.is_checked(self.measure_starts[step_type]):
-                if self.measure_start_ts[step_type].value() > t:
-                    show_alert(self, 'Error!', 'Please check the measurement start time, it seems to be longer than the duration of this step.')
-                    return False
-            if self.is_checked(self.measure_stops[step_type]):
-                if self.measure_stop_ts[step_type].value() > t:
-                    show_alert(self, 'Error!', 'Please check the measurement stop time, it seems to be longer than the duration of this step.')
-                    return False
+    
         if step_type == g.SP_RAMP:
             v1 = self.ramp_v_start.value()
             v2 = self.ramp_v_end.value()
             if v1 == v2:
                 show_alert(self, 'Error!', 'The endpoints of this ramp have the same value, if this is what you want, please consider a constant volutage. Otherwise...typo?')
                 return False
-            if self.is_checked(self.measure_starts[step_type]):
-                if not self.is_between(self.measure_start_ts[step_type].value(), v1, v2):
-                    show_alert(self, 'Error!', 'Please check the measurement start voltage, its out of the voltage range of this step.')
-                    return False
-            if self.is_checked(self.measure_stops[step_type]):
-                if not self.is_between(self.measure_stop_ts[step_type].value(), v1, v2):
-                    show_alert(self, 'Error!', 'Please check the measurement stop voltage, its out of the voltage range of this step.')
-                    return False
-        if self.is_checked(self.measure_starts[step_type]) and self.is_checked(self.measure_stops[step_type]):
-            if self.measure_start_ts[step_type].value() == self.measure_stop_ts[step_type].value():
-                show_alert(self, 'Error!', 'It is very challenging to both begin and stop collecting data at the exact same time, please check those parameters.')
-                return False
+            
         return True
 
+    def start_save(self, save_type):
+        if self.validate_sweep_profile():
+            if save_type == 'save-as':
+                self.sp_save_as()
+            else:
+                self.sp_save()
     
+    def sp_save_as(self):     
+        # get the actual filename and path from user
+        self.path = askSaveAsFileName(          # open a save file dialog which returns the file object
+            filetypes=[(l.filetype_sp_lbl[g.L], g.SWEEP_PROFILE_FILE_TYPES)],
+            defaultextension=g.SWEEP_PROFILE_EXT,
+            confirmoverwrite=True,
+            initialfile=guess_filename(self.name.text()))
+        if not self.path or self.path == '':    # if the user didn't select a path
+            return                              # don't try to save, just return
+        self.sp_save()                          # save the file!
 
-    def is_between(self, val, x1, x2):
-        """returns true if val is between x1 and x2, inclusive.
-        Otherwise, returns false"""
+    def sp_save(self):
+        data = {g.SP_SP_NAME: self.name.text(),
+                g.SP_DT: self.dt.value(),
+                g.SP_STEPS: self.steps}
+        write_data_to_file(self.path, data)
+            
+
         
-        v1 = min(x1, x2)
-        v2 = max(x1, x2)
-        if (val >= v1 and val <= v2):
-            return True
-        return False
-
-    def calc_t_from_v(self, v1, v2, vm, t):
-        return t*(vm-v1)/(v2-v1)
-
-    def calc_v_from_t(self, v1, v2, t_tot, tm):
-        return v1+(tm*(v2-v1)/t_tot)
-
-    def convert_measurement_voltages_to_time(self):
-        """ Asumes form is filled out correctly (ie. has been validated"""
-        step_type = g.SP_TYPES[self.step_type.currentIndex()]
-
-        if step_type == g.SP_RAMP:
-            v1 = self.ramp_v_start.value()                                                                        
-            v2 = self.ramp_v_end.value()
-            t = self.ts[step_type].value()
-            if self.is_checked(self.measure_starts[step_type]):
-                vm = self.measure_start_ts[step_type].value()
-                self.measure_start_ts[step_type].setValue(self.calc_t_from_v(v1, v2, vm, t))
-            if self.is_checked(self.measure_stops[step_type]):
-                vm = self.measure_stop_ts[step_type].value()
-                self.measure_stop_ts[step_type].setValue(self.calc_t_from_v(v1, v2, vm, t))
-
     
-    '''def resize(self, event):
-        try:
-            outer = self.profile_chart
-            inner = self.w_pc
-            scroll_area_resized(outer, inner, event)
-        except Exception as e:
-            print(e)'''
-      
+
+    def validate_sweep_profile(self):
+        # If you want to add validation to the overall sweep profile, do so here!
+        #   Maybe to min and max dt?
+        return True
+            
+        

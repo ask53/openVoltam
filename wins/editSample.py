@@ -16,7 +16,6 @@ import ov_lang as l
 from ov_functions import *
 
 from tkinter.filedialog import asksaveasfilename as askSaveAsFileName
-from re import sub
 from functools import partial
 
 from PyQt6.QtCore import QDateTime, QDate
@@ -161,20 +160,15 @@ class WindowEditSample(QMainWindow):
 
 
     def saveFileAs(self):
-        
-        # Make a best-guess at the desired filename
-        f_guess = self.w_name.text()                       # grab text from name field
-        f_guess = sub('[^A-Za-z0-9" "-_]+', '', f_guess)# remove all characters other than a-z, numbers, and spaces
-        f_guess = ' '.join(f_guess.split())               # convert all sequential blankspace to a single space
-        f_guess = f_guess.replace(' ', '-')               # replace all spaces with em-dashes
-
         # get the actual filename and path from user
+
         self.path = askSaveAsFileName(                           # open a save file dialog which returns the file object
-            filetypes=[(l.filetype_lbl[g.L], g.SAMPLE_FILE_TYPES)],
+            filetypes=[(l.filetype_sample_lbl[g.L], g.SAMPLE_FILE_TYPES)],
             defaultextension=g.SAMPLE_EXT,
             confirmoverwrite=True,
-            initialfile=f_guess)
-
+            initialfile=guess_filename(self.w_name.text()))
+        if not self.path or self.path == '':            # if the user didn't select a path
+            return                                      # don't try to save, just return
         self.saveFile()                                 # save the file!
 
     def saveFile(self):

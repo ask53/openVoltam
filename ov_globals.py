@@ -21,7 +21,11 @@ S_BLANK_ARRAYS = [S_SWEEP_PROFILES, S_RUNS, S_PROCESSED]
 SP_UID_SELF = 'uid'
 SP_NOTES = 'notes'          ##### THIS IS JUST A PLACEHOLDER, WE WONT HAVE A NOTES FEATURE HERE
 SP_UID_PREFIX = 'sp-'
-SP_NAME = 'name'
+SP_SP_NAME = 'name'
+SP_DT = 'dt'
+SP_STEPS = 'steps'
+SP_STEP_NAME = 'name'
+SP_DATA_COLLECT = 'data-collect'
 SP_STIR = 'stir'
 SP_VIBRATE = 'vibrate'
 SP_TYPE = 'type'
@@ -74,6 +78,7 @@ ICON_TRASH = 'external/icons/trash.png'
 ICON_X = 'external/icons/x.png'
 ICON_STIR = 'external/icons/stirer.png'
 ICON_VIB = 'external/icons/vibrator.png'
+ICON_MEASURE = 'external/icons/measure.png'
 
 RC_REPS_MIN = 1
 RC_REPS_MAX = 99
@@ -106,9 +111,9 @@ PADDING = 4
 
 #File system navigation
 SAMPLE_EXT = '.ovs'
-CONFIG_EXT = '.ovc'
+SWEEP_PROFILE_EXT = '.ovp'
 SAMPLE_FILE_TYPES = '*'+SAMPLE_EXT
-CONFIG_FILE_TYPES = '*'+SAMPLE_EXT
+SWEEP_PROFILE_FILE_TYPES = '*'+SWEEP_PROFILE_EXT
 
 # Globals changed by program
 L = ENG  				# default lang, changed by program

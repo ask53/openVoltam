@@ -2,6 +2,10 @@
 #		
 
 from tabularjson import parse, stringify, StringifyOptions
+from re import sub
+
+from json import dumps
+
 
 import ov_globals as g
 from PyQt6.QtCore import Qt 
@@ -9,7 +13,8 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMessageBox,
-    QScrollArea
+    QScrollArea,
+    QFrame
 )
 
 def encodeCustomName(custom_name):
@@ -50,6 +55,17 @@ def show_alert(obj, title, msg):
     dlg.setText(msg)
     dlg.exec()
 
+def guess_filename(name):
+    """Takes in a name and returns a best guess at the filename
+    by stripping all characters other than letters, numbers,
+    em-dashes, and underscores and by replacing all blankspace
+    with dashes"""
+    guess = sub('[^A-Za-z0-9 ]', '', name)  # remove all characters other than a-z, numbers, and spaces
+    guess = ' '.join(guess.split())         # convert all sequential blankspace to a single space
+    guess = guess.replace(' ', '-')         # replace all spaces with em-dashes
+    return guess
+    
+
 def get_data_from_file(path):
     try:
         with open(path, 'r') as file:
@@ -64,9 +80,11 @@ def write_data_to_file(path, data):
     try:
         with open(path, 'w') as file:                            
             
-            options: StringifyOptions = {"indentation": 4, "trailingCommas": False}
-            tab_json_to_write = stringify(data, options)       #   convert dictionary to json string
-            file.write(tab_json_to_write)                                       #   write json string to file
+            #options: StringifyOptions = {"indentation": 4, "trailingCommas": False}
+            #tab_json_to_write = stringify(data, options)       #   convert dictionary to json string
+            #file.write(tab_json_to_write)                                       #   write json string to file
+            json_to_write = dumps(data, indent=4)
+            file.write(json_to_write)
             file.close()                                                    #   close the file (to avoid taking up too much memory)
         return True
     except Exception as e:
@@ -143,6 +161,28 @@ def scroll_area_resized(outer, inner, event):
     inner.setFixedWidth(outer_width-g.PADDING-v_bar_width)
     print(outer_width)
     print(inner.width())
+
+
+
+# Classes!
+
+class QVLine(QFrame):
+    def __init__(self):
+        super(QVLine, self).__init__()
+        self.setFrameShape(QFrame.Shape.VLine)
+        self.setFrameShadow(QFrame.Shadow.Sunken)
+
+class QHLine(QFrame):
+    def __init__(self):
+        super(QHLine, self).__init__()
+        self.setFrameShape(QFrame.Shape.HLine)
+        self.setFrameShadow(QFrame.Shadow.Sunken)
+
+
+
+
+
+# 
 
     
         
