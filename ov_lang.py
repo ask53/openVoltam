@@ -5,17 +5,17 @@ import ov_globals as g
 new_sample = ['New sample', 'Muestra nueva']
 open_sample = ['Open sample', 'Abrir muestra']
 edit_sample = ['Edit sample', 'Modificar muestra']
-new_config = ['New config', 'Config nueva']
-open_config = ['Open config', 'Abrir config']
-edit_config = ['Edit config','Modificar config']
-new_config_full = ['New sweep configuration','Ajuste de voltametría nueva']
-view_config_full = ['View sweep configuration','Revisar ajustes de voltametría']
+new_config = ['New method', 'Método nueva']
+open_config = ['Open method', 'Abrir config']
+edit_config = ['Edit method','Modificar config']
+new_config_full = ['New method','Ajuste de voltametría nueva']
+view_config_full = ['View method','Revisar ajustes de voltametría']
 info_msg = ["Welcome to <a href='https://github.com/ask53/openVoltam'>OpenVoltam</a>!<br><br>An open source project by <a href='https://www.caminosdeagua.org'>Caminos de Agua</a> and <a href='https://www.iorodeo.com'>IO Rodeo</a><br><br>v0.0 | 2025","Bienvenidx a <a href='https://github.com/ask53/openVoltam'>OpenVoltam</a>!<br><br>Un proyecto de fuente abierta por <a href='https://www.caminosdeagua.org'>Caminos de Agua</a> y <a href='https://www.iorodeo.com'>IO Rodeo</a><br><br>v0.0 | 2025"]
 window_home = ['OpenVoltam','OpenVoltam']
 
 # Menus
 menu_sample = ['Sample','Muestra']
-menu_config = ['Sweep configuration','Ajustes de voltametría']
+menu_config = ['Method','Ajustes de voltametría']
 menu_run = ['Run','??????']
 
 # Window: edit sample
@@ -33,8 +33,8 @@ s_edit_discard = ['Discard changes?','¿Tirar cambios a la basura?']
 e_edit_save_dialog = ['Are you sure you want to close without saving this sample?', "Favor de confirmar si quieres cerar sin guardar esta muestra."]
 
 # Window: edit sweep configuration
-c_edit_header_edit = ['Edit sweep configuration', 'Editar los ajustes de voltametría']
-c_edit_header_new = ['New sweep configuration', 'Ajuste de voltametría nueva']
+c_edit_header_edit = ['Edit method', 'Editar los ajustes de voltametría']
+c_edit_header_new = ['New method', 'Ajuste de voltametría nueva']
 
 # Window: sample
 s_view_info = ['View info','Ver datos']

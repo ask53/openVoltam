@@ -75,19 +75,39 @@ class WindowEditSweepProfile(QMainWindow):
         self.g1 = QGroupBox(l.sp_add_step[g.L])
         v4 = QVBoxLayout()
         self.s1 = QStackedLayout()
+        g2 = QGroupBox('Method parameters')
+        v5 = QVBoxLayout()
 
         
         
         
         
 
-        self.graph = SweepProfilePlot(self.steps)
+        
+        
         self.name = QLineEdit()
         self.name.setObjectName('ov-profile-name')
         self.name.setPlaceholderText('Profile name')
 
-        dt_lbl = QLabel('dt')
+        
+        
+        
+        # Define method-wide parameters
+        dt_lbl_0 = QLabel('Sample every')
         self.dt = QDoubleSpinBox()
+        dt_lbl_1 = QLabel('second(s).')
+
+        current_ranges = ['1uA', '10 uA', '100 uA', '1,000 uA', '10,000 uA']
+        current_range_lbl = QLabel("Device current range")
+        self.current_range = QComboBox()
+        self.current_range.setPlaceholderText('Select...')
+        for cr in current_ranges:    
+            self.current_range.addItem(cr)
+
+        # Graph stuff
+        self.hide_plot_lbls = QCheckBox('Hide plot labels')
+        self.hide_plot_lbls.stateChanged.connect(self.refresh_graph)
+        self.graph = SweepProfilePlot()
 
         step_name_lbl = QLabel('Step name')
         self.step_name = QLineEdit()
@@ -235,15 +255,28 @@ class WindowEditSweepProfile(QMainWindow):
         else:
             but_save.clicked.connect(partial(self.start_save, 'save-as'))
 
-        v2.addWidget(self.name)
+
+        v5.addLayout(horizontalize([dt_lbl_0, self.dt, dt_lbl_1], True))
+        v5.addLayout(horizontalize([current_range_lbl, self.current_range], True))
+        g2.setLayout(v5)
+
+        
+        
+        v2.addWidget(g2)
         v2.addStretch()
-        v2.addLayout(horizontalize([dt_lbl, self.dt], True))
-        
-        
+        v2.addWidget(self.hide_plot_lbls)
+
         h1.addLayout(v2)
         h1.addWidget(self.graph)
-        
+      
+        v1.addWidget(self.name)
         v1.addLayout(h1)
+        
+        
+        #h1.addLayout(v2)
+        #h1.addWidget(self.graph)
+        
+        #v1.addLayout(h1)
         v1.addWidget(self.builder)
         
         if self.path:
@@ -333,6 +366,7 @@ class WindowEditSweepProfile(QMainWindow):
         try:
             self.erase_list_visualization()
             self.build_new_list()
+            self.refresh_graph()
             self.update_highlights()
             self.update_buttons()
         except Exception as e:
@@ -686,13 +720,13 @@ class WindowEditSweepProfile(QMainWindow):
         #########################33##########
         #
         #   FOR TESTING ONLY, COMMENT TO RUN
-        return True
+        #return True
         #
         #
         #####################################
-        if self.step_name.text() == '':    # make sure there is a name selected
+        '''if self.step_name.text() == '':    # make sure there is a name selected
             show_alert(self, 'Error!', 'Please name your step')
-            return False
+            return False'''
         if self.step_type.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:    # make sure there is a type selected
             show_alert(self, 'Error!', 'Please select a type of run')
             return False
@@ -742,5 +776,14 @@ class WindowEditSweepProfile(QMainWindow):
         # If you want to add validation to the overall sweep profile, do so here!
         #   Maybe to min and max dt?
         return True
+
+    def refresh_graph(self):
+        lbls = True
+        print(self.hide_plot_lbls.checkState())
+        print(Qt.CheckState.Checked)
+        if self.hide_plot_lbls.checkState() == Qt.CheckState.Checked:
+            lbls = False
+        self.graph.update_plot(self.steps, lbls)
+        
             
         
