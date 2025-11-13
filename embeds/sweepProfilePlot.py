@@ -43,8 +43,7 @@ class SweepProfilePlot(Canvas):
         
 
     def update_plot(self, steps, show_labels):
-        print('show labels:')
-        print(show_labels)
+
         self.axes.cla()
         
 

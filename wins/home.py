@@ -5,7 +5,7 @@ from ov_functions import *
 
 # import custom window objects
 from wins.editSample import WindowEditSample
-from wins.editSweepProfile import WindowEditSweepProfile
+from wins.method import WindowMethod
 from wins.viewSweepProfile import WindowViewSweepProfile
 from wins.sample import WindowSample
 
@@ -58,7 +58,7 @@ class WindowHome(QMainWindow):
         
         # define possible popup windows (not modals)
         self.w_edit_sample = WindowEditSample(False, self)
-        self.w_edit_config = WindowEditSweepProfile(False)
+        self.w_edit_config = WindowMethod(False)
         self.w_samples = []
         self.ws_view_config = []
         
@@ -173,18 +173,26 @@ class WindowHome(QMainWindow):
 
     def new_config(self):
         if (self.w_edit_config.isHidden()):                 # check if winow is hidden. If so:
-            self.w_edit_config = WindowEditSweepProfile(False)    #   Create a new empty edit config window
+            self.w_edit_config = WindowMethod(False)    #   Create a new empty edit config window
             self.w_edit_config.show()                       #   and show it!
         else:                                               # if window is already showing
             self.w_edit_config.activateWindow()             #   bring it to front of screen
 
     def open_config(self):
-        '''self.ws_view_config.append(WindowViewSweepProfile())
-        self.ws_view_config[-1].show()'''
+        path = askOpenFileName(filetypes = [(l.filetype_sp_lbl[g.L], g.SWEEP_PROFILE_FILE_TYPES)])
+        if path:
+                try:
+                    
+                    self.ws_view_config.append(WindowMethod(path=path, view_only=True, parent=self))
+                    self.ws_view_config[-1].show()
+                except Exception as e:
+                    print(e)
+        else:
+            return
 
         # FOR TESTING ONLY
         #
-        self.edit_config('C:\\Users\\aaronkrupp\\Desktop\\TO DELETE\\TEST.ovp')
+        #self.edit_config('C:\\Users\\aaronkrupp\\Desktop\\TO DELETE\\TEST.ovp')
         #
         ###############################
     def edit_config(self, path=False):
@@ -195,7 +203,7 @@ class WindowHome(QMainWindow):
                     
                 if path:                                    # if the path is passed or if the user selected a valid path:                        
                     try:
-                        self.w_edit_config = WindowEditSweepProfile(path)   #   Create a new empty edit config window
+                        self.w_edit_config = WindowMethod(path)   #   Create a new empty edit config window
                         self.w_edit_config.show()                           #   and show it!
                     except Exception as e:
                         print(e)

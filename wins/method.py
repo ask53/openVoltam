@@ -51,21 +51,18 @@ from PyQt6.QtWidgets import (
     
     )
 
-class WindowEditSweepProfile(QMainWindow):
-    def __init__(self, path=False, uid=False):
+class WindowMethod(QMainWindow):
+    def __init__(self, path=False, uid=False, view_only=False, parent=False):
         super().__init__()
         self.path = False
         self.steps = []
         self.selected = []
         self.editing = False
         self.adding = False
+        self.view_only = view_only
 
         if path:
             self.path = path
-        if self.path:
-            self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.c_edit_header_edit[g.L])
-        else:
-            self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.c_edit_header_new[g.L])
 
         v1 = QVBoxLayout()
         h1 = QHBoxLayout()
@@ -88,6 +85,7 @@ class WindowEditSweepProfile(QMainWindow):
         self.name = QLineEdit()
         self.name.setObjectName('ov-profile-name')
         self.name.setPlaceholderText('Profile name')
+        self.name.textChanged.connect(self.set_header)
 
         
         
@@ -108,7 +106,8 @@ class WindowEditSweepProfile(QMainWindow):
         self.hide_plot_lbls = QCheckBox('Hide plot labels')
         self.hide_plot_lbls.stateChanged.connect(self.refresh_graph)
         self.graph = SweepProfilePlot()
-
+        
+        # Step-specific inputs
         step_name_lbl = QLabel('Step name')
         self.step_name = QLineEdit()
         self.step_name.setMaxLength(8)
@@ -162,7 +161,7 @@ class WindowEditSweepProfile(QMainWindow):
         w_ramp = QWidget()
         w_ramp.setLayout(v_ramp)
         
-        # Organize measurement widgets into lists to itterate over
+        # Organize some repeated widgets into lists to itterate over
 
         self.ts = {g.SP_CONSTANT: const_t,
                    g.SP_RAMP: ramp_t}
@@ -191,9 +190,9 @@ class WindowEditSweepProfile(QMainWindow):
                                 
         
         self.g1.setLayout(v4)           
-        policy = self.g1.sizePolicy()           # get existing size policy of g1
-        policy.setRetainSizeWhenHidden(True)    # modify policy so that g1 takes up space regardless of whether shown or hidden
-        self.g1.setSizePolicy(policy)           # set g1's size policy to the modified version.
+        #policy = self.g1.sizePolicy()           # get existing size policy of g1
+        #policy.setRetainSizeWhenHidden(True)    # modify policy so that g1 takes up space regardless of whether shown or hidden
+        #self.g1.setSizePolicy(policy)           # set g1's size policy to the modified version.
         
         self.profile_chart = QScrollArea()          # Initialize scroll area
         
@@ -271,12 +270,6 @@ class WindowEditSweepProfile(QMainWindow):
       
         v1.addWidget(self.name)
         v1.addLayout(h1)
-        
-        
-        #h1.addLayout(v2)
-        #h1.addWidget(self.graph)
-        
-        #v1.addLayout(h1)
         v1.addWidget(self.builder)
         
         if self.path:
@@ -288,11 +281,43 @@ class WindowEditSweepProfile(QMainWindow):
         self.hide_new_step_pane()
         if self.path:
             self.set_values_from_file()
-        
+        self.update_buttons()
+        self.set_header()
+
+        if self.view_only:
+            try:
+                but_edit = QPushButton('Edit method')
+                but_edit.clicked.connect(partial(parent.edit_config, path=self.path))
+                but_refresh = QPushButton()
+                but_refresh.setIcon(QIcon(g.ICON_REFRESH))
+                but_refresh.setToolTip('Refresh')
+                but_refresh.clicked.connect(self.set_values_from_file)
+                v1 = QVBoxLayout()
+                h1 = QHBoxLayout()
+                v2 = QVBoxLayout()
+                h2 = QHBoxLayout()
+
+                h2.addWidget(but_edit)
+                h2.addWidget(but_refresh)
+                h2.addStretch()
+                h2.addWidget(self.hide_plot_lbls)
+                v2.addWidget(g2)
+                v2.addWidget(self.profile_chart)
+                v2.addLayout(h2)
+                h1.addLayout(v2)
+                h1.addWidget(self.graph)
+                v1.addWidget(self.name)
+                v1.addLayout(h1)
+
+                self.name.setEnabled(False)
+                self.dt.setEnabled(False)
+            except Exception as e:
+                print(e)
+            
         w = QWidget()
         w.setLayout(v1)
         self.setCentralWidget(w)
-        self.update_buttons()
+        
 
     def init_form_values(self):
         # Modify title and button text
@@ -325,7 +350,8 @@ class WindowEditSweepProfile(QMainWindow):
         self.name.setText(data[g.SP_SP_NAME])
         self.dt.setValue(data[g.SP_DT])
         self.steps = data[g.SP_STEPS]
-        self.refresh_list()  
+        self.refresh_list()
+        self.set_header()
         
         
     def set_form_values_for_editing(self, step):
@@ -469,7 +495,7 @@ class WindowEditSweepProfile(QMainWindow):
         self.profile_chart.setWidget(self.w_pc)
 
     def row_clicked(self, w, event):
-        if self.editing:                                            # If there is an edit in process, 
+        if self.editing or self.view_only:                          # If there is an edit in process or if we are on a view-only window, 
             return                                                  # block the user from modifying the rows at all
         keys = QApplication.keyboardModifiers()
         i = w.property('row')
@@ -767,10 +793,6 @@ class WindowEditSweepProfile(QMainWindow):
                 g.SP_DT: self.dt.value(),
                 g.SP_STEPS: self.steps}
         write_data_to_file(self.path, data)
-            
-
-        
-    
 
     def validate_sweep_profile(self):
         # If you want to add validation to the overall sweep profile, do so here!
@@ -779,11 +801,17 @@ class WindowEditSweepProfile(QMainWindow):
 
     def refresh_graph(self):
         lbls = True
-        print(self.hide_plot_lbls.checkState())
-        print(Qt.CheckState.Checked)
         if self.hide_plot_lbls.checkState() == Qt.CheckState.Checked:
             lbls = False
         self.graph.update_plot(self.steps, lbls)
+
+    def set_header(self):
+        if self.view_only:
+            self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.c_edit_header_view[g.L]+self.name.text())   
+        elif self.path:
+            self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.c_edit_header_edit[g.L]+self.name.text())
+        else:
+            self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.c_edit_header_new[g.L]+self.name.text())
         
             
         

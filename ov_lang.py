@@ -33,8 +33,9 @@ s_edit_discard = ['Discard changes?','¿Tirar cambios a la basura?']
 e_edit_save_dialog = ['Are you sure you want to close without saving this sample?', "Favor de confirmar si quieres cerar sin guardar esta muestra."]
 
 # Window: edit sweep configuration
-c_edit_header_edit = ['Edit method', 'Editar los ajustes de voltametría']
-c_edit_header_new = ['New method', 'Ajuste de voltametría nueva']
+c_edit_header_edit = ['Edit method: ', 'Editar los ajustes de voltametría']
+c_edit_header_new = ['New method: ', 'Ajuste de voltametría nueva']
+c_edit_header_view = ['View method: ', 'TEXTO']
 
 # Window: sample
 s_view_info = ['View info','Ver datos']

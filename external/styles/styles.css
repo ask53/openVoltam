@@ -1,6 +1,6 @@
 /*styles.css*/
 
-WindowEditSample QLineEdit#ov_sample_name, WindowEditSweepProfile QLineEdit#ov-profile-name {
+WindowEditSample QLineEdit#ov_sample_name, WindowMethod QLineEdit#ov-profile-name {
 	font-size: 18pt;
 	border: 0;
 	background-color: rgba(0,0,0,0);

@@ -79,6 +79,7 @@ ICON_X = 'external/icons/x.png'
 ICON_STIR = 'external/icons/stirer.png'
 ICON_VIB = 'external/icons/vibrator.png'
 ICON_MEASURE = 'external/icons/measure.png'
+ICON_REFRESH = 'external/icons/refresh.png'
 
 RC_REPS_MIN = 1
 RC_REPS_MAX = 99
