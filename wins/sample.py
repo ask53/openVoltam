@@ -55,8 +55,9 @@ class WindowSample(QMainWindow):
         self.w_name = QLineEdit()                                       # init line edit
         self.w_name.setMaxLength(63)                                    # set properties
         self.w_name.setObjectName(encodeCustomName(g.S_NAME))           # add object name for specific styling and data mgmt
-        but_edit = QPushButton('edit')
-        but_edit.clicked.connect(parent.edit_sample)
+        if self.view_only:
+            but_edit = QPushButton('edit')
+            but_edit.clicked.connect(parent.edit_sample)
         
 
         # the date collected field 

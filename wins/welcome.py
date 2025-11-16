@@ -34,18 +34,7 @@ from PyQt6.QtWidgets import (
     QFrame    
 )
 
-##############3
-#
-#   FOR TESTING ONLY
-#
-##############
-
-import traceback
-
-
-
-
-# Define class for Home window
+# Define class for Welcome window
 class WindowWelcome(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -56,7 +45,7 @@ class WindowWelcome(QMainWindow):
         self.setWindowTitle(l.window_home[g.L])
         
         # define possible popup windows (not modals)
-        self.w_edit_sample = WindowSample(False, self, open_on_save=True)
+        self.w_new_sample = WindowSample(False, self, open_on_save=True)
         self.w_edit_config = WindowMethod(False)
         self.w_samples = []
         self.ws_view_config = []
@@ -114,11 +103,10 @@ class WindowWelcome(QMainWindow):
         self.setCentralWidget(w)
 
     def new_sample(self):
-        if (self.w_edit_sample.isHidden()):                 # check if winow is hidden. If so:
-            #self.w_edit_sample = WindowSample(False, self)    #   Create a new empty edit sample window, with this as parent
-            self.w_edit_sample.show()                       #   and show it!
+        if (self.w_new_sample.isHidden()):                 # check if winow is hidden. If so:
+            self.w_new_sample.show()                       #   and show it!
         else:                                               # if window is already showing
-            self.w_edit_sample.activateWindow()             #   bring it to front of screen'''
+            self.w_new_sample.activateWindow()             #   bring it to front of screen'''
 
     def open_sample(self, path=False):
         
@@ -152,23 +140,6 @@ class WindowWelcome(QMainWindow):
     def create_sample_window(self, path):
         self.w_samples.append(WindowMain(path, self))     # create new window for sample, append to list
         self.w_samples[len(self.w_samples)-1].show()        # show most recently added sample window
-        
-               
-
-    def edit_sample(self, path):
-        if (self.w_edit_sample.isHidden()):                 # check if window is hidden. If so:
-            if path:                                        # if a path has been passed
-                self.edit_sample_from_file(path)                 #   open the sample from the given path
-            else:                                           # if a path has not been passed, ask the user to select a file
-                path = askOpenFileName(filetypes = [(l.filetype_lbl[g.L], g.SAMPLE_FILE_TYPES)])
-                if path:                                    # if the user has selected a file (instead, say, of selecting "cancel")
-                    self.edit_sample_from_file(path)        # load the sample from the selected file       
-        else:                                               # if window is already showing
-            self.w_edit_sample.activateWindow()             #   bring it to front of screen
-        
-    def edit_sample_from_file(self, path):
-        self.w_edit_sample = WindowSample(path, self)   #   Create a new edit sample window with data from path
-        self.w_edit_sample.show()                       #   and show it!
 
     def new_config(self):
         if (self.w_edit_config.isHidden()):                 # check if winow is hidden. If so:
@@ -189,11 +160,6 @@ class WindowWelcome(QMainWindow):
         else:
             return
 
-        # FOR TESTING ONLY
-        #
-        #self.edit_config('C:\\Users\\aaronkrupp\\Desktop\\TO DELETE\\TEST.ovp')
-        #
-        ###############################
     def edit_config(self, path=False):
         try:
             if (self.w_edit_config.isHidden()):                 # check if winow is hidden. If so:
