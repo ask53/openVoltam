@@ -5,6 +5,7 @@ import ov_globals as g
 new_sample = ['New sample', 'Muestra nueva']
 open_sample = ['Open sample', 'Abrir muestra']
 edit_sample = ['Edit sample', 'Modificar muestra']
+view_sample = ['View sample', 'Ver muestra']
 new_config = ['New method', 'Método nueva']
 open_config = ['Open method', 'Abrir config']
 edit_config = ['Edit method','Modificar config']

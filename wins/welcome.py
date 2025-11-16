@@ -4,10 +4,9 @@ import ov_lang as l
 from ov_functions import *
 
 # import custom window objects
-from wins.editSample import WindowEditSample
-from wins.method import WindowMethod
-from wins.viewSweepProfile import WindowViewSweepProfile
 from wins.sample import WindowSample
+from wins.method import WindowMethod
+from wins.main import WindowMain
 
 # import other necessary python tools
 from os.path import join as joindir
@@ -47,7 +46,7 @@ import traceback
 
 
 # Define class for Home window
-class WindowHome(QMainWindow):
+class WindowWelcome(QMainWindow):
     def __init__(self):
         super().__init__()
 
@@ -57,7 +56,7 @@ class WindowHome(QMainWindow):
         self.setWindowTitle(l.window_home[g.L])
         
         # define possible popup windows (not modals)
-        self.w_edit_sample = WindowEditSample(False, self)
+        self.w_edit_sample = WindowSample(False, self, open_on_save=True)
         self.w_edit_config = WindowMethod(False)
         self.w_samples = []
         self.ws_view_config = []
@@ -116,7 +115,7 @@ class WindowHome(QMainWindow):
 
     def new_sample(self):
         if (self.w_edit_sample.isHidden()):                 # check if winow is hidden. If so:
-            self.w_edit_sample = WindowEditSample(False, self)    #   Create a new empty edit sample window, with this as parent
+            #self.w_edit_sample = WindowSample(False, self)    #   Create a new empty edit sample window, with this as parent
             self.w_edit_sample.show()                       #   and show it!
         else:                                               # if window is already showing
             self.w_edit_sample.activateWindow()             #   bring it to front of screen'''
@@ -151,7 +150,7 @@ class WindowHome(QMainWindow):
             
 
     def create_sample_window(self, path):
-        self.w_samples.append(WindowSample(path, self))     # create new window for sample, append to list
+        self.w_samples.append(WindowMain(path, self))     # create new window for sample, append to list
         self.w_samples[len(self.w_samples)-1].show()        # show most recently added sample window
         
                
@@ -168,7 +167,7 @@ class WindowHome(QMainWindow):
             self.w_edit_sample.activateWindow()             #   bring it to front of screen
         
     def edit_sample_from_file(self, path):
-        self.w_edit_sample = WindowEditSample(path, self)   #   Create a new edit sample window with data from path
+        self.w_edit_sample = WindowSample(path, self)   #   Create a new edit sample window with data from path
         self.w_edit_sample.show()                       #   and show it!
 
     def new_config(self):

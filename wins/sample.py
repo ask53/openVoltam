@@ -1,457 +1,300 @@
 """
-window_sample.py
+window_editSample.py
 
-This file defines a class WindowSample which creates a window object
-that can be used to do a bunch of things. This is the main window that the
-user will primarily use while operating the GUI.
+This file defines a class WindowEditSample which creates a window object
+that can be used to create a new sample (if blank) or to edit an existing
+sample file (if passed the path of the sample file).
 
-The user can configure new runs, initiate runs, collect data, analyze data,
-export data, view all past runs and analysis, and perhaps run calculations
+The sample file may be saved to a file named by the user anywhere in the
+local directory.
+
+All files are in .json format. 
 """
 
 import ov_globals as g
 import ov_lang as l
 from ov_functions import *
 
-from wins.viewSample import WindowViewSample
-from wins.runConfig import WindowRunConfig
-
-# import other necessary python tools
-from os.path import join as joindir
+from tkinter.filedialog import asksaveasfilename as askSaveAsFileName
 from functools import partial
-from tkinter.filedialog import askopenfilename as askOpenFileName
 
-from PyQt6.QtTest import QTest
-from PyQt6.QtGui import QAction, QFont, QIcon
-from PyQt6.QtCore import QDate, Qt
+from PyQt6.QtCore import QDateTime, QDate
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QMainWindow,
+    QLineEdit,
+    QDateEdit,
+    QTextEdit,
+    QLabel,
     QPushButton,
     QVBoxLayout,
     QHBoxLayout,
-    QGridLayout,
-    QTableWidget,
     QWidget,
-    QLabel,
-    QToolTip,
-    QHeaderView,
-    QCheckBox,
-    QScrollArea,
-    QGroupBox
-    
+    QMessageBox
 )
 
-# Define class for Home window
-class WindowSample(QMainWindow):  
-
-    def __init__(self, path, parent):
-        super().__init__()
-        
-        self.path = path
-        self.parent = parent
-        self.data = {}
-        self.w_view_sample = False
-        self.config_pane_displayed = False
-        self.setObjectName('window-sample')
-        self.selected = []                  # for storing which runs are selected
-        self.prog_check_flag = False
-        self.num_runs = 0
-
-        #print(self.data)
-            
-
-        #####################
-        #                   #
-        #   menu bar        #
-        #                   #
-        #####################
-        menu = self.menuBar()
-
-        # add labels ("actions") for menu bar
-        action_new_sample = QAction(l.new_sample[g.L], self)
-        action_open_sample = QAction(l.open_sample[g.L], self)
-        action_new_config = QAction(l.new_config[g.L], self)
-        action_open_config = QAction(l.open_config[g.L], self)
-        action_edit_config = QAction(l.edit_config[g.L], self)
-
-        # connect menu bar labels with slots 
-        action_new_sample.triggered.connect(parent.new_sample)                      # this first group of menu functions come from the home window (parent)
-        action_open_sample.triggered.connect(parent.open_sample)
-        action_new_config.triggered.connect(parent.new_config)
-        action_open_config.triggered.connect(parent.open_config)
-        action_edit_config.triggered.connect(parent.edit_config)
-
-        # Add menu top labels then populate the menus with the above slotted labels
-        file_menu = menu.addMenu(l.menu_sample[g.L])
-        file_menu.addAction(action_new_sample)
-        file_menu.addAction(action_open_sample)
-        
-        file_menu = menu.addMenu(l.menu_config[g.L])
-        file_menu.addAction(action_new_config)
-        file_menu.addAction(action_open_config)
-        file_menu.addSeparator()
-        file_menu.addAction(action_edit_config)
-
-        file_menu = menu.addMenu(l.menu_run[g.L])
+class WindowSample(QMainWindow):
+    def __init__(self, path, parent, view_only=False, update_on_save=False, open_on_save=False):  
+        super().__init__()                          # if path, load sample deets, else load empty edit window for new sample
+        self.path = path                            # create an empty string for holding the filepath
+        self.parent = parent                        # store the parent object in object-wide scope
+        self.data = {}                              # create an empty dict to hold data read from a file
+        self.saved = False                          # reset flag to indicate current data shown in pane hasn't been saved
+        self.setObjectName("window-edit-sample")    # create a name for modifying styles from QSS
+        layouts = []                                # create list to hold layouts
+        self.view_only = view_only
+        self.update_on_save = update_on_save
+        self.open_on_save = open_on_save
 
 
-        #####################
-        #                   #
-        #   page layout     #
-        #                   #
-        #####################
-        
-        self.load_sample_info()                                                 # reads sample info into self.data
-        self.set_sample_info()
-
+        print(type(self.parent))
+        print(parent)
         
 
-        lay = QVBoxLayout()                             # this is the main vertical layout we'll add things to
-
-        #
-        #   Define the top row ("sample header")
-        #
+        # The name field 
+        self.w_name = QLineEdit()                                       # init line edit
+        self.w_name.setMaxLength(63)                                    # set properties
+        self.w_name.setObjectName(encodeCustomName(g.S_NAME))           # add object name for specific styling and data mgmt
+        but_edit = QPushButton('edit')
+        but_edit.clicked.connect(parent.edit_sample)
         
-        
-        but_view = QPushButton('Sample info')
-        but_edit = QPushButton('Edit sample')
-        but_config = QPushButton('NEW RUN')
-        but_calc = QPushButton('Calculate')
-        but_res_sample = QPushButton('Sample results')
 
-        but_view.clicked.connect(self.view_sample_info)
-        but_edit.clicked.connect(partial(self.parent.edit_sample, self.path))
-        but_config.clicked.connect(self.config_run)
-        
-        v1 = QVLine()
-        v2 = QVLine()
-        v3 = QVLine()
-        
-        l_sample_header = QHBoxLayout()
-        l_sample_header.addWidget(self.lbl_sample_name)
-        l_sample_header.addWidget(but_view)
-        l_sample_header.addWidget(but_edit)
-        l_sample_header.addWidget(v1)
-        l_sample_header.addStretch()
-        l_sample_header.addWidget(v2)
-        l_sample_header.addWidget(but_config)
-        l_sample_header.addWidget(v3)
-        l_sample_header.addWidget(but_calc)
-        l_sample_header.addWidget(but_res_sample)
+        # the date collected field 
+        w_lbl_date_collected = QLabel(l.s_edit_date_c[g.L])                                 # init label with text
+        self.w_date_collected = QDateEdit()                                                 # init input
+        self.w_date_collected.setDisplayFormat(g.DATE_DISPLAY_FORMAT)                       # set input properties
+        self.w_date_collected.setCalendarPopup(True)                                
+        self.w_date_collected.setObjectName(encodeCustomName(g.S_DATE_COLLECTED))           # add name to input for data mgmt
+        layouts.append(horizontalize([w_lbl_date_collected, self.w_date_collected]))   # add horizontal layout of label and input
+                                                                                            #   to list of horizontal layouts
+        # the location collected field
+        w_lbl_loc = QLabel(l.s_edit_loc[g.L])
+        self.w_loc = QLineEdit()
+        self.w_loc.setMaxLength(63)
+        self.w_loc.setObjectName(encodeCustomName(g.S_LOC_COLLECTED))
+        layouts.append(horizontalize([w_lbl_loc, self.w_loc]))
 
-        w_sample_header = QWidget()                         # create a widget to hold the layout (which can be styled)
-        w_sample_header.setLayout(l_sample_header)          # add the layout to the widget
-        w_sample_header.setObjectName("sample-header")      # add a name to target with QSS
+        # the contact info field
+        w_lbl_contact = QLabel(l.s_edit_contact[g.L])
+        self.w_contact = QLineEdit()
+        self.w_contact.setMaxLength(63)
+        self.w_contact.setObjectName(encodeCustomName(g.S_CONTACT))
+        layouts.append(horizontalize([w_lbl_contact, self.w_contact]))
 
-    
-        #
-        #   Define the second row ("run header")
-        #
- 
-        l_run_header = QHBoxLayout()
+        # the collected by field
+        w_lbl_sampler = QLabel(l.s_edit_sampler[g.L])
+        self.w_sampler = QLineEdit()
+        self.w_sampler.setMaxLength(63)
+        self.w_sampler.setObjectName(encodeCustomName(g.S_COLLECTED_BY))
+        layouts.append(horizontalize([w_lbl_sampler, self.w_sampler]))
 
-        self.cb_all = QCheckBox()
-        lbl_cb_all = QLabel("Select all")
+        # the notes field
+        w_lbl_notes = QLabel(l.s_edit_notes[g.L])
+        self.w_notes = QTextEdit()
+        self.w_notes.setObjectName(encodeCustomName(g.S_NOTES))
+        layouts.append(horizontalize([w_lbl_notes, self.w_notes]))
 
-        self.cb_all.stateChanged.connect(partial(self.select_all_toggle, self.cb_all))  # connect checkbox to select_all_toggle function
-        lbl_cb_all.mouseReleaseEvent = self.select_all_lbl_clicked                      # when label is clicked, toggle checkbox
+        # the save (and save as) button(s)
+        but_save = QPushButton(l.s_edit_save[g.L])                          # create 'save' button
+        but_save_as = QPushButton(l.s_edit_save_as[g.L])                    # create 'save as' button
+        but_save_as.clicked.connect(partial(self.startSave, 'save as'))
+        layout_but = QHBoxLayout()
+        layout_but.addWidget(but_save)                                      # add 'save' button to horiz button layout
+        if self.path:                                                       # if we are modifying an existing file
+            but_save.clicked.connect(partial(self.startSave, 'save'))       #   then the 'save' button does the regular save action
+            layout_but.addWidget(but_save_as)                               #   also add the 'save as' button to the button layout
+        else:
+            but_save.clicked.connect(partial(self.startSave, 'save as'))    # if new sample, run 'save as' when 'save' is clicked
 
-        but_view_config = QPushButton('Details')
-        but_edit = QPushButton('Edit')
-        but_del = QPushButton('Delete')
-        but_export_raw = QPushButton('Export')
-        but_view_plots = QPushButton('Graph')
-        but_analyze = QPushButton('Analyze')
-        but_view_results = QPushButton('Results')
-        but_export_results = QPushButton('Export')
-
-        but_view_config.setObjectName(g.RUNS_BUT_ANY_NAME)
-        but_edit.setObjectName(g.RUNS_BUT_ONE_NAME)
-        but_del.setObjectName(g.RUNS_BUT_ANY_NAME)
-        but_export_raw.setObjectName(g.RUNS_BUT_ANY_NAME)
-        but_view_plots.setObjectName(g.RUNS_BUT_ANY_NAME)
-        but_analyze.setObjectName(g.RUNS_BUT_ANY_NAME)
-        but_view_results.setObjectName(g.RUNS_BUT_ANY_NAME)
-        but_export_results.setObjectName(g.RUNS_BUT_ANY_NAME)
-
-        l_run_header.addWidget(self.cb_all)
-        l_run_header.addWidget(lbl_cb_all)
-
-        l_run = QHBoxLayout()
-        l_run.addWidget(but_view_config)
-        l_run.addWidget(but_edit)
-        l_run.addWidget(but_del)
-        gb_run = QGroupBox("Run info")
-        gb_run.setLayout(l_run)
-
-        l_raw = QHBoxLayout()
-        l_raw.addWidget(but_export_raw)
-        l_raw.addWidget(but_view_plots)
-        l_raw.addWidget(but_analyze)
-        gb_raw = QGroupBox("Raw data")
-        gb_raw.setLayout(l_raw)
-
-        l_res = QHBoxLayout()
-        l_res.addWidget(but_view_results)
-        l_res.addWidget(but_export_results)
-        gb_res = QGroupBox("Run results")
-        gb_res.setLayout(l_res)
-        
-        l_run_header.addWidget(gb_run)
-        l_run_header.addWidget(gb_raw)
-        l_run_header.addWidget(gb_res)
-        l_run_header.addStretch()
-
-        self.w_run_header = QWidget()                    # create a widget to hold the layout (which can be styled)
-        self.w_run_header.setLayout(l_run_header)        # add the layout to the widget
-        self.w_run_header.setObjectName("run-header-row")# add a name to target with QSS
-
-
-        # Grab the run history as a widget
-        self.widgetize_run_history()
-        
-        # Add all of these three widgets to our vertical layout
-        lay.addWidget(w_sample_header)
-        lay.addWidget(self.w_run_header)
-        lay.addWidget(self.w_run_history_area)
-
-        # make sure all buttons are appropriately enabled/disabled to start
-        self.update_button_states()
-
-        # Display! 
+        # organize these widgets into a layout
+        layout_pane = QVBoxLayout()
+        if self.view_only:
+            layout_pane.addLayout(horizontalize([self.w_name, but_edit]))
+        else:
+            layout_pane.addWidget(self.w_name)  # add the name first
+        for layout in layouts:              # add all the rest of the label+input rows
+            layout_pane.addLayout(layout)   
+        if not self.view_only:
+            layout_pane.addLayout(layout_but)     # add the save button on the bottom
         self.w = QWidget()
-        self.w.setLayout(lay)
-        self.setCentralWidget(self.w)
-        
-        
+        self.w.setLayout(layout_pane)
 
-    def select_all_lbl_clicked(self, event):        # this exists so that the "select all" label can be clicked
-        self.cb_all.toggle()                        #   as well as the checkbox itself
-
-    def load_sample_info(self):                     # this grabs all data from file and lays it out on the window
-                                                    # this can be called to update the window when the file has been updated
-        if self.path:                                # if there is a path, read in the data
-            self.data = get_data_from_file(self.path)
-
-    def set_sample_info(self):
-        self.w_view_sample = WindowViewSample(self.data)        # Update info in view sample pane (even if hidden)
-        sample_name = self.data[g.S_NAME]                       
-        self.setWindowTitle(sample_name)                        # Set the sample window title to the sample name
-        try:
-            self.lbl_sample_name.updateTitleLbl(sample_name)    # Set the Title label to the sample name...if this 
-        except:                                                 #   throws and error, there is not yet a title label
-            self.lbl_sample_name = TitleLbl(sample_name)        #   so create one! 
-
-
-
-    def view_sample_info(self):
-        self.w_view_sample = WindowViewSample(self.data)
-        self.w_view_sample.show()
-
-    def update_displayed_info(self):
-        self.load_sample_info()                                             # reload the sample info from file
-        self.set_sample_info()                                          
-        self.selected = []                                                  # re-init selected list b/c we have reloaded all runs and none 
-                                                                            #   are selected to start.
-        self.w_run_history_area.setParent(None)                             # remove run history pane from layout
-        self.widgetize_run_history()                                        # get updated run history as a widget    
-        self.centralWidget().layout().addWidget(self.w_run_history_area)    # add the updated run history back to layout                                      # and adjust the size to match the window
-
-    def config_run(self):
-        try:
-            self.w_run_config = WindowRunConfig(self, 'run-0')
-            self.w_run_config.show()
-        except Exception as e:
-            print(e)
-        
-
-    def widgetize_run_history(self):
-        demo = [{
-            'name': 'run_1',
-            'type':'blank',
-            'sweep':'20s As ramp -1.7 to 0.4V',
-            'timestamp': '2025-10-15 08:56pm',
-            'comment':'Blank test run'},{
-                'name':'run_2',
-            'type':'sample',
-            'sweep':'20s As ramp -1.7 to 0.4V w background',
-            'timestamp': '2025-10-15 09:02pm',
-            'comment':'No diultion'},{
-                'name': 'run_3',
-            'type':'sample',
-            'sweep':'20s As ramp -1.7 to 0.4V w background',
-            'timestamp': '2025-10-15 09:09pm',
-            'comment':'No diultion'},{
-                'name': 'run_6',
-            'type':'sample',
-            'sweep':'20s As ramp -1.7 to 0.4V w background',
-            'timestamp': '2025-10-15 09:32pm',
-            'comment':'No diultion'}]
-        self.w_run_history_area = QScrollArea()
-        self.w_run_history_area.resizeEvent = self.resize
-
-        grid = QGridLayout()
-        grid.setHorizontalSpacing(0)
-        grid.setVerticalSpacing(0)
-        headers = ['Run began','Type', 'Sweep profile','Notes']
-        w_heads = [0,0,0,0]
-        for i, header in enumerate(headers):
-            w_heads[i] = QLabel(header)
-            w_heads[i].setObjectName('run-col-header')
-            grid.addWidget(w_heads[i], 0, i+1)
+        if self.view_only:
+            self.w_name.setEnabled(False)
+            self.w_date_collected.setEnabled(False)
+            self.w_loc.setEnabled(False)
+            self.w_contact.setEnabled(False)
+            self.w_sampler.setEnabled(False)
+            self.w_notes.setEnabled(False)
             
-
-
-
-
-        
-        for i, run in enumerate(demo):
-            w_cb = QCheckBox()
-            w_cb.setObjectName(run['name'])         ##### <--- THIS IS WHERE THE RUN UID GETS STORED!!!
-            w_cb.stateChanged.connect(partial(self.row_toggle,w_cb))
-            w_type = QLabel(run['type'])
-            w_sweep = QLabel(run['sweep'])
-            w_comment = QLabel(run['comment'])
-            w_time = QLabel(run['timestamp'])
-
-            w_type.mouseReleaseEvent = partial(self.row_clicked, w_type)
-            w_sweep.mouseReleaseEvent = partial(self.row_clicked, w_sweep)
-            w_comment.mouseReleaseEvent = partial(self.row_clicked, w_comment)
-            w_time.mouseReleaseEvent = partial(self.row_clicked, w_time)
-
-            if (i%2 == 0):
-                obj_name =g.RUNS_ODD_ROW_NAME
+        # if a path was entered, gather the data from the specified file and display it
+        if self.path:
+            try:
+                self.setTextFromFile()
+            except Exception as e:
+                print(e)
+            if self.view_only:
+                self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.view_sample[g.L])
             else:
-                obj_name =g.RUNS_EVEN_ROW_NAME
+                self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.edit_sample[g.L])
+        else:
+            self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.new_sample[g.L])
+            self.w_name.setPlaceholderText(l.s_edit_name[g.L])
 
-            w_type.setObjectName(obj_name)
-            w_sweep.setObjectName(obj_name)
-            w_comment.setObjectName(obj_name)
-            w_time.setObjectName(obj_name)
-            
-            grid.addWidget(w_cb, i+1, 0)
-            grid.addWidget(w_type, i+1, 2)
-            grid.addWidget(w_sweep, i+1, 3)
-            grid.addWidget(w_comment, i+1, 4)
-            grid.addWidget(w_time, i+1, 1)
 
-        self.num_runs = i+1
-        grid.setColumnStretch(4,1)
+        self.setCentralWidget(self.w)
 
-        self.w_run_history_container = QWidget()
-        self.w_run_history_container.setLayout(grid)
-        self.w_run_history_container.setObjectName('runs-container')
-        self.w_run_history_area.setWidget(self.w_run_history_container)
+    def startSave(self, save_type):
+        if self.validate():
+            try:
+                if save_type == 'save as':
+                    self.saveFileAs()
+                else:
+                    self.saveFile()
+            except Exception as e:
+                print(e)
+
+    def validate(self):
+        """
+        Validates the form. If there is an error, a dialog is displayed to
+        user that describes the error and the function returns False.
+        If no error, returns True
+        """
+        if len(self.w_name.text()) < g.SAMPLE_NAME_MIN_LENGTH:
+            show_alert(self, l.alert_header[g.L], l.alert_s_edit_name[g.L])
+            return False
+        else:
+            return True
+
+    def setTextFromFile(self):
+        self.data = get_data_from_file(self.path)
+        w = self.w
         
-
-    def row_clicked(self, w, event):
-        ws = self.get_row_ws(w)
-        for w in ws:
-            if isinstance(w, QCheckBox):
-                w.toggle()
-                break
-
-    def select_all_toggle(self, w):
-        if self.prog_check_flag:                        # if the select all checkbox has been modified programatically
-            self.prog_check_flag = False                # reset the flag
-            return                                      # and do nothing
-        else:                                           # otherwise, it was a user click!
-            state = w.checkState()
-            state_to_set = Qt.CheckState.Unchecked      # figure out what to set all the run checkboxes to (checked or unchecked)
-            if (state == Qt.CheckState.Checked):
-                state_to_set = Qt.CheckState.Checked
-
-            for w in self.w_run_history_container.children():       # loop thru all the widgets in the grid
-                if isinstance(w, QCheckBox):            # for each checkbox
-                    w.setCheckState(state_to_set)         # set the checkbox to the state determined above
-                    
-    def row_toggle(self, w, state):
-        run_id = w.objectName()
-        if (state == Qt.CheckState.Checked.value):              # if the checkbox is now checked
-            if run_id not in self.selected:                     #  and if that row is not already listed as selected (altho this should be redundant)
-                self.selected.append(run_id)                    #   add the current run uid to the list of selected runs     
-                self.highlight_row(w)                           #   and highlight the row
-                if (len(self.selected) == self.num_runs):       #   if this is the final row now selected (all rows are selected)
-                    if (self.cb_all.checkState() == Qt.CheckState.Unchecked):
-                        self.cb_all.toggle()
-        elif run_id in self.selected:                               # if the the checkbox is now not checked and the row is currently listed as selected
-            self.selected.remove(run_id)                            #  remove it from the selected list,
-            self.unhighlight_row(w)                                 #  remove the highlighting,
-            if (self.cb_all.checkState() == Qt.CheckState.Checked): # and if the 'select-all' box is checked
-                self.prog_check_flag = True                         # set the flag that we modified a checkbox programatically
-                self.cb_all.toggle()                                # and uncheck the "select all" checkbox
-        self.update_button_states()
-
-    def highlight_row(self, w):                                             # Highlights the row that contains the widget w        
-        row = self.get_row_ws(w)                                            # find all widgets in row that contains w                                             
-        for w in row:                                                       # loop through them
-            if not isinstance(w, QCheckBox):                                # for all widgets that are not checkboxes
-                w.setObjectName(w.objectName()+g.RUNS_ROW_SELECTED_SUFFIX)  #   update the widget name to indicate it sholud display as selected
-        applyStyles()                                                       # when complete, update the styles across the app
-
-    def unhighlight_row(self, w):                                                       # Unhighlights the row that contains the widget w 
-        row = self.get_row_ws(w)                                                        # find all widgets in row that contains w 
-        for w in row:                                                                   # loop through them
-            if not isinstance(w, QCheckBox):                                            # for all widgets that are not checkboxes
-                w.setObjectName(w.objectName().replace(g.RUNS_ROW_SELECTED_SUFFIX,''))  #   update the widget name to indicate it sholud no longer be highlighted
-        applyStyles()                                                                   # when complete, update the styles across the app
- 
-    ###################### REDO THE GET ROW, HIGHLIGHT, AND SELECTION FUNCTIONS
-        # USING THE GLOBAL FUNCTIONS AND THE FACT THAT WE CAN ADD A
-        # ROW PROPERTY TO EACH WIDGET WHEN WE PLACE IT IN THE GRIDDDD
-        ###################################################################################################################################################################################################
-    def get_row_ws(self, widget_to_find):
-        '''Takes in a widget that is on the table of runs
-        loops through that table and returns a list of all
-        widgets on the same row as the given widget, in order
-        from left to right'''
-        all_ws = self.w_run_history_container.children()    # grab all table widgets
-        row_ws = []                             
-        found_row = False
-        for w in all_ws:    
-            if isinstance(w, QCheckBox):        # if the widget is a checkbox, that means its the start of a new row
-                if found_row:                   # if the previous row was the row we were seeking
-                    break                       #   break! we did it! 
-                row_ws = [w]                    # otherwise, begin storing the values in this array
-            else:                               # if the the widget is NOT a checkbox, its an ordinary row element
-                row_ws.append(w)                #  append it to the list
-
-            if (w == widget_to_find):           # if the current widget is the widget we were seeking
-                found_row = True
-
-        return row_ws
-
-    def update_button_states(self):
-        rows = len(self.selected)
-        enable_buts = []
-        disable_buts = []
-        if rows == 0:
-            disable_buts = self.w_run_header.findChildren(QPushButton)
-        elif rows == 1:
-            enable_buts = self.w_run_header.findChildren(QPushButton)
-        elif rows > 1:
-            disable_buts = self.w_run_header.findChildren(QPushButton, g.RUNS_BUT_ONE_NAME)
-            enable_buts = self.w_run_header.findChildren(QPushButton, g.RUNS_BUT_ANY_NAME)
-            
-        for but in disable_buts:
-            but.setEnabled(False)
-        for but in enable_buts:
-            but.setEnabled(True)
-
-    
+        textedits = w.findChildren(QLineEdit) + w.findChildren(QTextEdit) # grab all line and text edit objects from form
+        dateedits = w.findChildren(QDateEdit)                                  # grab all date edit objects from form
 
 
-    def resize(self, event):
-        outer = self.w_run_history_area
-        inner = self.w_run_history_container
-        scroll_area_resized(outer, inner, event)
+        # loop through all line edit elements, saving entered text
+        for el in textedits:
+            if isCustomName(el.objectName()):
+                el.setText(self.data[decodeCustomName(el.objectName())])
+
+        # loop through all date elements, saving date
+        for el in dateedits:
+            if isCustomName(el.objectName()):
+                d = QDate.fromString(self.data[decodeCustomName(el.objectName())], g.DATE_STORAGE_FORMAT)
+                el.setDate(d)    
 
 
-class TitleLbl(QLabel):
-    def __init__(self, name):
-        super(QLabel, self).__init__()
-        self.setObjectName(encodeCustomName(g.S_NAME))
-        self.setText(name)
-                 
-    def updateTitleLbl(self, new_name):
-        self.setText(new_name)
+    def saveFileAs(self):
+        # get the actual filename and path from user
+
+        self.path = askSaveAsFileName(                           # open a save file dialog which returns the file object
+            filetypes=[(l.filetype_sample_lbl[g.L], g.SAMPLE_FILE_TYPES)],
+            defaultextension=g.SAMPLE_EXT,
+            confirmoverwrite=True,
+            initialfile=guess_filename(self.w_name.text()))
+        if not self.path or self.path == '':            # if the user didn't select a path
+            return                                      # don't try to save, just return
+        self.saveFile()                                 # save the file!
+
+    def saveFile(self):
+        lineedits = self.findChildren(QLineEdit)            # grab all line edit objects from form
+        dateedits = self.findChildren(QDateEdit)            # grab all date edit objects from form
+        textedits = self.findChildren(QTextEdit)            # grab all paragraph text edit objects from form
+        newSample = True
+        if self.data:
+            newSample = False
+                
+
+        # loop through all line edit elements, saving entered text
+        for el in lineedits:
+            if isCustomName(el.objectName()):
+                self.data.update({decodeCustomName(el.objectName()): el.text()})
+
+        # loop through all date elements, saving date
+        for el in dateedits:
+            if isCustomName(el.objectName()):
+                self.data.update({decodeCustomName(el.objectName()): el.date().toString(g.DATE_STORAGE_FORMAT)})
+
+        # loop through all paragraph edit(textedit) elements, saving text
+        for el in textedits:
+            if isCustomName(el.objectName()):
+                self.data.update({decodeCustomName(el.objectName()): el.toPlainText()})
+
+        if newSample:
+            # append current datetime
+            self.data.update({g.S_DATE_ENTERED: QDateTime.currentDateTime().toString(g.DATETIME_STORAGE_FORMAT)})
+        
+            # append empty arrays for future data
+            for key in g.S_BLANK_ARRAYS:
+                self.data.update({key:[]})
+
+
+        # write dict to file
+        write_data_to_file(self.path, self.data)
+        self.saved = True                                   # set flag that file has been successfully saved
+        self.close()                                        # close the new sample window
+
+    def closeEvent(self, event):
+        """
+        This is the handler for all close envents, including those generated by the user
+        (eg. the press of the X button) and those generated programatically (eg. a
+        'self.close()' statement). The name of this function is dictated by PyQt6's
+        specification for event handling.
+
+        Algorithm:
+        Checks the flag self.saved.
+            If True, window is closed.
+            If False, displays a dialog with three options: save, discard, and cancel.
+                - if save is selected, the close action is blocked and the save
+                    routine is called
+                - if discard is selected, the window is closed
+                - if cancel is selected, the close action is blocked
+        """
+        if self.view_only:      # If the pane is view only (no editing possible)
+            event.accept()      # we don't need to ask about saving, so close window
+        else:
+        
+            if not self.saved:                                      # if there is unsaved content:
+
+                confirm = saveMessageBox(self)                      # init a dialog asking the user if they're sure
+                resp = confirm.exec()                               # launch the dialog
+
+                if resp == QMessageBox.StandardButton.Save:         # if the user selects "Save"
+                    event.ignore()                                  #   block the close action
+                    if self.path:                                   # if there is already a save path
+                        self.startSave('save')                      #   run the 'save' function
+                    else:                                           # otherwise,
+                        self.startSave('save as')                   #   run the 'save as' function
+                elif resp == QMessageBox.StandardButton.Discard:    # if the user selects "discard"
+                    event.accept()                                  #   allow the close action to complete
+                else:                                               # if the user selects "cancel" (or anything else)
+                    event.ignore()                                  #   block the close action
+            else:                                                   # if there is no unsaved content
+                try:
+                    if self.open_on_save:
+                        self.parent.open_sample(self.path)              #   open the recently saved sample
+                    if self.update_on_save:
+                        self.parent.update_displayed_info()
+                    event.accept()                                  #   then allow the close event to proceed
+                except Exception as e:
+                    print(e)
+                                        
+
+
+class saveMessageBox(QMessageBox):
+    def __init__(self, parent):                       
+        super().__init__()
+        # set text for save message
+        self.setWindowTitle(l.s_edit_discard[g.L]) 
+        self.setText(l.e_edit_save_dialog[g.L])
+        self.setStandardButtons(QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel)
+
+        # customize button language text for multi-language support
+        but_save = self.button(QMessageBox.StandardButton.Save)
+        but_save.setText(l.s_edit_save[g.L])
+        but_disc = self.button(QMessageBox.StandardButton.Discard)
+        but_disc.setText(l.s_edit_close_wo_save[g.L])
+        but_canc = self.button(QMessageBox.StandardButton.Cancel)
+        but_canc.setText(l.s_edit_cancel[g.L])

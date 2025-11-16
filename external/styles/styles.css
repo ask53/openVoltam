@@ -1,6 +1,6 @@
 /*styles.css*/
 
-WindowEditSample QLineEdit#ov_sample_name, WindowMethod QLineEdit#ov-profile-name {
+WindowSample QLineEdit#ov_sample_name, WindowMethod QLineEdit#ov-profile-name {
 	font-size: 18pt;
 	border: 0;
 	background-color: rgba(0,0,0,0);
@@ -24,7 +24,7 @@ QTableWidget::item QLabel {
 	padding: 2px 6px;
 }
 
-WindowSample #sample-header {
+WindowMain #sample-header {
 	background-color: pink;
 	border: 1px solid grey;
 }

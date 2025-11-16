@@ -2,7 +2,7 @@
 import ov_globals as g
 import ov_lang as l
 from ov_functions import *
-from wins.home import WindowHome
+from wins.welcome import WindowWelcome
 
 # import other python functions (be as specific as possible to keep filesize down)
 from os.path import dirname
@@ -30,8 +30,8 @@ g.APP.setWindowIcon(QIcon(joindir(g.BASEDIR,'external/icons/icon.png')))      # 
 with open(joindir(g.BASEDIR,"external/styles/styles.css"), "r") as file:    # open the stylesheet
     g.STYLES = file.read()
 applyStyles()                       # and set it as the app's stylesheet
-window = WindowHome()               # create a new home window object
-window.show()                       # show the home window (when the app is run)
+window = WindowWelcome()            # create a new welcome window object
+window.show()                       # show the welcome window (when the app is run)
 g.APP.exec()                        # run the app!
 
 
