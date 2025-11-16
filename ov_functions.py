@@ -3,11 +3,14 @@
 
 from tabularjson import parse, stringify, StringifyOptions
 from re import sub
+from tkinter.filedialog import askopenfilename
 
 from json import dumps
 
 
 import ov_globals as g
+import ov_lang as l
+
 from PyQt6.QtCore import Qt 
 from PyQt6.QtWidgets import (
     QHBoxLayout,
@@ -64,6 +67,18 @@ def guess_filename(name):
     guess = ' '.join(guess.split())         # convert all sequential blankspace to a single space
     guess = guess.replace(' ', '-')         # replace all spaces with em-dashes
     return guess
+
+def get_path_from_user(pathtype):
+    try:
+        path = ''
+        if pathtype=='sample':
+            path = askopenfilename(filetypes = [(l.filetype_sample_lbl[g.L], g.SAMPLE_FILE_TYPES)])
+        elif pathtype=='method':
+            path = askopenfilename(filetypes = [(l.filetype_sp_lbl[g.L], g.SWEEP_PROFILE_FILE_TYPES)])
+        return path
+    except Exception as e:
+        print(e)
+        
     
 
 def get_data_from_file(path):

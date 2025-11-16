@@ -11,11 +11,11 @@ S_LOC_COLLECTED = "location_collected"
 S_CONTACT = "contact_info"
 S_COLLECTED_BY = "collected_by"
 S_NOTES = "sample_comments"
-S_SWEEP_PROFILES = "sweep_profiles"
+S_METHODS = "methods"
 S_RUNS = "runs"
 S_PROCESSED = "processed_data"
 
-S_BLANK_ARRAYS = [S_SWEEP_PROFILES, S_RUNS, S_PROCESSED]
+S_BLANK_ARRAYS = [S_METHODS, S_RUNS, S_PROCESSED]
 
 # Keys for sweep profile dictionary
 SP_UID_SELF = 'uid'

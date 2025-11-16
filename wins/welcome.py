@@ -11,7 +11,6 @@ from wins.main import WindowMain
 # import other necessary python tools
 from os.path import join as joindir
 from functools import partial
-from tkinter.filedialog import askopenfilename as askOpenFileName
 
 # import necessary tools from PyQt6
 from PyQt6.QtGui import QAction, QPixmap, QIcon
@@ -103,15 +102,15 @@ class WindowWelcome(QMainWindow):
         self.setCentralWidget(w)
 
     def new_sample(self):
-        if (self.w_new_sample.isHidden()):                 # check if winow is hidden. If so:
-            self.w_new_sample.show()                       #   and show it!
-        else:                                               # if window is already showing
-            self.w_new_sample.activateWindow()             #   bring it to front of screen'''
+        if (self.w_new_sample.isHidden()):      # check if winow is hidden. If so:
+            self.w_new_sample.show()            #   and show it!
+        else:                                   # if window is already showing
+            self.w_new_sample.activateWindow()  #   bring it to front of screen'''
 
     def open_sample(self, path=False):
         
         if not path:                # if no path is passed, ask the user to pick a file path
-            path = askOpenFileName(filetypes = [(l.filetype_sample_lbl[g.L], g.SAMPLE_FILE_TYPES)])
+            path = get_path_from_user('sample')
         error = False        
         if path:                    # if the path is passed or if the user selected a valid path:
             w = False                               # placeholder for the current sample window
@@ -149,7 +148,7 @@ class WindowWelcome(QMainWindow):
             self.w_edit_config.activateWindow()             #   bring it to front of screen
 
     def open_config(self):
-        path = askOpenFileName(filetypes = [(l.filetype_sp_lbl[g.L], g.SWEEP_PROFILE_FILE_TYPES)])
+        path = get_path_from_user('method')
         if path:
                 try:
                     
@@ -164,7 +163,7 @@ class WindowWelcome(QMainWindow):
         try:
             if (self.w_edit_config.isHidden()):                 # check if winow is hidden. If so:
                 if not path:                                    # if no path is passed, ask the user to pick a file path
-                    path = askOpenFileName(filetypes = [(l.filetype_sp_lbl[g.L], g.SWEEP_PROFILE_FILE_TYPES)])
+                    path = get_path_from_user('method')
                     
                 if path:                                    # if the path is passed or if the user selected a valid path:                        
                     try:

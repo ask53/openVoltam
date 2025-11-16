@@ -24,7 +24,7 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QLineEdit,
     QDateEdit,
-    QTextEdit,
+    QPlainTextEdit,
     QLabel,
     QPushButton,
     QVBoxLayout,
@@ -39,7 +39,7 @@ class WindowSample(QMainWindow):
         self.path = path                            # create an empty string for holding the filepath
         self.parent = parent                        # store the parent object in object-wide scope
         self.data = {}                              # create an empty dict to hold data read from a file
-        self.saved = False                          # reset flag to indicate current data shown in pane hasn't been saved
+        self.saved = True                           # set flag to indicate current data shown reflects what is already saved
         self.setObjectName("window-edit-sample")    # create a name for modifying styles from QSS
         layouts = []                                # create list to hold layouts
         self.view_only = view_only
@@ -55,6 +55,7 @@ class WindowSample(QMainWindow):
         self.w_name = QLineEdit()                                       # init line edit
         self.w_name.setMaxLength(63)                                    # set properties
         self.w_name.setObjectName(encodeCustomName(g.S_NAME))           # add object name for specific styling and data mgmt
+        self.w_name.textEdited.connect(self.update_edited_status)
         if self.view_only:
             but_edit = QPushButton('edit')
             but_edit.clicked.connect(parent.edit_sample)
@@ -66,6 +67,7 @@ class WindowSample(QMainWindow):
         self.w_date_collected.setDisplayFormat(g.DATE_DISPLAY_FORMAT)                       # set input properties
         self.w_date_collected.setCalendarPopup(True)                                
         self.w_date_collected.setObjectName(encodeCustomName(g.S_DATE_COLLECTED))           # add name to input for data mgmt
+        self.w_date_collected.userDateChanged.connect(self.update_edited_status)
         layouts.append(horizontalize([w_lbl_date_collected, self.w_date_collected]))   # add horizontal layout of label and input
                                                                                             #   to list of horizontal layouts
         # the location collected field
@@ -73,6 +75,7 @@ class WindowSample(QMainWindow):
         self.w_loc = QLineEdit()
         self.w_loc.setMaxLength(63)
         self.w_loc.setObjectName(encodeCustomName(g.S_LOC_COLLECTED))
+        self.w_loc.textEdited.connect(self.update_edited_status)
         layouts.append(horizontalize([w_lbl_loc, self.w_loc]))
 
         # the contact info field
@@ -80,6 +83,7 @@ class WindowSample(QMainWindow):
         self.w_contact = QLineEdit()
         self.w_contact.setMaxLength(63)
         self.w_contact.setObjectName(encodeCustomName(g.S_CONTACT))
+        self.w_contact.textEdited.connect(self.update_edited_status)
         layouts.append(horizontalize([w_lbl_contact, self.w_contact]))
 
         # the collected by field
@@ -87,12 +91,14 @@ class WindowSample(QMainWindow):
         self.w_sampler = QLineEdit()
         self.w_sampler.setMaxLength(63)
         self.w_sampler.setObjectName(encodeCustomName(g.S_COLLECTED_BY))
+        self.w_sampler.textEdited.connect(self.update_edited_status)
         layouts.append(horizontalize([w_lbl_sampler, self.w_sampler]))
 
         # the notes field
         w_lbl_notes = QLabel(l.s_edit_notes[g.L])
-        self.w_notes = QTextEdit()
+        self.w_notes = QPlainTextEdit()
         self.w_notes.setObjectName(encodeCustomName(g.S_NOTES))
+        self.w_notes.textChanged.connect(self.update_edited_status)
         layouts.append(horizontalize([w_lbl_notes, self.w_notes]))
 
         # the save (and save as) button(s)
@@ -142,7 +148,7 @@ class WindowSample(QMainWindow):
             self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.new_sample[g.L])
             self.w_name.setPlaceholderText(l.s_edit_name[g.L])
 
-
+        self.saved = True               #set this again as the process of setting text may mess with this flag, but no data has changed
         self.setCentralWidget(self.w)
 
     def startSave(self, save_type):
@@ -171,14 +177,19 @@ class WindowSample(QMainWindow):
         self.data = get_data_from_file(self.path)
         w = self.w
         
-        textedits = w.findChildren(QLineEdit) + w.findChildren(QTextEdit) # grab all line and text edit objects from form
-        dateedits = w.findChildren(QDateEdit)                                  # grab all date edit objects from form
+        textedits = w.findChildren(QLineEdit)
+        plaintextedits = w.findChildren(QPlainTextEdit) 
+        dateedits = w.findChildren(QDateEdit)                                  
 
 
         # loop through all line edit elements, saving entered text
         for el in textedits:
             if isCustomName(el.objectName()):
                 el.setText(self.data[decodeCustomName(el.objectName())])
+
+        for el in plaintextedits:
+            if isCustomName(el.objectName()):
+                el.setPlainText(self.data[decodeCustomName(el.objectName())])
 
         # loop through all date elements, saving date
         for el in dateedits:
@@ -202,7 +213,7 @@ class WindowSample(QMainWindow):
     def saveFile(self):
         lineedits = self.findChildren(QLineEdit)            # grab all line edit objects from form
         dateedits = self.findChildren(QDateEdit)            # grab all date edit objects from form
-        textedits = self.findChildren(QTextEdit)            # grab all paragraph text edit objects from form
+        textedits = self.findChildren(QPlainTextEdit)            # grab all paragraph text edit objects from form
         newSample = True
         if self.data:
             newSample = False
@@ -235,6 +246,8 @@ class WindowSample(QMainWindow):
         # write dict to file
         write_data_to_file(self.path, self.data)
         self.saved = True                                   # set flag that file has been successfully saved
+        if self.update_on_save:
+            self.parent.update_displayed_info()
         self.close()                                        # close the new sample window
 
     def closeEvent(self, event):
@@ -245,19 +258,23 @@ class WindowSample(QMainWindow):
         specification for event handling.
 
         Algorithm:
-        Checks the flag self.saved.
-            If True, window is closed.
-            If False, displays a dialog with three options: save, discard, and cancel.
-                - if save is selected, the close action is blocked and the save
-                    routine is called
-                - if discard is selected, the window is closed
-                - if cancel is selected, the close action is blocked
+        Checks the flag self.view_only.
+            If True, the window is closed (as no editing is possible)
+            Othersiwe:
+            Checks the flag self.saved.
+                If True, window is closed.
+                If False, displays a dialog with three options: save, discard, and cancel.
+                    - if save is selected, the close action is blocked and the save
+                        routine is called
+                    - if discard is selected, the window is closed
+                    - if cancel is selected, the close action is blocked
         """
         if self.view_only:      # If the pane is view only (no editing possible)
             event.accept()      # we don't need to ask about saving, so close window
         else:
         
             if not self.saved:                                      # if there is unsaved content:
+                print('hiiii')
 
                 confirm = saveMessageBox(self)                      # init a dialog asking the user if they're sure
                 resp = confirm.exec()                               # launch the dialog
@@ -273,14 +290,20 @@ class WindowSample(QMainWindow):
                 else:                                               # if the user selects "cancel" (or anything else)
                     event.ignore()                                  #   block the close action
             else:                                                   # if there is no unsaved content
+                
                 try:
-                    if self.open_on_save:
-                        self.parent.open_sample(self.path)              #   open the recently saved sample
-                    if self.update_on_save:
-                        self.parent.update_displayed_info()
+                    if self.path:
+                        if self.open_on_save:
+                            self.parent.open_sample(self.path)              #   open the recently saved sample
+                        if self.update_on_save:
+                            self.parent.update_displayed_info()
                     event.accept()                                  #   then allow the close event to proceed
                 except Exception as e:
                     print(e)
+
+    def update_edited_status(self):
+        print('updating!')
+        self.saved = False
                                         
 
 

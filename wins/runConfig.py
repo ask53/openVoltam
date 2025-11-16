@@ -44,6 +44,7 @@ class WindowRunConfig(QMainWindow):
         
         print(parent.path)
         self.parent = parent
+        self.parent.load_sample_info()                              # make sure data in parent is up-to-date
         self.setWindowTitle(l.rc_window_title[g.L])
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.run_to_run = False
@@ -54,6 +55,8 @@ class WindowRunConfig(QMainWindow):
         v2 = QVBoxLayout()
             
         run_type_lbl = QLabel("Run type")
+
+        print(parent.data)
             
 
         #####################
@@ -69,11 +72,11 @@ class WindowRunConfig(QMainWindow):
         self.run_type.setPlaceholderText(l.rc_select[g.L])
         self.run_type.currentIndexChanged.connect(self.run_type_changed)
 
-        sweep_prof_lbl = QLabel("Sweep profile")
+        sweep_prof_lbl = QLabel("Method")
             
         ###############3 THIS IS A PLACEHOLDER, READ THESE IN AT INIT
         ############### AND UPDATE THIS LIST IF A NEW ONE IS ADDED
-        self.sps = ['sp0', 'my favorite sp1', 'ooops sp2']
+        self.sps = ['method0', 'my favorite method1', 'ooops method2']
         #
         #   These Sweep profiles are two types:
         #       - Those loaded in from .ovc (OV config) files   (data is path)
@@ -147,7 +150,7 @@ class WindowRunConfig(QMainWindow):
 
         if uid:
             i = -1
-            data = get_data_from_file(self.parent.path)
+            data = self.parent.data
             for j, run in enumerate(data[g.S_RUNS]):
                 if run[g.R_UID_SELF] == uid:
                     i = j

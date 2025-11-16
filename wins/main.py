@@ -58,8 +58,8 @@ class WindowMain(QMainWindow):
         self.selected = []                  # for storing which runs are selected
         self.prog_check_flag = False
         self.num_runs = 0
+        self.sub_windows = [self.w_view_sample, self.w_edit_sample]
 
-        #print(self.data)
             
 
         #####################
@@ -232,7 +232,7 @@ class WindowMain(QMainWindow):
 
     def load_sample_info(self):                     # this grabs all data from file and lays it out on the window
                                                     # this can be called to update the window when the file has been updated
-        if self.path:                                # if there is a path, read in the data
+        if self.path:                               # if there is a path, read in the data
             self.data = get_data_from_file(self.path)
 
     def set_sample_info(self):      
@@ -254,11 +254,14 @@ class WindowMain(QMainWindow):
             self.w_view_sample.activateWindow()     # bring it to front
 
     def edit_sample(self):
-        self.w_edit_sample.setTextFromFile()        # update content
-        if self.w_edit_sample.isHidden():           # if window is closed,
-            self.w_edit_sample.show()               # show it
-        else:                                       # if it is showing,
-            self.w_edit_sample.activateWindow()     # bring it to front
+        try:
+            self.w_edit_sample.setTextFromFile()        # update content
+            if self.w_edit_sample.isHidden():           # if window is closed,
+                self.w_edit_sample.show()               # show it
+            else:                                       # if it is showing,
+                self.w_edit_sample.activateWindow()     # bring it to front
+        except Exception as e:
+            print(e)
 
     def update_displayed_info(self):
         self.load_sample_info()                                             # reload the sample info from file
@@ -461,6 +464,11 @@ class WindowMain(QMainWindow):
         outer = self.w_run_history_area
         inner = self.w_run_history_container
         scroll_area_resized(outer, inner, event)
+
+    def closeEvent(self, event):
+        for win in self.sub_windows:
+            win.close()
+        event.accept()
 
 
 class TitleLbl(QLabel):
