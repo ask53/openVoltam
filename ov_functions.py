@@ -131,14 +131,14 @@ def get_ids(data, key):
     return ids
     
 
-def sweep_profiles_match(sp1, sp2):
-    ''' Takes in two sweep profile dicts, sp1 and sp2
+def methods_match(m1, m2):
+    ''' Takes in two method dicts, m1 and m2
     checks whether they match. If so, returns True,
     if not, returns False'''
 
     #####   THIS IS A PLACE HOLDER, WRITE ACTUAL FUNCTION ONCE WE KNOW STRUCTURE OF SWEEP PROFILES!
     #
-    if sp1[g.SP_NOTES] == sp2[g.SP_NOTES]:
+    if m1[g.SP_NOTES] == m2[g.SP_NOTES]:
         return True
     return False
     #

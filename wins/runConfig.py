@@ -42,7 +42,6 @@ class WindowRunConfig(QMainWindow):
     def __init__(self, parent, uid=False):
         super().__init__()
         
-        print(parent.path)
         self.parent = parent
         self.parent.load_sample_info()                              # make sure data in parent is up-to-date
         self.setWindowTitle(l.rc_window_title[g.L])
@@ -55,8 +54,6 @@ class WindowRunConfig(QMainWindow):
         v2 = QVBoxLayout()
             
         run_type_lbl = QLabel("Run type")
-
-        print(parent.data)
             
 
         #####################
@@ -72,24 +69,15 @@ class WindowRunConfig(QMainWindow):
         self.run_type.setPlaceholderText(l.rc_select[g.L])
         self.run_type.currentIndexChanged.connect(self.run_type_changed)
 
-        sweep_prof_lbl = QLabel("Method")
-            
-        ###############3 THIS IS A PLACEHOLDER, READ THESE IN AT INIT
-        ############### AND UPDATE THIS LIST IF A NEW ONE IS ADDED
-        self.sps = ['method0', 'my favorite method1', 'ooops method2']
-        #
-        #   These Sweep profiles are two types:
-        #       - Those loaded in from .ovc (OV config) files   (data is path)
-        #       - Those loaded from already in this sample      (data is uid of sweep in this file)
-        ##########################################################
-        
-        self.sweep_profile = QComboBox()
-        self.sweep_profile.setPlaceholderText(l.rc_select[g.L])
-        self.sweep_profile.addItems(self.sps)
-        self.sweep_profile.currentIndexChanged.connect(self.sweep_profile_changed)
+        method_lbl = QLabel("Method")
+        self.method = QComboBox()
+        self.method.setPlaceholderText(l.rc_select[g.L])
+        for method in parent.data[g.S_METHODS]:
+            self.method.addItem(method[g.SP_NOTES], method)
+        self.method.currentIndexChanged.connect(self.method_changed)
 
-        but_sp_load = QPushButton('load from file')
-        but_sp_load.clicked.connect(self.open_sp_from_file)
+        but_m_load = QPushButton('load from file')
+        but_m_load.clicked.connect(self.open_method_from_file)
 
         replicates_lbl = QLabel("Repeats")
         self.replicates = QSpinBox()
@@ -134,8 +122,8 @@ class WindowRunConfig(QMainWindow):
         # add widgets to layouts 
         v1.addWidget(run_type_lbl)
         v1.addWidget(self.run_type)
-        v1.addWidget(sweep_prof_lbl)
-        v1.addLayout(horizontalize([self.sweep_profile, but_sp_load]))
+        v1.addWidget(method_lbl)
+        v1.addLayout(horizontalize([self.method, but_m_load]))
         v1.addStretch()
         v1.addLayout(horizontalize([replicates_lbl, self.replicates]))
 
@@ -180,19 +168,32 @@ class WindowRunConfig(QMainWindow):
     def run_type_changed(self, i):
         self.type_stack.setCurrentIndex(i)
 
-    def sweep_profile_changed(self, i):
+    def method_changed(self, i):
+        print(self.method.currentData())
         return
         #
         # THIS IS WHERE WE GRAPH THINGSSS
 
-    def open_sp_from_file(self):
-        print('we are now allowing a user to select an sp from the file!')
+    def open_method_from_file(self):
+        path = get_path_from_user('method')
+        data = get_data_from_file(path)
+        try:
+            if len(self.parent.data[g.S_METHODS]) > 0 and len(self.parent.data[g.S_METHODS]) == self.method.count():
+                self.method.insertSeparator(self.method.count())
+            self.method.addItem(data[g.SP_SP_NAME], data)
+            self.method.setCurrentIndex(self.method.count()-1)
+        except Exception as e:
+            print(e)
+        
+        print('---')
+        print(data)
+        print('---')
         
     def run_button_clicked(self):
         try:
             form_is_valid = self.validate_form()    # Validate form
             if form_is_valid:   
-                self.save_sweep_profile()   # Save the sweep profile
+                self.save_method()   # Save the sweep profile
                 self.save_run_configs()    # Save the configs for the run
 
                 print(self.run_to_run)
@@ -209,7 +210,7 @@ class WindowRunConfig(QMainWindow):
             show_alert(self, l.alert_header[g.L], 'please select a run type to proceed.')
             return False
 
-        elif self.sweep_profile.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:
+        elif self.method.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:
             show_alert(self, l.alert_header[g.L], 'please select a sweep profile to proceed.')
             return False
             
@@ -235,28 +236,28 @@ class WindowRunConfig(QMainWindow):
             
         return True
 
-    def save_sweep_profile(self):
+    def save_method(self):
         # Get the selected sweep profile
         #######################
         #
         # THIS IS A PLACEHOLDER TILL WE GET THE SWEEP PROFILE GENERATOR WORKING
-        sp_new = {g.SP_NOTES: self.sweep_profile.currentText()}
+        sp_new = {g.SP_NOTES: self.method.currentText()}
         #
         #######################
         # grab the most up to date version of the sample data from file
         data = get_data_from_file(self.parent.path)
 
         sp_id = False
-        for sp in data[g.S_SWEEP_PROFILES]:
-            if sweep_profiles_match(sp, sp_new):
+        for sp in data[g.S_METHODS]:
+            if methods_match(sp, sp_new):
                 sp_id = sp[g.R_UID_SELF]
 
         if not sp_id:                                       # if this is a brand new sweep profie for this sample
                                                             # Generate a new sweep id + add it to the data
-            ids = get_ids(data, g.S_SWEEP_PROFILES)             # get existing sp uids      
+            ids = get_ids(data, g.S_METHODS)                # get existing sp uids      
             sp_id = get_next_id(ids, g.SP_UID_PREFIX)           # generate the next sp uid
             sp_new[g.SP_UID_SELF] = sp_id                       # add that new sp uid to this current sweep proile
-            data[g.S_SWEEP_PROFILES].append(sp_new)             # append the new sweep profile to the old data
+            data[g.S_METHODS].append(sp_new)                    # append the new sweep profile to the old data
             write_data_to_file(self.parent.path, data)          # write the data back to the file! 
             
         self.sp_id = sp_id   

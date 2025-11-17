@@ -45,10 +45,6 @@ class WindowSample(QMainWindow):
         self.view_only = view_only
         self.update_on_save = update_on_save
         self.open_on_save = open_on_save
-
-
-        print(type(self.parent))
-        print(parent)
         
 
         # The name field 
@@ -274,7 +270,6 @@ class WindowSample(QMainWindow):
         else:
         
             if not self.saved:                                      # if there is unsaved content:
-                print('hiiii')
 
                 confirm = saveMessageBox(self)                      # init a dialog asking the user if they're sure
                 resp = confirm.exec()                               # launch the dialog
@@ -302,7 +297,6 @@ class WindowSample(QMainWindow):
                     print(e)
 
     def update_edited_status(self):
-        print('updating!')
         self.saved = False
                                         
 

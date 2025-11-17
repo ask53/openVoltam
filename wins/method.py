@@ -25,11 +25,12 @@ import ov_lang as l
 from ov_functions import *
 
 from wins.sample import QVLine
-from embeds.sweepProfilePlot import SweepProfilePlot
+from embeds.methodPlot import MethodPlot
 
 from functools import partial
 from tkinter.filedialog import asksaveasfilename as askSaveAsFileName
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import (
     QMainWindow,
@@ -44,6 +45,7 @@ from PyQt6.QtWidgets import (
     QStackedLayout,
     QGridLayout,
     QGroupBox,
+    QSplitter,
     QScrollArea,
     QComboBox,
     QTabWidget,
@@ -65,6 +67,8 @@ class WindowMethod(QMainWindow):
             self.path = path
 
         v1 = QVBoxLayout()
+        v1top = QVBoxLayout()
+        v1bot = QVBoxLayout()
         h1 = QHBoxLayout()
         v2 = QVBoxLayout()
         h2 = QHBoxLayout()
@@ -74,6 +78,8 @@ class WindowMethod(QMainWindow):
         self.s1 = QStackedLayout()
         g2 = QGroupBox('Method parameters')
         v5 = QVBoxLayout()
+        split1 = QSplitter()
+        split1.setOrientation(Qt.Orientation.Vertical)
 
         
         
@@ -83,7 +89,7 @@ class WindowMethod(QMainWindow):
         
         
         self.name = QLineEdit()
-        self.name.setObjectName('ov-profile-name')
+        self.name.setObjectName('ov-method-name')
         self.name.setPlaceholderText('Profile name')
         self.name.textChanged.connect(self.set_header)
 
@@ -105,7 +111,10 @@ class WindowMethod(QMainWindow):
         # Graph stuff
         self.hide_plot_lbls = QCheckBox('Hide plot labels')
         self.hide_plot_lbls.stateChanged.connect(self.refresh_graph)
-        self.graph = SweepProfilePlot()
+        self.graph = MethodPlot()
+        graph_area = QScrollArea()
+        graph_area.setObjectName('ov-graph-area')
+        graph_area.setWidget(self.graph)
         
         # Step-specific inputs
         step_name_lbl = QLabel('Step name')
@@ -266,16 +275,23 @@ class WindowMethod(QMainWindow):
         v2.addWidget(self.hide_plot_lbls)
 
         h1.addLayout(v2)
-        h1.addWidget(self.graph)
-      
-        v1.addWidget(self.name)
-        v1.addLayout(h1)
-        v1.addWidget(self.builder)
+        h1.addWidget(graph_area)
+
+        
+        v1top.addWidget(self.name)
+        v1top.addLayout(h1)
+        v1bot.addWidget(self.builder)
         
         if self.path:
-            v1.addLayout(horizontalize([but_save, but_save_as]))
+            v1bot.addLayout(horizontalize([but_save, but_save_as]))
         else:
-            v1.addWidget(but_save)
+            v1bot.addWidget(but_save)
+        wtop = QWidget()
+        wbot = QWidget()
+        wtop.setLayout(v1top)
+        wbot.setLayout(v1bot)
+        split1.addWidget(wtop)
+        split1.addWidget(wbot)
 
         self.init_form_values()
         self.hide_new_step_pane()
@@ -311,13 +327,15 @@ class WindowMethod(QMainWindow):
 
                 self.name.setEnabled(False)
                 self.dt.setEnabled(False)
+
+                w = QWidget()
+                w.setLayout(v1)
+                self.setCentralWidget(w)
             except Exception as e:
                 print(e)
-            
-        w = QWidget()
-        w.setLayout(v1)
-        self.setCentralWidget(w)
+        else:
         
+            self.setCentralWidget(split1)
 
     def init_form_values(self):
         # Modify title and button text

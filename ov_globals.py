@@ -116,6 +116,9 @@ SWEEP_PROFILE_EXT = '.ovp'
 SAMPLE_FILE_TYPES = '*'+SAMPLE_EXT
 SWEEP_PROFILE_FILE_TYPES = '*'+SWEEP_PROFILE_EXT
 
+# Unit conversions
+MM2IN = 1. / 25.4
+
 # Globals changed by program
 L = ENG  				# default lang, changed by program
 BASEDIR = ''			# stores base directory for application executable file

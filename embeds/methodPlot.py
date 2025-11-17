@@ -29,16 +29,20 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 
-
-
-class SweepProfilePlot(Canvas):
+class MethodPlot(Canvas):
     def __init__(self):
-        
-        self.fig = plt.figure()
+
+        size_mm = g.APP.primaryScreen().physicalSize()
+        width_in = size_mm.width() * g.MM2IN
+        height_in = size_mm.height() * g.MM2IN
+
+        self.fig = plt.figure(figsize=(width_in/1.75, height_in/1.75))
         self.axes = self.fig.add_subplot(111)
+        
         super().__init__(self.fig)
         
         self.steps = []
+        self.update_plot(self.steps, False)
 
         
 

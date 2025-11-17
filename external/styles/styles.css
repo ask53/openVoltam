@@ -1,6 +1,6 @@
 /*styles.css*/
 
-WindowSample QLineEdit#ov_sample_name, WindowMethod QLineEdit#ov-profile-name {
+QLineEdit#ov_sample_name, QLineEdit#ov-method-name {
 	font-size: 18pt;
 	border: 0;
 	background-color: rgba(0,0,0,0);
@@ -54,3 +54,10 @@ QWidget#runs-container QCheckBox {
 	padding-right: 8px;
 }
 
+WindowMethod QSplitter::handle {
+	background-color: #dddddd;
+}
+
+QScrollArea#ov-graph-area {
+	background-color: white;
+}
