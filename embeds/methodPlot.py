@@ -36,7 +36,7 @@ class MethodPlot(Canvas):
         width_in = size_mm.width() * g.MM2IN
         height_in = size_mm.height() * g.MM2IN
 
-        self.fig = plt.figure(figsize=(width_in/1.75, height_in/1.75))
+        self.fig = plt.figure(figsize=(width_in/1.75, height_in))
         self.axes = self.fig.add_subplot(111)
         
         super().__init__(self.fig)
@@ -142,6 +142,11 @@ class MethodPlot(Canvas):
             self.axes.set_xticks(t_ticks)
             self.axes.set_yticks(v_ticks, v_ticks_lbl)
             self.axes.grid(True, linestyle='--', linewidth=0.2)
+            for i,t in enumerate(t_ticks):
+                if t%1==0:
+                    t_ticks[i] = int(t)
+            
+            self.axes.set_xticklabels(t_ticks, rotation=300)
 
             
             self.draw()

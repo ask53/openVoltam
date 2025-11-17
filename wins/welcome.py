@@ -101,6 +101,77 @@ class WindowWelcome(QMainWindow):
         w.setLayout(layout_pane)
         self.setCentralWidget(w)
 
+        self.bloop = {
+            "name": "testENG",
+            "dt": 0.05,
+            "steps": [
+                {
+                    "name": "hold",
+                    "data-collect": False,
+                    "stir": True,
+                    "vibrate": False,
+                    "type": "constant",
+                    "duration": 10.5,
+                    "V": -0.5
+                },
+                {
+                    "name": "clean",
+                    "data-collect": False,
+                    "stir": True,
+                    "vibrate": True,
+                    "type": "constant",
+                    "duration": 60.25,
+                    "V": 1.2
+                },
+                {
+                    "name": "hold",
+                    "data-collect": False,
+                    "stir": True,
+                    "vibrate": False,
+                    "type": "constant",
+                    "duration": 10.0,
+                    "V": -0.5
+                },
+                {
+                    "name": "plate",
+                    "data-collect": False,
+                    "stir": True,
+                    "vibrate": True,
+                    "type": "constant",
+                    "duration": 60.0,
+                    "V": -1.2
+                },
+                {
+                    "name": "hold",
+                    "data-collect": False,
+                    "stir": True,
+                    "vibrate": False,
+                    "type": "constant",
+                    "duration": 10.12,
+                    "V": -0.5
+                },
+                {
+                    "name": "ramp",
+                    "data-collect": True,
+                    "stir": True,
+                    "vibrate": True,
+                    "type": "ramp",
+                    "duration": 20.0,
+                    "V1": -1.0,
+                    "V2": 0.75
+                },
+                {
+                    "name": "holdHigh",
+                    "data-collect": False,
+                    "stir": False,
+                    "vibrate": False,
+                    "type": "constant",
+                    "duration": 10.0,
+                    "V": 1.0
+                }
+            ]
+        }
+
     def new_sample(self):
         if (self.w_new_sample.isHidden()):      # check if winow is hidden. If so:
             self.w_new_sample.show()            #   and show it!
@@ -147,13 +218,20 @@ class WindowWelcome(QMainWindow):
         else:                                               # if window is already showing
             self.w_edit_config.activateWindow()             #   bring it to front of screen
 
-    def open_config(self, path=False):
-        if not path:
+    def open_config(self, path=False, data=False, editable=True):
+        if data:
+            try:       
+                self.ws_view_config.append(WindowMethod(data=data, view_only=True, parent=self, view_only_edit=editable))
+                self.ws_view_config[-1].show()
+            except Exception as e:
+                print(e)
+        elif not path:
             path = get_path_from_user('method')
-        if path:
+
+        if not data and path:
                 try:
                     
-                    self.ws_view_config.append(WindowMethod(path=path, view_only=True, parent=self))
+                    self.ws_view_config.append(WindowMethod(path=path, view_only=True, parent=self, view_only_edit=editable))
                     self.ws_view_config[-1].show()
                 except Exception as e:
                     print(e)

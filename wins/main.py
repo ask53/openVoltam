@@ -115,14 +115,12 @@ class WindowMain(QMainWindow):
         #
         
         
-        but_view = QPushButton('Sample info')
-        but_edit = QPushButton('Edit sample')
+        but_view = QPushButton('info')
         but_config = QPushButton('NEW RUN')
         but_calc = QPushButton('Calculate')
         but_res_sample = QPushButton('Sample results')
 
         but_view.clicked.connect(self.view_sample_info)
-        but_edit.clicked.connect(self.edit_sample)
         but_config.clicked.connect(self.config_run)
         
         v1 = QVLine()
@@ -132,7 +130,6 @@ class WindowMain(QMainWindow):
         l_sample_header = QHBoxLayout()
         l_sample_header.addWidget(self.lbl_sample_name)
         l_sample_header.addWidget(but_view)
-        l_sample_header.addWidget(but_edit)
         l_sample_header.addWidget(v1)
         l_sample_header.addStretch()
         l_sample_header.addWidget(v2)

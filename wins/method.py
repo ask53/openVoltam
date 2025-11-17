@@ -54,17 +54,16 @@ from PyQt6.QtWidgets import (
     )
 
 class WindowMethod(QMainWindow):
-    def __init__(self, path=False, uid=False, view_only=False, parent=False):
+    def __init__(self, path=False, data=False, uid=False, view_only=False, parent=False, view_only_edit=True):
         super().__init__()
-        self.path = False
         self.steps = []
         self.selected = []
         self.editing = False
         self.adding = False
         self.view_only = view_only
-
-        if path:
-            self.path = path
+        self.path = path
+        self.data = data
+        
 
         v1 = QVBoxLayout()
         v1top = QVBoxLayout()
@@ -295,8 +294,8 @@ class WindowMethod(QMainWindow):
 
         self.init_form_values()
         self.hide_new_step_pane()
-        if self.path:
-            self.set_values_from_file()
+        if self.path or self.data:
+            self.set_values()
         self.update_buttons()
         self.set_header()
 
@@ -307,7 +306,10 @@ class WindowMethod(QMainWindow):
                 but_refresh = QPushButton()
                 but_refresh.setIcon(QIcon(g.ICON_REFRESH))
                 but_refresh.setToolTip('Refresh')
-                but_refresh.clicked.connect(self.set_values_from_file)
+                but_refresh.clicked.connect(self.set_values)
+                if not view_only_edit:
+                    but_edit.setEnabled(False)
+                    but_refresh.setEnabled(False)
                 v1 = QVBoxLayout()
                 h1 = QHBoxLayout()
                 v2 = QVBoxLayout()
@@ -363,8 +365,11 @@ class WindowMethod(QMainWindow):
         for sp_type in g.SP_TYPES:
             self.ts[sp_type].setValue(0)
 
-    def set_values_from_file(self):
-        data = get_data_from_file(self.path)
+    def set_values(self):
+        if self.path:
+            data = get_data_from_file(self.path)
+        elif self.data:
+            data = self.data
         self.name.setText(data[g.SP_SP_NAME])
         self.dt.setValue(data[g.SP_DT])
         self.steps = data[g.SP_STEPS]

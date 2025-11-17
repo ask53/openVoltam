@@ -47,9 +47,9 @@ class WindowRunConfig(QMainWindow):
         super().__init__()
         
         self.parent = parent
+        self.parent.setEnabled(False)
         self.parent.load_sample_info()                              # make sure data in parent is up-to-date
         self.setWindowTitle(l.rc_window_title[g.L])
-        self.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.run_to_run = False
         self.reps_to_run = []
             
@@ -97,7 +97,8 @@ class WindowRunConfig(QMainWindow):
         graph_area.setObjectName('ov-graph-area')
         graph_area.setWidget(self.graph)
 
-        but_view_method = QPushButton('Method details')
+        but_view_method = QPushButton('View method details')
+        but_view_method.clicked.connect(self.view_method)
 
         ######################### HERE ######################
         #
@@ -154,7 +155,6 @@ class WindowRunConfig(QMainWindow):
 
         v2.addWidget(graph_area)
         v2.addWidget(but_view_method)
-        v2.addStretch()
 
         h1.addLayout(v2)
         h1.addLayout(v1)
@@ -361,6 +361,13 @@ class WindowRunConfig(QMainWindow):
         if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
             reps = int(self.replicates.value())
             self.graph.update_plot(self.method.currentData()[g.SP_STEPS], show_labels=False, reps=reps)
+
+    def view_method(self):
+        self.parent.parent.open_config(data=self.method.currentData(), editable=False)
+
+    def closeEvent(self, event):
+        self.parent.setEnabled(True)
+        event.accept()
 
     
             
