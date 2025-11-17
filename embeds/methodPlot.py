@@ -42,11 +42,11 @@ class MethodPlot(Canvas):
         super().__init__(self.fig)
         
         self.steps = []
-        self.update_plot(self.steps, False)
+        self.update_plot(self.steps)
 
         
 
-    def update_plot(self, steps, show_labels):
+    def update_plot(self, steps, show_labels=False, reps=1):
 
         self.axes.cla()
         
@@ -62,66 +62,69 @@ class MethodPlot(Canvas):
                 }
         v_ticks_lbl = []
 
-        for step in steps:
-            if not t:
-                t0 = 0
-                t1 = step[g.SP_T]
-            else:
-                t0 = t[-1]
-                t1 = t[-1]+step[g.SP_T]
+        for rep in range(0,reps):
+            for step in steps:
+                if not t:
+                    t0 = 0
+                    t1 = step[g.SP_T]
+                else:
+                    t0 = t[-1]
+                    t1 = t[-1]+step[g.SP_T]
 
-            step_type = step[g.SP_TYPE]
-            if step_type == g.SP_CONSTANT:
-                v0 = step[g.SP_CONST_V]
-                v1 = v0
-            elif step_type == g.SP_RAMP:
-                v0 = step[g.SP_RAMP_V1]
-                v1 = step[g.SP_RAMP_V2]
-            else:
-                show_alert(self, "Error!", "There was an issue plotting this method.")
-                return
+                step_type = step[g.SP_TYPE]
+                if step_type == g.SP_CONSTANT:
+                    v0 = step[g.SP_CONST_V]
+                    v1 = v0
+                elif step_type == g.SP_RAMP:
+                    v0 = step[g.SP_RAMP_V1]
+                    v1 = step[g.SP_RAMP_V2]
+                else:
+                    show_alert(self, "Error!", "There was an issue plotting this method.")
+                    return
 
-            lbls.append(step[g.SP_STEP_NAME])
+                lbls.append(step[g.SP_STEP_NAME])
 
-            t.append(t0)
-            t.append(t1)
-            v.append(v0)
-            v.append(v1)
+                t.append(t0)
+                t.append(t1)
+                v.append(v0)
+                v.append(v1)
 
-            if t1 not in t_ticks:
-                t_ticks.append(t1)
-            if v0 not in v_ticks:
-                v_ticks.append(v0)
-                v_ticks_lbl.append(str(v0)+'V')
-            if v1 not in v_ticks:
-                v_ticks.append(v1)
-                v_ticks_lbl.append(str(v1)+'V')
+                if t1 not in t_ticks:
+                    t_ticks.append(t1)
+                if v0 not in v_ticks:
+                    v_ticks.append(v0)
+                    v_ticks_lbl.append(str(v0)+'V')
+                if v1 not in v_ticks:
+                    v_ticks.append(v1)
+                    v_ticks_lbl.append(str(v1)+'V')
 
-            if show_labels:
+                
                 for key in segs:
                     if step[key]:
                         segs[key].append((t0,t1))
-                
+                    
         try:
             self.axes.plot(t, v, 'black')
             self.axes.set_title('Applied voltage [V] vs. time [s]')
             
         
             
+            
+            adj = self.get_indicator_adjustment()
+            [ymin, ymax] = self.axes.get_ylim()
+            seg_props = {g.SP_STIR:{'pos':ymin-adj, 'color':'pink', 'lbl':'stir'},
+                g.SP_VIBRATE:{'pos':ymin-2*adj, 'color':'green', 'lbl':'vibrate'},
+                g.SP_DATA_COLLECT:{'pos':ymin-4*adj, 'color':'purple', 'lbl':'measure'}}
+            for k in seg_props:
+                v_ticks.append(seg_props[k]['pos'])
+                v_ticks_lbl.append(seg_props[k]['lbl'])
+            for k in segs:
+                for seg in segs[k]:
+                    y = seg_props[k]['pos']
+                    c = seg_props[k]['color']
+                    self.axes.plot(seg, [y, y], color=c, linewidth=4)
+
             if show_labels:
-                adj = self.get_indicator_adjustment()
-                [ymin, ymax] = self.axes.get_ylim()
-                seg_props = {g.SP_STIR:{'pos':ymin-adj, 'color':'pink', 'lbl':'stir'},
-                    g.SP_VIBRATE:{'pos':ymin-2*adj, 'color':'green', 'lbl':'vibrate'},
-                    g.SP_DATA_COLLECT:{'pos':ymin-4*adj, 'color':'purple', 'lbl':'measure'}}
-                for k in seg_props:
-                    v_ticks.append(seg_props[k]['pos'])
-                    v_ticks_lbl.append(seg_props[k]['lbl'])
-                for k in segs:
-                    for seg in segs[k]:
-                        y = seg_props[k]['pos']
-                        c = seg_props[k]['color']
-                        self.axes.plot(seg, [y, y], color=c, linewidth=4)
                 v_max = self.get_step_name_position()
                 lbl_x_adj = self.get_x_adj()
                 for i, time in enumerate(t):
@@ -134,7 +137,8 @@ class MethodPlot(Canvas):
                             })
             
 
-            self.axes.set_xlim(left=0)
+            if len(t)>0:
+                self.axes.set_xlim(left=0, right=t[-1])
             self.axes.set_xticks(t_ticks)
             self.axes.set_yticks(v_ticks, v_ticks_lbl)
             self.axes.grid(True, linestyle='--', linewidth=0.2)

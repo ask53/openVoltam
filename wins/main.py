@@ -282,6 +282,7 @@ class WindowMain(QMainWindow):
             self.w_run_config.show()
         except Exception as e:
             print(e)
+            print('here we areeeee')
         
 
     def widgetize_run_history(self):

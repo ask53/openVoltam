@@ -147,8 +147,9 @@ class WindowWelcome(QMainWindow):
         else:                                               # if window is already showing
             self.w_edit_config.activateWindow()             #   bring it to front of screen
 
-    def open_config(self):
-        path = get_path_from_user('method')
+    def open_config(self, path=False):
+        if not path:
+            path = get_path_from_user('method')
         if path:
                 try:
                     
@@ -156,8 +157,6 @@ class WindowWelcome(QMainWindow):
                     self.ws_view_config[-1].show()
                 except Exception as e:
                     print(e)
-        else:
-            return
 
     def edit_config(self, path=False):
         try:

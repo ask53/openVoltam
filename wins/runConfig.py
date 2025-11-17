@@ -20,6 +20,10 @@ import ov_globals as g
 import ov_lang as l
 from ov_functions import *
 
+from embeds.methodPlot import MethodPlot
+
+from functools import partial
+
 from PyQt6.QtCore import Qt, QDateTime
 from PyQt6.QtWidgets import (
     QMainWindow,
@@ -52,6 +56,7 @@ class WindowRunConfig(QMainWindow):
         v1 = QVBoxLayout()
         h1 = QHBoxLayout()
         v2 = QVBoxLayout()
+        v3 = QVBoxLayout()
             
         run_type_lbl = QLabel("Run type")
             
@@ -84,9 +89,22 @@ class WindowRunConfig(QMainWindow):
         self.replicates.setValue(g.RC_REPS_MIN)
         self.replicates.setMinimum(g.RC_REPS_MIN)
         self.replicates.setMaximum(g.RC_REPS_MAX)
+        self.replicates.valueChanged.connect(self.refresh_graph)
             
 
-        self.graph_area = QScrollArea()
+        self.graph = MethodPlot()
+        graph_area = QScrollArea()
+        graph_area.setObjectName('ov-graph-area')
+        graph_area.setWidget(self.graph)
+
+        but_view_method = QPushButton('Method details')
+
+        ######################### HERE ######################
+        #
+        #
+        #   Figure out how to view method details if method:
+        #       a. comes from a file (this is easy, just load from path)
+        #       b. comes from the .osv file (this is harder, have to pass data array.)
 
         notes_lbl = QLabel("Notes")
         self.notes = QLineEdit()
@@ -96,21 +114,25 @@ class WindowRunConfig(QMainWindow):
         self.type_stack = QStackedLayout(self)
         w_blank = QWidget()
 
-        f_sample = QFormLayout()
+        v_sample = QVBoxLayout()
         self.w_sample_sample_vol = QDoubleSpinBox()
         self.w_sample_total_vol = QDoubleSpinBox()
-        f_sample.addRow('Sample volume [mL]', self.w_sample_sample_vol)
-        f_sample.addRow('Total volume [mL]', self.w_sample_total_vol)
+        w_sample_sample_vol_lbl = QLabel('Sample volume [mL]')
+        w_sample_total_vol_lbl = QLabel('Total volume [mL]')
+        v_sample.addLayout(horizontalize([w_sample_sample_vol_lbl, self.w_sample_sample_vol],True))
+        v_sample.addLayout(horizontalize([w_sample_total_vol_lbl, self.w_sample_total_vol], True))
         g_sample = QGroupBox("Sample parameters")
-        g_sample.setLayout(f_sample)
+        g_sample.setLayout(v_sample)
 
-        f_stdadd = QFormLayout()
+        v_stdadd = QVBoxLayout()
         self.w_stdadd_vol_std = QDoubleSpinBox()
         self.w_stdadd_conc_std = QDoubleSpinBox()
-        f_stdadd.addRow('Volume standard added [mL]', self.w_stdadd_vol_std)
-        f_stdadd.addRow('Standard concentration [mg/L]', self.w_stdadd_conc_std)
+        w_stdadd_vol_std_lbl = QLabel('Volume standard added [mL]')
+        w_stdadd_conc_std_lbl = QLabel('Standard concentration [mg/L]')
+        v_stdadd.addLayout(horizontalize([w_stdadd_vol_std_lbl, self.w_stdadd_vol_std], True))
+        v_stdadd.addLayout(horizontalize([w_stdadd_conc_std_lbl, self.w_stdadd_conc_std], True))
         g_stdadd = QGroupBox("Standard addition parameters")
-        g_stdadd.setLayout(f_stdadd)
+        g_stdadd.setLayout(v_stdadd)
                
         self.type_stack.addWidget(w_blank)
         self.type_stack.addWidget(g_sample)
@@ -124,17 +146,21 @@ class WindowRunConfig(QMainWindow):
         v1.addWidget(self.run_type)
         v1.addWidget(method_lbl)
         v1.addLayout(horizontalize([self.method, but_m_load]))
+        v1.addLayout(self.type_stack)
+        v1.addLayout(horizontalize([replicates_lbl, self.replicates], True))
+        v1.addLayout(horizontalize([notes_lbl, self.notes]))
         v1.addStretch()
-        v1.addLayout(horizontalize([replicates_lbl, self.replicates]))
+        
 
-        h1.addLayout(v1)
-        h1.addWidget(self.graph_area)
-    
-        v2.addLayout(h1)
-        v2.addLayout(self.type_stack)
-        v2.addLayout(horizontalize([notes_lbl, self.notes]))
+        v2.addWidget(graph_area)
+        v2.addWidget(but_view_method)
         v2.addStretch()
-        v2.addWidget(but_run)
+
+        h1.addLayout(v2)
+        h1.addLayout(v1)
+    
+        v3.addLayout(h1)
+        v3.addWidget(but_run)
 
         if uid:
             i = -1
@@ -162,7 +188,7 @@ class WindowRunConfig(QMainWindow):
 
         
         w = QWidget()
-        w.setLayout(v2)
+        w.setLayout(v3)
         self.setCentralWidget(w)
 
     def run_type_changed(self, i):
@@ -170,9 +196,8 @@ class WindowRunConfig(QMainWindow):
 
     def method_changed(self, i):
         print(self.method.currentData())
-        return
-        #
-        # THIS IS WHERE WE GRAPH THINGSSS
+        self.refresh_graph()
+        
 
     def open_method_from_file(self):
         path = get_path_from_user('method')
@@ -331,6 +356,11 @@ class WindowRunConfig(QMainWindow):
 
     def run_runs(self):
         return
+
+    def refresh_graph(self):
+        if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
+            reps = int(self.replicates.value())
+            self.graph.update_plot(self.method.currentData()[g.SP_STEPS], show_labels=False, reps=reps)
 
     
             
