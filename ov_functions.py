@@ -135,15 +135,15 @@ def methods_match(m1, m2):
     ''' Takes in two method dicts, m1 and m2
     checks whether they match. If so, returns True,
     if not, returns False'''
-
-    #####   THIS IS A PLACE HOLDER, WRITE ACTUAL FUNCTION ONCE WE KNOW STRUCTURE OF SWEEP PROFILES!
-    #
-    if m1[g.SP_NOTES] == m2[g.SP_NOTES]:
-        return True
-    return False
-    #
-    #
-    ################################################################################################
+    
+    keys_to_ignore = [g.M_UID_SELF]   # List all keys to ignore
+    for key in m1:                      # Loop thru all keys in m1
+        if key not in keys_to_ignore:   # If key is not on ignore list
+            if key not in m2:           # if the key from m1 is not in m2
+                return False            #   We don't have a match...
+            elif m1[key] != m2[key]:    # if the key exists but the values don't match
+                return False            #   Still no match...
+    return True                         # If we get all the way thru, its a match! 
 
 def get_row_ws(w_parent, i):
     """Accepts:

@@ -15,21 +15,21 @@ devices = [
      'dtmin': 0.01,
      'dtmax': 0.1,
      'maxV': 1.65,
-     'minV': -1.65
-     'Ires': False
+     'minV': -1.65,
+     'Ires': ['10 uA']
      },
     {'name':'Featherwing (100 uA)',
      'dtmin': 0.01,
      'dtmax': 0.1,
      'maxV': 1.65,
-     'minV': -1.65
-     'Ires': False
+     'minV': -1.65,
+     'Ires': ['100 uA']
      },
     {'name':'Featherwing (1,000 uA)',
      'dtmin': 0.01,
      'dtmax': 0.1,
      'maxV': 1.65,
-     'minV': -1.65
-     'Ires': False
+     'minV': -1.65,
+     'Ires': ['1,000 uA']
      }
     ]

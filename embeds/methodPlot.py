@@ -56,9 +56,9 @@ class MethodPlot(Canvas):
         lbls = []
         t_ticks = [0]
         v_ticks = []
-        segs = {g.SP_STIR:[],
-                g.SP_VIBRATE:[],
-                g.SP_DATA_COLLECT:[]
+        segs = {g.M_STIR:[],
+                g.M_VIBRATE:[],
+                g.M_DATA_COLLECT:[]
                 }
         v_ticks_lbl = []
 
@@ -66,23 +66,23 @@ class MethodPlot(Canvas):
             for step in steps:
                 if not t:
                     t0 = 0
-                    t1 = step[g.SP_T]
+                    t1 = step[g.M_T]
                 else:
                     t0 = t[-1]
-                    t1 = t[-1]+step[g.SP_T]
+                    t1 = t[-1]+step[g.M_T]
 
-                step_type = step[g.SP_TYPE]
-                if step_type == g.SP_CONSTANT:
-                    v0 = step[g.SP_CONST_V]
+                step_type = step[g.M_TYPE]
+                if step_type == g.M_CONSTANT:
+                    v0 = step[g.M_CONST_V]
                     v1 = v0
-                elif step_type == g.SP_RAMP:
-                    v0 = step[g.SP_RAMP_V1]
-                    v1 = step[g.SP_RAMP_V2]
+                elif step_type == g.M_RAMP:
+                    v0 = step[g.M_RAMP_V1]
+                    v1 = step[g.M_RAMP_V2]
                 else:
                     show_alert(self, "Error!", "There was an issue plotting this method.")
                     return
 
-                lbls.append(step[g.SP_STEP_NAME])
+                lbls.append(step[g.M_STEP_NAME])
 
                 t.append(t0)
                 t.append(t1)
@@ -112,9 +112,9 @@ class MethodPlot(Canvas):
             
             adj = self.get_indicator_adjustment()
             [ymin, ymax] = self.axes.get_ylim()
-            seg_props = {g.SP_STIR:{'pos':ymin-adj, 'color':'pink', 'lbl':'stir'},
-                g.SP_VIBRATE:{'pos':ymin-2*adj, 'color':'green', 'lbl':'vibrate'},
-                g.SP_DATA_COLLECT:{'pos':ymin-4*adj, 'color':'purple', 'lbl':'measure'}}
+            seg_props = {g.M_STIR:{'pos':ymin-adj, 'color':'pink', 'lbl':'stir'},
+                g.M_VIBRATE:{'pos':ymin-2*adj, 'color':'green', 'lbl':'vibrate'},
+                g.M_DATA_COLLECT:{'pos':ymin-4*adj, 'color':'purple', 'lbl':'measure'}}
             for k in seg_props:
                 v_ticks.append(seg_props[k]['pos'])
                 v_ticks_lbl.append(seg_props[k]['lbl'])

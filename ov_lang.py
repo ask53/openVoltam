@@ -51,8 +51,8 @@ rc_select = ['Select...','TEXTO']
 
 # Window: sweep profile builder/editer
 sp_types = {
-    g.SP_CONSTANT: ['Voltage: constant','TEXTO'],
-    g.SP_RAMP: ['Voltage: ramp','TEXTO']
+    g.M_CONSTANT: ['Voltage: constant','TEXTO'],
+    g.M_RAMP: ['Voltage: ramp','TEXTO']
     }
 sp_add_step = ['Add step','TEXTO']
 sp_edit_step = ['Edit step','TEXTO']

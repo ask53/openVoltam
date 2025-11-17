@@ -33,6 +33,12 @@ from PyQt6.QtWidgets import (
     QFrame    
 )
 
+#######
+#   FOR TESTING ONLY
+import sys, os
+#
+###########
+
 # Define class for Welcome window
 class WindowWelcome(QMainWindow):
     def __init__(self):
@@ -101,77 +107,6 @@ class WindowWelcome(QMainWindow):
         w.setLayout(layout_pane)
         self.setCentralWidget(w)
 
-        self.bloop = {
-            "name": "testENG",
-            "dt": 0.05,
-            "steps": [
-                {
-                    "name": "hold",
-                    "data-collect": False,
-                    "stir": True,
-                    "vibrate": False,
-                    "type": "constant",
-                    "duration": 10.5,
-                    "V": -0.5
-                },
-                {
-                    "name": "clean",
-                    "data-collect": False,
-                    "stir": True,
-                    "vibrate": True,
-                    "type": "constant",
-                    "duration": 60.25,
-                    "V": 1.2
-                },
-                {
-                    "name": "hold",
-                    "data-collect": False,
-                    "stir": True,
-                    "vibrate": False,
-                    "type": "constant",
-                    "duration": 10.0,
-                    "V": -0.5
-                },
-                {
-                    "name": "plate",
-                    "data-collect": False,
-                    "stir": True,
-                    "vibrate": True,
-                    "type": "constant",
-                    "duration": 60.0,
-                    "V": -1.2
-                },
-                {
-                    "name": "hold",
-                    "data-collect": False,
-                    "stir": True,
-                    "vibrate": False,
-                    "type": "constant",
-                    "duration": 10.12,
-                    "V": -0.5
-                },
-                {
-                    "name": "ramp",
-                    "data-collect": True,
-                    "stir": True,
-                    "vibrate": True,
-                    "type": "ramp",
-                    "duration": 20.0,
-                    "V1": -1.0,
-                    "V2": 0.75
-                },
-                {
-                    "name": "holdHigh",
-                    "data-collect": False,
-                    "stir": False,
-                    "vibrate": False,
-                    "type": "constant",
-                    "duration": 10.0,
-                    "V": 1.0
-                }
-            ]
-        }
-
     def new_sample(self):
         if (self.w_new_sample.isHidden()):      # check if winow is hidden. If so:
             self.w_new_sample.show()            #   and show it!
@@ -201,8 +136,12 @@ class WindowWelcome(QMainWindow):
                     self.create_sample_window(path) #   create a sample window from the path
                 except Exception as e:
                     print(e)
-                    show_alert(self, "Error", "Uh oh, there was an issue opening the selected file, please try again. If the problem persists, the file may be corrupted.")
                     error = True
+                    exc_type, exc_obj, exc_tb = sys.exc_info()
+                    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                    print(exc_type, fname, exc_tb.tb_lineno)
+                    show_alert(self, "Error", "Uh oh, there was an issue opening the selected file, please try again. If the problem persists, the file may be corrupted.")
+                    
             if not error:
                 self.close()                            # close the home window if open
             

@@ -21,6 +21,7 @@ import ov_lang as l
 from ov_functions import *
 
 from embeds.methodPlot import MethodPlot
+from devices.supportedDevices import devices
 
 from functools import partial
 
@@ -47,42 +48,52 @@ class WindowRunConfig(QMainWindow):
         super().__init__()
         
         self.parent = parent
-        self.parent.setEnabled(False)
         self.parent.load_sample_info()                              # make sure data in parent is up-to-date
         self.setWindowTitle(l.rc_window_title[g.L])
         self.run_to_run = False
         self.reps_to_run = []
+        self.valid = False
             
         v1 = QVBoxLayout()
         h1 = QHBoxLayout()
         v2 = QVBoxLayout()
         v3 = QVBoxLayout()
+
+        method_lbl = QLabel("Method")
+        self.method = QComboBox()
+        self.method.setPlaceholderText(l.rc_select[g.L])
+        for method in parent.data[g.S_METHODS]:
+            self.method.addItem(method[g.M_NAME], method)
+        self.method.currentIndexChanged.connect(self.method_changed)
+
+        but_m_load = QPushButton('load from file')
+        but_m_load.clicked.connect(self.open_method_from_file)
+
+        device_lbl = QLabel("Device")
+        self.device = QComboBox()
+        self.device.setPlaceholderText(l.rc_select[g.L])
+        for dev in devices:
+            self.device.addItem(dev['name'], dev)
+
+        but_device_connect = QPushButton('connect to device')
+
             
         run_type_lbl = QLabel("Run type")
-            
-
         #####################
         # editable!
         self.types = [l.rc_type_blank[g.L], l.rc_type_sample[g.L], l.rc_type_stdadd[g.L]]
         self.run_type = QComboBox()
+        self.run_type.setPlaceholderText(l.rc_select[g.L])
         self.run_type.addItems(self.types)
         self.run_type.setItemData(0, g.R_RUN_TYPE_BLANK)
         self.run_type.setItemData(1, g.R_RUN_TYPE_SAMPLE)
         self.run_type.setItemData(2, g.R_RUN_TYPE_STDADD)
         #
         #####################
-        self.run_type.setPlaceholderText(l.rc_select[g.L])
+        
         self.run_type.currentIndexChanged.connect(self.run_type_changed)
 
-        method_lbl = QLabel("Method")
-        self.method = QComboBox()
-        self.method.setPlaceholderText(l.rc_select[g.L])
-        for method in parent.data[g.S_METHODS]:
-            self.method.addItem(method[g.SP_NOTES], method)
-        self.method.currentIndexChanged.connect(self.method_changed)
-
-        but_m_load = QPushButton('load from file')
-        but_m_load.clicked.connect(self.open_method_from_file)
+        
 
         replicates_lbl = QLabel("Repeats")
         self.replicates = QSpinBox()
@@ -99,13 +110,6 @@ class WindowRunConfig(QMainWindow):
 
         but_view_method = QPushButton('View method details')
         but_view_method.clicked.connect(self.view_method)
-
-        ######################### HERE ######################
-        #
-        #
-        #   Figure out how to view method details if method:
-        #       a. comes from a file (this is easy, just load from path)
-        #       b. comes from the .osv file (this is harder, have to pass data array.)
 
         notes_lbl = QLabel("Notes")
         self.notes = QLineEdit()
@@ -143,15 +147,17 @@ class WindowRunConfig(QMainWindow):
         but_run.clicked.connect(self.run_button_clicked)
 
         # add widgets to layouts 
-        v1.addWidget(run_type_lbl)
-        v1.addWidget(self.run_type)
+        
         v1.addWidget(method_lbl)
         v1.addLayout(horizontalize([self.method, but_m_load]))
+        v1.addWidget(device_lbl)
+        v1.addWidget(self.device)
+        v1.addWidget(run_type_lbl)
+        v1.addWidget(self.run_type)
         v1.addLayout(self.type_stack)
         v1.addLayout(horizontalize([replicates_lbl, self.replicates], True))
         v1.addLayout(horizontalize([notes_lbl, self.notes]))
         v1.addStretch()
-        
 
         v2.addWidget(graph_area)
         v2.addWidget(but_view_method)
@@ -205,7 +211,7 @@ class WindowRunConfig(QMainWindow):
         try:
             if len(self.parent.data[g.S_METHODS]) > 0 and len(self.parent.data[g.S_METHODS]) == self.method.count():
                 self.method.insertSeparator(self.method.count())
-            self.method.addItem(data[g.SP_SP_NAME], data)
+            self.method.addItem(data[g.M_NAME], data)
             self.method.setCurrentIndex(self.method.count()-1)
         except Exception as e:
             print(e)
@@ -218,8 +224,8 @@ class WindowRunConfig(QMainWindow):
         try:
             form_is_valid = self.validate_form()    # Validate form
             if form_is_valid:   
-                self.save_method()   # Save the sweep profile
-                self.save_run_configs()    # Save the configs for the run
+                self.save_method()          # Save the sweep profile
+                self.save_run_configs()     # Save the configs for the run
 
                 print(self.run_to_run)
                 print(self.reps_to_run)
@@ -230,15 +236,31 @@ class WindowRunConfig(QMainWindow):
 
 
     def validate_form(self):
+        ########## FOR TESTING, DELETE TO RUN ####################################
+        self.valid = True
+        return True
+        ###############################################################
+
+        
+
     
-        if self.run_type.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:
+        # Make sure all drop down menus have something selected
+        if self.method.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:
+            show_alert(self, l.alert_header[g.L], 'please select a sweep profile to proceed.')
+            return False
+
+        elif self.device.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:
+            show_alert(self, l.alert_header[g.L], 'please select a device to proceed.')
+            return False
+
+        if not self.method_and_device_compatible():
+            return False
+
+        elif self.run_type.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:
             show_alert(self, l.alert_header[g.L], 'please select a run type to proceed.')
             return False
 
-        elif self.method.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:
-            show_alert(self, l.alert_header[g.L], 'please select a sweep profile to proceed.')
-            return False
-            
+        # If relevant, validate the parameters specific to the "sample" type run
         if self.run_type.currentText() == l.rc_type_sample[g.L]:
             vol_sample = self.w_sample_sample_vol.value()
             vol_total = self.w_sample_total_vol.value()
@@ -248,7 +270,8 @@ class WindowRunConfig(QMainWindow):
             elif (vol_sample > vol_total):
                 show_alert(self, l.alert_header[g.L], 'The sample volume cannot be larger than the total volume. Please check the sample parameters.')
                 return False
-
+            
+        # If relevant, validate the parameters specific to the "standard-addition" type run
         if self.run_type.currentText() == l.rc_type_stdadd[g.L]:
             vol_add = self.w_stdadd_vol_std.value()
             conc = self.w_stdadd_conc_std.value()
@@ -258,34 +281,50 @@ class WindowRunConfig(QMainWindow):
             elif conc == float(0):
                 show_alert(self, l.alert_header[g.L], 'The concentration of the standard is probably not 0. Please check the standard addition parameters.')
                 return False
-            
+
+        self.valid = True    
         return True
 
+    def method_and_device_compatible(self):
+        ###############################################
+        #
+        # THIS IS WHERE WE VALIDATE WHETHER THE DEVICE IS COMPATIBLE WITH THE METHOD
+        #
+        #####################################################
+        return True
+        
+
     def save_method(self):
-        # Get the selected sweep profile
-        #######################
-        #
-        # THIS IS A PLACEHOLDER TILL WE GET THE SWEEP PROFILE GENERATOR WORKING
-        sp_new = {g.SP_NOTES: self.method.currentText()}
-        #
-        #######################
+
         # grab the most up to date version of the sample data from file
         data = get_data_from_file(self.parent.path)
+        method_id = False
 
-        sp_id = False
-        for sp in data[g.S_METHODS]:
-            if methods_match(sp, sp_new):
-                sp_id = sp[g.R_UID_SELF]
-
-        if not sp_id:                                       # if this is a brand new sweep profie for this sample
-                                                            # Generate a new sweep id + add it to the data
-            ids = get_ids(data, g.S_METHODS)                # get existing sp uids      
-            sp_id = get_next_id(ids, g.SP_UID_PREFIX)           # generate the next sp uid
-            sp_new[g.SP_UID_SELF] = sp_id                       # add that new sp uid to this current sweep proile
-            data[g.S_METHODS].append(sp_new)                    # append the new sweep profile to the old data
-            write_data_to_file(self.parent.path, data)          # write the data back to the file! 
+        if self.valid:
+            method_new = self.method.currentData()
+            print(method_new)
             
-        self.sp_id = sp_id   
+            for method in data[g.S_METHODS]:
+                if methods_match(method, method_new):
+                    method_id = method[g.R_UID_SELF]
+                    break
+            
+            if not method_id:                                   # if this is a brand new method for this sample
+                                                                        # Generate a new method id + add it to the data
+                    ids = get_ids(data, g.S_METHODS)                # get existing method uids      
+                    method_id = get_next_id(ids, g.M_UID_PREFIX)   # generate the next method uid
+                    try:
+                        print(method_new)
+                        method_new[g.M_UID_SELF] = method_id           # add that new method uid to this current sweep proile
+                    except Exception as e:
+                        print(e)
+                        print('here!')
+
+                    data[g.S_METHODS].append(method_new)            # append the new sweep profile to the old data
+                    write_data_to_file(self.parent.path, data)      # write the data back to the file!
+            
+                
+            self.method_id = method_id   
 
         
                 
@@ -299,13 +338,9 @@ class WindowRunConfig(QMainWindow):
 
             # Create dictionary from new run configs entered by user
             new_data = {}
-            #######################
-            #
-            # THIS IS A PLACEHOLDER TILL WE GET THE SWEEP PROFILE GENERATOR WORKING
-            new_data[g.R_UID_SP] = self.sp_id
-            #
-            #######################
 
+            new_data[g.R_UID_METHOD] = self.method_id
+            new_data[g.R_DEVICE] = self.device.currentText()
             run_type = self.run_type.currentData()
             new_data[g.R_TYPE] = run_type
             new_data[g.R_NOTES] = self.notes.text()
@@ -360,13 +395,22 @@ class WindowRunConfig(QMainWindow):
     def refresh_graph(self):
         if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
             reps = int(self.replicates.value())
-            self.graph.update_plot(self.method.currentData()[g.SP_STEPS], show_labels=False, reps=reps)
+            self.graph.update_plot(self.method.currentData()[g.M_STEPS], show_labels=False, reps=reps)
 
     def view_method(self):
-        self.parent.parent.open_config(data=self.method.currentData(), editable=False)
+        if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
+            self.parent.parent.open_config(data=self.method.currentData(), editable=False)
 
+
+    def showEvent(self, event):
+        self.parent.setEnabled(False)
+        self.parent.setEnabledChildren(False)
+        self.setEnabled(True)
+        event.accept()
+        
     def closeEvent(self, event):
         self.parent.setEnabled(True)
+        self.parent.setEnabledChildren(True)
         event.accept()
 
     

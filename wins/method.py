@@ -1,7 +1,7 @@
 """
-window_editSweepProfile.py
+method.py
 
-This file defines a class WindowEditConfig which creates a window object
+This file defines a class WindowMethod which creates a window object
 that can be used to create a new sweep profile (if blank) or to edit
 an existing profile. There are two ways to edit an existing profile because
 there are two places a profile may be stored:
@@ -127,7 +127,7 @@ class WindowMethod(QMainWindow):
         step_type_lbl = QLabel('Step type')
         self.step_type = QComboBox()                                        # Create dropdown menu
         self.step_type.setPlaceholderText('Select...')                      # Add placeholder text for when nothing is selected
-        for sp_type in g.SP_TYPES:                                          # Loop thru types (defined in globals)
+        for sp_type in g.M_TYPES:                                          # Loop thru types (defined in globals)
             self.step_type.addItem(l.sp_types[sp_type][g.L])                # Add each type to the dropdown menu
         self.step_type.currentIndexChanged.connect(self.step_type_changed)  # Each time the dropdown selection is changed, connect to fn
 
@@ -137,10 +137,10 @@ class WindowMethod(QMainWindow):
         
         const_v_lbl = QLabel('Voltage [V]')
         self.const_v = QDoubleSpinBox()
-        self.const_v.setMinimum(g.SP_V_MIN)
+        self.const_v.setMinimum(g.M_V_MIN)
         const_t_lbl = QLabel('Duration [s]')
         const_t = QDoubleSpinBox()
-        const_t.setMaximum(g.SP_T_MAX)
+        const_t.setMaximum(g.M_T_MAX)
         
         v_const.addLayout(horizontalize([const_v_lbl, self.const_v]))
         v_const.addLayout(horizontalize([const_t_lbl, const_t]))
@@ -154,13 +154,13 @@ class WindowMethod(QMainWindow):
         
         ramp_v_start_lbl = QLabel('Start voltage [V]')
         self.ramp_v_start = QDoubleSpinBox()
-        self.ramp_v_start.setMinimum(g.SP_V_MIN)
+        self.ramp_v_start.setMinimum(g.M_V_MIN)
         ramp_v_end_lbl = QLabel('End voltage [V]')
         self.ramp_v_end = QDoubleSpinBox()
-        self.ramp_v_end.setMinimum(g.SP_V_MIN)
+        self.ramp_v_end.setMinimum(g.M_V_MIN)
         ramp_t_lbl = QLabel('Duration [s]')
         ramp_t = QDoubleSpinBox()
-        ramp_t.setMaximum(g.SP_T_MAX)
+        ramp_t.setMaximum(g.M_T_MAX)
         
         v_ramp.addLayout(horizontalize([ramp_v_start_lbl, self.ramp_v_start]))
         v_ramp.addLayout(horizontalize([ramp_v_end_lbl, self.ramp_v_end]))
@@ -171,8 +171,8 @@ class WindowMethod(QMainWindow):
         
         # Organize some repeated widgets into lists to itterate over
 
-        self.ts = {g.SP_CONSTANT: const_t,
-                   g.SP_RAMP: ramp_t}
+        self.ts = {g.M_CONSTANT: const_t,
+                   g.M_RAMP: ramp_t}
 
         # Load the widgets into the stacked layout in order 
         self.s1.addWidget(QWidget())
@@ -362,7 +362,7 @@ class WindowMethod(QMainWindow):
         #   it separate for now in case we want to implement a different way of determining the
         #   duration of some steps i.e. measuring in terms of samples per voltage or total
         #   data points collected instead of time).
-        for sp_type in g.SP_TYPES:
+        for sp_type in g.M_TYPES:
             self.ts[sp_type].setValue(0)
 
     def set_values(self):
@@ -370,9 +370,9 @@ class WindowMethod(QMainWindow):
             data = get_data_from_file(self.path)
         elif self.data:
             data = self.data
-        self.name.setText(data[g.SP_SP_NAME])
-        self.dt.setValue(data[g.SP_DT])
-        self.steps = data[g.SP_STEPS]
+        self.name.setText(data[g.M_NAME])
+        self.dt.setValue(data[g.M_DT])
+        self.steps = data[g.M_STEPS]
         self.refresh_list()
         self.set_header()
         
@@ -385,30 +385,30 @@ class WindowMethod(QMainWindow):
         self.but_add_step.setText(l.sp_edit_btn[g.L])
 
         # Set top values to values from step
-        self.step_name.setText(step[g.SP_STEP_NAME])
+        self.step_name.setText(step[g.M_STEP_NAME])
         
-        if step[g.SP_DATA_COLLECT]:
+        if step[g.M_DATA_COLLECT]:
             self.data_collect.setCheckState(Qt.CheckState.Checked)
         
-        if step[g.SP_STIR]:
+        if step[g.M_STIR]:
             self.stirrer.setCheckState(Qt.CheckState.Checked)
 
-        if step[g.SP_VIBRATE]:
+        if step[g.M_VIBRATE]:
             self.vibrator.setCheckState(Qt.CheckState.Checked)
 
-        this_type = step[g.SP_TYPE]
-        self.step_type.setCurrentIndex(g.SP_TYPES.index(this_type))
+        this_type = step[g.M_TYPE]
+        self.step_type.setCurrentIndex(g.M_TYPES.index(this_type))
 
         # Set step-type specific properties
-        t_tot = step[g.SP_T]
+        t_tot = step[g.M_T]
         self.ts[this_type].setValue(t_tot)
 
-        if this_type == g.SP_CONSTANT:
-            self.const_v.setValue(step[g.SP_CONST_V])
+        if this_type == g.M_CONSTANT:
+            self.const_v.setValue(step[g.M_CONST_V])
 
-        elif this_type == g.SP_RAMP:
-            self.ramp_v_start.setValue(step[g.SP_RAMP_V1])
-            self.ramp_v_end.setValue(step[g.SP_RAMP_V2])
+        elif this_type == g.M_RAMP:
+            self.ramp_v_start.setValue(step[g.M_RAMP_V1])
+            self.ramp_v_end.setValue(step[g.M_RAMP_V2])
         
     def refresh_list(self):
         """ Clears the sweep list and rebuilds it"""
@@ -465,34 +465,34 @@ class WindowMethod(QMainWindow):
         
         for i, step in enumerate(self.steps):
             #### TO ADD MORE WIDGETS TO THIS LAYOUT, DEFINE THEM HERE
-            step_type = step[g.SP_TYPE]
-            w_name = QLabel(step[g.SP_STEP_NAME])
+            step_type = step[g.M_TYPE]
+            w_name = QLabel(step[g.M_STEP_NAME])
             
             
             w_volt = QLabel()
-            if step_type == g.SP_CONSTANT:
-                w_volt = QLabel('const: '+str(step[g.SP_CONST_V])+'V')
-            elif step_type == g.SP_RAMP:
-                w_volt.setText('ramp: '+str(step[g.SP_RAMP_V1])+'V'+' --> '+str(step[g.SP_RAMP_V2])+'V')
+            if step_type == g.M_CONSTANT:
+                w_volt = QLabel('const: '+str(step[g.M_CONST_V])+'V')
+            elif step_type == g.M_RAMP:
+                w_volt.setText('ramp: '+str(step[g.M_RAMP_V1])+'V'+' --> '+str(step[g.M_RAMP_V2])+'V')
             
 
-            w_t = QLabel(str(step[g.SP_T])+'s')
+            w_t = QLabel(str(step[g.M_T])+'s')
 
             w_stir = QLabel()
             w_stir.setToolTip('Stirrer OFF')
-            if step[g.SP_STIR]:
+            if step[g.M_STIR]:
                 w_stir.setPixmap(QPixmap(g.ICON_STIR))
                 w_stir.setToolTip('Stirrer ON')
 
             w_vib = QLabel()
             w_vib.setToolTip('Vibrator OFF')
-            if step[g.SP_VIBRATE]:
+            if step[g.M_VIBRATE]:
                 w_vib.setPixmap(QPixmap(g.ICON_VIB))
                 w_vib.setToolTip('Vibrator ON')
 
             w_collect = QLabel()
             w_collect.setToolTip('Data collection OFF')
-            if step[g.SP_DATA_COLLECT]:
+            if step[g.M_DATA_COLLECT]:
                 w_collect.setPixmap(QPixmap(g.ICON_MEASURE))
                 w_collect.setToolTip('Data collection ON')
             
@@ -718,29 +718,29 @@ class WindowMethod(QMainWindow):
     def add_step(self):
         
         if self.validate_step():
-            step_type = g.SP_TYPES[self.step_type.currentIndex()]
+            step_type = g.M_TYPES[self.step_type.currentIndex()]
             
             # Grab the data that all steps contain   
             data_general = {
-                g.SP_STEP_NAME: self.step_name.text(),
-                g.SP_DATA_COLLECT: self.is_checked(self.data_collect),
-                g.SP_STIR: self.is_checked(self.stirrer),
-                g.SP_VIBRATE: self.is_checked(self.vibrator),
-                g.SP_TYPE: step_type,
-                g.SP_T: self.ts[step_type].value()
+                g.M_STEP_NAME: self.step_name.text(),
+                g.M_DATA_COLLECT: self.is_checked(self.data_collect),
+                g.M_STIR: self.is_checked(self.stirrer),
+                g.M_VIBRATE: self.is_checked(self.vibrator),
+                g.M_TYPE: step_type,
+                g.M_T: self.ts[step_type].value()
                 }
             
             ############################################ IF ADDING ANOTHER STEP TYPE, ADD ANOTHER ELIF TO THE CODE BELOW ############
             data_specific = {}                                                                                                      #
-            if step_type == g.SP_CONSTANT:                                                                                          #
+            if step_type == g.M_CONSTANT:                                                                                          #
                 data_specific = {                                                                                                   #
-                    g.SP_CONST_V: self.const_v.value()                                                                              #                                                                                 #
+                    g.M_CONST_V: self.const_v.value()                                                                              #                                                                                 #
                     }                                                                                                               #
                                                                                                                                     #
-            elif step_type == g.SP_RAMP:                                                                                            #
+            elif step_type == g.M_RAMP:                                                                                            #
                 data_specific = {                                                                                                   #
-                    g.SP_RAMP_V1: self.ramp_v_start.value(),                                                                        #
-                    g.SP_RAMP_V2: self.ramp_v_end.value()                                                                           #
+                    g.M_RAMP_V1: self.ramp_v_start.value(),                                                                        #
+                    g.M_RAMP_V2: self.ramp_v_end.value()                                                                           #
                     }                                                                                                               #
             #########################################################################################################################
 
@@ -779,12 +779,12 @@ class WindowMethod(QMainWindow):
         if self.step_type.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:    # make sure there is a type selected
             show_alert(self, 'Error!', 'Please select a type of run')
             return False
-        step_type = g.SP_TYPES[self.step_type.currentIndex()]
+        step_type = g.M_TYPES[self.step_type.currentIndex()]
         if self.ts[step_type].value() == 0:                                   # make sure there is a duration
             show_alert(self, 'Error!', 'Please set a duration longer than 0 for this step')
             return False
     
-        if step_type == g.SP_RAMP:
+        if step_type == g.M_RAMP:
             v1 = self.ramp_v_start.value()
             v2 = self.ramp_v_end.value()
             if v1 == v2:
@@ -812,9 +812,9 @@ class WindowMethod(QMainWindow):
         self.sp_save()                          # save the file!
 
     def sp_save(self):
-        data = {g.SP_SP_NAME: self.name.text(),
-                g.SP_DT: self.dt.value(),
-                g.SP_STEPS: self.steps}
+        data = {g.M_NAME: self.name.text(),
+                g.M_DT: self.dt.value(),
+                g.M_STEPS: self.steps}
         write_data_to_file(self.path, data)
 
     def validate_sweep_profile(self):

@@ -3,7 +3,7 @@
 # PyQt globals
 QT_NOTHING_SELECTED_INDEX = -1
 
-# Keys for sample dictionary
+# Keys for sample (S) dictionary
 S_NAME = "sample_name"
 S_DATE_ENTERED = "date_first_saved"
 S_DATE_COLLECTED = "date_sample_collected"
@@ -17,34 +17,30 @@ S_PROCESSED = "processed_data"
 
 S_BLANK_ARRAYS = [S_METHODS, S_RUNS, S_PROCESSED]
 
-# Keys for sweep profile dictionary
-SP_UID_SELF = 'uid'
-SP_NOTES = 'notes'          ##### THIS IS JUST A PLACEHOLDER, WE WONT HAVE A NOTES FEATURE HERE
-SP_UID_PREFIX = 'sp-'
-SP_SP_NAME = 'name'
-SP_DT = 'dt'
-SP_STEPS = 'steps'
-SP_STEP_NAME = 'name'
-SP_DATA_COLLECT = 'data-collect'
-SP_STIR = 'stir'
-SP_VIBRATE = 'vibrate'
-SP_TYPE = 'type'
-SP_CONSTANT = 'constant'
-SP_RAMP = 'ramp'
-SP_TYPES = [SP_CONSTANT, SP_RAMP]   # This dicates the order they appear in the menu          
-SP_T = 'duration'
-SP_START_COLLECT = 'collection-start'
-SP_END_COLLECT = 'collection-stop'
-SP_START_COLLECT_T = 'collection-start-time'
-SP_END_COLLECT_T = 'collection-stop-time'
-SP_CONST_V = 'V'
-SP_RAMP_V1 = 'V1'
-SP_RAMP_V2 = 'V2'
+# Keys for method (M) dictionary
+M_UID_SELF = 'uid'
+M_UID_PREFIX = 'method-'
+M_NAME = 'name'
+M_DT = 'dt'
+M_STEPS = 'steps'
+M_STEP_NAME = 'name'
+M_DATA_COLLECT = 'data-collect'
+M_STIR = 'stir'
+M_VIBRATE = 'vibrate'
+M_TYPE = 'type'
+M_CONSTANT = 'constant'
+M_RAMP = 'ramp'
+M_TYPES = [M_CONSTANT, M_RAMP]   # This dicates the order they appear in the menu          
+M_T = 'duration'
+M_CONST_V = 'V'
+M_RAMP_V1 = 'V1'
+M_RAMP_V2 = 'V2'
 
 
-# Keys for run dictionary
+# Keys for run (R) dictionary
 R_UID_SELF = 'uid'
-R_UID_SP = 'sweep_profile'
+R_UID_METHOD = 'method'
+R_DEVICE = 'device'
 R_TYPE = 'run_type'
 R_NOTES = 'notes'
 R_REPLICATES = 'replicates'
@@ -69,6 +65,7 @@ R_REPLICATE_UID_PREFIX = "rep-"
 #
 ##### ADD MORE RUN PARAMS HERE
 
+# Icon URLs 
 ICON_PLUS = 'external/icons/add.png'
 ICON_UP = 'external/icons/up.png'
 ICON_DOWN = 'external/icons/down.png'
@@ -81,10 +78,11 @@ ICON_VIB = 'external/icons/vibrator.png'
 ICON_MEASURE = 'external/icons/measure.png'
 ICON_REFRESH = 'external/icons/refresh.png'
 
+# Input 
 RC_REPS_MIN = 1
 RC_REPS_MAX = 99
-SP_V_MIN = -99.99
-SP_T_MAX = 9999
+M_V_MIN = -99.99
+M_T_MAX = 9999
 
 # Language globals 
 ENG = 0

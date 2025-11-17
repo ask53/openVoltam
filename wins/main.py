@@ -53,12 +53,13 @@ class WindowMain(QMainWindow):
         self.data = {}
         self.w_view_sample = WindowSample(self.path, self, update_on_save=True, view_only=True)
         self.w_edit_sample = WindowSample(self.path, self, update_on_save=True, view_only=False)
+        self.w_run_config = WindowRunConfig(self)
         self.config_pane_displayed = False
         self.setObjectName('window-sample')
         self.selected = []                  # for storing which runs are selected
         self.prog_check_flag = False
         self.num_runs = 0
-        self.sub_windows = [self.w_view_sample, self.w_edit_sample]
+        self.children = [self.w_view_sample, self.w_edit_sample, self.w_run_config]
 
             
 
@@ -275,8 +276,8 @@ class WindowMain(QMainWindow):
 
     def config_run(self):
         try:
-            self.w_run_config = WindowRunConfig(self, 'run-0')
             self.w_run_config.show()
+            
         except Exception as e:
             print(e)
             print('here we areeeee')
@@ -463,8 +464,14 @@ class WindowMain(QMainWindow):
         inner = self.w_run_history_container
         scroll_area_resized(outer, inner, event)
 
+    def setEnabledChildren(self, enable):
+        """Takes in a boolean, "enable" and sets all children's enabled status
+        to that boolena, either enabling or disabling all"""
+        for win in self.children:
+            win.setEnabled(enable)
+
     def closeEvent(self, event):
-        for win in self.sub_windows:
+        for win in self.children:
             win.close()
         event.accept()
 
