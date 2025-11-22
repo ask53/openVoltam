@@ -158,13 +158,15 @@ class WindowMethod(QMainWindow):
         ramp_v_end_lbl = QLabel('End voltage [V]')
         self.ramp_v_end = QDoubleSpinBox()
         self.ramp_v_end.setMinimum(g.M_V_MIN)
-        ramp_t_lbl = QLabel('Duration [s]')
+
+        ramp_scan_rate_lbl = QLabel('Scan rate [V/s]')
+        self.ramp_scan_rate = QDoubleSpinBox()
+        self.ramp_scan_rate.setMaximum(g.M_SCAN_RATE_MAX)
         ramp_t = QDoubleSpinBox()
-        ramp_t.setMaximum(g.M_T_MAX)
         
         v_ramp.addLayout(horizontalize([ramp_v_start_lbl, self.ramp_v_start]))
         v_ramp.addLayout(horizontalize([ramp_v_end_lbl, self.ramp_v_end]))
-        v_ramp.addLayout(horizontalize([ramp_t_lbl, ramp_t]))
+        v_ramp.addLayout(horizontalize([ramp_scan_rate_lbl, self.ramp_scan_rate]))
         v_ramp.addStretch()
         w_ramp = QWidget()
         w_ramp.setLayout(v_ramp)
@@ -400,15 +402,19 @@ class WindowMethod(QMainWindow):
         self.step_type.setCurrentIndex(g.M_TYPES.index(this_type))
 
         # Set step-type specific properties
-        t_tot = step[g.M_T]
-        self.ts[this_type].setValue(t_tot)
+        duration = step[g.M_T]
+        self.ts[this_type].setValue(duration)
 
         if this_type == g.M_CONSTANT:
             self.const_v.setValue(step[g.M_CONST_V])
 
         elif this_type == g.M_RAMP:
-            self.ramp_v_start.setValue(step[g.M_RAMP_V1])
-            self.ramp_v_end.setValue(step[g.M_RAMP_V2])
+            v0 = step[g.M_RAMP_V1]
+            vf = step[g.M_RAMP_V2]
+            self.ramp_v_start.setValue(v0)      # set V start
+            self.ramp_v_end.setValue(vf)        # set V end
+            sr = self.ramp_duration_to_scan_rate(v0, vf, duration)
+            self.ramp_scan_rate.setValue(sr)    # set scan rate (calculated from duration, v1, and v2)
         
     def refresh_list(self):
         """ Clears the sweep list and rebuilds it"""
@@ -470,13 +476,18 @@ class WindowMethod(QMainWindow):
             
             
             w_volt = QLabel()
+            w_t = QLabel()
+            t = step[g.M_T]
+            
             if step_type == g.M_CONSTANT:
                 w_volt = QLabel('const: '+str(step[g.M_CONST_V])+'V')
+                w_t = QLabel(str(t)+'s')
             elif step_type == g.M_RAMP:
-                w_volt.setText('ramp: '+str(step[g.M_RAMP_V1])+'V'+' --> '+str(step[g.M_RAMP_V2])+'V')
-            
-
-            w_t = QLabel(str(step[g.M_T])+'s')
+                v0 = step[g.M_RAMP_V1]
+                vf = step[g.M_RAMP_V2]
+                sr = self.ramp_duration_to_scan_rate(v0, vf, t)
+                w_volt.setText('ramp: '+str(v0)+'V'+' --> '+str(vf)+'V')
+                w_t = QLabel(str(sr)+'V/s')
 
             w_stir = QLabel()
             w_stir.setToolTip('Stirrer OFF')
@@ -719,6 +730,8 @@ class WindowMethod(QMainWindow):
         
         if self.validate_step():
             step_type = g.M_TYPES[self.step_type.currentIndex()]
+
+            self.set_duration(step_type)
             
             # Grab the data that all steps contain   
             data_general = {
@@ -732,15 +745,15 @@ class WindowMethod(QMainWindow):
             
             ############################################ IF ADDING ANOTHER STEP TYPE, ADD ANOTHER ELIF TO THE CODE BELOW ############
             data_specific = {}                                                                                                      #
-            if step_type == g.M_CONSTANT:                                                                                          #
+            if step_type == g.M_CONSTANT:                                                                                           #
                 data_specific = {                                                                                                   #
-                    g.M_CONST_V: self.const_v.value()                                                                              #                                                                                 #
+                    g.M_CONST_V: self.const_v.value()                                                                               #                                                                                 #
                     }                                                                                                               #
                                                                                                                                     #
-            elif step_type == g.M_RAMP:                                                                                            #
+            elif step_type == g.M_RAMP:                                                                                             #
                 data_specific = {                                                                                                   #
-                    g.M_RAMP_V1: self.ramp_v_start.value(),                                                                        #
-                    g.M_RAMP_V2: self.ramp_v_end.value()                                                                           #
+                    g.M_RAMP_V1: self.ramp_v_start.value(),                                                                         #
+                    g.M_RAMP_V2: self.ramp_v_end.value()                                                                            #
                     }                                                                                                               #
             #########################################################################################################################
 
@@ -780,15 +793,19 @@ class WindowMethod(QMainWindow):
             show_alert(self, 'Error!', 'Please select a type of run')
             return False
         step_type = g.M_TYPES[self.step_type.currentIndex()]
-        if self.ts[step_type].value() == 0:                                   # make sure there is a duration
-            show_alert(self, 'Error!', 'Please set a duration longer than 0 for this step')
-            return False
+        if self.ts[step_type].value() == 0: # make sure there is a duration
+            if step_type != g.M_RAMP:       # don't flag this error if type is ramp because instead we ask for scan rate 
+                show_alert(self, 'Error!', 'Please set a duration longer than 0 for this step')
+                return False
     
         if step_type == g.M_RAMP:
             v1 = self.ramp_v_start.value()
             v2 = self.ramp_v_end.value()
             if v1 == v2:
                 show_alert(self, 'Error!', 'The endpoints of this ramp have the same value, if this is what you want, please consider a constant volutage. Otherwise...typo?')
+                return False
+            if self.ramp_scan_rate == 0:
+                show_alert(self, 'Error!', 'Please set a scan rate greater than 0.')
                 return False
             
         return True
@@ -835,6 +852,22 @@ class WindowMethod(QMainWindow):
             self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.c_edit_header_edit[g.L]+self.name.text())
         else:
             self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.c_edit_header_new[g.L]+self.name.text())
+
+    def ramp_scan_rate_to_duration(self):
+
+        scan_rate = self.ramp_scan_rate.value()
+        v0 = self.ramp_v_start.value()
+        v1 = self.ramp_v_end.value()
+        return abs(v0-v1)/scan_rate
+
+    def ramp_duration_to_scan_rate(self, v0, v1, duration):
+        return abs(v0-v1)/duration
+
+    def set_duration(self, step_type):
+        if step_type == g.M_RAMP:
+            dur = self.ramp_scan_rate_to_duration()
+            self.ts[step_type].setValue(dur)
+        
         
             
         

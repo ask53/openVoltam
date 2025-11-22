@@ -35,6 +35,7 @@ M_T = 'duration'
 M_CONST_V = 'V'
 M_RAMP_V1 = 'V1'
 M_RAMP_V2 = 'V2'
+M_SCAN_RATE = 'scan-rate'
 
 
 # Keys for run (R) dictionary
@@ -83,6 +84,7 @@ RC_REPS_MIN = 1
 RC_REPS_MAX = 99
 M_V_MIN = -99.99
 M_T_MAX = 9999
+M_SCAN_RATE_MAX = 99.99
 
 # Language globals 
 ENG = 0
