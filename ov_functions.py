@@ -74,7 +74,7 @@ def get_path_from_user(pathtype):
         if pathtype=='sample':
             path = askopenfilename(filetypes = [(l.filetype_sample_lbl[g.L], g.SAMPLE_FILE_TYPES)])
         elif pathtype=='method':
-            path = askopenfilename(filetypes = [(l.filetype_sp_lbl[g.L], g.SWEEP_PROFILE_FILE_TYPES)])
+            path = askopenfilename(filetypes = [(l.filetype_sp_lbl[g.L], g.METHOD_FILE_TYPES)])
         return path
     except Exception as e:
         print(e)

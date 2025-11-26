@@ -1,24 +1,225 @@
 """
 method.py
 
-This file defines a class WindowMethod which creates a window object
-that can be used to create a new sweep profile (if blank) or to edit
-an existing profile. There are two ways to edit an existing profile because
-there are two places a profile may be stored:
-    1. In a standalone sweep profile file (with .ovp extention for 'Open Voltam Profile')
-    2. Embedded in an Open Voltam sample file (.ovs).
-In the first case, this window is passed a path to the .ovp file. If so,
-it loads the sweep profile info which can be edited and either saved back to the
-same file or Save-as'd to a new file name/location.
-In the second case, both the path of the .ovs file as well as the unique ID of
-the stored sweep profile is passed. As this is not being imported from a standalone
-file, when "save" is pressed, it prompts the user to select a location and name
-for the new file.
+OVERALL FUNCTION
 
-Both .ovs and .ovp files use tabular json format (an extension of json that allows
+This file defines a class WindowMethod which creates a window object
+that can be used to:
+    - create a new method
+    - view an existing method
+    - edit an existing method
+Depending on the arguments passed when first creating the WindowMethod() object.
+
+There are two ways to edit an existing method because there are two places in which
+a method may be stored:
+    1. In a standalone method file (with .ovm extention for 'Open Voltam Method')
+    2. Embedded in an Open Voltam sample (.ovs) file.
+
+Thus the WindowMethod() object can either be passed a path to an .ovm file(as in
+case #1) or a dictionary of data (as in case #2). When a path is given, the user
+is given options for "save" (save changes to original path) and "save as" (save
+changes to a new file, without modifying the original). When data is passed, the
+user can only select "save" and will be prompted to decide where to save the file.
+
+Both .ovs and .ovm files use tabular json format (an extension of json that allows
 for tabular, comma-separated-value type data to be embedded within a json.
 
+ARGUMENTS
+
+The WindowMethod() class accepts the following arguments:
+    - path=False           -- a path to a .ovm data file
+    - data=False           -- a dictionary the contains the expected keys present in an .ovm file
+    - view_only=False      -- if True, the method is NOT editable, only viewable.
+    - parent=False         -- the parent object of the WindowMethod (this is necessary only when view_only==True
+    - view_only_edit=True  -- a binary that determines whether the "edit" button is enabled when view-only==True
+
+
+INITIALIZATION
+
+To get the following window configurations, use these arguments:
+    - New Method:
+        all args = default
+        
+    - Edit existing method from .osm file:
+        path = path to file
+        all other args = default
+
+    - Edit existing method that is stored in a sample file:
+        path = False
+        data = data from sample file as dictionary
+        all other args = default
+
+    - View existing method from .osm file:
+        path = path to file
+        data = False
+        view_only = True
+        parent = parent object ('self' from calling object, usually)
+        view_only_edit = whatever you prefer (True if you want the user to be able to open an editing window from the view window)
+
+    - View existing method that is stored in a sample file:
+        path = False
+        data = data from sample file as dictionary
+        view_only = True
+        parent = parent object ('self' from calling object, usually)
+        view_only_edit = whatever you prefer (True if you want the user to be able to open an editing window from the view window)
+
+TABLE OF CONTENTS
+
+A. Imports
+B. WindowMethod()
+    1. __init__(self, path=False, data=False, view_only=False, parent=False, view_only_edit=True)
+        Initializes and opens window based on passed arguments
+    
+    2. init_form_values(self)
+	initializes the values in the form to preset blank values
+		
+    3. set_values(self)
+	Sets the values of the form to reflect the stored data of the
+	method, either from the passed path or passed data
+		
+    4. set_step_values_for_editing(self, step)
+	Sets the values of the step input form in preparation for editing.
+	Pulls values from 'step' argument to fill form.
+		
+    5. refresh_list(self)
+        Refreshes the list of steps to reflect the most updated steps saved
+        
+    6. erase_list_visualization(self)
+        Erases the list of steps
+        
+    7. update_buttons(self)
+        Based on the current status (adding a new step, editing an existing step, neither) and
+        how many steps have been added, enables and disables the relevant buttons (up/down/add/edit/dup/delete).
+        
+    8. build_new_list(self)
+        Builds a new list of steps with brand new widgets based on self.steps
+        
+    9. row_clicked(self, w, event)
+        Event handler for clicking on widget 'w' in a row in the steps display.
+        Can handle regular clicks and ctrl+click
+        It manages which steps are currently selected in self.selected
+        and manages which rows are highlighted.
+        
+    10. update_highlights(self)
+        Makes sure correct rows (only those in self.selected) are highlighted
+        
+    11. change_row_highlight(self, i, to_highlight)
+        either highlights row i if to_highlight == True or unhighlights it if not
+    
+    12. widget_is_highlighted(self, w):
+        returns True if widget 'w' is highlighted, otherwise returns False.
+        
+    13. row_move_up(self)
+        Moves all selected rows up one position.
+
+    14. row_move_down(self)
+        Moves all selected rows down one position.
+        
+    15. row_duplicate(self)
+        Duplicates all selected rows and places each new row below the row of which it is a duplicate.
+        
+    16. edit_step(self)
+        Event handler for click on "edit" button. Either opens the editing pane and loads values if
+        nothing is currently being edited. Otherwise, closes the editing pane.
+        
+    17. show_edit_step(self)
+        Loads the relevant info from the selected step into the editing pane then shows the editing pane.
+        
+    18. hide_edit_step(self)
+        Resets the values in the editing pane and hides it (does NOT save step)
+        
+    19. row_delete(self)
+        Deletes all selected rows.
+        
+    20. blockify(self, i_list)
+        Takes in a list of integers. Returns a list of lists where all consecutive integers
+        have been grouped together in sub-lists, in the same order that the original list was
+        passed. (See example in function description)
+        
+    21. step_type_changed(self, i)
+        Event handler whenever the type is changed for a step. Pulls up a new layout
+        from the stacked layout
+        
+    22. add_new_step(self)
+        Event handler for click on "add" button. Either opens the step pane with blank values if
+        no step is currently being added. Otherwise, closes the step pane.
+        
+    23. show_new_step_pane(self)
+        Shows the add-new-step pane
+    
+    24. hide_new_step_pane(self)
+        Resets and hides the new step pane
+        
+    25. add_step(self)
+        Pulls all the data from the new step pane and validates it.
+        If it is valid, adds the step to the end of the self.steps
+        list, updates the step list, and resets and closes the step pane.
+        
+    26. is_checked(self, checkbox)
+        Takes in a QCheckBox object and returns True if it is checked, False if not
+        
+    27. validate_step(self)
+        A bunch of validation rule checks for a step that is being added or edited.
+        If a rule is missed, it displays and alert and returns False.
+        If all checks are passed, returns True.
+        
+    28. start_save(self, save_type)
+        Event handler for someone pushing the "save" or "save as" button.
+        First, validates the whole method. If valid,
+        Calls the appropriate save function
+        
+    29. method_save_as(self)
+        Asks the user to identify a location and filename to save, then callse
+        the method_save() function.
+        
+    30. method_save(self)
+        Pulls the method file together and saves it as an .osm file.
+	
+    31. validate_method(self)
+        A bunch of validation rule checks for the overall method (either for a new method or one
+        that is being edited).
+        If a rule is missed, it displays and alert and returns False.
+        If all checks are passed, returns True.
+        
+    32. refresh_graph(self)
+        Using self.steps and the checkbox that determines whether or not labels are displayed
+        on the graph, refreshes the graph to match the current steps.
+        
+    33. set_header(self)
+        Sets the window header based on arguments and method name
+        
+    34. ramp_scan_rate_to_duration(self)
+        converts the values entered in a ramp step for v1, v2, and scan rate
+        into a duration in secords, returns the duraction.
+        
+    35. ramp_duration_to_scan_rate(self, v0, v1, duration)
+        converts the passed arguments v0, v1, and duration into a scan rate
+        returns the scan rate
+        
+    36. set_duration(self, step_type)
+        takes in a step_type and, if it is a step where duration must be calculated
+        from the user-entered parameters, calculates it and sets the hidden field,
+        self.ts[step_type] to that duration. This requires that there is a hidden
+        QDoubleSpinBox stored in the self.ts array for EVERY step type. 
+
+UPDATE HISTORY
+
+26-Nov-2025    aaron k    First draft of code and documentation complete
+
+
+FUNCTIONALITY TO ADD
+1. Auto fill ramp v0 parameter when ramp is added after const V. (for quick ease of use)
+2. Auto fill const duration to match previous const duration (for quick ease of use)
+3. Extend step rows to match width of QScrollArea
+4. Upon save update display in any linked (sibling?) windows
+
+
 """
+#############################
+#
+#       IMPORTS
+#
+#############################
 
 import ov_globals as g
 import ov_lang as l
@@ -54,7 +255,7 @@ from PyQt6.QtWidgets import (
     )
 
 class WindowMethod(QMainWindow):
-    def __init__(self, path=False, data=False, uid=False, view_only=False, parent=False, view_only_edit=True):
+    def __init__(self, path=False, data=False, view_only=False, parent=False, view_only_edit=True):
         super().__init__()
         self.steps = []
         self.selected = []
@@ -78,33 +279,23 @@ class WindowMethod(QMainWindow):
         g2 = QGroupBox('Method parameters')
         v5 = QVBoxLayout()
         split1 = QSplitter()
-        split1.setOrientation(Qt.Orientation.Vertical)
-
-        
-        
-        
-        
-
-        
+        split1.setOrientation(Qt.Orientation.Vertical)  
         
         self.name = QLineEdit()
         self.name.setObjectName('ov-method-name')
         self.name.setPlaceholderText('Profile name')
         self.name.textChanged.connect(self.set_header)
-
-        
-        
-        
+    
         # Define method-wide parameters
         dt_lbl_0 = QLabel('Sample every')
         self.dt = QDoubleSpinBox()
         dt_lbl_1 = QLabel('second(s).')
 
-        current_ranges = ['1uA', '10 uA', '100 uA', '1,000 uA', '10,000 uA']
+        
         current_range_lbl = QLabel("Device current range")
         self.current_range = QComboBox()
         self.current_range.setPlaceholderText('Select...')
-        for cr in current_ranges:    
+        for cr in g.CURRENT_RANGES:    
             self.current_range.addItem(cr)
 
         # Graph stuff
@@ -331,6 +522,7 @@ class WindowMethod(QMainWindow):
 
                 self.name.setEnabled(False)
                 self.dt.setEnabled(False)
+                self.current_range.setEnabled(False)
 
                 w = QWidget()
                 w.setLayout(v1)
@@ -368,18 +560,20 @@ class WindowMethod(QMainWindow):
             self.ts[sp_type].setValue(0)
 
     def set_values(self):
-        if self.path:
-            data = get_data_from_file(self.path)
-        elif self.data:
-            data = self.data
-        self.name.setText(data[g.M_NAME])
-        self.dt.setValue(data[g.M_DT])
-        self.steps = data[g.M_STEPS]
-        self.refresh_list()
-        self.set_header()
+        if self.path:                               # if there is a path,
+            data = get_data_from_file(self.path)    #   get the most up to date data from the path
+        elif self.data:                             # otherwise, if there is some data passed
+            data = self.data                        #   use it rather than a path
+        self.name.setText(data[g.M_NAME])           # set name  
+        self.dt.setValue(data[g.M_DT])              # set dt
+        cr_text = data[g.M_CURRENT_RANGE]           # set current range
+        self.current_range.setCurrentIndex(g.CURRENT_RANGES.index(cr_text))
+        self.steps = data[g.M_STEPS]                # set steps 
+        self.refresh_list()                         # rebuild visual steps list based on self.steps
+        self.set_header()                           # set the window header
         
         
-    def set_form_values_for_editing(self, step):
+    def set_step_values_for_editing(self, step):
         self.init_form_values()                     # initialize all form values
         
         # Modify title and button text
@@ -636,7 +830,7 @@ class WindowMethod(QMainWindow):
         self.update_buttons()
         self.but_edit.setIcon(QIcon(g.ICON_X))
         step = self.steps[self.selected[0]]
-        self.set_form_values_for_editing(step)
+        self.set_step_values_for_editing(step)
         self.g1.show()
         
 
@@ -683,26 +877,6 @@ class WindowMethod(QMainWindow):
 
     def step_type_changed(self, i):
         self.s1.setCurrentIndex(i+1) # the +1 allows for the 0th screen to be empty
-
-
-    def collection_state_changed(self, checkbox, state):
-        
-        """This runs when a checkbox is supposed to hide/display some other
-        content each time it is toggled. Works by finding the layout to
-        toggle based on the checkbox's assigned name and the layout's corresponding
-        name. More specifically, the layout must
-            (a) be wrapped in a QWidget and
-            (b) have the name: [checkbox name]-layout.
-        So if the checkbox's name is 'steve', then the QWidget that wraps the
-        layout must be named 'steve-layout'. If the checkbox is selected, then the
-        layout will be shown. Otherwise it will be hidden"""
-        
-        lay = self.findChild(QWidget, checkbox.objectName()+'-layout')
-        if state == Qt.CheckState.Checked.value:
-            lay.show()
-        else:
-            lay.hide()
-        
         
     def add_new_step(self):
         if self.g1.isHidden():
@@ -811,32 +985,48 @@ class WindowMethod(QMainWindow):
         return True
 
     def start_save(self, save_type):
-        if self.validate_sweep_profile():
+        if self.validate_method():
             if save_type == 'save-as':
-                self.sp_save_as()
+                self.method_save_as()
             else:
-                self.sp_save()
+                self.method_save()
     
-    def sp_save_as(self):     
+    def method_save_as(self):     
         # get the actual filename and path from user
         self.path = askSaveAsFileName(          # open a save file dialog which returns the file object
-            filetypes=[(l.filetype_sp_lbl[g.L], g.SWEEP_PROFILE_FILE_TYPES)],
-            defaultextension=g.SWEEP_PROFILE_EXT,
+            filetypes=[(l.filetype_sp_lbl[g.L], g.METHOD_FILE_TYPES)],
+            defaultextension=g.METHOD_EXT,
             confirmoverwrite=True,
             initialfile=guess_filename(self.name.text()))
         if not self.path or self.path == '':    # if the user didn't select a path
             return                              # don't try to save, just return
-        self.sp_save()                          # save the file!
+        self.method_save()                      # save the file!
 
-    def sp_save(self):
+    def method_save(self):
         data = {g.M_NAME: self.name.text(),
                 g.M_DT: self.dt.value(),
+                g.M_CURRENT_RANGE: self.current_range.currentText(),
                 g.M_STEPS: self.steps}
         write_data_to_file(self.path, data)
 
-    def validate_sweep_profile(self):
-        # If you want to add validation to the overall sweep profile, do so here!
-        #   Maybe to min and max dt?
+    def validate_method(self):
+
+        if not self.name.text():                                                                # if there is no method name
+            show_alert(self, 'Error!', 'Please name this method.')
+            return False
+        elif len(self.name.text()) < 3:                                                         # if method name is too short
+            show_alert(self, 'Error!', 'Method name must contain at least three characters.')
+            return False
+        elif self.dt.value() == float(0):                                                       # if there is no dt set
+            show_alert(self, 'Error!', 'Please select a sample frequency greater than 0.')
+            return False
+        elif self.current_range.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:                  # if there is no current range selected
+            show_alert(self, 'Error!', 'Please select a current range.')
+            return False
+        elif len(self.steps) == 0:                                                              # if no steps have been added
+            show_alert(self, 'Error!', 'Please add at least one step to the method.')
+            return False
+      
         return True
 
     def refresh_graph(self):

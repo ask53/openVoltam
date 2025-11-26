@@ -1,5 +1,7 @@
 #ov_globals.py
 
+CURRENT_RANGES = ['1uA', '10 uA', '100 uA', '1,000 uA', '10,000 uA']
+
 # PyQt globals
 QT_NOTHING_SELECTED_INDEX = -1
 
@@ -22,6 +24,7 @@ M_UID_SELF = 'uid'
 M_UID_PREFIX = 'method-'
 M_NAME = 'name'
 M_DT = 'dt'
+M_CURRENT_RANGE = 'current-range'
 M_STEPS = 'steps'
 M_STEP_NAME = 'name'
 M_DATA_COLLECT = 'data-collect'
@@ -112,9 +115,9 @@ PADDING = 4
 
 #File system navigation
 SAMPLE_EXT = '.ovs'
-SWEEP_PROFILE_EXT = '.ovp'
+METHOD_EXT = '.ovm'
 SAMPLE_FILE_TYPES = '*'+SAMPLE_EXT
-SWEEP_PROFILE_FILE_TYPES = '*'+SWEEP_PROFILE_EXT
+METHOD_FILE_TYPES = '*'+METHOD_EXT
 
 # Unit conversions
 MM2IN = 1. / 25.4
