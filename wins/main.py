@@ -276,6 +276,7 @@ class WindowMain(QMainWindow):
 
     def config_run(self):
         try:
+            self.w_run_config.reset_form()
             self.w_run_config.show()
             
         except Exception as e:

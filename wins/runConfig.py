@@ -74,9 +74,6 @@ class WindowRunConfig(QMainWindow):
         self.device.setPlaceholderText(l.rc_select[g.L])
         for dev in devices:
             self.device.addItem(dev['name'], dev)
-
-        but_device_connect = QPushButton('connect to device')
-
             
         run_type_lbl = QLabel("Run type")
         #####################
@@ -181,13 +178,7 @@ class WindowRunConfig(QMainWindow):
                 show_alert(self, 'success!', 'legooooo')
                     
                
-                #####################################
-                #
-                #   FILL THIS OUT!!!
-                #
-                #   This is where we load the form with
-                #   the config values from the run with
-                #   the passed uid. 
+
 
             pass
             
@@ -196,6 +187,35 @@ class WindowRunConfig(QMainWindow):
         w = QWidget()
         w.setLayout(v3)
         self.setCentralWidget(w)
+
+    def reset_form(self):                                           # resets Run Config window to all blank values
+        self.method.setCurrentIndex(g.QT_NOTHING_SELECTED_INDEX)    # set dropdowns to 'nothing selected'
+        self.device.setCurrentIndex(g.QT_NOTHING_SELECTED_INDEX)
+        self.run_type.setCurrentIndex(g.QT_NOTHING_SELECTED_INDEX)
+        self.replicates.setValue(g.RC_REPS_MIN)                     # set reps to minimum value (1)
+        self.notes.setText('')                                      # set notes to an empty string
+        self.type_stack.setCurrentIndex(0)                          # set stacked view to the 0th view (blank)
+        self.refresh_graph()                                        # refresh the graph pane
+
+    def set_form(self, uid):                                        # Sets Run Config window to match values from run with uid
+        print(self.parent.path)
+
+        #
+        ###########################################################################3
+        #
+        # HERE!
+        #
+        #######################
+
+                #####################################
+                #
+                #   FILL THIS OUT!!!
+                #
+                #   This is where we load the form with
+                #   the config values from the run with
+                #   the passed uid. 
+        return 
+        
 
     def run_type_changed(self, i):
         self.type_stack.setCurrentIndex(i)
@@ -393,9 +413,11 @@ class WindowRunConfig(QMainWindow):
         return
 
     def refresh_graph(self):
+        reps = int(self.replicates.value())
+        steps = []
         if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
-            reps = int(self.replicates.value())
-            self.graph.update_plot(self.method.currentData()[g.M_STEPS], show_labels=False, reps=reps)
+            steps = self.method.currentData()[g.M_STEPS]    
+        self.graph.update_plot(steps, show_labels=False, reps=reps)
 
     def view_method(self):
         if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
