@@ -39,18 +39,33 @@ class WindowRun(QMainWindow):
         super().__init__()
         
         self.parent = parent
-        self.setWindowTitle(l.r_window_title[g.L])
+        self.data = False
+        self.uid = False
+        self.run = False
+        self.method = False
+        self.setWindowTitle(l.r_window_title[g.L]+' | '+self.parent.data[g.S_NAME])
         
         w = QWidget()
         w.setLayout(QVBoxLayout())
         self.setCentralWidget(w)
+        
 
     def start_run(self, uid):
         self.uid = uid
-        print("now we're starting the run from within the new object yayyyy")
+        self.read_updated_file()
+        self.run = get_run_from_file_data(self.data, self.uid)
+        self.method = get_method_from_file_data(self.data, run[g.R_UID_METHOD])
 
+
+
+
+
+
+        
+    def read_updated_file(self):
+        self.parent.load_sample_info()
+        self.data = self.parent.data
     
-
     def showEvent(self, event):
         self.parent.setEnabled(False)
         self.parent.setEnabledChildren(False)
@@ -61,12 +76,3 @@ class WindowRun(QMainWindow):
         self.parent.setEnabled(True)
         self.parent.setEnabledChildren(True)
         event.accept()
-
-    
-            
-            
-
-    
-
-    ############################################################################
-        

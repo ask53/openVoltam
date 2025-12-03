@@ -177,6 +177,32 @@ def scroll_area_resized(outer, inner, event):
     print(outer_width)
     print(inner.width())
 
+def get_run_from_file_data(data, run_id):
+    
+    """ takes in a full dataset dictionary, data, and the uid of the run
+    we are seeking, run_id. Loops through all run elements in the data
+    looking for one with a matching uid. If found, returns the dictionary
+    of that run. Otherwise, returns False."""
+    
+    for run in data[g.S_RUNS]:          
+        if run[g.R_UID_SELF] == run_id: 
+            return run
+    return False
+    
+
+def get_method_from_file_data(data, method_id):
+
+    """ takes in a full dataset dictionary, data, and the uid of the method
+    we are seeking, method_id. Loops through all method elements in the data
+    looking for one with a matching uid. If found, returns the dictionary
+    of that method. Otherwise, returns False."""
+    
+    for method in data[g.S_METHODS]:
+        if method[g.M_UID_SELF] == method_id:
+            return method
+    return False
+    
+
 
 
 # Classes!

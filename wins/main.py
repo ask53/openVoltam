@@ -489,8 +489,6 @@ class WindowMain(QMainWindow):
             win.setEnabled(enable)
 
     def start_run(self, uid):
-        print('starting the run from the main window!')
-        print('with uid',uid)
         self.w_run.start_run(uid)
         self.w_run.show()
 

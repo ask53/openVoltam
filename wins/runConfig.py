@@ -184,24 +184,16 @@ class WindowRunConfig(QMainWindow):
 
     def set_form(self, uid):                                        # Sets Run Config window to match values from run with uid
         data = get_data_from_file(self.parent.path)
-        run_found = False
-        for run in data[g.S_RUNS]:                              # Loop through all runs, looking for the run with matching UID
-            if run[g.R_UID_SELF] == uid:                        # Break loop when found so "run" contains run info.
-                run_found = True
-                break
-        if run_found:                                           # if the run is found in the file
-            method_match = False                                # find the name of the corresponding method from the same file
-            for m in data[g.S_METHODS]:
-                if m[g.M_UID_SELF] == run[g.R_UID_METHOD]:
-                    method_match = True
-                    break
-            if method_match:                                    # If the method is found in the file
-                self.method.setCurrentText(m[g.M_NAME])         # Select that method in the method dropdown
+        run = get_run_from_file_data(data, uid)                 # Look for the relevant run, store it if found, else run=False
+        if run:                                           
+            method = get_method_from_file_data(data, run[g.R_UID_METHOD]) # Look for relevant method, store if found, else method=False
+            if method:                                          # If the method is found in the file
+                self.method.setCurrentText(method[g.M_NAME])    # Select that method in the method dropdown
 
             self.device.setCurrentText(run[g.R_DEVICE])         # set device menu to value from file
-            self.replicates.setValue(len(run[g.R_REPLICATES]))  # set replicates to value from file
+            self.replicates.setValue(len(run[g.R_REPLICATES]))  # set replicates to length of replicate list of run from file
             self.notes.setText(run[g.R_NOTES])                  # set notes to value from file
-            self.refresh_graph()                                # refresh the graph pane
+            
 
             for i in range(0, self.run_type.count()):           # loop through all the items in the type list            
                 if self.run_type.itemData(i) == run[g.R_TYPE]:  # (list text is in user language) but if list item *data*
@@ -216,6 +208,8 @@ class WindowRunConfig(QMainWindow):
             elif run[g.R_TYPE] == g.R_TYPE_STDADD:              # if this run was the standard addition
                 self.w_stdadd_vol_std.setValue(run[g.R_STD_ADDED_VOL])
                 self.w_stdadd_conc_std.setValue(run[g.R_STD_CONC])
+
+            self.refresh_graph()                                # refresh the graph pane
 
     def run_type_changed(self, i):
         self.type_stack.setCurrentIndex(i)
