@@ -44,9 +44,9 @@ s_edit_info = ['Edit info','Modificar datos']
 
 # Window: run configuration
 rc_window_title = ['Configure run(s)','TEXTO']
-rc_type_blank = ['Blank','TEXTO']
-rc_type_sample = ['Sample','TEXTO']
-rc_type_stdadd = ['Standard addition','TEXTO']
+rc_type_blank = ['BlankLANG','TEXTO']
+rc_type_sample = ['SampleLANG','TEXTO']
+rc_type_stdadd = ['Standard additionLANGLANGGGG','TEXTO']
 rc_select = ['Select...','TEXTO']
 
 # Window: sweep profile builder/editer

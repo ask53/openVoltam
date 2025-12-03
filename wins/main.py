@@ -123,6 +123,7 @@ class WindowMain(QMainWindow):
 
         but_view.clicked.connect(self.view_sample_info)
         but_config.clicked.connect(self.config_run)
+        but_calc.clicked.connect(self.config_run_with_uid)
         
         v1 = QVLine()
         v2 = QVLine()
@@ -281,7 +282,21 @@ class WindowMain(QMainWindow):
             
         except Exception as e:
             print(e)
-            print('here we areeeee')
+
+    def config_run_with_uid(self):
+        try:
+            ##############################################################
+            #
+            #   PLACEHOLDER!!!   modify this with actual UID of selected run
+            #
+            uid = 'run-14'
+            #
+            ##############################################################
+            self.w_run_config.reset_form()
+            self.w_run_config.set_form(uid)
+            self.w_run_config.show()
+        except Exception as e:
+            print(e)
         
 
     def widgetize_run_history(self):

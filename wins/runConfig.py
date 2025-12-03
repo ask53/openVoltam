@@ -44,7 +44,7 @@ from PyQt6.QtWidgets import (
 )
 
 class WindowRunConfig(QMainWindow):
-    def __init__(self, parent, uid=False):
+    def __init__(self, parent):
         super().__init__()
         
         self.parent = parent
@@ -79,14 +79,14 @@ class WindowRunConfig(QMainWindow):
         #####################
         # editable!
         self.types = [l.rc_type_blank[g.L], l.rc_type_sample[g.L], l.rc_type_stdadd[g.L]]
-        self.run_type = QComboBox()
-        self.run_type.setPlaceholderText(l.rc_select[g.L])
-        self.run_type.addItems(self.types)
-        self.run_type.setItemData(0, g.R_RUN_TYPE_BLANK)
-        self.run_type.setItemData(1, g.R_RUN_TYPE_SAMPLE)
-        self.run_type.setItemData(2, g.R_RUN_TYPE_STDADD)
         #
         #####################
+        self.run_type = QComboBox()
+        self.run_type.setPlaceholderText(l.rc_select[g.L])  # set placeholder text
+        self.run_type.addItems(self.types)                  # add all text in correct language
+        for i in range(0, len(self.types)):                 # for each text item:
+            self.run_type.setItemData(i, g.R_TYPES[i])      #   link the corresponding label in English for cross-language data storage
+        
         
         self.run_type.currentIndexChanged.connect(self.run_type_changed)
 
@@ -164,25 +164,6 @@ class WindowRunConfig(QMainWindow):
     
         v3.addLayout(h1)
         v3.addWidget(but_run)
-
-        if uid:
-            i = -1
-            data = self.parent.data
-            for j, run in enumerate(data[g.S_RUNS]):
-                if run[g.R_UID_SELF] == uid:
-                    i = j
-
-            if i == -1:
-                show_alert(self, "eeeeek", "there is no run that matches!")
-            else:
-                show_alert(self, 'success!', 'legooooo')
-                    
-               
-
-
-            pass
-            
-
         
         w = QWidget()
         w.setLayout(v3)
@@ -192,38 +173,58 @@ class WindowRunConfig(QMainWindow):
         self.method.setCurrentIndex(g.QT_NOTHING_SELECTED_INDEX)    # set dropdowns to 'nothing selected'
         self.device.setCurrentIndex(g.QT_NOTHING_SELECTED_INDEX)
         self.run_type.setCurrentIndex(g.QT_NOTHING_SELECTED_INDEX)
+        self.w_sample_sample_vol.setValue(0)                        # Set all type-dependent values to 0
+        self.w_sample_total_vol.setValue(0)
+        self.w_stdadd_vol_std.setValue(0)
+        self.w_stdadd_conc_std.setValue(0)
         self.replicates.setValue(g.RC_REPS_MIN)                     # set reps to minimum value (1)
         self.notes.setText('')                                      # set notes to an empty string
         self.type_stack.setCurrentIndex(0)                          # set stacked view to the 0th view (blank)
         self.refresh_graph()                                        # refresh the graph pane
 
     def set_form(self, uid):                                        # Sets Run Config window to match values from run with uid
-        print(self.parent.path)
+        data = get_data_from_file(self.parent.path)
+        run_found = False
+        for run in data[g.S_RUNS]:                              # Loop through all runs, looking for the run with matching UID
+            if run[g.R_UID_SELF] == uid:                        # Break loop when found so "run" contains run info.
+                run_found = True
+                break
+        if run_found:                                           # if the run is found in the file
+            method_match = False                                # find the name of the corresponding method from the same file
+            for m in data[g.S_METHODS]:
+                if m[g.M_UID_SELF] == run[g.R_UID_METHOD]:
+                    method_match = True
+                    break
+            if method_match:                                    # If the method is found in the file
+                self.method.setCurrentText(m[g.M_NAME])         # Select that method in the method dropdown
 
-        #
-        ###########################################################################3
-        #
-        # HERE!
-        #
-        #######################
+            self.device.setCurrentText(run[g.R_DEVICE])         # set device menu to value from file
+            self.replicates.setValue(len(run[g.R_REPLICATES]))  # set replicates to value from file
+            self.notes.setText(run[g.R_NOTES])                  # set notes to value from file
+            self.refresh_graph()                                # refresh the graph pane
 
-                #####################################
-                #
-                #   FILL THIS OUT!!!
-                #
-                #   This is where we load the form with
-                #   the config values from the run with
-                #   the passed uid. 
-        return 
-        
+            for i in range(0, self.run_type.count()):           # loop through all the items in the type list            
+                if self.run_type.itemData(i) == run[g.R_TYPE]:  # (list text is in user language) but if list item *data*
+                    self.run_type.setCurrentIndex(i)            #   matches the type of run stored in the file, select that
+                    self.type_stack.setCurrentIndex(i)          #   entry in both the dropdown list and the following stacked layout
+                    break
+                
+            # Then load the data for the relevant section of the stacked layout
+            if run[g.R_TYPE] == g.R_TYPE_SAMPLE:                # if this run was the sample
+                print('sample!')
+                self.w_sample_sample_vol.setValue(run[g.R_SAMPLE_VOL])
+                self.w_sample_total_vol.setValue(run[g.R_TOTAL_VOL])
+                
+            elif run[g.R_TYPE] == g.R_TYPE_STDADD:              # if this run was the standard addition
+                print('std add!')
+                self.w_stdadd_vol_std.setValue(run[g.R_STD_ADDED_VOL])
+                self.w_stdadd_conc_std.setValue(run[g.R_STD_CONC])
 
     def run_type_changed(self, i):
         self.type_stack.setCurrentIndex(i)
 
     def method_changed(self, i):
-        print(self.method.currentData())
         self.refresh_graph()
-        
 
     def open_method_from_file(self):
         path = get_path_from_user('method')
@@ -236,19 +237,12 @@ class WindowRunConfig(QMainWindow):
         except Exception as e:
             print(e)
         
-        print('---')
-        print(data)
-        print('---')
-        
     def run_button_clicked(self):
         try:
             form_is_valid = self.validate_form()    # Validate form
             if form_is_valid:   
                 self.save_method()          # Save the sweep profile
                 self.save_run_configs()     # Save the configs for the run
-
-                print(self.run_to_run)
-                print(self.reps_to_run)
                 self.run_runs()
                                                     # start running the runs!
         except Exception as e:
@@ -322,7 +316,6 @@ class WindowRunConfig(QMainWindow):
 
         if self.valid:
             method_new = self.method.currentData()
-            print(method_new)
             
             for method in data[g.S_METHODS]:
                 if methods_match(method, method_new):
@@ -334,11 +327,9 @@ class WindowRunConfig(QMainWindow):
                     ids = get_ids(data, g.S_METHODS)                # get existing method uids      
                     method_id = get_next_id(ids, g.M_UID_PREFIX)   # generate the next method uid
                     try:
-                        print(method_new)
                         method_new[g.M_UID_SELF] = method_id           # add that new method uid to this current sweep proile
                     except Exception as e:
                         print(e)
-                        print('here!')
 
                     data[g.S_METHODS].append(method_new)            # append the new sweep profile to the old data
                     write_data_to_file(self.parent.path, data)      # write the data back to the file!
@@ -364,10 +355,10 @@ class WindowRunConfig(QMainWindow):
             run_type = self.run_type.currentData()
             new_data[g.R_TYPE] = run_type
             new_data[g.R_NOTES] = self.notes.text()
-            if run_type == g.R_RUN_TYPE_SAMPLE:
+            if run_type == g.R_TYPE_SAMPLE:
                 new_data[g.R_SAMPLE_VOL] = self.w_sample_sample_vol.value()
                 new_data[g.R_TOTAL_VOL] = self.w_sample_total_vol.value()
-            elif run_type == g.R_RUN_TYPE_STDADD:
+            elif run_type == g.R_TYPE_STDADD:
                 new_data[g.R_STD_ADDED_VOL] = self.w_stdadd_vol_std.value()
                 new_data[g.R_STD_CONC] = self.w_stdadd_conc_std.value()
         

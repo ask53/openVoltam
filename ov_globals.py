@@ -48,9 +48,9 @@ R_DEVICE = 'device'
 R_TYPE = 'run_type'
 R_NOTES = 'notes'
 R_REPLICATES = 'replicates'
-R_RUN_TYPE_BLANK = "blank"
-R_RUN_TYPE_SAMPLE = "sample"
-R_RUN_TYPE_STDADD = "standard_addition"
+R_TYPE_BLANK = "blank"
+R_TYPE_SAMPLE = "sample"
+R_TYPE_STDADD = "standard_addition"
 R_SAMPLE_VOL = "sample_vol_mL"
 R_TOTAL_VOL = "total_vol_mL"
 R_STD_ADDED_VOL = "standard_vol_mL"
@@ -64,6 +64,7 @@ R_STATUS_RAN = "run_success"
 R_STATUS_ANALYZED = "analyzed"
 R_RUN_UID_PREFIX = "run-"
 R_REPLICATE_UID_PREFIX = "rep-"
+R_TYPES = [R_TYPE_BLANK, R_TYPE_SAMPLE, R_TYPE_STDADD]
 #
 #
 #
