@@ -16,6 +16,7 @@ from ov_functions import *
 #from wins.viewSample import WindowViewSample
 from wins.sample import WindowSample
 from wins.runConfig import WindowRunConfig
+from wins.run import WindowRun
 
 # import other necessary python tools
 from os.path import join as joindir
@@ -54,12 +55,13 @@ class WindowMain(QMainWindow):
         self.w_view_sample = WindowSample(self.path, self, update_on_save=True, view_only=True)
         self.w_edit_sample = WindowSample(self.path, self, update_on_save=True, view_only=False)
         self.w_run_config = WindowRunConfig(self)
+        self.w_run = WindowRun(self)
         self.config_pane_displayed = False
         self.setObjectName('window-sample')
         self.selected = []                  # for storing which runs are selected
         self.prog_check_flag = False
         self.num_runs = 0
-        self.children = [self.w_view_sample, self.w_edit_sample, self.w_run_config]
+        self.children = [self.w_view_sample, self.w_edit_sample, self.w_run_config, self.w_run]
 
             
 
@@ -485,6 +487,16 @@ class WindowMain(QMainWindow):
         to that boolena, either enabling or disabling all"""
         for win in self.children:
             win.setEnabled(enable)
+
+    def start_run(self, uid):
+        print('starting the run from the main window!')
+        print('with uid',uid)
+        self.w_run.start_run(uid)
+        self.w_run.show()
+
+        
+
+        
 
     def closeEvent(self, event):
         for win in self.children:

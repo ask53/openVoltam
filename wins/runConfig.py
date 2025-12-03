@@ -208,15 +208,12 @@ class WindowRunConfig(QMainWindow):
                     self.run_type.setCurrentIndex(i)            #   matches the type of run stored in the file, select that
                     self.type_stack.setCurrentIndex(i)          #   entry in both the dropdown list and the following stacked layout
                     break
-                
-            # Then load the data for the relevant section of the stacked layout
+                                                                # Then load the data for the relevant section of the stacked layout
             if run[g.R_TYPE] == g.R_TYPE_SAMPLE:                # if this run was the sample
-                print('sample!')
                 self.w_sample_sample_vol.setValue(run[g.R_SAMPLE_VOL])
                 self.w_sample_total_vol.setValue(run[g.R_TOTAL_VOL])
                 
             elif run[g.R_TYPE] == g.R_TYPE_STDADD:              # if this run was the standard addition
-                print('std add!')
                 self.w_stdadd_vol_std.setValue(run[g.R_STD_ADDED_VOL])
                 self.w_stdadd_conc_std.setValue(run[g.R_STD_CONC])
 
@@ -401,7 +398,8 @@ class WindowRunConfig(QMainWindow):
 
 
     def run_runs(self):
-        return
+        self.close()
+        self.parent.start_run(self.run_to_run)
 
     def refresh_graph(self):
         reps = int(self.replicates.value())
@@ -424,6 +422,7 @@ class WindowRunConfig(QMainWindow):
     def closeEvent(self, event):
         self.parent.setEnabled(True)
         self.parent.setEnabledChildren(True)
+        self.parent.load_sample_info()
         event.accept()
 
     

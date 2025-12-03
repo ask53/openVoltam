@@ -59,6 +59,9 @@ sp_edit_step = ['Edit step','TEXTO']
 sp_add_btn = ['Add','TEXTO']
 sp_edit_btn = ['Apply edits','TEXTO']
 
+# Window: run
+r_window_title = ['Run viewer','TEXTO']
+
 
 
 #Alerts
