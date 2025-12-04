@@ -291,7 +291,7 @@ class WindowMain(QMainWindow):
             #
             #   PLACEHOLDER!!!   modify this with actual UID of selected run
             #
-            uid = 'run-14'
+            uid = 'run-0'
             #
             ##############################################################
             self.w_run_config.reset_form()

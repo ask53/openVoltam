@@ -201,6 +201,20 @@ def get_method_from_file_data(data, method_id):
         if method[g.M_UID_SELF] == method_id:
             return method
     return False
+
+def get_v_max_abs(step):
+
+    """ takes in a step of the method, and returns the maximum amplitude
+    of volutage (always positive) during that step. """
+
+    if step[g.M_TYPE] == g.M_CONSTANT:
+        return abs(step[g.M_CONST_V])
+
+    elif step[g.M_TYPE] == g.M_RAMP:
+        v0 = abs(step[g.M_RAMP_V1])
+        v1 = abs(step[g.M_RAMP_V2])
+        return max(v0, v1)
+        
     
 
 

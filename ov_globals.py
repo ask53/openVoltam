@@ -1,6 +1,6 @@
 #ov_globals.py
 
-CURRENT_RANGES = ['1uA', '10 uA', '100 uA', '1,000 uA', '10,000 uA']
+CURRENT_RANGES = ['1uA', '10uA', '100uA', '1000uA', '10000uA']
 
 # PyQt globals
 QT_NOTHING_SELECTED_INDEX = -1
@@ -39,6 +39,9 @@ M_CONST_V = 'V'
 M_RAMP_V1 = 'V1'
 M_RAMP_V2 = 'V2'
 M_SCAN_RATE = 'scan-rate'
+M_RELAY = 'relay'
+M_RELAY_STATE = 'relay-state'
+M_RELAYS = [M_STIR, M_VIBRATE]
 
 
 # Keys for run (R) dictionary
