@@ -68,10 +68,10 @@ R_STATUS_ANALYZED = "analyzed"
 R_RUN_UID_PREFIX = "run-"
 R_REPLICATE_UID_PREFIX = "rep-"
 R_TYPES = [R_TYPE_BLANK, R_TYPE_SAMPLE, R_TYPE_STDADD]
-#
-#
-#
-##### ADD MORE RUN PARAMS HERE
+
+# Run window
+R_PLOT_REFRESH_T = 0.1      # refreshes graph every x seconds
+R_POST_RUN_WAIT_TIME = 0.5  # time after run to wait for last data [s]
 
 # Icon URLs 
 ICON_PLUS = 'external/icons/add.png'
