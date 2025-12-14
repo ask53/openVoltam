@@ -140,7 +140,7 @@ class WindowRunConfig(QMainWindow):
         self.type_stack.addWidget(g_sample)
         self.type_stack.addWidget(g_stdadd)
 
-        but_run = QPushButton('Begin run!')
+        but_run = QPushButton('Ready to run!')
         but_run.clicked.connect(self.run_button_clicked)
 
         # add widgets to layouts 

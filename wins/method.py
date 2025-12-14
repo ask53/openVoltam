@@ -288,8 +288,10 @@ class WindowMethod(QMainWindow):
     
         # Define method-wide parameters
         dt_lbl_0 = QLabel('Sample every')
-        self.dt = QDoubleSpinBox()
-        dt_lbl_1 = QLabel('second(s).')
+        self.dt = QSpinBox()
+        dt_lbl_1 = QLabel('miliseconds.')
+        self.dt.setMinimum(g.M_DT_MIN)
+        self.dt.setMaximum(g.M_DT_MAX)
 
         
         current_range_lbl = QLabel("Device current range")

@@ -70,8 +70,14 @@ R_REPLICATE_UID_PREFIX = "rep-"
 R_TYPES = [R_TYPE_BLANK, R_TYPE_SAMPLE, R_TYPE_STDADD]
 
 # Run window
-R_PLOT_REFRESH_T = 0.1      # refreshes graph every x seconds
+R_PLOT_REFRESH_TIME = 0.1      # refreshes graph every x seconds
 R_POST_RUN_WAIT_TIME = 0.5  # time after run to wait for last data [s]
+R_ERROR_PREFIX = 'ERR'
+R_STATUS_PREFIX = 'STA'
+R_DATA_PREFIX = 'DAT'
+R_PORT_PREFIX = 'POR'
+R_ERROR_NO_CONNECT = '0'
+R_ERROR_VMAX_TOO_HIGH = '1'
 
 # Icon URLs 
 ICON_PLUS = 'external/icons/add.png'
@@ -92,6 +98,8 @@ RC_REPS_MAX = 99
 M_V_MIN = -99.99
 M_T_MAX = 9999
 M_SCAN_RATE_MAX = 99.99
+M_DT_MIN = 1
+M_DT_MAX = 86399999         # 86,400,000 miliseconds in a day
 
 # Language globals 
 ENG = 0

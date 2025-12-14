@@ -16,12 +16,13 @@ from ov_functions import *
 #from wins.viewSample import WindowViewSample
 from wins.sample import WindowSample
 from wins.runConfig import WindowRunConfig
-from wins.run import WindowRun
+from wins.runView import WindowRunView
 
 # import other necessary python tools
 from os.path import join as joindir
 from functools import partial
 from tkinter.filedialog import askopenfilename as askOpenFileName
+
 
 from PyQt6.QtTest import QTest
 from PyQt6.QtGui import QAction, QFont, QIcon
@@ -55,7 +56,7 @@ class WindowMain(QMainWindow):
         self.w_view_sample = WindowSample(self.path, self, update_on_save=True, view_only=True)
         self.w_edit_sample = WindowSample(self.path, self, update_on_save=True, view_only=False)
         self.w_run_config = WindowRunConfig(self)
-        self.w_run = WindowRun(self)
+        self.w_run = WindowRunView(self)
         self.config_pane_displayed = False
         self.setObjectName('window-sample')
         self.selected = []                  # for storing which runs are selected
@@ -489,12 +490,8 @@ class WindowMain(QMainWindow):
             win.setEnabled(enable)
 
     def start_run(self, uid):
-        self.w_run.start_run(uid)
+        self.w_run.set_run_uid(uid)
         self.w_run.show()
-
-        
-
-        
 
     def closeEvent(self, event):
         for win in self.children:

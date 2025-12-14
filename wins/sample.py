@@ -124,11 +124,11 @@ class WindowSample(QMainWindow):
 
         if self.view_only:
             self.w_name.setEnabled(False)
-            self.w_date_collected.setEnabled(False)
-            self.w_loc.setEnabled(False)
-            self.w_contact.setEnabled(False)
-            self.w_sampler.setEnabled(False)
-            self.w_notes.setEnabled(False)
+            self.w_date_collected.setReadOnly(True)
+            self.w_loc.setReadOnly(True)
+            self.w_contact.setReadOnly(True)
+            self.w_sampler.setReadOnly(True)
+            self.w_notes.setReadOnly(True)
             
         # if a path was entered, gather the data from the specified file and display it
         if self.path:

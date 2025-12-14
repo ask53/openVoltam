@@ -2,7 +2,14 @@
 import ov_globals as g
 import ov_lang as l
 from ov_functions import *
+print('loaded globals!')
 from wins.welcome import WindowWelcome
+print('loaded welcome window =/')
+
+############# If "loaded globals!" appears much before the "loaded welcome..."
+# message, create a placeholder window that indicates to user that
+# OpenVoltam! is loading.
+################################################################
 
 # import other python functions (be as specific as possible to keep filesize down)
 from os.path import dirname
