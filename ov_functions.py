@@ -214,10 +214,34 @@ def get_v_max_abs(step):
         v0 = abs(step[g.M_RAMP_V1])
         v1 = abs(step[g.M_RAMP_V2])
         return max(v0, v1)
+
+def get_method_duration(steps):
+    t = 0
+    for step in steps:
+        t = t + step[g.M_T]
+    return t
         
-    
-
-
+def get_method_v_extremes(steps):
+    v_min = 0
+    v_max = 0
+    for step in steps:
+        if step[g.M_TYPE] == g.M_CONSTANT:
+            if step[g.M_CONST_V] < v_min:
+                v_min = step[g.M_CONST_V]
+            elif step[g.M_CONST_V] > v_max:
+                v_max = step[g.M_CONST_V]
+        elif step[g.M_TYPE] == g.M_RAMP:
+            if step[g.M_RAMP_V1] > step[g.M_RAMP_V2]:
+                hi = step[g.M_RAMP_V1]
+                lo = step[g.M_RAMP_V2]
+            else:
+                hi = step[g.M_RAMP_V2]
+                lo = step[g.M_RAMP_V1]
+            if lo < v_min:
+                v_min = lo
+            if hi > v_max:
+                v_max = hi
+    return [v_min, v_max]
 
 # Classes!
 

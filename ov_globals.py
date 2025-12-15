@@ -70,7 +70,7 @@ R_REPLICATE_UID_PREFIX = "rep-"
 R_TYPES = [R_TYPE_BLANK, R_TYPE_SAMPLE, R_TYPE_STDADD]
 
 # Run window
-R_PLOT_REFRESH_TIME = 0.1      # refreshes graph every x seconds
+R_PLOT_REFRESH_TIME = 0.04      # refreshes graph every x seconds
 R_POST_RUN_WAIT_TIME = 0.5  # time after run to wait for last data [s]
 R_ERROR_PREFIX = 'ERR'
 R_STATUS_PREFIX = 'STA'
@@ -132,7 +132,8 @@ SAMPLE_FILE_TYPES = '*'+SAMPLE_EXT
 METHOD_FILE_TYPES = '*'+METHOD_EXT
 
 # Unit conversions
-MM2IN = 1. / 25.4
+MM2IN = 1. / 25.4   # milimeters to inches
+S2MS = 1000         # seconds to miliseconds
 
 # Globals changed by program
 L = ENG  				# default lang, changed by program

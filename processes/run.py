@@ -1,6 +1,7 @@
 #run.py
 #
 # This is the script that runs the method directly on the potentiostat
+
 import sys
 import os
 sys.path.append(os.getcwd()) # current working directory must be appended to path
@@ -100,6 +101,41 @@ def device_is_connected():
                 return True 
     write_error(g.R_ERROR_NO_CONNECT)               # If we don't connect at all, write the error message
     return False
+
+def on_data(chan, t, volt, curr):
+    write_data((t,volt,curr))
+
+def set_relay(step):
+    write_status('relay step here')
+
+def run_const(step):
+    v = step[g.M_CONST_V]
+    t = int(step[g.M_T] * g.S2MS)
+    params = {
+        'quietValue' : v,
+        'quietTime'  : 0,
+        'value'      : v,
+        'duration'   : t,
+        }
+    write_status('STARTING a constant voltage')
+    PSTAT.run_test('constant', param=params, on_data=on_data, display=None)
+    write_status('FINISHED a constant voltage')
+
+def run_ramp(step):
+    v0 = step[g.M_RAMP_V1]          # get starting voltage
+    v1 = step[g.M_RAMP_V2]          # get ending voltage
+    t = int(step[g.M_T] * g.S2MS)   # get duration as float in [s], convert to int in [ms]
+    params = {
+        'quietTime'  : 0,   # quiet period duration (ms)
+        'quietValue' : v0,  # quiet period voltage (V)
+        'startValue' : v0,  # linear sweep starting voltage (V)
+        'finalValue' : v1,  # linear sweep final voltage (V)
+        'duration'   : t,   # linear sweep duration (ms)
+        }
+    write_status('STARTING a ramp')
+    PSTAT.run_test('linearSweep', param=params, on_data=on_data, display=None)
+    write_status('FINISHED a ramp')
+    
     
     
 
@@ -107,6 +143,7 @@ def init_run():
     dev = device_is_connected()
     if not dev:
         return
+    write_status('device is connected!')
     PSTAT.set_sample_period(DT)
     PSTAT.set_curr_range(I_MAX)
     v_max = calc_v_max()
@@ -114,17 +151,19 @@ def init_run():
         return
     PSTAT.set_volt_range(v_max)
     PSTAT.set_auto_connect(True)
-        
+    
     write_status('sample period is: '+str(PSTAT.get_sample_period()))
     write_status('current range is: '+str(PSTAT.get_curr_range()))
     write_status('voltage range is: '+str(PSTAT.get_volt_range()))     
     write_status("now we're doing stuff!")
-    
-        
-    '''for step in STEPS:
-        write(step[g.M_TYPE])
-        if step[g.M_TYPE] == 'ramp':
-            raise ValueError("i'm an error message!")
-        time.sleep(0.25)'''
+
+    for step in STEPS:
+        step_type = step[g.M_TYPE]
+        if step_type == g.M_RELAY:
+            set_relay(step)
+        elif step_type == g.M_CONSTANT:
+            run_const(step)
+        elif step_type == g.M_RAMP:
+            run_ramp(step)
     
 init_run()
