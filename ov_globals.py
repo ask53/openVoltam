@@ -70,7 +70,7 @@ R_REPLICATE_UID_PREFIX = "rep-"
 R_TYPES = [R_TYPE_BLANK, R_TYPE_SAMPLE, R_TYPE_STDADD]
 
 # Run window
-R_PLOT_REFRESH_TIME = 0.04      # refreshes graph every x seconds
+R_PLOT_REFRESH_TIME = 0.1   # refreshes graph every x seconds
 R_POST_RUN_WAIT_TIME = 0.5  # time after run to wait for last data [s]
 R_ERROR_PREFIX = 'ERR'
 R_STATUS_PREFIX = 'STA'
@@ -78,6 +78,10 @@ R_DATA_PREFIX = 'DAT'
 R_PORT_PREFIX = 'POR'
 R_ERROR_NO_CONNECT = '0'
 R_ERROR_VMAX_TOO_HIGH = '1'
+R_FINISHED_MSG = 'FIN'
+R_DATA_TIME = 'time_s'
+R_DATA_VOLT = 'voltage_V'
+R_DATA_CURR = 'current_mA'
 
 # Icon URLs 
 ICON_PLUS = 'external/icons/add.png'

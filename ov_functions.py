@@ -1,7 +1,7 @@
 # ov_functions.py
 #		
 
-from tabularjson import parse, stringify, StringifyOptions
+from tabularjson import parse, stringify, StringifyOptions, is_homogeneous
 from re import sub
 from tkinter.filedialog import askopenfilename
 
@@ -95,11 +95,15 @@ def write_data_to_file(path, data):
     try:
         with open(path, 'w') as file:                            
             
-            #options: StringifyOptions = {"indentation": 4, "trailingCommas": False}
-            #tab_json_to_write = stringify(data, options)       #   convert dictionary to json string
-            #file.write(tab_json_to_write)                                       #   write json string to file
-            json_to_write = dumps(data, indent=4)
-            file.write(json_to_write)
+            options: StringifyOptions = {
+                "indentation": 4,
+                "trailingCommas": False,
+                "output_as_table": is_homogeneous
+                }
+            tab_json_to_write = stringify(data, options)       #   convert dictionary to json string
+            file.write(tab_json_to_write)                                       #   write json string to file
+            #json_to_write = dumps(data, indent=4)
+            #file.write(json_to_write)
             file.close()                                                    #   close the file (to avoid taking up too much memory)
         return True
     except Exception as e:

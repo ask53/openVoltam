@@ -24,21 +24,16 @@ import ov_globals as g
 import ov_lang as l
 from ov_functions import *
 
-from potentiostat import Potentiostat
-
-import serial.tools.list_ports
 from ast import literal_eval
-from re import sub
 import threading
 from queue import SimpleQueue as Queue
 import time
 
 #from devices.supportedDevices import devices
 from embeds.runVoltagePlot import RunVoltagePlot
+from embeds.runPlots import RunPlots
 
-#from functools import partial
-
-from PyQt6.QtCore import QProcess#Qt, QDateTime
+from PyQt6.QtCore import QProcess
 from PyQt6.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -71,6 +66,7 @@ class WindowRunView(QMainWindow):
         self.t_prev = -1
         self.t_to_add = 0
         self.current_step_index = 0
+        self.data_saved = False
         [self.t, self.v, self.I] = [[],[],[]]
         self.q = Queue()
         self.setWindowTitle(l.r_window_title[g.L]+' | '+self.parent.data[g.S_NAME])
@@ -87,23 +83,17 @@ class WindowRunView(QMainWindow):
         self.run_details = QPlainTextEdit()
         but_stop_run = QPushButton('\nSTOP\n')
         but_stop_run.clicked.connect(self.stop_run)
-        self.graph_volt = RunVoltagePlot()
-        self.graph_curr = RunVoltagePlot()
-        
+        self.graphs = RunPlots()
 
         v_left = QVBoxLayout()
-        v_right = QVBoxLayout()
         h1 = QHBoxLayout()
 
         v_left.addLayout(self.msg_box)
         v_left.addWidget(self.run_details)
         v_left.addWidget(but_stop_run)
 
-        v_right.addWidget(self.graph_volt)
-        v_right.addWidget(self.graph_curr)
-
         h1.addLayout(v_left)
-        h1.addLayout(v_right)
+        h1.addWidget(self.graphs)
         
 
 
@@ -162,28 +152,47 @@ class WindowRunView(QMainWindow):
             return
         
            
-        '''
-        # UNCOMMENT THIS BLOCK TO RUN CODE WITH REPLICATES ###############
-        self.message("Finished rep "+str(self.rep_current+1)+" of "+str(self.reps_total))
-        self.rep_current = self.rep_current + 1
-        if self.rep_current < self.reps_total:
-            self.start_process()
-        else:
-            self.message('RUN IS COMPLETE!')
-            self.process = None
+        try:
+            self.message("Finished rep "+str(self.rep_current+1)+" of "+str(self.reps_total))
             self.running = False
-        ##################################################################3'''
+            while not self.data_saved:                  # Wait here until data is saved, before removing reference to process
+                time.sleep(0.05)
+            self.process = None                         # Remove reference to process cause its done! 
+            self.rep_current = self.rep_current + 1     # Increment rep
+
+            if self.rep_current < self.reps_total:
+                self.init_pstat_process()
+            else:
+                self.message('RUN IS COMPLETE!')
+                self.process = None
+                self.running = False
+            
+        except Exception as e:
+            print(e)
         
 
-        # COMMENT THIS CODE TO RUN CODE WITH REPLICATES ###################
-        self.message('RUN IS COMPLETE!')
-        self.process = None
-        self.running = False
-        print(self.raw_data)
         
 
     def init_pstat_process(self):
         if self.process is None:
+            # Reset graphs and set pre-run variables
+            self.graphs.init_plot(self.method)
+            self.init_raw_data()
+            
+            
+            # Setup some flags at beginning of run
+            self.running = True
+            self.data_saved = False
+
+            # Empty the queue
+            self.empty_q()
+
+            # Setup and start interrupt to retreive and plot data (this should end after last data from run is saved)
+            thread = threading.Thread(target=self.interrupt_data_getter) 
+            thread.daemon = True                            # interrupt ends when the start_run() fn returns
+            thread.start()
+
+            # Initiate and begin external process (that I/Os with potentiostat
             self.process = QProcess()
             self.process.readyReadStandardOutput.connect(self.handle_stdout)
             self.process.readyReadStandardError.connect(self.handle_stderr)
@@ -192,10 +201,19 @@ class WindowRunView(QMainWindow):
             self.process.start("python", ['processes/run.py', str(self.dt), self.i_max, str(self.steps), self.port])
             self.message('Process started!')
 
+    def empty_q(self):
+        while not self.q.empty():   # As long as there is any data in queue                    
+            self.q.get()            # Pop the next item!
+
     def init_raw_data(self):
+        [self.t, self.v, self.I] = [[],[],[]]
+        self.current_step_index = 0
+        self.t_prev = -1
+        self.t_to_add = 0
         self.raw_data = []
         for step in self.method[g.M_STEPS]:
             self.raw_data.append([])
+        
      
     def start_run(self):
         try:
@@ -204,18 +222,9 @@ class WindowRunView(QMainWindow):
             self.reps_total = len(self.run[g.R_REPLICATES])
             self.rep_current = 0
             self.method = get_method_from_file_data(self.data, self.run[g.R_UID_METHOD])
-            self.graph_volt.init_plot(self.method)
-            self.init_raw_data()
             self.steps = self.get_steps()
             self.dt = self.method[g.M_DT]
             self.i_max = self.method[g.M_CURRENT_RANGE]
-            print(self.raw_data)
-
-            # Setup and start interrupt to retreive and plot data
-            self.running = True     
-            thread = threading.Thread(target=self.interrupt_data_getter) 
-            thread.daemon = True                            # interrupt ends when the start_run() fn returns
-            thread.start()
 
             # Start run
             self.init_pstat_process()
@@ -308,40 +317,7 @@ class WindowRunView(QMainWindow):
 
         time.sleep(g.R_POST_RUN_WAIT_TIME)      # once run is complete, wait a bit to make sure all remaining data is in queue
         self.store_and_graph_from_queue()       # and store and graph all the data remaining in queue
-        
-    '''def store_and_graph_from_queue(self):
-        [t, v, I] = [[],[],[]]
-        while not self.q.empty():                       # and there is some data in queue
-            [t, v, I] = self.store_queued_data(t, v, I) # store the data
-        self.graph_new_data(t, v, I)
-        
-    def graph_new_data(self, t, v, I):
-        self.graph_volt.update_plot(t, v)
-
-    def store_queued_data(self, t, v, I):
-        
-        a = self.q.get()                                            # Get oldest item from queue
-        data_tup = literal_eval(a)                                  # Convert to tuple
-        t_now = data_tup[0]                                         # Grab time from tuple
-        if t_now < self.t_prev:                                     # If this is the start of a new step
-            step = self.method[g.M_STEPS][self.current_step_index]  #   get the current step
-            dur = step[g.M_T]                                       #   get expected duration from method
-            if dur - self.t_prev < self.dt:                         #   if the last time value reported is less than dt from the duration
-                self.t_to_add = dur                                 #       yay! the duration was pretty accurate!
-            else:                                                   #   otherwise
-                self.t_to_add = self.t_prev                         #       assume the previous run ended after last timestamp
-            self.current_step_index = self.current_step_index + 1   # increment the current step index
-            
-        t.append(t_now + self.t_to_add)                             # Append values for plotting 
-        v.append(data_tup[1])
-        I.append(data_tup[2])
-        self.raw_data[self.current_step_index].append(data_tup)     # Append tuple to appropriate method list
-        self.t_prev = t_now                                         # Store this time as the previous time for next
-        return [t,v,I]'''
-
-
-
-    
+        self.save_rep_raw_data()
 
     def store_and_graph_from_queue(self):
         while not self.q.empty():                       # and there is some data in queue
@@ -349,7 +325,7 @@ class WindowRunView(QMainWindow):
         self.graph_new_data()
         
     def graph_new_data(self):
-        self.graph_volt.update_plot(self.t, self.v)
+        self.graphs.update_plots(self.t, self.v, self.I)
 
     def store_queued_data(self):
         a = self.q.get()                                            # Get oldest item from queue
@@ -359,26 +335,54 @@ class WindowRunView(QMainWindow):
             step = self.method[g.M_STEPS][self.current_step_index]  #   get the current step
             dur = step[g.M_T]                                       #   get expected duration from method
             if dur - self.t_prev < self.dt:                         #   if the last time value reported is less than dt from the duration
-                self.t_to_add = dur                                 #       yay! the duration was pretty accurate!
+                self.t_to_add = self.t_to_add + dur                 #       yay! the duration was pretty accurate!
             else:                                                   #   otherwise
                 self.t_to_add = self.t_prev                         #       assume the previous run ended after last timestamp
             self.current_step_index = self.current_step_index + 1   # increment the current step index
             
+        t_new = t_now + self.t_to_add
+        v_new = data_tup[1]
+        I_new = data_tup[2]
         self.t.append(t_now + self.t_to_add)                        # Append values for plotting 
-        self.v.append(data_tup[1])
-        self.I.append(data_tup[2])
-        self.raw_data[self.current_step_index].append(data_tup)     # Append tuple to appropriate method list
+        self.v.append(v_new)
+        self.I.append(I_new)                                        # Append tuple to appropriate method list
+        self.raw_data[self.current_step_index].append((t_new, v_new, I_new))
         self.t_prev = t_now                                         # Store this time as the previous time for next
-
-
-
-
-
-
-    
 
     def update_replicate_msg(self, this_rep, total_reps):
         print("--- Running replicate", this_rep+1, "of", total_reps, "---")
+
+    def save_rep_raw_data(self):
+        self.message("Saving data for rep "+str(self.rep_current+1))
+        raw_data = []
+        for i,step in enumerate(self.method[g.M_STEPS]):
+            if step[g.M_DATA_COLLECT]:
+                for datum in self.raw_data[i]:
+                    raw_data.append({
+                        g.R_DATA_TIME: datum[0],
+                        g.R_DATA_VOLT: datum[1],
+                        g.R_DATA_CURR: datum[2]
+                        })
+        for run in self.data[g.S_RUNS]:
+            if run[g.R_UID_SELF] == self.uid:
+                print(run)
+                for rep in run[g.R_REPLICATES]:
+                    if rep[g.R_UID_SELF] == self.get_uid_of_current_rep():
+                        rep[g.R_DATA] = raw_data
+        try:
+            self.parent.data = self.data
+            write_data_to_file(self.parent.path, self.data)
+            self.data_saved = True
+        except Exception as e:
+            print(e)
+            self.message('Sorry! We were unable to save the data!')
+
+        
+        
+        
+                
+    def get_uid_of_current_rep(self):
+        return g.R_REPLICATE_UID_PREFIX + str(self.rep_current)
     
     def showEvent(self, event):
         self.parent.setEnabled(False)
@@ -387,6 +391,10 @@ class WindowRunView(QMainWindow):
         event.accept()
         
     def closeEvent(self, event):
-        self.parent.setEnabled(True)
-        self.parent.setEnabledChildren(True)
-        event.accept()
+        try:
+            self.parent.setEnabled(True)
+            self.parent.setEnabledChildren(True)
+            self.__init__(self.parent)
+            event.accept()
+        except Exception as e:
+            print(e)
