@@ -38,9 +38,10 @@ c_edit_header_edit = ['Edit method: ', 'Editar los ajustes de voltametría']
 c_edit_header_new = ['New method: ', 'Ajuste de voltametría nueva']
 c_edit_header_view = ['View method: ', 'TEXTO']
 
-# Window: sample
+# Window: main
 s_view_info = ['View info','Ver datos']
 s_edit_info = ['Edit info','Modificar datos']
+r_rep_abbrev = ['Rep.', 'TEX']
 
 # Window: run configuration
 rc_window_title = ['Configure run(s)','TEXTO']
@@ -48,6 +49,11 @@ rc_type_blank = ['Blank','TEXTO']
 rc_type_sample = ['Sample','TEXTO']
 rc_type_stdadd = ['Standard addition','TEXTO']
 rc_select = ['Select...','TEXTO']
+rc_types = {
+    g.R_TYPE_BLANK: ['Blank','TEXTO'],
+    g.R_TYPE_SAMPLE: ['Sample','TEXTO'],
+    g.R_TYPE_STDADD: ['Standard Addition','TEXTO'],
+    }
 
 # Window: sweep profile builder/editer
 sp_types = {

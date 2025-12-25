@@ -30,7 +30,6 @@ from queue import SimpleQueue as Queue
 import time
 
 #from devices.supportedDevices import devices
-from embeds.runVoltagePlot import RunVoltagePlot
 from embeds.runPlots import RunPlots
 
 from PyQt6.QtCore import QProcess

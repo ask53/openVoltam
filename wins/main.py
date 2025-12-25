@@ -300,10 +300,20 @@ class WindowMain(QMainWindow):
             self.w_run_config.show()
         except Exception as e:
             print(e)
+
+    def add_row_to_main(self, ws, row, name):
+        for j, w in enumerate(ws):
+            #w.mouseReleaseEvent = partial(self.row_clicked, w)
+            w.setObjectName(name)
+            w.setProperty('row', row)
+            self.grid.addWidget(w, row, j)
+        
         
 
     def widgetize_run_history(self):
-        demo = [{
+        runs = self.data[g.S_RUNS]
+        
+        '''demo = [{
             'name': 'run_1',
             'type':'blank',
             'sweep':'20s As ramp -1.7 to 0.4V',
@@ -323,21 +333,52 @@ class WindowMain(QMainWindow):
             'type':'sample',
             'sweep':'20s As ramp -1.7 to 0.4V w background',
             'timestamp': '2025-10-15 09:32pm',
-            'comment':'No diultion'}]
+            'comment':'No diultion'}]'''
         self.w_run_history_area = QScrollArea()
         self.w_run_history_area.resizeEvent = self.resize
 
-        grid = QGridLayout()
-        grid.setHorizontalSpacing(0)
-        grid.setVerticalSpacing(0)
-        headers = ['Run began','Type', 'Sweep profile','Notes']
-        w_heads = [0,0,0,0]
-        for i, header in enumerate(headers):
-            w_heads[i] = QLabel(header)
-            w_heads[i].setObjectName('run-col-header')
-            grid.addWidget(w_heads[i], 0, i+1)
-            
+        self.grid = QGridLayout()
+        self.grid.setHorizontalSpacing(0)
+        self.grid.setVerticalSpacing(0)
+        
+        headers = ['RUN INFO','METHOD', 'NOTES']
+        w_heads = []
+        for header in headers:
+            w_heads.append(QLabel(header))
+        header_name = 'run-col-header'
+            #self.grid.addWidget(w_heads[i], 0, i)
 
+        row = 0
+        self.add_row_to_main(w_heads, row, header_name)
+        row = row + 1
+        
+        for run in runs:
+            run_type = l.rc_types[run[g.R_TYPE]][g.L]
+            method_name = get_method_from_file_data(self.data, run[g.R_UID_METHOD])[g.M_NAME]
+            run_notes = run[g.R_NOTES]
+            obj_name = run[g.R_UID_SELF]
+            w_type = QLabel(run_type)
+            w_method = QLabel(method_name)
+            w_run_notes = QLabel(run_notes)
+            ws_run = [w_type, w_method, w_run_notes]
+            self.add_row_to_main(ws_run, row, obj_name)
+            row = row + 1
+            
+            for i, rep in enumerate(run[g.R_REPLICATES]):
+                desc = "       "
+                desc = desc + l.r_rep_abbrev[g.L] + ' '+str(i)
+                desc = desc + ' ' + 'TIMESTAMP WHEN RUN COMPLETED'
+                rep_notes = rep[g.R_NOTES]
+                obj_name = rep[g.R_UID_SELF]
+                w_desc = QLabel(desc)
+                w_empty = QLabel()
+                w_rep_notes = QLabel(rep_notes)
+                ws_rep = [w_desc, w_empty, w_rep_notes]
+                self.add_row_to_main(ws_rep, row, obj_name)
+                row = row + 1
+            
+            
+        '''
 
 
 
@@ -371,12 +412,13 @@ class WindowMain(QMainWindow):
             grid.addWidget(w_sweep, i+1, 3)
             grid.addWidget(w_comment, i+1, 4)
             grid.addWidget(w_time, i+1, 1)
+        '''
 
         self.num_runs = i+1
-        grid.setColumnStretch(4,1)
+        self.grid.setColumnStretch(4,1)
 
         self.w_run_history_container = QWidget()
-        self.w_run_history_container.setLayout(grid)
+        self.w_run_history_container.setLayout(self.grid)
         self.w_run_history_container.setObjectName('runs-container')
         self.w_run_history_area.setWidget(self.w_run_history_container)
         
