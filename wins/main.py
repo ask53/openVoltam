@@ -535,82 +535,126 @@ class WindowMain(QMainWindow):
         self.update_highlights() 
 
     def rep_is_selected(self, w):
+        """Takes in a widget and returns True if that widget is part of a selected row.
+        Otherwise, returns False"""
         if w.objectName() == w.property('ov-selected-qss-name'):
             return True
         return False
         
     def all_reps_of_run_are_selected(self, w):
-        run_id = w.property('ov-run')
-        N_reps = len(self.get_run_data(run_id)[g.R_REPLICATES])
-        ws = self.w_run_history_container.children()    # grab all table widgets
+        """Takes in a widget and returns True if all reps from the widget's run are selected.
+        Otherwise, returns False"""
+        run_id = w.property('ov-run')                                   # Get run ID from widget, then # of reps from this run                          
+        N_reps = len(self.get_run_data(run_id)[g.R_REPLICATES])         # grab all table widgets then filter for those that are selected 
+        ws = self.w_run_history_container.children()                    #   AND correpond to the run of interest
         ws_selected = list(filter(lambda w: (w.objectName() == w.property('ov-selected-qss-name') and w.property('ov-run')==run_id), ws))
-        reps_selected = len(ws_selected) / (self.grid.columnCount()-1)
-        print(reps_selected)
-        if reps_selected == N_reps:
-            return True
-        return False
+        reps_selected = len(ws_selected) / (self.grid.columnCount()-1)  # take the # of selected widgets and divide by widgets_per_row to get                    
+        if reps_selected == N_reps:                                     #   count of total rows selected. 
+            return True                                                 # If the # of selected reps from this run matches the total reps per run
+        return False                                                    # Return True, else return False.
 
     def all_reps_are_selected(self):
+        """Returns True if all reps are selected.
+        Otherwise, returns False"""
         N_reps = 0                                      # Count total # of replicates
-        for run in self.data[g.S_RUNS]:
+        for run in self.data[g.S_RUNS]:                 
             N_reps = N_reps + len(run[g.R_REPLICATES])
-        if len(self.selected) == N_reps:
+        if len(self.selected) == N_reps:                
             return True
         return False      
 
     def add_rep_to_selected(self, run, rep):
-        d = {'run': run, 'rep': rep}    
-        if not d in self.selected:      # Only add if this run/rep combo is not already on list 
-            self.selected.append(d)
+        """Adds a specific replicate of a specific run to the list of selected replicates. Takes:
+                run    String. Unique ID of run in dataset
+                rep    String. Unique ID of replicate of run to add
+        Before pushing the (run,rep) tuple, checks if it is already selected. If so, does not
+            add it to the selected list again. """
+        t = (run, rep)    
+        if not t in self.selected:      # Only add if this run/rep combo is not already on list 
+            self.selected.append(t)
 
     def remove_rep_from_selected(self, run, rep):
-        d = {'run': run, 'rep': rep} 
-        self.selected.remove(d)
+        """Removes a specific replicate of a specific run from the list of selected replicates. Takes:
+                run    String. Unique ID of run in dataset
+                rep    String. Unique ID of replicate of run to remove"""
+        t = (run, rep) 
+        self.selected.remove(t)
 
     def add_run_to_selected(self, run_id):
+        """Adds all replicates of a specific run to the list of selected replicates. Takes:
+                run    String. Unique ID of run in dataset"""
         run = self.get_run_data(run_id)
         for rep in run[g.R_REPLICATES]:
             rep_id = rep[g.R_UID_SELF]
             self.add_rep_to_selected(run_id, rep_id)
 
     def remove_run_from_selected(self, run_id):
+        """Removes all replicates of a specific run from the list of selected replicates. Takes:
+            run    String. Unique ID of run in dataset"""
         run = self.get_run_data(run_id)
         for rep in run[g.R_REPLICATES]:
             rep_id = rep[g.R_UID_SELF]
             self.remove_rep_from_selected(run_id, rep_id)
 
     def add_all_to_selected(self):
+        """Adds all replicates in dataset to the list of selected replicates."""
         for run in self.data[g.S_RUNS]:
             self.add_run_to_selected(run[g.R_UID_SELF])
     
     def update_highlights(self):
-        ws = self.w_run_history_container.children()    # grab all table widgets
+        """Using the current state of the self.selected list, modifies the objectName
+        of relevant widgets to either remove selected status (if not on the list) or
+        add selected status (if on the list). It assumes that each widget within the
+        Run History Container (the QScrollArea that holds the run information) contains
+        the following properties:
+            ov-run               String. Unique ID of run in dataset
+            ov-rep               String. Unique ID of replicate in dataset
+            ov-selected-qss-name String. Set objectName to this for QSS stylings if selected
+            ov-qss-name          String. Set objectName to this for QSS stylings if NOT selected
+        This function loops through all widgets and if the widgets run and rep ids are listed
+        on the selected list, it sets their objectName to their selected name. If they're not
+        on the selected list, it sets their objectName to ther NOT selected name.
+        """
+        ws = self.w_run_history_container.children()        # grab all table widgets
         for w in ws:
-            id = {'run': w.property('ov-run'), 'rep': w.property('ov-rep')}
-            if id in self.selected:
+            ids = (w.property('ov-run'), w.property('ov-rep'))
+            if ids in self.selected:                                
                 w.setObjectName(w.property('ov-selected-qss-name'))
             else:
                 w.setObjectName(w.property('ov-qss-name'))
-        applyStyles()
+        applyStyles()                                        #Grab QSS Stylesheet and apply it, now that names have been changed
 
     def get_run_data(self, run_id):
+        """Takes in:
+            run_id    String. Unique ID of run in dataset
+        Returns:
+            The dictionary from the Runs list in the dataset whose unique ID matches run_id"""
         return next(filter(lambda x: x[g.R_UID_SELF] == run_id, self.data[g.S_RUNS]), None)
       
     def select_all_toggle(self, w):
-        if self.select_all_prog_check_flag:
-            self.select_all_prog_check_flag = False
+        """Click handler for select-all checkbox. This runs when select-all checkbox is checked
+        programatically or by the user. The first step is to filter out programatic changes.
+        Then, if box is check, all replicates are selected. If unchecked, nothing is selected."""
+        if self.select_all_prog_check_flag:         # 1. If this function was triggered programatically
+            self.select_all_prog_check_flag = False # Reset flag and ignore (return)
             return
-        if w.checkState() == Qt.CheckState.Checked:
-            self.add_all_to_selected()
-        else:
-            self.selected = []
+        if w.checkState() == Qt.CheckState.Checked: # 2. if this function was triggered by a user click and the box is now checked
+            self.add_all_to_selected()              # Add all reps to selected
+        else:                                       # If triggered by a user click and box is now unchecked
+            self.selected = []                      # Remove all selected
         self.update_highlights()
 
     def update_select_all_checkbox(self):
-        self.select_all_prog_check_flag = True
-        if self.all_reps_are_selected():   
+        """This function adjusts the state of the select-all checkbox programatically. To indicate that
+        the change was programatic, before making a changes, the self.select_all_prog_check_flag is
+        set. The two conditions that cause action are:
+            1. If all reps are selected but select-all checkobx is not checked, check it!
+            2. If NOT all reps are selected but select-all checkobx is checked, uncheck it!"""
+        if self.all_reps_are_selected() and self.cb_all.checkState() != Qt.CheckState.Checked:
+            self.select_all_prog_check_flag = True
             self.cb_all.setChecked(True)
-        else:
+        elif not self.all_reps_are_selected() and self.cb_all.checkState() != Qt.CheckState.Unchecked:
+            self.select_all_prog_check_flag = True
             self.cb_all.setChecked(False)
         
         
@@ -622,78 +666,6 @@ class WindowMain(QMainWindow):
 
             
 
-    
-        
-
-    '''def select_all_toggle(self, w):
-        if self.prog_check_flag:                        # if the select all checkbox has been modified programatically
-            self.prog_check_flag = False                # reset the flag
-            return                                      # and do nothing
-        else:                                           # otherwise, it was a user click!
-            state = w.checkState()
-            state_to_set = Qt.CheckState.Unchecked      # figure out what to set all the run checkboxes to (checked or unchecked)
-            if (state == Qt.CheckState.Checked):
-                state_to_set = Qt.CheckState.Checked
-
-            for w in self.w_run_history_container.children():       # loop thru all the widgets in the grid
-                if isinstance(w, QCheckBox):            # for each checkbox
-                    w.setCheckState(state_to_set)         # set the checkbox to the state determined above'''
-                    
-    def row_toggle(self, w, state):
-        run_id = w.objectName()
-        if (state == Qt.CheckState.Checked.value):              # if the checkbox is now checked
-            if run_id not in self.selected:                     #  and if that row is not already listed as selected (altho this should be redundant)
-                self.selected.append(run_id)                    #   add the current run uid to the list of selected runs     
-                self.highlight_row(w)                           #   and highlight the row
-                if (len(self.selected) == self.num_runs):       #   if this is the final row now selected (all rows are selected)
-                    if (self.cb_all.checkState() == Qt.CheckState.Unchecked):
-                        self.cb_all.toggle()
-        elif run_id in self.selected:                               # if the the checkbox is now not checked and the row is currently listed as selected
-            self.selected.remove(run_id)                            #  remove it from the selected list,
-            self.unhighlight_row(w)                                 #  remove the highlighting,
-            if (self.cb_all.checkState() == Qt.CheckState.Checked): # and if the 'select-all' box is checked
-                self.prog_check_flag = True                         # set the flag that we modified a checkbox programatically
-                self.cb_all.toggle()                                # and uncheck the "select all" checkbox
-        self.update_button_states()
-
-    def highlight_row(self, w):                                             # Highlights the row that contains the widget w        
-        row = self.get_row_ws(w)                                            # find all widgets in row that contains w                                             
-        for w in row:                                                       # loop through them
-            if not isinstance(w, QCheckBox):                                # for all widgets that are not checkboxes
-                w.setObjectName(w.objectName()+g.RUNS_ROW_SELECTED_SUFFIX)  #   update the widget name to indicate it sholud display as selected
-        applyStyles()                                                       # when complete, update the styles across the app
-
-    def unhighlight_row(self, w):                                                       # Unhighlights the row that contains the widget w 
-        row = self.get_row_ws(w)                                                        # find all widgets in row that contains w 
-        for w in row:                                                                   # loop through them
-            if not isinstance(w, QCheckBox):                                            # for all widgets that are not checkboxes
-                w.setObjectName(w.objectName().replace(g.RUNS_ROW_SELECTED_SUFFIX,''))  #   update the widget name to indicate it sholud no longer be highlighted
-        applyStyles()                                                                   # when complete, update the styles across the app
- 
-    ###################### REDO THE GET ROW, HIGHLIGHT, AND SELECTION FUNCTIONS
-        # USING THE GLOBAL FUNCTIONS AND THE FACT THAT WE CAN ADD A
-        # ROW PROPERTY TO EACH WIDGET WHEN WE PLACE IT IN THE GRIDDDD
-        ###################################################################################################################################################################################################
-    def get_row_ws(self, widget_to_find):
-        '''Takes in a widget that is on the table of runs
-        loops through that table and returns a list of all
-        widgets on the same row as the given widget, in order
-        from left to right'''
-        all_ws = self.w_run_history_container.children()    # grab all table widgets
-        row_ws = []                             
-        found_row = False
-        for w in all_ws:    
-            if isinstance(w, QCheckBox):        # if the widget is a checkbox, that means its the start of a new row
-                if found_row:                   # if the previous row was the row we were seeking
-                    break                       #   break! we did it! 
-                row_ws = [w]                    # otherwise, begin storing the values in this array
-            else:                               # if the the widget is NOT a checkbox, its an ordinary row element
-                row_ws.append(w)                #  append it to the list
-
-            if (w == widget_to_find):           # if the current widget is the widget we were seeking
-                found_row = True
-
-        return row_ws
 
     def update_button_states(self):
         rows = len(self.selected)
