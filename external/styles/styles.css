@@ -38,6 +38,7 @@ QWidget#runs-container QLabel#run-col-header {
 	font-weight: bold;
 }
 
+
 QWidget#runs-container QLabel#run-cell-even, QWidget#steps-container QLabel#step-cell-even {
 	background-color: white;
 }
@@ -46,13 +47,15 @@ QWidget#runs-container QLabel#run-cell-odd, QWidget#steps-container QLabel#step-
 	background-color: #dddddd;
 }
 
-QWidget#runs-container QLabel#run-cell-even-selected, QWidget#runs-container QLabel#run-cell-odd-selected, QWidget#steps-container QLabel#step-cell-even-selected, QWidget#steps-container QLabel#step-cell-odd-selected {
+/*QWidget#runs-container QLabel#run-cell-even-selected, QWidget#runs-container QLabel#run-cell-odd-selected, */QWidget#steps-container QLabel#step-cell-even-selected, QWidget#steps-container QLabel#step-cell-odd-selected {
 	background-color: #fcdf88;
 }
 
-QWidget#runs-container QCheckBox {
-	padding-right: 8px;
-}
+
+
+
+
+
 
 WindowMethod QSplitter::handle {
 	background-color: #dddddd;

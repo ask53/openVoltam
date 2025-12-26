@@ -40,9 +40,16 @@ from PyQt6.QtWidgets import (
     QHeaderView,
     QCheckBox,
     QScrollArea,
-    QGroupBox
+    QGroupBox,
+    QApplication
     
 )
+
+#######
+#   FOR TESTING ONLY
+import sys, os
+#
+###########
 
 # Define class for Home window
 class WindowMain(QMainWindow):  
@@ -212,7 +219,13 @@ class WindowMain(QMainWindow):
 
 
         # Grab the run history as a widget
-        self.widgetize_run_history()
+        try:
+            self.widgetize_run_history()
+        except Exception as e:
+            print(e)
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print(exc_type, fname, exc_tb.tb_lineno)
         
         # Add all of these three widgets to our vertical layout
         lay.addWidget(w_sample_header)
@@ -301,121 +314,135 @@ class WindowMain(QMainWindow):
         except Exception as e:
             print(e)
 
-    def add_row_to_main(self, ws, row, name):
-        for j, w in enumerate(ws):
-            #w.mouseReleaseEvent = partial(self.row_clicked, w)
-            w.setObjectName(name)
-            w.setProperty('row', row)
-            self.grid.addWidget(w, row, j)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def do_nothing_with_widget(self, w):
+        return
+
+    def add_row_to_main(self, ws, row, h_offset=0, v_merge=1, h_merge=1):
+        """
+        Adds a new row of QWidgets to the self.grid object. Requires there being one self.grid object.
+        Arguments:
+            ws             List: of widgets to add to row
+            row            Int: index of the row to add to the grid
+            h_offset=0     Int: column offset of first widget (eg. if h_offset==2, this leaves first 2 cols
+                           blank and ws[0] is placed in 2nd column)
+            v_merge=1      Int: # of rows to merge together vertically
+            h_merge=1      Int: # of columns to merge together horizontally
+        Returns:
+            The incremented row index
+        """
+        for i, w in enumerate(ws):
+            self.grid.addWidget(w, row, i+h_offset, v_merge, h_merge)
+        return row+1
+    
+    def create_w(self, s, qss_name, onclick_fn=do_nothing_with_widget, run_id=False, rep_id=False, word_wrap=True):
+        """
+        Returns a QLabel widget according the following arguments:
+            s:          String: contains the text of the label
+            qss_name    String: will be accessed by Qt Style Sheet for styling
+            onclick_fn  Function handle: that runs when widget is clicked (default: do nothing)
+            run_id      String: The UID of the related run (default False for cases where widget is not connected to specific run)
+            rep_id      String: The UID of the related replicate (default False for cases where widget is not connected to specific replicate)
+            word_wrap   Boolean: True to enable word wrapping, False to disable
+        Sets the QLabel's current object name to qss_name (this can be modified elsewhere to adjust styling)
+        Also creates properties within the QLabel (see documentation for QObject) for:
+            ov-run (contains run=id)
+            ov-rep (contains rep-id)
+            ov-qss-name (contains qss_name for resetting styles)
+        """
         
-        
+        w = QLabel(s)
+        w.setWordWrap(word_wrap)
+        w.setObjectName(qss_name)
+        w.mouseReleaseEvent = partial(onclick_fn, w)
+        w.setProperty('ov-run', run_id)
+        w.setProperty('ov-rep', rep_id)     
+        w.setProperty('ov-qss-name', qss_name)          # store qss name for easy access later (to reset styles)
+        return w
 
     def widgetize_run_history(self):
-        runs = self.data[g.S_RUNS]
         
-        '''demo = [{
-            'name': 'run_1',
-            'type':'blank',
-            'sweep':'20s As ramp -1.7 to 0.4V',
-            'timestamp': '2025-10-15 08:56pm',
-            'comment':'Blank test run'},{
-                'name':'run_2',
-            'type':'sample',
-            'sweep':'20s As ramp -1.7 to 0.4V w background',
-            'timestamp': '2025-10-15 09:02pm',
-            'comment':'No diultion'},{
-                'name': 'run_3',
-            'type':'sample',
-            'sweep':'20s As ramp -1.7 to 0.4V w background',
-            'timestamp': '2025-10-15 09:09pm',
-            'comment':'No diultion'},{
-                'name': 'run_6',
-            'type':'sample',
-            'sweep':'20s As ramp -1.7 to 0.4V w background',
-            'timestamp': '2025-10-15 09:32pm',
-            'comment':'No diultion'}]'''
-        self.w_run_history_area = QScrollArea()
+        qss_name_even = 'run-cell-even'                     # name for styling even cells
+        qss_name_odd = 'run-cell-odd'                       # name for styling odd cells
+        
+        self.w_run_history_area = QScrollArea()             # init the scroll area
         self.w_run_history_area.resizeEvent = self.resize
 
-        self.grid = QGridLayout()
+        self.grid = QGridLayout()                           # init grid layout (that is inside scroll area)
         self.grid.setHorizontalSpacing(0)
         self.grid.setVerticalSpacing(0)
-        
-        headers = ['RUN INFO','METHOD', 'NOTES']
+
+        # create column headers and add them to the grid layout
+        headers = ['RUN INFO','REPLICATE', 'STATUS', 'COMPLETED', 'NOTES', 'PROCESSING']
         w_heads = []
         for header in headers:
-            w_heads.append(QLabel(header))
-        header_name = 'run-col-header'
-            #self.grid.addWidget(w_heads[i], 0, i)
+            w = self.create_w(header, qss_name='run-col-header')
+            w_heads.append(w)
 
         row = 0
-        self.add_row_to_main(w_heads, row, header_name)
-        row = row + 1
-        
-        for run in runs:
+        row = self.add_row_to_main(w_heads, row)
+
+        # Loop through all runs in sample's dataset
+        for i, run in enumerate(self.data[g.S_RUNS]):
+
+            # For each run, create a row for each replicate and add it to the grid, leaving the first cell of each row blank
+            start_row = row
+            run_id = run[g.R_UID_SELF]
+            for j, rep in enumerate(run[g.R_REPLICATES]):
+                rep_name = l.r_rep_abbrev[g.L] + ' '+str(j)
+                rep_status = rep[g.R_STATUS]
+                rep_time = 'TIMESTAMP WHEN RUN COMPLETED'
+                rep_notes = rep[g.R_NOTES]
+                rep_proc = 'PROCESSING ICONS HERE'
+                rep_strs = [rep_name,rep_status,rep_time,rep_notes,rep_proc]
+                if row%2 != 0: qss_name = qss_name_even
+                else: qss_name = qss_name_odd
+                rep_id = rep[g.R_UID_SELF]
+                ws_rep = []
+                for s in rep_strs:
+                    w = self.create_w(s, qss_name, self.rep_clicked, run_id, rep_id)
+                    ws_rep.append(w)
+
+                    
+                row = self.add_row_to_main(ws_rep, row, h_offset=1)
+
+            
+            # Vertically merge all the first cells for this run's replicates and add run information
+            run_name = 'Run '+str(i)
             run_type = l.rc_types[run[g.R_TYPE]][g.L]
             method_name = get_method_from_file_data(self.data, run[g.R_UID_METHOD])[g.M_NAME]
             run_notes = run[g.R_NOTES]
-            obj_name = run[g.R_UID_SELF]
-            w_type = QLabel(run_type)
-            w_method = QLabel(method_name)
-            w_run_notes = QLabel(run_notes)
-            ws_run = [w_type, w_method, w_run_notes]
-            self.add_row_to_main(ws_run, row, obj_name)
-            row = row + 1
+            run_str = '<b>'+run_name+'</b><br>'
+            run_str = run_str + 'Type: '+run_type+'<br>'
+            run_str = run_str + 'Method: '+method_name+'<br>'
+            run_str = run_str + 'Notes: '+run_notes
+
+            if i%2 == 0: qss_name = qss_name_even
+            else: qss_name = qss_name_odd
+
+            w = self.create_w(run_str, qss_name, self.run_clicked, run_id)
             
-            for i, rep in enumerate(run[g.R_REPLICATES]):
-                desc = "       "
-                desc = desc + l.r_rep_abbrev[g.L] + ' '+str(i)
-                desc = desc + ' ' + 'TIMESTAMP WHEN RUN COMPLETED'
-                rep_notes = rep[g.R_NOTES]
-                obj_name = rep[g.R_UID_SELF]
-                w_desc = QLabel(desc)
-                w_empty = QLabel()
-                w_rep_notes = QLabel(rep_notes)
-                ws_rep = [w_desc, w_empty, w_rep_notes]
-                self.add_row_to_main(ws_rep, row, obj_name)
-                row = row + 1
-            
-            
-        '''
+            self.add_row_to_main([w], start_row, v_merge=row-start_row)
 
-
-
-        
-        for i, run in enumerate(demo):
-            w_cb = QCheckBox()
-            w_cb.setObjectName(run['name'])         ##### <--- THIS IS WHERE THE RUN UID GETS STORED!!!
-            w_cb.stateChanged.connect(partial(self.row_toggle,w_cb))
-            w_type = QLabel(run['type'])
-            w_sweep = QLabel(run['sweep'])
-            w_comment = QLabel(run['comment'])
-            w_time = QLabel(run['timestamp'])
-
-            w_type.mouseReleaseEvent = partial(self.row_clicked, w_type)
-            w_sweep.mouseReleaseEvent = partial(self.row_clicked, w_sweep)
-            w_comment.mouseReleaseEvent = partial(self.row_clicked, w_comment)
-            w_time.mouseReleaseEvent = partial(self.row_clicked, w_time)
-
-            if (i%2 == 0):
-                obj_name =g.RUNS_ODD_ROW_NAME
-            else:
-                obj_name =g.RUNS_EVEN_ROW_NAME
-
-            w_type.setObjectName(obj_name)
-            w_sweep.setObjectName(obj_name)
-            w_comment.setObjectName(obj_name)
-            w_time.setObjectName(obj_name)
-            
-            grid.addWidget(w_cb, i+1, 0)
-            grid.addWidget(w_type, i+1, 2)
-            grid.addWidget(w_sweep, i+1, 3)
-            grid.addWidget(w_comment, i+1, 4)
-            grid.addWidget(w_time, i+1, 1)
-        '''
-
-        self.num_runs = i+1
-        self.grid.setColumnStretch(4,1)
+        #self.num_runs = row+1
+        self.grid.setColumnStretch(len(headers)-1,1)                    # Set column stretch on last col so grid fills whole window
 
         self.w_run_history_container = QWidget()
         self.w_run_history_container.setLayout(self.grid)
@@ -423,12 +450,46 @@ class WindowMain(QMainWindow):
         self.w_run_history_area.setWidget(self.w_run_history_container)
         
 
-    def row_clicked(self, w, event):
-        ws = self.get_row_ws(w)
-        for w in ws:
-            if isinstance(w, QCheckBox):
-                w.toggle()
-                break
+    def rep_clicked(self, w, event):
+        print('--------')
+        keys = QApplication.keyboardModifiers()
+        btn = event.button()
+
+        if btn == Qt.MouseButton.RightButton and keys == Qt.KeyboardModifier.NoModifier:    # regular right click
+            print('regular right click')
+
+        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.NoModifier:   # regular left click
+            print('regular left click!')
+
+        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ControlModifier:   # ctrl+left click
+            print('ctrl+click')
+
+        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ShiftModifier:   # shift+left click
+            print('shift+click')
+            
+        print('run:',w.property('ov-run'))
+        print('rep:',w.property('ov-rep'))
+
+    def run_clicked(self, w, event):
+        print('--------')
+        keys = QApplication.keyboardModifiers()
+        btn = event.button()
+
+        if btn == Qt.MouseButton.RightButton and keys == Qt.KeyboardModifier.NoModifier:    # regular right click
+            print('regular right click')
+
+        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.NoModifier:   # regular left click
+            print('regular left click!')
+
+        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ControlModifier:   # ctrl+left click
+            print('ctrl+click')
+
+        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ShiftModifier:   # shift+left click
+            print('shift+click')
+            
+        print('run:',w.property('ov-run'))
+        print('rep:',w.property('ov-rep'))
+        
 
     def select_all_toggle(self, w):
         if self.prog_check_flag:                        # if the select all checkbox has been modified programatically
