@@ -375,12 +375,10 @@ class WindowMain(QMainWindow):
         w.setProperty('ov-run', run_id)
         w.setProperty('ov-rep', rep_id)     
         w.setProperty('ov-qss-name', qss_name)          # store qss name for easy access later (to reset styles)
+        w.setProperty('ov-selected-qss-name', 'selected-'+qss_name)
         return w
 
     def widgetize_run_history(self):
-        
-        qss_name_even = 'run-cell-even'                     # name for styling even cells
-        qss_name_odd = 'run-cell-odd'                       # name for styling odd cells
         
         self.w_run_history_area = QScrollArea()             # init the scroll area
         self.w_run_history_area.resizeEvent = self.resize
@@ -412,8 +410,15 @@ class WindowMain(QMainWindow):
                 rep_notes = rep[g.R_NOTES]
                 rep_proc = 'PROCESSING ICONS HERE'
                 rep_strs = [rep_name,rep_status,rep_time,rep_notes,rep_proc]
-                if row%2 != 0: qss_name = qss_name_even
-                else: qss_name = qss_name_odd
+
+                is_last = False
+                if j == len(run[g.R_REPLICATES])-1: is_last=True                # figure out if current rep is last of run
+
+                if (i+j)%2 == 0 and is_last: qss_name = 'run-rep-even-last'     # even rows that are last rep of run
+                elif (i+j)%2 != 0 and is_last: qss_name = 'run-rep-odd-last'    # odd rows that are last rep of run
+                elif (i+j)%2 == 0: qss_name = 'run-rep-even'                    # regular even rows
+                else: qss_name = 'run-rep-odd'                                  # regular odd rows
+                
                 rep_id = rep[g.R_UID_SELF]
                 ws_rep = []
                 for s in rep_strs:
@@ -434,8 +439,8 @@ class WindowMain(QMainWindow):
             run_str = run_str + 'Method: '+method_name+'<br>'
             run_str = run_str + 'Notes: '+run_notes
 
-            if i%2 == 0: qss_name = qss_name_even
-            else: qss_name = qss_name_odd
+            if i%2 == 0: qss_name = 'run-even'
+            else: qss_name = 'run-odd'
 
             w = self.create_w(run_str, qss_name, self.run_clicked, run_id)
             
@@ -454,41 +459,141 @@ class WindowMain(QMainWindow):
         print('--------')
         keys = QApplication.keyboardModifiers()
         btn = event.button()
+        run = w.property('ov-run')
+        rep = w.property('ov-rep')
 
         if btn == Qt.MouseButton.RightButton and keys == Qt.KeyboardModifier.NoModifier:    # regular right click
             print('regular right click')
+            ###################3
+            #
+            #   ADD RIGHT-CLICK IMPLEMENTATION HERE...
+            #
+            ##################
 
-        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.NoModifier:   # regular left click
-            print('regular left click!')
-
-        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ControlModifier:   # ctrl+left click
-            print('ctrl+click')
-
-        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ShiftModifier:   # shift+left click
-            print('shift+click')
+        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.NoModifier:       # regular left click
+            N = len(self.selected)                                                              # Get # of reps selected
+            self.selected = []                                                                  # Clear all selections 
+            if N > 1:                                                                           # If there were multiple selected, 
+                self.add_rep_to_selected(run, rep)                                              # select the clicked rep (regardless of status)
+            elif not self.rep_is_selected(w):                                                   # if 1 or 0 selected, not including clicked one
+                self.add_rep_to_selected(run, rep)                                              # select clicked rep (if clicked rep is already only selection, this deselects it)
             
-        print('run:',w.property('ov-run'))
-        print('rep:',w.property('ov-rep'))
+        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ControlModifier:  # ctrl+left click
+            if not self.rep_is_selected(w):                                                     # if clicked row not selected
+                self.add_rep_to_selected(run, rep)                                              # add it to selection
+            else:                                                                               # otherwise,
+                self.remove_rep_from_selected(run, rep)                                         # remove it from selection
+
+        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ShiftModifier:    # shift+left click
+            print('shift+click --- TODO: Add shift+click implemntation!!!')
+            ###################3
+            #
+            #   ADD SHIFT+CLICK IMPLEMENTATION HERE...
+            #
+            ##################
+
+        self.update_highlights()                                                            # update styles to apply hightlighting
+
 
     def run_clicked(self, w, event):
         print('--------')
         keys = QApplication.keyboardModifiers()
         btn = event.button()
+        run = w.property('ov-run')
 
         if btn == Qt.MouseButton.RightButton and keys == Qt.KeyboardModifier.NoModifier:    # regular right click
             print('regular right click')
+            ###################3
+            #
+            #   ADD RIGHT-CLICK IMPLEMENTATION HERE...
+            #
+            ##################
 
         elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.NoModifier:   # regular left click
-            print('regular left click!')
+            N = len(self.selected)                                                          # Get # of reps selected, # of reps per run, and clear selections
+            reps_per_run = len(self.get_run_data(run)[g.R_REPLICATES])                      # CONDITiONAL: If the # of selections != # of reps OR not all
+            self.selected = []                                                              #   reps of run are selected: (This logic leads allows for 
+            if not N==reps_per_run or not self.all_reps_of_run_are_selected(w):             #   deselecting all reps of run IFandonlyIF all reps of run are
+                self.add_run_to_selected(run)                                               #   the only extant selections. ---> Select all reps of run
 
-        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ControlModifier:   # ctrl+left click
-            print('ctrl+click')
+        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ControlModifier:  # ctrl+left click
+            if self.all_reps_of_run_are_selected(w):                                            # if all reps of run are already selected
+                self.remove_run_from_selected(run)                                              # deselect them all! 
+            else:                                                                               # if they are not ALL selected (some or none are)
+                self.add_run_to_selected(run)                                                   # Select them all! 
 
         elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ShiftModifier:   # shift+left click
-            print('shift+click')
+            print('shift+click --- TODO: Add shift+click implemntation!!!')
+            ###################3
+            #
+            #   ADD SHIFT+CLICK IMPLEMENTATION HERE...
+            #
+            ##################
+
+        self.update_highlights() 
+
+    def rep_is_selected(self, w):
+        if w.objectName() == w.property('ov-selected-qss-name'):
+            return True
+        return False
+        
+
+    def all_reps_of_run_are_selected(self, w):
+        run_id = w.property('ov-run')
+        N_reps = len(self.get_run_data(run_id)[g.R_REPLICATES])
+        ws = self.w_run_history_container.children()    # grab all table widgets
+        ws_selected = list(filter(lambda w: (w.objectName() == w.property('ov-selected-qss-name') and w.property('ov-run')==run_id), ws))
+        reps_selected = len(ws_selected) / (self.grid.columnCount()-1)
+        print(reps_selected)
+        if reps_selected == N_reps:
+            return True
+        return False
+        
+        
+
+    def add_rep_to_selected(self, run, rep):
+        d = {'run': run, 'rep': rep}    
+        if not d in self.selected:      # Only add if this run/rep combo is not already on list 
+            self.selected.append(d)
+
+    def remove_rep_from_selected(self, run, rep):
+        d = {'run': run, 'rep': rep} 
+        self.selected.remove(d)
+
+    def add_run_to_selected(self, run_id):
+        run = self.get_run_data(run_id)
+        for rep in run[g.R_REPLICATES]:
+            rep_id = rep[g.R_UID_SELF]
+            self.add_rep_to_selected(run_id, rep_id)
+
+    def remove_run_from_selected(self, run_id):
+        run = self.get_run_data(run_id)
+        for rep in run[g.R_REPLICATES]:
+            rep_id = rep[g.R_UID_SELF]
+            self.remove_rep_from_selected(run_id, rep_id)
+    
+    def update_highlights(self):
+        ws = self.w_run_history_container.children()    # grab all table widgets
+        for w in ws:
+            id = {'run': w.property('ov-run'), 'rep': w.property('ov-rep')}
+            if id in self.selected:
+                w.setObjectName(w.property('ov-selected-qss-name'))
+            else:
+                w.setObjectName(w.property('ov-qss-name'))
+        applyStyles()
+
+    def get_run_data(self, run_id):
+        return next(filter(lambda x: x[g.R_UID_SELF] == run_id, self.data[g.S_RUNS]), None)
+
+
+
+
+
+
+
             
-        print('run:',w.property('ov-run'))
-        print('rep:',w.property('ov-rep'))
+
+    
         
 
     def select_all_toggle(self, w):

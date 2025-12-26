@@ -1,6 +1,7 @@
 /*styles.css*/
 
-QLineEdit#ov_sample_name, QLineEdit#ov-method-name {
+QLineEdit#ov_sample_name, 
+QLineEdit#ov-method-name {
 	font-size: 18pt;
 	border: 0;
 	background-color: rgba(0,0,0,0);
@@ -29,7 +30,8 @@ WindowMain #sample-header {
 	border: 1px solid grey;
 }
 
-QWidget#runs-container QLabel, QWidget#steps-container QLabel  {
+QWidget#runs-container QLabel, 
+QWidget#steps-container QLabel  {
 	background-color: none;
 	padding: 2px 8px;
 }
@@ -39,23 +41,51 @@ QWidget#runs-container QLabel#run-col-header {
 }
 
 
-QWidget#runs-container QLabel#run-cell-even, QWidget#steps-container QLabel#step-cell-even {
+QWidget#runs-container QLabel#run-even, 
+QWidget#runs-container QLabel#run-rep-even, 
+QWidget#runs-container QLabel#run-rep-even-last, 
+QWidget#steps-container QLabel#step-cell-even {
 	background-color: white;
+	border-top: 1px solid black;
 }
 
-QWidget#runs-container QLabel#run-cell-odd, QWidget#steps-container QLabel#step-cell-odd {
+QWidget#runs-container QLabel#run-odd, 
+QWidget#runs-container QLabel#run-rep-odd, 
+QWidget#runs-container QLabel#run-rep-odd-last, 
+QWidget#steps-container QLabel#step-cell-odd {
 	background-color: #dddddd;
+	border-top: 1px solid black;
 }
 
-/*QWidget#runs-container QLabel#run-cell-even-selected, QWidget#runs-container QLabel#run-cell-odd-selected, */QWidget#steps-container QLabel#step-cell-even-selected, QWidget#steps-container QLabel#step-cell-odd-selected {
+QWidget#runs-container QLabel#run-odd, 
+QWidget#runs-container QLabel#run-even {
+	border-left: 1px solid black;
+	border-bottom: 1px solid black;
+	border-right: 1px dashed grey;
+	margin-bottom: 10px;
+}
+
+QWidget#runs-container QLabel#run-rep-odd-last, 
+QWidget#runs-container QLabel#run-rep-even-last {
+	border-bottom: 1px solid black;
+	margin-bottom: 10px;
+}
+
+QWidget#runs-container QLabel#selected-run-rep-odd, 
+QWidget#runs-container QLabel#selected-run-rep-even, 
+QWidget#runs-container QLabel#selected-run-rep-odd-last,
+QWidget#runs-container QLabel#selected-run-rep-even-last, 
+QWidget#steps-container QLabel#step-cell-even-selected, 
+QWidget#steps-container QLabel#step-cell-odd-selected {
 	background-color: #fcdf88;
+	border-top: 1px solid black;
 }
 
-
-
-
-
-
+QWidget#runs-container QLabel#selected-run-rep-odd-last,
+QWidget#runs-container QLabel#selected-run-rep-even-last {
+	border-bottom: 1px solid black;
+	margin-bottom: 10px;
+}
 
 WindowMethod QSplitter::handle {
 	background-color: #dddddd;
