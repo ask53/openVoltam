@@ -67,7 +67,7 @@ class WindowMain(QMainWindow):
         self.config_pane_displayed = False
         self.setObjectName('window-sample')
         self.selected = []                  # for storing which runs are selected
-        self.prog_check_flag = False
+        self.select_all_prog_check_flag = False
         self.num_runs = 0
         self.children = [self.w_view_sample, self.w_edit_sample, self.w_run_config, self.w_run]
 
@@ -491,7 +491,8 @@ class WindowMain(QMainWindow):
             #   ADD SHIFT+CLICK IMPLEMENTATION HERE...
             #
             ##################
-
+            
+        self.update_select_all_checkbox()
         self.update_highlights()                                                            # update styles to apply hightlighting
 
 
@@ -530,6 +531,7 @@ class WindowMain(QMainWindow):
             #
             ##################
 
+        self.update_select_all_checkbox()
         self.update_highlights() 
 
     def rep_is_selected(self, w):
@@ -537,7 +539,6 @@ class WindowMain(QMainWindow):
             return True
         return False
         
-
     def all_reps_of_run_are_selected(self, w):
         run_id = w.property('ov-run')
         N_reps = len(self.get_run_data(run_id)[g.R_REPLICATES])
@@ -548,8 +549,14 @@ class WindowMain(QMainWindow):
         if reps_selected == N_reps:
             return True
         return False
-        
-        
+
+    def all_reps_are_selected(self):
+        N_reps = 0                                      # Count total # of replicates
+        for run in self.data[g.S_RUNS]:
+            N_reps = N_reps + len(run[g.R_REPLICATES])
+        if len(self.selected) == N_reps:
+            return True
+        return False      
 
     def add_rep_to_selected(self, run, rep):
         d = {'run': run, 'rep': rep}    
@@ -571,6 +578,10 @@ class WindowMain(QMainWindow):
         for rep in run[g.R_REPLICATES]:
             rep_id = rep[g.R_UID_SELF]
             self.remove_rep_from_selected(run_id, rep_id)
+
+    def add_all_to_selected(self):
+        for run in self.data[g.S_RUNS]:
+            self.add_run_to_selected(run[g.R_UID_SELF])
     
     def update_highlights(self):
         ws = self.w_run_history_container.children()    # grab all table widgets
@@ -584,8 +595,26 @@ class WindowMain(QMainWindow):
 
     def get_run_data(self, run_id):
         return next(filter(lambda x: x[g.R_UID_SELF] == run_id, self.data[g.S_RUNS]), None)
+      
+    def select_all_toggle(self, w):
+        if self.select_all_prog_check_flag:
+            self.select_all_prog_check_flag = False
+            return
+        if w.checkState() == Qt.CheckState.Checked:
+            self.add_all_to_selected()
+        else:
+            self.selected = []
+        self.update_highlights()
 
-
+    def update_select_all_checkbox(self):
+        self.select_all_prog_check_flag = True
+        if self.all_reps_are_selected():   
+            self.cb_all.setChecked(True)
+        else:
+            self.cb_all.setChecked(False)
+        
+        
+        
 
 
 
@@ -596,7 +625,7 @@ class WindowMain(QMainWindow):
     
         
 
-    def select_all_toggle(self, w):
+    '''def select_all_toggle(self, w):
         if self.prog_check_flag:                        # if the select all checkbox has been modified programatically
             self.prog_check_flag = False                # reset the flag
             return                                      # and do nothing
@@ -608,7 +637,7 @@ class WindowMain(QMainWindow):
 
             for w in self.w_run_history_container.children():       # loop thru all the widgets in the grid
                 if isinstance(w, QCheckBox):            # for each checkbox
-                    w.setCheckState(state_to_set)         # set the checkbox to the state determined above
+                    w.setCheckState(state_to_set)         # set the checkbox to the state determined above'''
                     
     def row_toggle(self, w, state):
         run_id = w.objectName()
