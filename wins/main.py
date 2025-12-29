@@ -41,7 +41,8 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QScrollArea,
     QGroupBox,
-    QApplication
+    QApplication,
+    QMenu
     
 )
 
@@ -106,6 +107,40 @@ class WindowMain(QMainWindow):
         file_menu.addAction(action_edit_config)
 
         file_menu = menu.addMenu(l.menu_run[g.L])
+
+
+
+        #####################################
+        #                                   #
+        #   right-click ("context") menu    #
+        #                                   #
+        #####################################
+
+        self.contextmenu_run = QMenu(self)
+        self.contextmenu_rep = QMenu(self)
+
+        self.runAction_runAgain = self.contextmenu_run.addAction("New run from config")
+        self.contextmenu_run.addSeparator()
+        self.runAction_editNote = self.contextmenu_run.addAction("Edit run info [DOES NOTHING YET]")
+        self.contextmenu_run.addSeparator()
+        self.runAction_viewConfig = self.contextmenu_run.addAction("View run config")
+        self.runAction_viewData = self.contextmenu_run.addAction("Graph data [DOES NOTHING YET]")
+        self.runAction_exportData = self.contextmenu_run.addAction("Export CSV")
+        self.contextmenu_run.addSeparator()
+        self.runAction_delete = self.contextmenu_run.addAction("Delete [DOES NOTHING YET]")
+
+        self.repAction_editNote = self.contextmenu_rep.addAction("Edit replicate note [DOES NOTHING YET]")
+        self.contextmenu_rep.addSeparator()
+        self.repAction_viewData = self.contextmenu_rep.addAction("Graph data [DOES NOTHING YET]")
+        self.repAction_exportData = self.contextmenu_rep.addAction("Export CSV")
+        self.contextmenu_rep.addSeparator()
+        self.repAction_delete = self.contextmenu_rep.addAction("Delete [DOES NOTHING YET]")
+
+        self.runActions_oneOnly = [self.runAction_runAgain, self.runAction_editNote, self.runAction_viewConfig]
+        self.repActions_oneOnly = [self.repAction_editNote]
+
+
+        
 
 
         #####################
@@ -462,13 +497,12 @@ class WindowMain(QMainWindow):
         run = w.property('ov-run')
         rep = w.property('ov-rep')
 
-        if btn == Qt.MouseButton.RightButton and keys == Qt.KeyboardModifier.NoModifier:    # regular right click
-            print('regular right click')
-            ###################3
-            #
-            #   ADD RIGHT-CLICK IMPLEMENTATION HERE...
-            #
-            ##################
+        if btn == Qt.MouseButton.RightButton and keys == Qt.KeyboardModifier.NoModifier:        # regular right click
+            if not self.rep_is_selected(w):                                                     # If the clicked rep is not selected
+                self.selected = []                                                              # Make it the only one selected
+                self.add_rep_to_selected(run, rep)
+                self.update_highlights()
+            self.open_rightclick_menu_rep(event)                                                # Open right-click context menu
 
         elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.NoModifier:       # regular left click
             N = len(self.selected)                                                              # Get # of reps selected
@@ -504,6 +538,9 @@ class WindowMain(QMainWindow):
 
         if btn == Qt.MouseButton.RightButton and keys == Qt.KeyboardModifier.NoModifier:    # regular right click
             print('regular right click')
+            # 1. If the clicked on run is not completely selected, deselect all and select it!
+            # 2. If the clicked on run IS completely selected, do nothing and show menu
+            self.open_rightclick_menu_run(event)
             ###################3
             #
             #   ADD RIGHT-CLICK IMPLEMENTATION HERE...
@@ -656,17 +693,64 @@ class WindowMain(QMainWindow):
         elif not self.all_reps_are_selected() and self.cb_all.checkState() != Qt.CheckState.Unchecked:
             self.select_all_prog_check_flag = True
             self.cb_all.setChecked(False)
+
+    def get_N_runs_selected(self):
+        runs = []
+        for rep in self.selected:
+            if not rep[0] in runs:
+                runs.append(rep[0])
+        return len(runs)
+
+    def open_rightclick_menu_run(self, event):
+        # Get # of run selected
+        # if N == 1, enable all menu elements
+        # else disable those that only work for single runs
+        # If N>0, show the menu
+        #
+        #   TODO:
+        #
+        #       1. Figure out how to keep better track of which runs have been selected!
+        #       2. Implement it in logic!
+        #       3. Add classes and color coding in QSS!
+
+
+
         
-        
-        
+        runs = self.get_N_runs_selected()
+        reps = len(self.selected)
+
+        elif runs == 1:
+            pass
+        elif runs > 1:
+            pass
+            #self.contextmenu_runs.exec(event.globalPosition().toPoint())
+        self.contextmenu_run.exec(event.globalPosition().toPoint())
+
+    def open_rightclick_menu_rep(self, event):
+        try:
+            
+            reps = len(self.selected)
+            is_enabled = False
+            if reps == 1:
+                is_enabled = True
+            if reps > 0:
+                for action in self.repActions_oneOnly:
+                    action.setEnabled(is_enabled)
+                self.contextmenu_rep.exec(event.globalPosition().toPoint())
+
+            
+        except Exception as e:
+            print(e)
+    
+
+
+
 
 
 
 
 
             
-
-
     def update_button_states(self):
         rows = len(self.selected)
         enable_buts = []
