@@ -3,7 +3,7 @@
 
 from tabularjson import parse, stringify, StringifyOptions, is_homogeneous
 from re import sub
-from tkinter.filedialog import askopenfilename
+from tkinter.filedialog import askopenfilename, askdirectory
 
 from json import dumps
 
@@ -75,6 +75,9 @@ def get_path_from_user(pathtype):
             path = askopenfilename(filetypes = [(l.filetype_sample_lbl[g.L], g.SAMPLE_FILE_TYPES)])
         elif pathtype=='method':
             path = askopenfilename(filetypes = [(l.filetype_sp_lbl[g.L], g.METHOD_FILE_TYPES)])
+        elif pathtype=='folder':
+            path = askdirectory()
+            
         return path
     except Exception as e:
         print(e)

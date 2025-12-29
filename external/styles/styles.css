@@ -58,7 +58,9 @@ QWidget#steps-container QLabel#step-cell-odd {
 }
 
 QWidget#runs-container QLabel#run-odd, 
-QWidget#runs-container QLabel#run-even {
+QWidget#runs-container QLabel#run-even,
+QWidget#runs-container QLabel#selected-run-odd, 
+QWidget#runs-container QLabel#selected-run-even {
 	border-left: 1px solid black;
 	border-bottom: 1px solid black;
 	border-right: 1px dashed grey;
@@ -76,9 +78,24 @@ QWidget#runs-container QLabel#selected-run-rep-even,
 QWidget#runs-container QLabel#selected-run-rep-odd-last,
 QWidget#runs-container QLabel#selected-run-rep-even-last, 
 QWidget#steps-container QLabel#step-cell-even-selected, 
-QWidget#steps-container QLabel#step-cell-odd-selected {
-	background-color: #fcdf88;
+QWidget#steps-container QLabel#step-cell-odd-selected,
+QWidget#runs-container QLabel#selected-run-odd, 
+QWidget#runs-container QLabel#selected-run-even {
 	border-top: 1px solid black;
+}
+
+QWidget#runs-container QLabel#selected-run-rep-odd, 
+QWidget#runs-container QLabel#selected-run-rep-even, 
+QWidget#runs-container QLabel#selected-run-rep-odd-last,
+QWidget#runs-container QLabel#selected-run-rep-even-last {
+	background-color: #bafcec; 	/* pastel aqua */
+}
+
+QWidget#runs-container QLabel#selected-run-odd, 
+QWidget#runs-container QLabel#selected-run-even,
+QWidget#steps-container QLabel#step-cell-even-selected, 
+QWidget#steps-container QLabel#step-cell-odd-selected {
+	background-color: #fcecba; 	/* pastel gold */
 }
 
 QWidget#runs-container QLabel#selected-run-rep-odd-last,

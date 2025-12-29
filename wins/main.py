@@ -22,6 +22,7 @@ from wins.runView import WindowRunView
 from os.path import join as joindir
 from functools import partial
 from tkinter.filedialog import askopenfilename as askOpenFileName
+import csv
 
 
 from PyQt6.QtTest import QTest
@@ -67,7 +68,7 @@ class WindowMain(QMainWindow):
         self.w_run = WindowRunView(self)
         self.config_pane_displayed = False
         self.setObjectName('window-sample')
-        self.selected = []                  # for storing which runs are selected
+        self.layout = {}                  # for storing an outline of runs and reps and which are selected
         self.select_all_prog_check_flag = False
         self.num_runs = 0
         self.children = [self.w_view_sample, self.w_edit_sample, self.w_run_config, self.w_run]
@@ -115,26 +116,28 @@ class WindowMain(QMainWindow):
         #   right-click ("context") menu    #
         #                                   #
         #####################################
-
-        self.contextmenu_run = QMenu(self)
-        self.contextmenu_rep = QMenu(self)
+        
+        self.contextmenu_run = QMenu(self)      # Menu for when run is clicked
+        self.contextmenu_rep = QMenu(self)      # Menu for when rep is clicked
 
         self.runAction_runAgain = self.contextmenu_run.addAction("New run from config")
         self.contextmenu_run.addSeparator()
         self.runAction_editNote = self.contextmenu_run.addAction("Edit run info [DOES NOTHING YET]")
         self.contextmenu_run.addSeparator()
         self.runAction_viewConfig = self.contextmenu_run.addAction("View run config")
-        self.runAction_viewData = self.contextmenu_run.addAction("Graph data [DOES NOTHING YET]")
-        self.runAction_exportData = self.contextmenu_run.addAction("Export CSV")
+        self.runAction_viewData = self.contextmenu_run.addAction("Graph data from run(s) [DOES NOTHING YET]")
+        self.runAction_exportData = self.contextmenu_run.addAction("Export CSV of run(s)")
         self.contextmenu_run.addSeparator()
-        self.runAction_delete = self.contextmenu_run.addAction("Delete [DOES NOTHING YET]")
+        self.runAction_delete = self.contextmenu_run.addAction("Delete run(s) [DOES NOTHING YET]")
 
         self.repAction_editNote = self.contextmenu_rep.addAction("Edit replicate note [DOES NOTHING YET]")
         self.contextmenu_rep.addSeparator()
-        self.repAction_viewData = self.contextmenu_rep.addAction("Graph data [DOES NOTHING YET]")
-        self.repAction_exportData = self.contextmenu_rep.addAction("Export CSV")
+        self.repAction_viewData = self.contextmenu_rep.addAction("Graph replicate(s) data [DOES NOTHING YET]")
+        self.repAction_exportData = self.contextmenu_rep.addAction("Export CSV of rep(s)")
         self.contextmenu_rep.addSeparator()
-        self.repAction_delete = self.contextmenu_rep.addAction("Delete [DOES NOTHING YET]")
+        self.repAction_delete = self.contextmenu_rep.addAction("Delete replicates(s) [DOES NOTHING YET]")
+
+        self.repAction_exportData.triggered.connect(self.export_reps_to_csv)
 
         self.runActions_oneOnly = [self.runAction_runAgain, self.runAction_editNote, self.runAction_viewConfig]
         self.repActions_oneOnly = [self.repAction_editNote]
@@ -189,9 +192,11 @@ class WindowMain(QMainWindow):
         w_sample_header.setLayout(l_sample_header)          # add the layout to the widget
         w_sample_header.setObjectName("sample-header")      # add a name to target with QSS
 
-    
+
+        ###########################################################################################################################
         #
         #   Define the second row ("run header")
+        #   (For now, just the "select all" checkbox, might move this later (holdover from when this was a row of buttons...
         #
  
         l_run_header = QHBoxLayout()
@@ -202,55 +207,18 @@ class WindowMain(QMainWindow):
         self.cb_all.stateChanged.connect(partial(self.select_all_toggle, self.cb_all))  # connect checkbox to select_all_toggle function
         lbl_cb_all.mouseReleaseEvent = self.select_all_lbl_clicked                      # when label is clicked, toggle checkbox
 
-        but_view_config = QPushButton('Details')
-        but_edit = QPushButton('Edit')
-        but_del = QPushButton('Delete')
-        but_export_raw = QPushButton('Export')
-        but_view_plots = QPushButton('Graph')
-        but_analyze = QPushButton('Analyze')
-        but_view_results = QPushButton('Results')
-        but_export_results = QPushButton('Export')
-
-        but_view_config.setObjectName(g.RUNS_BUT_ANY_NAME)
-        but_edit.setObjectName(g.RUNS_BUT_ONE_NAME)
-        but_del.setObjectName(g.RUNS_BUT_ANY_NAME)
-        but_export_raw.setObjectName(g.RUNS_BUT_ANY_NAME)
-        but_view_plots.setObjectName(g.RUNS_BUT_ANY_NAME)
-        but_analyze.setObjectName(g.RUNS_BUT_ANY_NAME)
-        but_view_results.setObjectName(g.RUNS_BUT_ANY_NAME)
-        but_export_results.setObjectName(g.RUNS_BUT_ANY_NAME)
-
         l_run_header.addWidget(self.cb_all)
         l_run_header.addWidget(lbl_cb_all)
 
-        l_run = QHBoxLayout()
-        l_run.addWidget(but_view_config)
-        l_run.addWidget(but_edit)
-        l_run.addWidget(but_del)
-        gb_run = QGroupBox("Run info")
-        gb_run.setLayout(l_run)
-
-        l_raw = QHBoxLayout()
-        l_raw.addWidget(but_export_raw)
-        l_raw.addWidget(but_view_plots)
-        l_raw.addWidget(but_analyze)
-        gb_raw = QGroupBox("Raw data")
-        gb_raw.setLayout(l_raw)
-
-        l_res = QHBoxLayout()
-        l_res.addWidget(but_view_results)
-        l_res.addWidget(but_export_results)
-        gb_res = QGroupBox("Run results")
-        gb_res.setLayout(l_res)
-        
-        l_run_header.addWidget(gb_run)
-        l_run_header.addWidget(gb_raw)
-        l_run_header.addWidget(gb_res)
         l_run_header.addStretch()
 
         self.w_run_header = QWidget()                    # create a widget to hold the layout (which can be styled)
         self.w_run_header.setLayout(l_run_header)        # add the layout to the widget
         self.w_run_header.setObjectName("run-header-row")# add a name to target with QSS
+
+        #
+        #
+        ############################################################################################################################
 
 
         # Grab the run history as a widget
@@ -266,9 +234,6 @@ class WindowMain(QMainWindow):
         lay.addWidget(w_sample_header)
         lay.addWidget(self.w_run_header)
         lay.addWidget(self.w_run_history_area)
-
-        # make sure all buttons are appropriately enabled/disabled to start
-        self.update_button_states()
 
         # Display! 
         self.w = QWidget()
@@ -316,7 +281,7 @@ class WindowMain(QMainWindow):
     def update_displayed_info(self):
         self.load_sample_info()                                             # reload the sample info from file
         self.set_sample_info()                                          
-        self.selected = []                                                  # re-init selected list b/c we have reloaded all runs and none 
+        #self.selected = []                                                  # re-init selected list b/c we have reloaded all runs and none 
                                                                             #   are selected to start.
         self.w_run_history_area.setParent(None)                             # remove run history pane from layout
         self.widgetize_run_history()                                        # get updated run history as a widget    
@@ -438,6 +403,7 @@ class WindowMain(QMainWindow):
             # For each run, create a row for each replicate and add it to the grid, leaving the first cell of each row blank
             start_row = row
             run_id = run[g.R_UID_SELF]
+            self.layout[run_id] = {'selected':[],'reps':[]}                     # initialize holing spot for run data 
             for j, rep in enumerate(run[g.R_REPLICATES]):
                 rep_name = l.r_rep_abbrev[g.L] + ' '+str(j)
                 rep_status = rep[g.R_STATUS]
@@ -462,6 +428,7 @@ class WindowMain(QMainWindow):
 
                     
                 row = self.add_row_to_main(ws_rep, row, h_offset=1)
+                self.layout[run_id]['reps'].append(rep_id)
 
             
             # Vertically merge all the first cells for this run's replicates and add run information
@@ -491,29 +458,29 @@ class WindowMain(QMainWindow):
         
 
     def rep_clicked(self, w, event):
-        print('--------')
         keys = QApplication.keyboardModifiers()
         btn = event.button()
         run = w.property('ov-run')
         rep = w.property('ov-rep')
 
         if btn == Qt.MouseButton.RightButton and keys == Qt.KeyboardModifier.NoModifier:        # regular right click
-            if not self.rep_is_selected(w):                                                     # If the clicked rep is not selected
-                self.selected = []                                                              # Make it the only one selected
+            if not self.rep_is_selected(run, rep):                                              # If the clicked rep is not selected
+                self.clear_selected()                                                           # Make it the only one selected
                 self.add_rep_to_selected(run, rep)
                 self.update_highlights()
             self.open_rightclick_menu_rep(event)                                                # Open right-click context menu
 
-        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.NoModifier:       # regular left click
-            N = len(self.selected)                                                              # Get # of reps selected
-            self.selected = []                                                                  # Clear all selections 
+        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.NoModifier:       # regular left click                                                            
+            N = self.N_reps_selected()                                                          # Get # of reps selected
+            rep_is_selected = self.rep_is_selected(run, rep)
+            self.clear_selected()                                                               # Clear all selections
             if N > 1:                                                                           # If there were multiple selected, 
                 self.add_rep_to_selected(run, rep)                                              # select the clicked rep (regardless of status)
-            elif not self.rep_is_selected(w):                                                   # if 1 or 0 selected, not including clicked one
+            elif not rep_is_selected:                                                           # if 1 or 0 selected, not including clicked one
                 self.add_rep_to_selected(run, rep)                                              # select clicked rep (if clicked rep is already only selection, this deselects it)
-            
+
         elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ControlModifier:  # ctrl+left click
-            if not self.rep_is_selected(w):                                                     # if clicked row not selected
+            if not self.rep_is_selected(run, rep):                                              # if clicked row not selected
                 self.add_rep_to_selected(run, rep)                                              # add it to selection
             else:                                                                               # otherwise,
                 self.remove_rep_from_selected(run, rep)                                         # remove it from selection
@@ -525,37 +492,32 @@ class WindowMain(QMainWindow):
             #   ADD SHIFT+CLICK IMPLEMENTATION HERE...
             #
             ##################
-            
         self.update_select_all_checkbox()
         self.update_highlights()                                                            # update styles to apply hightlighting
+        
 
 
     def run_clicked(self, w, event):
-        print('--------')
         keys = QApplication.keyboardModifiers()
         btn = event.button()
         run = w.property('ov-run')
 
         if btn == Qt.MouseButton.RightButton and keys == Qt.KeyboardModifier.NoModifier:    # regular right click
             print('regular right click')
-            # 1. If the clicked on run is not completely selected, deselect all and select it!
-            # 2. If the clicked on run IS completely selected, do nothing and show menu
+            if not self.all_reps_of_run_are_selected(run):
+                self.clear_selected()
+                self.add_run_to_selected(run)
+                self.update_highlights()
             self.open_rightclick_menu_run(event)
-            ###################3
-            #
-            #   ADD RIGHT-CLICK IMPLEMENTATION HERE...
-            #
-            ##################
 
         elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.NoModifier:   # regular left click
-            N = len(self.selected)                                                          # Get # of reps selected, # of reps per run, and clear selections
-            reps_per_run = len(self.get_run_data(run)[g.R_REPLICATES])                      # CONDITiONAL: If the # of selections != # of reps OR not all
-            self.selected = []                                                              #   reps of run are selected: (This logic leads allows for 
-            if not N==reps_per_run or not self.all_reps_of_run_are_selected(w):             #   deselecting all reps of run IFandonlyIF all reps of run are
-                self.add_run_to_selected(run)                                               #   the only extant selections. ---> Select all reps of run
-
+            this_entire_run_is_only_selection = self.this_entire_run_and_nothing_else_is_selected(run)
+            self.clear_selected()
+            if not this_entire_run_is_only_selection:
+                self.add_run_to_selected(run)
+                
         elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ControlModifier:  # ctrl+left click
-            if self.all_reps_of_run_are_selected(w):                                            # if all reps of run are already selected
+            if self.all_reps_of_run_are_selected(run):                                            # if all reps of run are already selected
                 self.remove_run_from_selected(run)                                              # deselect them all! 
             else:                                                                               # if they are not ALL selected (some or none are)
                 self.add_run_to_selected(run)                                                   # Select them all! 
@@ -571,34 +533,54 @@ class WindowMain(QMainWindow):
         self.update_select_all_checkbox()
         self.update_highlights() 
 
-    def rep_is_selected(self, w):
+    def rep_is_selected(self, run, rep):
         """Takes in a widget and returns True if that widget is part of a selected row.
         Otherwise, returns False"""
-        if w.objectName() == w.property('ov-selected-qss-name'):
+        if rep in self.layout[run]['selected']:
             return True
         return False
         
-    def all_reps_of_run_are_selected(self, w):
-        """Takes in a widget and returns True if all reps from the widget's run are selected.
+    def all_reps_of_run_are_selected(self, run):
+        """Takes in a run id and returns True if all reps from that run are selected.
         Otherwise, returns False"""
-        run_id = w.property('ov-run')                                   # Get run ID from widget, then # of reps from this run                          
-        N_reps = len(self.get_run_data(run_id)[g.R_REPLICATES])         # grab all table widgets then filter for those that are selected 
-        ws = self.w_run_history_container.children()                    #   AND correpond to the run of interest
-        ws_selected = list(filter(lambda w: (w.objectName() == w.property('ov-selected-qss-name') and w.property('ov-run')==run_id), ws))
-        reps_selected = len(ws_selected) / (self.grid.columnCount()-1)  # take the # of selected widgets and divide by widgets_per_row to get                    
-        if reps_selected == N_reps:                                     #   count of total rows selected. 
-            return True                                                 # If the # of selected reps from this run matches the total reps per run
-        return False                                                    # Return True, else return False.
+        if len(self.layout[run]['selected']) == len(self.layout[run]['reps']):
+            return True
+        return False
+
+    def this_entire_run_and_nothing_else_is_selected(self, run_id):
+        """ Takes in a run ID and returns True if this entire run is selected
+        and nothing else is selected (this-and-only-this). Otherwise, returns False,"""
+        for run in self.layout:
+            if run == run_id:
+                if not self.all_reps_of_run_are_selected(run):
+                    return False
+            else:
+                if len(self.layout[run]['selected']) != 0:
+                    return False
+        return True
 
     def all_reps_are_selected(self):
         """Returns True if all reps are selected.
         Otherwise, returns False"""
-        N_reps = 0                                      # Count total # of replicates
-        for run in self.data[g.S_RUNS]:                 
-            N_reps = N_reps + len(run[g.R_REPLICATES])
-        if len(self.selected) == N_reps:                
-            return True
-        return False      
+        for run in self.layout:
+            if not self.all_reps_of_run_are_selected(run):
+                return False
+        return True
+
+    def N_reps_selected(self):
+        """ Returns Int, # of replicates currently selected"""
+        N = 0
+        for run in self.layout:
+            N = N + len(self.layout[run]['selected'])
+        return N
+
+    def N_runs_selected(self):
+        """ Returns Int, # of runs currently selected"""
+        N = 0
+        for run in self.layout:
+            if self.all_reps_of_run_are_selected(run):
+                N = N + 1
+        return N
 
     def add_rep_to_selected(self, run, rep):
         """Adds a specific replicate of a specific run to the list of selected replicates. Takes:
@@ -606,40 +588,41 @@ class WindowMain(QMainWindow):
                 rep    String. Unique ID of replicate of run to add
         Before pushing the (run,rep) tuple, checks if it is already selected. If so, does not
             add it to the selected list again. """
-        t = (run, rep)    
-        if not t in self.selected:      # Only add if this run/rep combo is not already on list 
-            self.selected.append(t)
-
+        if not rep in self.layout[run]['selected']: # Only add if this rep of this run is not already selected 
+            self.layout[run]['selected'].append(rep)
+    
     def remove_rep_from_selected(self, run, rep):
         """Removes a specific replicate of a specific run from the list of selected replicates. Takes:
                 run    String. Unique ID of run in dataset
                 rep    String. Unique ID of replicate of run to remove"""
-        t = (run, rep) 
-        self.selected.remove(t)
-
+        try:
+            self.layout[run]['selected'].remove(rep)
+        except Exception:
+            pass            # if rep is not selected, ignore
+        
     def add_run_to_selected(self, run_id):
         """Adds all replicates of a specific run to the list of selected replicates. Takes:
                 run    String. Unique ID of run in dataset"""
-        run = self.get_run_data(run_id)
-        for rep in run[g.R_REPLICATES]:
-            rep_id = rep[g.R_UID_SELF]
-            self.add_rep_to_selected(run_id, rep_id)
+
+        self.layout[run_id]['selected'] = self.layout[run_id]['reps'].copy()
 
     def remove_run_from_selected(self, run_id):
         """Removes all replicates of a specific run from the list of selected replicates. Takes:
             run    String. Unique ID of run in dataset"""
-        run = self.get_run_data(run_id)
-        for rep in run[g.R_REPLICATES]:
-            rep_id = rep[g.R_UID_SELF]
-            self.remove_rep_from_selected(run_id, rep_id)
+
+        self.layout[run_id]['selected'] = []
 
     def add_all_to_selected(self):
         """Adds all replicates in dataset to the list of selected replicates."""
-        for run in self.data[g.S_RUNS]:
-            self.add_run_to_selected(run[g.R_UID_SELF])
+        for run in self.layout:
+            self.add_run_to_selected(run)
+
+    def clear_selected(self):
+        for run in self.layout:
+            self.layout[run]['selected'] = []
     
     def update_highlights(self):
-        """Using the current state of the self.selected list, modifies the objectName
+        """Using the current state of the self.layout list, modifies the objectName
         of relevant widgets to either remove selected status (if not on the list) or
         add selected status (if on the list). It assumes that each widget within the
         Run History Container (the QScrollArea that holds the run information) contains
@@ -652,21 +635,23 @@ class WindowMain(QMainWindow):
         on the selected list, it sets their objectName to their selected name. If they're not
         on the selected list, it sets their objectName to ther NOT selected name.
         """
-        ws = self.w_run_history_container.children()        # grab all table widgets
+        ws = self.w_run_history_container.children()            # grab all table widgets
         for w in ws:
-            ids = (w.property('ov-run'), w.property('ov-rep'))
-            if ids in self.selected:                                
-                w.setObjectName(w.property('ov-selected-qss-name'))
-            else:
-                w.setObjectName(w.property('ov-qss-name'))
-        applyStyles()                                        #Grab QSS Stylesheet and apply it, now that names have been changed
-
-    def get_run_data(self, run_id):
-        """Takes in:
-            run_id    String. Unique ID of run in dataset
-        Returns:
-            The dictionary from the Runs list in the dataset whose unique ID matches run_id"""
-        return next(filter(lambda x: x[g.R_UID_SELF] == run_id, self.data[g.S_RUNS]), None)
+            run = w.property('ov-run')
+            rep = w.property('ov-rep')
+            select = False
+            if run:                                             # excludes any non-run or rep widgets (eg. headers)
+                if rep:                                         # For all widgets that are part of a replicate row
+                    if rep in self.layout[run]['selected']:     # set name for selected reps
+                        select = True
+                else:                                           # For all widgets that are part of a run (but not a rep!)
+                    if self.all_reps_of_run_are_selected(run):  # set name for all runs that have all reps selected
+                        select = True
+                if select:
+                    w.setObjectName(w.property('ov-selected-qss-name'))
+                else:
+                    w.setObjectName(w.property('ov-qss-name'))
+        applyStyles()                                           #Grab QSS Stylesheet and apply it, now that names have been changed
       
     def select_all_toggle(self, w):
         """Click handler for select-all checkbox. This runs when select-all checkbox is checked
@@ -678,7 +663,7 @@ class WindowMain(QMainWindow):
         if w.checkState() == Qt.CheckState.Checked: # 2. if this function was triggered by a user click and the box is now checked
             self.add_all_to_selected()              # Add all reps to selected
         else:                                       # If triggered by a user click and box is now unchecked
-            self.selected = []                      # Remove all selected
+            self.clear_selected()                      # Remove all selected
         self.update_highlights()
 
     def update_select_all_checkbox(self):
@@ -694,79 +679,106 @@ class WindowMain(QMainWindow):
             self.select_all_prog_check_flag = True
             self.cb_all.setChecked(False)
 
-    def get_N_runs_selected(self):
-        runs = []
-        for rep in self.selected:
-            if not rep[0] in runs:
-                runs.append(rep[0])
-        return len(runs)
-
     def open_rightclick_menu_run(self, event):
-        # Get # of run selected
-        # if N == 1, enable all menu elements
-        # else disable those that only work for single runs
-        # If N>0, show the menu
-        #
-        #   TODO:
-        #
-        #       1. Figure out how to keep better track of which runs have been selected!
-        #       2. Implement it in logic!
-        #       3. Add classes and color coding in QSS!
+        """Opens the right-click context menu for runs. Takes in a mouseclick QEvent object
+        that contains the location of the click. Menu is displayed at that location"""
+        runs_selected = self.N_runs_selected()      # Get count of selected runs
+        is_enabled = False
+        if runs_selected == 1:                      # If just 1 run selected
+            is_enabled = True                       # Enable all menu actions
+        if runs_selected > 0:                       # If any # of runs selected at all
+            for action in self.runActions_oneOnly:  # Setup which actions are enabled
+                action.setEnabled(is_enabled)
+            self.contextmenu_run.exec(event.globalPosition().toPoint())     # And show the menu!
+
+    def open_rightclick_menu_rep(self, event):
+        """Opens the right-click context menu for reps. Takes in a mouseclick QEvent object
+        that contains the location of the click. Menu is displayed at that location"""
+        reps_selected = self.N_reps_selected()      # Get count of selected replicates
+        is_enabled = False
+        if reps_selected == 1:                      # If just 1 rep selected
+            is_enabled = True                       # Enable all menu actions
+        if reps_selected > 0:                       # If any reps at all are selected
+            for action in self.repActions_oneOnly:  # Setup which actions are enabled
+                action.setEnabled(is_enabled)
+            self.contextmenu_rep.exec(event.globalPosition().toPoint())     # And show the menu! 
+
+    
+    def get_run_data(self, run):
+        """Takes in:
+            run    String. Unique ID of run in dataset
+        Returns:
+            The dictionary from the Runs list in the dataset whose unique ID matches run_id"""
+        return next(filter(lambda x: x[g.R_UID_SELF] == run, self.data[g.S_RUNS]), None)
+
+    def get_rep_data(self, run, rep):
+        """Takes in:
+            run    String. Unique ID of run in dataset
+            rep    String. Unique ID of replicate in dataset
+        Returns:
+            The dictionary of raw data that corresponds to rep of run."""
+        run_data = self.get_run_data(run)
+        rep_data = next(filter(lambda x: x[g.R_UID_SELF] == rep, run_data[g.R_REPLICATES]), None)
+        return rep_data[g.R_DATA]
+
+
+    def export_runs_to_csv(self):
+        return
+
+    def export_reps_to_csv(self):
+        
 
 
 
         
-        runs = self.get_N_runs_selected()
-        reps = len(self.selected)
+        path = get_path_from_user('folder')
+        if path:
+            for run in self.layout:
+                for rep in self.layout[run]['selected']:
+                    self.export_rep_to_csv(path, run, rep)
+                    
+        
 
-        elif runs == 1:
-            pass
-        elif runs > 1:
-            pass
-            #self.contextmenu_runs.exec(event.globalPosition().toPoint())
-        self.contextmenu_run.exec(event.globalPosition().toPoint())
-
-    def open_rightclick_menu_rep(self, event):
+    def export_rep_to_csv(self, loc, run, rep):
         try:
-            
-            reps = len(self.selected)
-            is_enabled = False
-            if reps == 1:
-                is_enabled = True
-            if reps > 0:
-                for action in self.repActions_oneOnly:
-                    action.setEnabled(is_enabled)
-                self.contextmenu_rep.exec(event.globalPosition().toPoint())
+            keys = []
+            data = self.get_rep_data(run, rep)
+            for key in data[0]:
+                keys.append(key)
 
-            
+            samplename=self.path.split('/')[-1]             # get filename from path 
+            groups = samplename.split('.')                  # begin removing the extension
+            samplename = '.'.join(groups[:len(groups)-1])   #   finish removing the extension
+            filename = samplename+'_'+run+'_'+rep+'.csv'    # add on the run and rep IDs and a csv extension
+            ###########################
+            #
+            #
+            #   Check if this filename already exists in path if it does, increment _1
+            #
+            #
+            ###########################
+            path = loc+'/'+filename                         # Append filename to passed folder path
+     
+            with open(path, 'w', encoding='UTF8', newline='') as f:
+                writer = csv.DictWriter(f, fieldnames=keys) # Tell the writer we are writing from a dictionary with 'keys' as headers
+                writer.writeheader()                        # Write the header row
+                writer.writerows(data)                      # Write the data
+                
+                
         except Exception as e:
             print(e)
-    
-
-
-
-
+        
+        
+        #for 
+        print('---')
+        print(run)
+        print(rep)
+        return
 
 
 
 
             
-    def update_button_states(self):
-        rows = len(self.selected)
-        enable_buts = []
-        disable_buts = []
-        if rows == 0:
-            disable_buts = self.w_run_header.findChildren(QPushButton)
-        elif rows == 1:
-            enable_buts = self.w_run_header.findChildren(QPushButton)
-        elif rows > 1:
-            disable_buts = self.w_run_header.findChildren(QPushButton, g.RUNS_BUT_ONE_NAME)
-            enable_buts = self.w_run_header.findChildren(QPushButton, g.RUNS_BUT_ANY_NAME)
-            
-        for but in disable_buts:
-            but.setEnabled(False)
-        for but in enable_buts:
-            but.setEnabled(True)
 
     
 
@@ -777,8 +789,8 @@ class WindowMain(QMainWindow):
         scroll_area_resized(outer, inner, event)
 
     def setEnabledChildren(self, enable):
-        """Takes in a boolean, "enable" and sets all children's enabled status
-        to that boolena, either enabling or disabling all"""
+        """Takes in a boolean, "enable" and sets all child window's enabled status
+        to that boolean, either enabling or disabling all"""
         for win in self.children:
             win.setEnabled(enable)
 
