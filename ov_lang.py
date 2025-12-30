@@ -44,7 +44,7 @@ s_edit_info = ['Edit info','Modificar datos']
 r_rep_abbrev = ['Rep.', 'TEX']
 
 # Window: run configuration
-rc_window_title = ['Configure run(s)','TEXTO']
+rc_window_title = ['Configure run','TEXTO']
 rc_type_blank = ['Blank','TEXTO']
 rc_type_sample = ['Sample','TEXTO']
 rc_type_stdadd = ['Standard addition','TEXTO']

@@ -25,6 +25,10 @@ QTableWidget::item QLabel {
 	padding: 2px 6px;
 }
 
+QMainWindow QStatusBar {
+	border-top: 1px solid grey;
+}
+
 WindowMain #sample-header {
 	background-color: pink;
 	border: 1px solid grey;
@@ -88,7 +92,7 @@ QWidget#runs-container QLabel#selected-run-rep-odd,
 QWidget#runs-container QLabel#selected-run-rep-even, 
 QWidget#runs-container QLabel#selected-run-rep-odd-last,
 QWidget#runs-container QLabel#selected-run-rep-even-last {
-	background-color: #bafcec; 	/* pastel aqua */
+	background-color: #ecbafc; 	/* pastel lavender */
 }
 
 QWidget#runs-container QLabel#selected-run-odd, 

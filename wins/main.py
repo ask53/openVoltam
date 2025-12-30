@@ -73,7 +73,9 @@ class WindowMain(QMainWindow):
         self.layout = {}                  # for storing an outline of runs and reps and which are selected
         self.select_all_prog_check_flag = False
         self.num_runs = 0
-        self.children = [[self.w_view_sample, self.w_edit_sample, self.w_run_config, self.w_run], self.ws_view_run_config]
+        self.children = [self.w_view_sample, self.w_edit_sample, self.w_run_config, self.w_run]
+        self.status = self.statusBar()
+        self.status.showMessage('yuuuujuuuu!', g.SB_DURATION)
 
             
 
@@ -124,9 +126,9 @@ class WindowMain(QMainWindow):
 
         self.runAction_runAgain = self.contextmenu_run.addAction("Run from config")
         self.contextmenu_run.addSeparator()
-        self.runAction_editNote = self.contextmenu_run.addAction("Edit run info [DOES NOTHING YET]")
+        self.runAction_viewConfig = self.contextmenu_run.addAction("View run info")
+        self.runAction_editConfig = self.contextmenu_run.addAction("Edit run info")
         self.contextmenu_run.addSeparator()
-        self.runAction_viewConfig = self.contextmenu_run.addAction("View config")
         self.runAction_viewData = self.contextmenu_run.addAction("Graph data from run(s) [DOES NOTHING YET]")
         self.runAction_exportData = self.contextmenu_run.addAction("Export CSV of run(s)")
         self.contextmenu_run.addSeparator()
@@ -140,15 +142,16 @@ class WindowMain(QMainWindow):
         self.repAction_delete = self.contextmenu_rep.addAction("Delete replicates(s) [DOES NOTHING YET]")
 
         self.runAction_runAgain.triggered.connect(self.config_run_with_uid)
-        self.runAction_exportData.triggered.connect(self.export_runs_to_csv)
         self.runAction_viewConfig.triggered.connect(self.view_config)
+        self.runAction_editConfig.triggered.connect(partial(self.view_config, True))
+        self.runAction_exportData.triggered.connect(self.export_runs_to_csv)
         
 
         self.repAction_exportData.triggered.connect(self.export_reps_to_csv)
 
         
 
-        self.runActions_oneOnly = [self.runAction_runAgain, self.runAction_editNote, self.runAction_viewConfig]
+        self.runActions_oneOnly = [self.runAction_runAgain, self.runAction_editConfig, self.runAction_viewConfig]
         self.repActions_oneOnly = [self.repAction_editNote]
 
 
@@ -301,19 +304,54 @@ class WindowMain(QMainWindow):
     def config_run(self):
         self.w_run_config.set_form()
         self.w_run_config.show()
+
+    def get_single_selected_run(self):
+        for run in self.layout:                         # Loop thru layout
+            if self.all_reps_of_run_are_selected(run):  # if this run is selected
+                return(run)                             # return unique ID of this run
+        return False
+        
             
     def config_run_with_uid(self):
         """Finds the first selected run (assumes there is only one run selected!)
         and opens up a new run configuration window with all of the parameters
         preset to match the currently selected run"""
-        for run in self.layout:                         # Loop thru layout
-            if self.all_reps_of_run_are_selected(run):  # if this run is selected
-                break                                   # break so that run=unique ID of run of interest
+        run_id = self.get_single_selected_run()
+        if run_id:
+            self.w_run_config.set_form(run_id)              # set the run config window to match config from run
+            self.w_run_config.show()                        # show the run config window
+        
+    def view_config(self, modifiable=False):
+        # Assumes only one run is selected.
+        try:
+            run = self.get_single_selected_run()
+            if run:
+                w = self.view_config_window(run)
+                w.setViewOnly(modifiable=modifiable)
+                if w.isHidden():
+                    w.show()
+                else:
+                    w.activateWindow()
+                    
+        except Exception as e:
+            print(e)
 
-        self.w_run_config.set_form(run)                 # set the run config window to match config from run
-        self.w_run_config.show()                        # show the run config window
+    def view_config_window(self, run):
+        for winDict in self.ws_view_run_config:
+            if winDict['run']==run:
+                return winDict['w']
+        self.ws_view_run_config.append({
+            'run': run,
+            'w': WindowRunConfig(self, view_only=True)
+            })
+        self.ws_view_run_config[-1]['w'].set_form(run)
+        return self.ws_view_run_config[-1]['w']
 
-    def view_config(self):
+        
+            
+
+
+
         #########################################
         #
         #
@@ -823,18 +861,21 @@ class WindowMain(QMainWindow):
     def setEnabledChildren(self, enable):
         """Takes in a boolean, "enable" and sets all child window's enabled status
         to that boolean, either enabling or disabling all"""
-        for l in self.children:
-            for win in l:
-                win.setEnabled(enable)
+        for win in self.children:
+            win.setEnabled(enable)
+        for winDict in self.ws_view_run_config:
+            winDict['w'].setEnabled(enable)
+            
 
     def start_run(self, uid):
         self.w_run.set_run_uid(uid)
         self.w_run.show()
 
     def closeEvent(self, event):
-        for l in self.children:
-            for win in l:
-                win.close()
+        for win in self.children:
+            win.close()
+        for winDict in self.ws_view_run_config:
+            winDict['w'].close()
         event.accept()
 
 

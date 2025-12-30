@@ -43,6 +43,9 @@ from PyQt6.QtWidgets import (
     QLineEdit
 )
 
+import time # FOR TESTING ONLY
+import sys, os
+
 class WindowRunConfig(QMainWindow):
     def __init__(self, parent, view_only=False):
         super().__init__()
@@ -53,6 +56,9 @@ class WindowRunConfig(QMainWindow):
         self.run_to_run = False
         self.reps_to_run = []
         self.valid = False
+        self.view_only = view_only
+        self.view_only_modifiable = False
+        self.status = self.statusBar()
             
         v1 = QVBoxLayout()
         h1 = QHBoxLayout()
@@ -143,6 +149,9 @@ class WindowRunConfig(QMainWindow):
         but_run = QPushButton('Ready to run!')
         but_run.clicked.connect(self.run_button_clicked)
 
+        self.but_edit = QPushButton('Edit run info')
+        self.but_edit.clicked.connect(self.edit_button_clicked)
+
         # add widgets to layouts 
         
         v1.addWidget(method_lbl)
@@ -161,12 +170,28 @@ class WindowRunConfig(QMainWindow):
 
         h1.addLayout(v2)
         h1.addLayout(v1)
-    
-        v3.addLayout(h1)
-        v3.addWidget(but_run)
-        
         w = QWidget()
-        w.setLayout(v3)
+
+        self.ws_to_toggle = {self.run_type, self.w_sample_sample_vol, self.w_sample_total_vol,
+                             self.w_stdadd_vol_std, self.w_stdadd_conc_std, self.notes}
+
+        if self.view_only:                          # If this is a view-only window
+            v1.addWidget(self.but_edit)             # Add edit info button to view-only layout
+            w.setLayout(h1)                         # Set the layout without the run button for view-only
+
+            self.device.setEnabled(False)           # Always disable these elements during view-only
+            self.method.setEnabled(False)
+            but_m_load.setEnabled(False)
+            self.replicates.setEnabled(False)
+            
+            
+            self.setViewOnly()                      # Sets view only WITHOUT any modification
+            
+        else:                                       # If this is preparing for an actual run!     
+            v3.addLayout(h1)                    
+            v3.addWidget(but_run)                   # Add the run button :)
+            w.setLayout(v3)
+        
         self.setCentralWidget(w)
 
     def reset_form(self):                                           # resets Run Config window to all blank values
@@ -182,9 +207,10 @@ class WindowRunConfig(QMainWindow):
         self.type_stack.setCurrentIndex(0)                          # set stacked view to the 0th view (blank)
         self.refresh_graph()                                        # refresh the graph pane
 
-    def set_form(self, uid=False):                              # Sets Run Config window to match values from run with uid
+    def set_form(self, uid=False):                                  # Sets Run Config window to match values from run with uid
         self.reset_form()
         if uid:
+            self.run_to_run = uid
             data = get_data_from_file(self.parent.path)
             run = get_run_from_file_data(data, uid)                 # Look for the relevant run, store it if found, else run=False
             if run:                                           
@@ -211,6 +237,8 @@ class WindowRunConfig(QMainWindow):
                     self.w_stdadd_vol_std.setValue(run[g.R_STD_ADDED_VOL])
                     self.w_stdadd_conc_std.setValue(run[g.R_STD_CONC])
             self.refresh_graph()                                # refresh the graph pane
+            if self.view_only:
+                self.setViewOnly()
 
     def run_type_changed(self, i):
         self.type_stack.setCurrentIndex(i)
@@ -242,9 +270,9 @@ class WindowRunConfig(QMainWindow):
 
 
     def validate_form(self):
-        ########## FOR TESTING, DELETE TO RUN ####################################
-        self.valid = True
-        return True
+        ########## FOR TESTING, COMMENT TO RUN ####################################
+        #self.valid = True
+        #return True
         ###############################################################
 
         
@@ -296,6 +324,24 @@ class WindowRunConfig(QMainWindow):
         #
         # THIS IS WHERE WE VALIDATE WHETHER THE DEVICE IS COMPATIBLE WITH THE METHOD
         #
+        #       BUILD THIS!!
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
         #####################################################
         return True
         
@@ -344,15 +390,7 @@ class WindowRunConfig(QMainWindow):
 
             new_data[g.R_UID_METHOD] = self.method_id
             new_data[g.R_DEVICE] = self.device.currentText()
-            run_type = self.run_type.currentData()
-            new_data[g.R_TYPE] = run_type
-            new_data[g.R_NOTES] = self.notes.text()
-            if run_type == g.R_TYPE_SAMPLE:
-                new_data[g.R_SAMPLE_VOL] = self.w_sample_sample_vol.value()
-                new_data[g.R_TOTAL_VOL] = self.w_sample_total_vol.value()
-            elif run_type == g.R_TYPE_STDADD:
-                new_data[g.R_STD_ADDED_VOL] = self.w_stdadd_vol_std.value()
-                new_data[g.R_STD_CONC] = self.w_stdadd_conc_std.value()
+            new_data = self.append_editable_run_info(new_data)
         
             # Get the unique run id for this run
             run_ids = get_ids(data, g.S_RUNS)
@@ -387,14 +425,84 @@ class WindowRunConfig(QMainWindow):
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print(exc_type, fname, exc_tb.tb_lineno)
-        
             
-        
-
-
     def run_runs(self):
         self.close()
         self.parent.start_run(self.run_to_run)
+
+    def setViewOnly(self, modifiable=False):
+        if self.run_to_run:
+            self.view_only_modifiable = modifiable          # set/reset flag
+            for w in self.ws_to_toggle:                     # toggle enabled status of buttoms/inputs
+                w.setEnabled(modifiable)
+            if not modifiable:
+                self.but_edit.setText('Edit run info')          # set button text 
+                self.setWindowTitle('View | '+self.run_to_run)  # and window title
+            else:
+                self.but_edit.setText('Save changes')           # set button text
+                self.setWindowTitle('Edit | '+self.run_to_run)  # and window title    
+
+    def edit_button_clicked(self):
+        if self.view_only_modifiable:
+            try:
+                form_is_valid = self.validate_form()    # Validate form
+                if form_is_valid:
+                    self.status.showMessage('saving...')
+                    self.save_modified_run_configs()     # Save the configs for the run
+                    self.setViewOnly()
+                    self.status.showMessage('Saved!', g.SB_DURATION)
+            except Exception as e:
+                show_alert(self, "Error", "Eek! There was an issue saving the data, please try again.")
+                print(e)
+        else:
+            self.setViewOnly(modifiable=True)
+
+
+    def save_modified_run_configs(self):
+        data = get_data_from_file(self.parent.path)
+        runDict = False
+        for run in data[g.S_RUNS]:
+            if run[g.R_UID_SELF] == self.run_to_run:
+                runDict = run
+                break
+        if runDict:
+            runDict = self.append_editable_run_info(runDict)
+            write_data_to_file(self.parent.path, data)
+
+    def append_editable_run_info(self, rDict):
+        
+        ### IF THERE IS DATA SPECIFIC TO THE RUN TYPE, INDICATE IT HERE: #####
+        #
+        #
+        sample_info = {g.R_SAMPLE_VOL: self.w_sample_sample_vol,
+                       g.R_TOTAL_VOL:self.w_sample_total_vol}
+
+        stdadd_info = {g.R_STD_ADDED_VOL: self.w_stdadd_vol_std,
+                        g.R_STD_CONC: self.w_stdadd_conc_std}
+        #
+        #
+        ######################################################################
+
+        keys = list(sample_info.keys()) + list(stdadd_info.keys())
+        run_type = self.run_type.currentData()          # Get the current run type
+        rDict[g.R_TYPE] = run_type                      # Add current run type to dict
+        rDict[g.R_NOTES] = self.notes.text()            # Add current note to dict
+        
+        dict_to_save = None                             # If there are type-specific values to save
+        if run_type == g.R_TYPE_SAMPLE:                 # Indicate which ones
+            dict_to_save = sample_info
+        elif run_type == g.R_TYPE_STDADD:
+            dict_to_save = stdadd_info
+            
+        for key in keys:                                # just in case, remove all                        
+            rDict.pop(key, None)                        # key/value pairs for sample and stdadd
+        if dict_to_save:                                # if type-specific daa
+            for key in dict_to_save:                    # Add the data from the given type
+                rDict[key] = dict_to_save[key].value()
+        return rDict
+
+   
+        
 
     def refresh_graph(self):
         reps = int(self.replicates.value())
@@ -409,22 +517,17 @@ class WindowRunConfig(QMainWindow):
 
 
     def showEvent(self, event):
-        self.parent.setEnabled(False)
-        self.parent.setEnabledChildren(False)
-        self.setEnabled(True)
+        if not self.view_only:
+            self.parent.setEnabled(False)
+            self.parent.setEnabledChildren(False)
+            self.setEnabled(True)
         event.accept()
         
     def closeEvent(self, event):
-        self.parent.setEnabled(True)
-        self.parent.setEnabledChildren(True)
+        if not self.view_only:
+            self.parent.setEnabled(True)
+            self.parent.setEnabledChildren(True)
         self.parent.load_sample_info()
         event.accept()
 
     
-            
-            
-
-    
-
-    ############################################################################
-        

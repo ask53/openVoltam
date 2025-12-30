@@ -5,6 +5,9 @@ CURRENT_RANGES = ['1uA', '10uA', '100uA', '1000uA', '10000uA']
 # PyQt globals
 QT_NOTHING_SELECTED_INDEX = -1
 
+# Status bar
+SB_DURATION = 6000  # duration of status bar messages in [ms]
+
 # Keys for sample (S) dictionary
 S_NAME = "sample_name"
 S_DATE_ENTERED = "date_first_saved"
