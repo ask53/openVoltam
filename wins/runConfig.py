@@ -44,7 +44,7 @@ from PyQt6.QtWidgets import (
 )
 
 class WindowRunConfig(QMainWindow):
-    def __init__(self, parent):
+    def __init__(self, parent, view_only=False):
         super().__init__()
         
         self.parent = parent
@@ -182,33 +182,34 @@ class WindowRunConfig(QMainWindow):
         self.type_stack.setCurrentIndex(0)                          # set stacked view to the 0th view (blank)
         self.refresh_graph()                                        # refresh the graph pane
 
-    def set_form(self, uid):                                        # Sets Run Config window to match values from run with uid
-        data = get_data_from_file(self.parent.path)
-        run = get_run_from_file_data(data, uid)                 # Look for the relevant run, store it if found, else run=False
-        if run:                                           
-            method = get_method_from_file_data(data, run[g.R_UID_METHOD]) # Look for relevant method, store if found, else method=False
-            if method:                                          # If the method is found in the file
-                self.method.setCurrentText(method[g.M_NAME])    # Select that method in the method dropdown
+    def set_form(self, uid=False):                              # Sets Run Config window to match values from run with uid
+        self.reset_form()
+        if uid:
+            data = get_data_from_file(self.parent.path)
+            run = get_run_from_file_data(data, uid)                 # Look for the relevant run, store it if found, else run=False
+            if run:                                           
+                method = get_method_from_file_data(data, run[g.R_UID_METHOD]) # Look for relevant method, store if found, else method=False
+                if method:                                          # If the method is found in the file
+                    self.method.setCurrentText(method[g.M_NAME])    # Select that method in the method dropdown
 
-            self.device.setCurrentText(run[g.R_DEVICE])         # set device menu to value from file
-            self.replicates.setValue(len(run[g.R_REPLICATES]))  # set replicates to length of replicate list of run from file
-            self.notes.setText(run[g.R_NOTES])                  # set notes to value from file
-            
-
-            for i in range(0, self.run_type.count()):           # loop through all the items in the type list            
-                if self.run_type.itemData(i) == run[g.R_TYPE]:  # (list text is in user language) but if list item *data*
-                    self.run_type.setCurrentIndex(i)            #   matches the type of run stored in the file, select that
-                    self.type_stack.setCurrentIndex(i)          #   entry in both the dropdown list and the following stacked layout
-                    break
-                                                                # Then load the data for the relevant section of the stacked layout
-            if run[g.R_TYPE] == g.R_TYPE_SAMPLE:                # if this run was the sample
-                self.w_sample_sample_vol.setValue(run[g.R_SAMPLE_VOL])
-                self.w_sample_total_vol.setValue(run[g.R_TOTAL_VOL])
+                self.device.setCurrentText(run[g.R_DEVICE])         # set device menu to value from file
+                self.replicates.setValue(len(run[g.R_REPLICATES]))  # set replicates to length of replicate list of run from file
+                self.notes.setText(run[g.R_NOTES])                  # set notes to value from file
                 
-            elif run[g.R_TYPE] == g.R_TYPE_STDADD:              # if this run was the standard addition
-                self.w_stdadd_vol_std.setValue(run[g.R_STD_ADDED_VOL])
-                self.w_stdadd_conc_std.setValue(run[g.R_STD_CONC])
 
+                for i in range(0, self.run_type.count()):           # loop through all the items in the type list            
+                    if self.run_type.itemData(i) == run[g.R_TYPE]:  # (list text is in user language) but if list item *data*
+                        self.run_type.setCurrentIndex(i)            #   matches the type of run stored in the file, select that
+                        self.type_stack.setCurrentIndex(i)          #   entry in both the dropdown list and the following stacked layout
+                        break
+                                                                    # Then load the data for the relevant section of the stacked layout
+                if run[g.R_TYPE] == g.R_TYPE_SAMPLE:                # if this run was the sample
+                    self.w_sample_sample_vol.setValue(run[g.R_SAMPLE_VOL])
+                    self.w_sample_total_vol.setValue(run[g.R_TOTAL_VOL])
+                    
+                elif run[g.R_TYPE] == g.R_TYPE_STDADD:              # if this run was the standard addition
+                    self.w_stdadd_vol_std.setValue(run[g.R_STD_ADDED_VOL])
+                    self.w_stdadd_conc_std.setValue(run[g.R_STD_CONC])
             self.refresh_graph()                                # refresh the graph pane
 
     def run_type_changed(self, i):

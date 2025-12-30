@@ -20,6 +20,7 @@ from wins.runView import WindowRunView
 
 # import other necessary python tools
 from os.path import join as joindir
+from os.path import exists
 from functools import partial
 from tkinter.filedialog import askopenfilename as askOpenFileName
 import csv
@@ -66,12 +67,13 @@ class WindowMain(QMainWindow):
         self.w_edit_sample = WindowSample(self.path, self, update_on_save=True, view_only=False)
         self.w_run_config = WindowRunConfig(self)
         self.w_run = WindowRunView(self)
+        self.ws_view_run_config = []
         self.config_pane_displayed = False
         self.setObjectName('window-sample')
         self.layout = {}                  # for storing an outline of runs and reps and which are selected
         self.select_all_prog_check_flag = False
         self.num_runs = 0
-        self.children = [self.w_view_sample, self.w_edit_sample, self.w_run_config, self.w_run]
+        self.children = [[self.w_view_sample, self.w_edit_sample, self.w_run_config, self.w_run], self.ws_view_run_config]
 
             
 
@@ -120,11 +122,11 @@ class WindowMain(QMainWindow):
         self.contextmenu_run = QMenu(self)      # Menu for when run is clicked
         self.contextmenu_rep = QMenu(self)      # Menu for when rep is clicked
 
-        self.runAction_runAgain = self.contextmenu_run.addAction("New run from config")
+        self.runAction_runAgain = self.contextmenu_run.addAction("Run from config")
         self.contextmenu_run.addSeparator()
         self.runAction_editNote = self.contextmenu_run.addAction("Edit run info [DOES NOTHING YET]")
         self.contextmenu_run.addSeparator()
-        self.runAction_viewConfig = self.contextmenu_run.addAction("View run config")
+        self.runAction_viewConfig = self.contextmenu_run.addAction("View config")
         self.runAction_viewData = self.contextmenu_run.addAction("Graph data from run(s) [DOES NOTHING YET]")
         self.runAction_exportData = self.contextmenu_run.addAction("Export CSV of run(s)")
         self.contextmenu_run.addSeparator()
@@ -137,7 +139,14 @@ class WindowMain(QMainWindow):
         self.contextmenu_rep.addSeparator()
         self.repAction_delete = self.contextmenu_rep.addAction("Delete replicates(s) [DOES NOTHING YET]")
 
+        self.runAction_runAgain.triggered.connect(self.config_run_with_uid)
+        self.runAction_exportData.triggered.connect(self.export_runs_to_csv)
+        self.runAction_viewConfig.triggered.connect(self.view_config)
+        
+
         self.repAction_exportData.triggered.connect(self.export_reps_to_csv)
+
+        
 
         self.runActions_oneOnly = [self.runAction_runAgain, self.runAction_editNote, self.runAction_viewConfig]
         self.repActions_oneOnly = [self.repAction_editNote]
@@ -171,7 +180,6 @@ class WindowMain(QMainWindow):
 
         but_view.clicked.connect(self.view_sample_info)
         but_config.clicked.connect(self.config_run)
-        but_calc.clicked.connect(self.config_run_with_uid)
         
         v1 = QVLine()
         v2 = QVLine()
@@ -281,7 +289,6 @@ class WindowMain(QMainWindow):
     def update_displayed_info(self):
         self.load_sample_info()                                             # reload the sample info from file
         self.set_sample_info()                                          
-        #self.selected = []                                                  # re-init selected list b/c we have reloaded all runs and none 
                                                                             #   are selected to start.
         self.w_run_history_area.setParent(None)                             # remove run history pane from layout
         self.widgetize_run_history()                                        # get updated run history as a widget    
@@ -292,47 +299,37 @@ class WindowMain(QMainWindow):
         
 
     def config_run(self):
-        try:
-            self.w_run_config.reset_form()
-            self.w_run_config.show()
+        self.w_run_config.set_form()
+        self.w_run_config.show()
             
-        except Exception as e:
-            print(e)
-
     def config_run_with_uid(self):
-        try:
-            ##############################################################
-            #
-            #   PLACEHOLDER!!!   modify this with actual UID of selected run
-            #
-            uid = 'run-0'
-            #
-            ##############################################################
-            self.w_run_config.reset_form()
-            self.w_run_config.set_form(uid)
-            self.w_run_config.show()
-        except Exception as e:
-            print(e)
+        """Finds the first selected run (assumes there is only one run selected!)
+        and opens up a new run configuration window with all of the parameters
+        preset to match the currently selected run"""
+        for run in self.layout:                         # Loop thru layout
+            if self.all_reps_of_run_are_selected(run):  # if this run is selected
+                break                                   # break so that run=unique ID of run of interest
 
+        self.w_run_config.set_form(run)                 # set the run config window to match config from run
+        self.w_run_config.show()                        # show the run config window
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def view_config(self):
+        #########################################
+        #
+        #
+        #       HERE
+        #   1. Append new window to self.ws_view_run_config
+        #       ^-- figure out how to manage references to windows
+        #       a. when window is closed, make sure to delete reference
+        #   2. Launch new window!
+        #   3. Modify runConfig.py for view-only! 
+        
+        return
+        
 
     def do_nothing_with_widget(self, w):
+        """This is necessary so that each widget has a callback function if clicked.
+        Pls don't delete even tho is looks oh so deleteable!"""
         return
 
     def add_row_to_main(self, ws, row, h_offset=0, v_merge=1, h_merge=1):
@@ -436,10 +433,10 @@ class WindowMain(QMainWindow):
             run_type = l.rc_types[run[g.R_TYPE]][g.L]
             method_name = get_method_from_file_data(self.data, run[g.R_UID_METHOD])[g.M_NAME]
             run_notes = run[g.R_NOTES]
-            run_str = '<b>'+run_name+'</b><br>'
-            run_str = run_str + 'Type: '+run_type+'<br>'
-            run_str = run_str + 'Method: '+method_name+'<br>'
-            run_str = run_str + 'Notes: '+run_notes
+            run_str = '<u>'+run_name+'</u><br>'
+            run_str = run_str + '<b>'+'Type'+'</b>: '+run_type+'<br>'
+            run_str = run_str + '<b>'+'Method'+'</b>: '+method_name+'<br>'
+            run_str = run_str + '<b>'+'Notes'+'</b>: '+run_notes
 
             if i%2 == 0: qss_name = 'run-even'
             else: qss_name = 'run-odd'
@@ -721,52 +718,87 @@ class WindowMain(QMainWindow):
         rep_data = next(filter(lambda x: x[g.R_UID_SELF] == rep, run_data[g.R_REPLICATES]), None)
         return rep_data[g.R_DATA]
 
+    def export_to_csv_message(self, yes, no):
+        try:
+            title = "Export complete."
+            msg = "Export complete.\n"
+            if no:
+                msg = msg+"\nERROR: Failed to export:\n"
+                for rep in no:
+                    msg = msg+rep[0]+': '+rep[1]+'\n'
+                title = "Warning: some replicates failed to export"
+            if yes:
+                msg = msg + "\nSuccessully exported:\n"
+                for rep in yes:
+                    msg = msg+rep[0]+': '+rep[1]+'\n'  
+            show_alert(self, title, msg)
+        except Exception as e:
+            print(e)
+                
 
     def export_runs_to_csv(self):
-        return
+        path = get_path_from_user('folder')
+        saved = []
+        errored = []
+        if path:
+            for run in self.layout:
+                if self.all_reps_of_run_are_selected(run):
+                    for rep in self.layout[run]['selected']:
+                        success = self.export_rep_to_csv(path, run, rep)
+                        if success:
+                            saved.append((run, rep))
+                        else:
+                            errored.append((run, rep))
+            self.export_to_csv_message(saved, errored)
+            
 
     def export_reps_to_csv(self):
-        
-
-
-
-        
         path = get_path_from_user('folder')
+        saved = []
+        errored = []
         if path:
             for run in self.layout:
                 for rep in self.layout[run]['selected']:
-                    self.export_rep_to_csv(path, run, rep)
+                    success = self.export_rep_to_csv(path, run, rep)
+                    if success:
+                        saved.append((run, rep))
+                    else:
+                        errored.append((run, rep))
+            self.export_to_csv_message(saved, errored)
                     
-        
-
     def export_rep_to_csv(self, loc, run, rep):
         try:
             keys = []
             data = self.get_rep_data(run, rep)
+            '''if not data:
+                show_alert(self, "Heads up!", "No data available to export from "+run+", "+rep+".")
+                return'''
+                
             for key in data[0]:
                 keys.append(key)
 
             samplename=self.path.split('/')[-1]             # get filename from path 
-            groups = samplename.split('.')                  # begin removing the extension
-            samplename = '.'.join(groups[:len(groups)-1])   #   finish removing the extension
-            filename = samplename+'_'+run+'_'+rep+'.csv'    # add on the run and rep IDs and a csv extension
-            ###########################
-            #
-            #
-            #   Check if this filename already exists in path if it does, increment _1
-            #
-            #
-            ###########################
-            path = loc+'/'+filename                         # Append filename to passed folder path
+            groups = samplename.split('.')                  # begin removing the extension (split at all periods)
+            samplename = '.'.join(groups[:len(groups)-1])   #   finish removing the extension (rejoin all with periods except for last)
+            filename = samplename+'_'+run+'_'+rep           # add on the run and rep IDs
+            path = loc+'/'+filename                         # append filename to path
+            suffix = ''
+            i = 1
+            while exists(path+suffix+'.csv'):               # while the file already exists
+                suffix = '_COPY'+str(i)                     # tack on a suffix
+                i = i+1                                     # and increment the counter until we find a filename that is not taken!
+            path = path+suffix+'.csv'                       # generate that novel filename
+                
      
             with open(path, 'w', encoding='UTF8', newline='') as f:
                 writer = csv.DictWriter(f, fieldnames=keys) # Tell the writer we are writing from a dictionary with 'keys' as headers
                 writer.writeheader()                        # Write the header row
                 writer.writerows(data)                      # Write the data
+            return True
                 
                 
         except Exception as e:
-            print(e)
+            return False
         
         
         #for 
@@ -791,16 +823,18 @@ class WindowMain(QMainWindow):
     def setEnabledChildren(self, enable):
         """Takes in a boolean, "enable" and sets all child window's enabled status
         to that boolean, either enabling or disabling all"""
-        for win in self.children:
-            win.setEnabled(enable)
+        for l in self.children:
+            for win in l:
+                win.setEnabled(enable)
 
     def start_run(self, uid):
         self.w_run.set_run_uid(uid)
         self.w_run.show()
 
     def closeEvent(self, event):
-        for win in self.children:
-            win.close()
+        for l in self.children:
+            for win in l:
+                win.close()
         event.accept()
 
 
