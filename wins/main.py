@@ -44,7 +44,8 @@ from PyQt6.QtWidgets import (
     QScrollArea,
     QGroupBox,
     QApplication,
-    QMenu
+    QMenu,
+    QInputDialog
     
 )
 
@@ -134,7 +135,7 @@ class WindowMain(QMainWindow):
         self.contextmenu_run.addSeparator()
         self.runAction_delete = self.contextmenu_run.addAction("Delete run(s) [DOES NOTHING YET]")
 
-        self.repAction_editNote = self.contextmenu_rep.addAction("Edit replicate note [DOES NOTHING YET]")
+        self.repAction_editNote = self.contextmenu_rep.addAction("Edit replicate note")
         self.contextmenu_rep.addSeparator()
         self.repAction_viewData = self.contextmenu_rep.addAction("Graph replicate(s) data [DOES NOTHING YET]")
         self.repAction_exportData = self.contextmenu_rep.addAction("Export CSV of rep(s)")
@@ -146,7 +147,7 @@ class WindowMain(QMainWindow):
         self.runAction_editConfig.triggered.connect(partial(self.view_config, True))
         self.runAction_exportData.triggered.connect(self.export_runs_to_csv)
         
-
+        self.repAction_editNote.triggered.connect(self.edit_rep_note)
         self.repAction_exportData.triggered.connect(self.export_reps_to_csv)
 
         
@@ -306,10 +307,20 @@ class WindowMain(QMainWindow):
         self.w_run_config.show()
 
     def get_single_selected_run(self):
+        """Loops through layout, returns ID of first selected run.
+        If no runs are selected, returns False."""
         for run in self.layout:                         # Loop thru layout
             if self.all_reps_of_run_are_selected(run):  # if this run is selected
                 return(run)                             # return unique ID of this run
         return False
+
+    def get_single_selected_rep(self):
+        """Loops through layout, returns (runID, repID) for first selected rep.
+        If no reps are selected, returns (False, False)."""
+        for run in self.layout:
+            if self.layout[run]['selected']:
+                return (run, self.layout[run]['selected'][0])
+        return (False, False)
         
             
     def config_run_with_uid(self):
@@ -831,19 +842,40 @@ class WindowMain(QMainWindow):
             with open(path, 'w', encoding='UTF8', newline='') as f:
                 writer = csv.DictWriter(f, fieldnames=keys) # Tell the writer we are writing from a dictionary with 'keys' as headers
                 writer.writeheader()                        # Write the header row
-                writer.writerows(data)                      # Write the data
+                writer.writerows(data)                      # Write  the data
             return True
                 
                 
         except Exception as e:
             return False
+
+    def edit_rep_note(self):
+        """Opens a dialog """
+        (run_id, rep_id) = self.get_single_selected_rep()
+        if run_id and rep_id:
+            note = ''
+            gotNote = False
+            for run in self.data[g.S_RUNS]:
+                if run[g.R_UID_SELF] == run_id:
+                    for rep in run[g.R_REPLICATES]:
+                        if rep[g.R_UID_SELF] == rep_id:
+                            note = rep[g.R_NOTES]
+                            gotNote = True
+                            break
+                    if gotNote:
+                        break
+            if gotNote:
+                title = "Replicate Note | "+run_id+': '+rep_id
+                input_text, ok = QInputDialog.getText(self, title, "", text=note)
+
+                if ok:
+                    rep[g.R_NOTES] = input_text
+                    write_data_to_file(self.path, self.data)
+                        
         
+            
         
-        #for 
-        print('---')
-        print(run)
-        print(rep)
-        return
+
 
 
 
