@@ -99,6 +99,15 @@ ICON_VIB = 'external/icons/vibrator.png'
 ICON_MEASURE = 'external/icons/measure.png'
 ICON_REFRESH = 'external/icons/refresh.png'
 
+# Asynchronous save
+SAVE_TYPE_SAMPLE = 'sample'
+SAVE_TYPE_RUN_NEW = 'new-run'
+SAVE_TYPE_REP_DELETE = 'rep-del'
+SAVE_TYPE_REP_MOD = 'rep-no-data'
+SAVE_TYPE_REP_MOD_WITH_DATA = 'rep-w-data'
+SAVE_TYPE_RUN_MOD = 'run-mod'
+
+
 # Input 
 RC_REPS_MIN = 1
 RC_REPS_MAX = 99

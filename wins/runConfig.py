@@ -51,7 +51,11 @@ class WindowRunConfig(QMainWindow):
         super().__init__()
         
         self.parent = parent
-        self.parent.load_sample_info()                              # make sure data in parent is up-to-date
+        ##### TESTING ####
+        #
+        #self.parent.load_sample_info()                              # make sure data in parent is up-to-date
+        #
+        ##################
         self.setWindowTitle(l.rc_window_title[g.L])
         self.run_to_run = False
         self.reps_to_run = []
@@ -68,8 +72,13 @@ class WindowRunConfig(QMainWindow):
         method_lbl = QLabel("Method")
         self.method = QComboBox()
         self.method.setPlaceholderText(l.rc_select[g.L])
-        for method in parent.data[g.S_METHODS]:
-            self.method.addItem(method[g.M_NAME], method)
+        ########## TESTING
+        #
+        if parent.data:
+        #
+        ###################
+            for method in parent.data[g.S_METHODS]:
+                self.method.addItem(method[g.M_NAME], method)
         self.method.currentIndexChanged.connect(self.method_changed)
 
         but_m_load = QPushButton('load from file')

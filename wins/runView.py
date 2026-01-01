@@ -68,8 +68,12 @@ class WindowRunView(QMainWindow):
         self.data_saved = False
         [self.t, self.v, self.I] = [[],[],[]]
         self.q = Queue()
-        self.setWindowTitle(l.r_window_title[g.L]+' | '+self.parent.data[g.S_NAME])
-
+        ##### FOR TESTING ####
+        #
+        #self.setWindowTitle(l.r_window_title[g.L]+' | '+self.parent.data[g.S_NAME])
+        #
+        ######################
+        
         # Stacked layout in upper left
         self.msg_box = QStackedLayout()
         self.msg_box.addWidget(QWidget())

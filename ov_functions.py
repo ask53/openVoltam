@@ -113,6 +113,12 @@ def write_data_to_file(path, data):
         print(e)
         return False
 
+def remove_data_from_layout(d):
+    for run in d[g.S_RUNS]:          #   For each run in data dict
+        for rep in run[g.R_REPLICATES]: #   And for each rep of the run
+            rep.pop(g.R_DATA, None)     #   Remove the raw data
+    return d
+
 def get_next_id(ids, prefix):
         """ Takes in a list of ids, loops through them to find the
         most recent one. Returns the id of the next one, which should be
@@ -169,6 +175,10 @@ def get_row_ws(w_parent, i):
     except Exception as e:
         print(e)
 
+#### IS THIS NECESSARY??? #####################################################
+#
+#
+#
 def scroll_area_resized(outer, inner, event):
     print('---')
     print('HERE!')
@@ -183,6 +193,9 @@ def scroll_area_resized(outer, inner, event):
     inner.setFixedWidth(outer_width-g.PADDING-v_bar_width)
     print(outer_width)
     print(inner.width())
+#
+#
+###########################################################3
 
 def get_run_from_file_data(data, run_id):
     

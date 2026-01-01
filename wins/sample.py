@@ -133,7 +133,8 @@ class WindowSample(QMainWindow):
         # if a path was entered, gather the data from the specified file and display it
         if self.path:
             try:
-                self.setTextFromFile()
+                print('just here testing!')
+                #self.setTextFromFile()
             except Exception as e:
                 print(e)
             if self.view_only:

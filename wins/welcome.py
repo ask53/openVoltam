@@ -6,7 +6,7 @@ from ov_functions import *
 # import custom window objects
 from wins.sample import WindowSample
 from wins.method import WindowMethod
-from wins.main import WindowMain
+from wins.main2 import WindowMain
 
 # import other necessary python tools
 from os.path import join as joindir
@@ -126,7 +126,7 @@ class WindowWelcome(QMainWindow):
                         w = w_sample                #   store the object in our placeholder
             if w:                                   # if we found a matching window
                 try:
-                    w.update_displayed_info()       #   update sample info
+                    w.update_main()                 #   update sample info
                 except Exception as e:
                     print(e)
                     error = True
@@ -147,8 +147,13 @@ class WindowWelcome(QMainWindow):
             
 
     def create_sample_window(self, path):
-        self.w_samples.append(WindowMain(path, self))     # create new window for sample, append to list
-        self.w_samples[len(self.w_samples)-1].show()        # show most recently added sample window
+        try:
+            self.w_samples.append(WindowMain(path, self))     # create new window for sample, append to list
+            print(self.w_samples)
+            self.w_samples[len(self.w_samples)-1].show()        # show most recently added sample window
+            print('thur')
+        except Exception as e:
+            print(e)
 
     def new_config(self):
         if (self.w_edit_config.isHidden()):                 # check if winow is hidden. If so:
