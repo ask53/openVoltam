@@ -13,8 +13,7 @@ import ov_globals as g
 import ov_lang as l
 from ov_functions import *
 
-#from wins.viewSample import WindowViewSample
-#from wins.sample import WindowSample
+from wins.sample import WindowSample
 #from wins.runConfig import WindowRunConfig
 #from wins.runView import WindowRunView
 
@@ -73,8 +72,7 @@ class WindowMain(QMainWindow):
         self.w_run = WindowRunView(self)'''
 
         self.ws_view_run_config = []
-        #self.children = [self.w_view_sample, self.w_edit_sample, self.w_run_config, self.w_run]
-
+        self.children = []
         self.setObjectName('window-sample')
         self.layout = {}                  # for storing an outline of runs and reps and which are selected
         self.select_all_prog_check_flag = False
@@ -184,7 +182,7 @@ class WindowMain(QMainWindow):
         but_calc = QPushButton('Calculate')
         but_res_sample = QPushButton('Sample results')
 
-        #but_view.clicked.connect(self.view_sample_info)
+        but_view.clicked.connect(self.new_win_this_sample)
         #but_config.clicked.connect(self.config_run)
         
         vl1 = QVLine()
@@ -733,7 +731,50 @@ class WindowMain(QMainWindow):
                     self.start_async_save(g.SAVE_TYPE_REP_MOD, [(run_id, rep_id), rep])
 
 
+
+    #############################################
+    #                                           #
+    #   Functions for opening new windows       #
+    #                                           #
+    #   1. new_win_this_sample                  #
+    #   2. X                   #
+    #   3. X                   #
+    #   4. X                 #
+    #                                           #
+    #############################################
+    def new_win_this_sample(self):
+        found = False
+        for win in self.children:
+            if type(win) == type(WindowSample(self.path, self)):
+                win.activateWindow()
+                found = True
+                break
+        if not found:        
+            self.children.append(WindowSample(self.path, self, view_only=True))
+            self.children[-1].show()
+
+
             
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     #############################################
@@ -825,6 +866,20 @@ class WindowMain(QMainWindow):
         self.save_error_flag = False
         self.process = None
         self.update_main()
+
+    #############################################
+    #                                           #
+    #   Close window event handler              #
+    #                                           #
+    #############################################
+
+    def closeEvent(self, event):
+        '''for win in self.children:
+            win.close()
+        for winDict in self.ws_view_run_config:
+            winDict['w'].close()'''
+        self.parent.children.remove(self)       # remove reference for memory cleanup
+        event.accept()
 
 
 

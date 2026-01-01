@@ -18,7 +18,7 @@ from ov_functions import *
 from tkinter.filedialog import asksaveasfilename as askSaveAsFileName
 from functools import partial
 
-from PyQt6.QtCore import QDateTime, QDate
+from PyQt6.QtCore import QDateTime, QDate, Qt
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QMainWindow,
@@ -30,32 +30,40 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QWidget,
-    QMessageBox
+    QMessageBox,
+    QProgressBar
 )
 
 class WindowSample(QMainWindow):
-    def __init__(self, path, parent, view_only=False, update_on_save=False, open_on_save=False):  
+    def __init__(self, path, parent, view_only=False):  
         super().__init__()                          # if path, load sample deets, else load empty edit window for new sample
         self.path = path                            # create an empty string for holding the filepath
         self.parent = parent                        # store the parent object in object-wide scope
-        self.data = {}                              # create an empty dict to hold data read from a file
         self.saved = True                           # set flag to indicate current data shown reflects what is already saved
         self.setObjectName("window-edit-sample")    # create a name for modifying styles from QSS
         layouts = []                                # create list to hold layouts
         self.view_only = view_only
-        self.update_on_save = update_on_save
-        self.open_on_save = open_on_save
-        
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.status = self.statusBar()
+        self.progress_bar = QProgressBar()
+        self.new_sample = False
+        if self.path:
+            self.new_sample = True
 
+        #####################
+        #                   #
+        #   status bar      #
+        #                   #
+        ##################### 
+        self.progress_bar.setMaximumWidth(200)  # Set a fixed width
+        self.progress_bar.setVisible(False)     # Hide it initially
+        self.status.addPermanentWidget(self.progress_bar)
+        
         # The name field 
         self.w_name = QLineEdit()                                       # init line edit
         self.w_name.setMaxLength(63)                                    # set properties
         self.w_name.setObjectName(encodeCustomName(g.S_NAME))           # add object name for specific styling and data mgmt
         self.w_name.textEdited.connect(self.update_edited_status)
-        if self.view_only:
-            but_edit = QPushButton('edit')
-            but_edit.clicked.connect(parent.edit_sample)
-        
 
         # the date collected field 
         w_lbl_date_collected = QLabel(l.s_edit_date_c[g.L])                                 # init label with text
@@ -97,58 +105,131 @@ class WindowSample(QMainWindow):
         self.w_notes.textChanged.connect(self.update_edited_status)
         layouts.append(horizontalize([w_lbl_notes, self.w_notes]))
 
-        # the save (and save as) button(s)
-        but_save = QPushButton(l.s_edit_save[g.L])                          # create 'save' button
-        but_save_as = QPushButton(l.s_edit_save_as[g.L])                    # create 'save as' button
-        but_save_as.clicked.connect(partial(self.startSave, 'save as'))
-        layout_but = QHBoxLayout()
-        layout_but.addWidget(but_save)                                      # add 'save' button to horiz button layout
-        if self.path:                                                       # if we are modifying an existing file
-            but_save.clicked.connect(partial(self.startSave, 'save'))       #   then the 'save' button does the regular save action
-            layout_but.addWidget(but_save_as)                               #   also add the 'save as' button to the button layout
-        else:
-            but_save.clicked.connect(partial(self.startSave, 'save as'))    # if new sample, run 'save as' when 'save' is clicked
+        # the bottom button row (save, save as, and edit button(s) -- depend on state)
+        self.but_new = QPushButton(l.s_edit_save[g.L])                      # create 'save' button for new samples
+        self.but_existing_edit = QPushButton(l.s_edit_save[g.L])            # create 'save' button for existing samples 
+        self.but_existing_view = QPushButton(l.s_edit_edit[g.L])            # create 'edit' button for existing samples
 
+        self.but_new.clicked.connect(self.start_save_new)
+        self.but_existing_edit.clicked.connect(self.start_save_existing)
+        self.but_existing_view.clicked.connect(self.set_mode_edit)
+
+        self.buts = [self.but_new, self.but_existing_edit, self.but_existing_view]
+        self.read_only = [self.w_date_collected,
+                          self.w_notes]
+        self.not_enabled = [self.w_name,
+                            self.w_loc,
+                            self.w_contact,
+                            self.w_sampler]
+                    
+        
         # organize these widgets into a layout
         layout_pane = QVBoxLayout()
-        if self.view_only:
-            layout_pane.addLayout(horizontalize([self.w_name, but_edit]))
-        else:
-            layout_pane.addWidget(self.w_name)  # add the name first
+        layout_pane.addWidget(self.w_name)  # add the name first
         for layout in layouts:              # add all the rest of the label+input rows
             layout_pane.addLayout(layout)   
-        if not self.view_only:
-            layout_pane.addLayout(layout_but)     # add the save button on the bottom
+        
         self.w = QWidget()
         self.w.setLayout(layout_pane)
-
-        if self.view_only:
-            self.w_name.setEnabled(False)
-            self.w_date_collected.setReadOnly(True)
-            self.w_loc.setReadOnly(True)
-            self.w_contact.setReadOnly(True)
-            self.w_sampler.setReadOnly(True)
-            self.w_notes.setReadOnly(True)
             
         # if a path was entered, gather the data from the specified file and display it
         if self.path:
-            try:
-                print('just here testing!')
-                #self.setTextFromFile()
-            except Exception as e:
-                print(e)
-            if self.view_only:
-                self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.view_sample[g.L])
-            else:
-                self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.edit_sample[g.L])
-        else:
-            self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.new_sample[g.L])
-            self.w_name.setPlaceholderText(l.s_edit_name[g.L])
+            self.setText()
 
         self.saved = True               #set this again as the process of setting text may mess with this flag, but no data has changed
         self.setCentralWidget(self.w)
 
-    def startSave(self, save_type):
+        if not self.path:
+            self.set_mode_new()
+        elif not self.view_only:
+            self.set_mode_edit()
+        else:
+            self.set_mode_view()
+
+    def setText(self):
+        data = self.parent.data
+        w = self.w
+        
+        textedits = w.findChildren(QLineEdit)
+        plaintextedits = w.findChildren(QPlainTextEdit) 
+        dateedits = w.findChildren(QDateEdit)                                  
+
+        # loop through all line edit elements, saving entered text
+        for el in textedits:
+            if isCustomName(el.objectName()):
+                el.setText(data[decodeCustomName(el.objectName())])
+
+        for el in plaintextedits:
+            if isCustomName(el.objectName()):
+                el.setPlainText(data[decodeCustomName(el.objectName())])
+
+        # loop through all date elements, saving date
+        for el in dateedits:
+            if isCustomName(el.objectName()):
+                d = QDate.fromString(data[decodeCustomName(el.objectName())], g.DATE_STORAGE_FORMAT)
+                el.setDate(d)
+
+    def set_mode_new(self):
+        self.set_elements_editable(True)
+        self.set_button_bar(self.but_new)
+        self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.new_sample[g.L])
+        self.w_name.setPlaceholderText(l.s_edit_name[g.L])
+        self.set_buttons_enabled(True)
+
+    def set_mode_edit(self):
+        self.set_elements_editable(True)
+        self.set_button_bar(self.but_existing_edit)
+        self.setWindowTitle(l.edit_sample[g.L])
+        self.set_buttons_enabled(True)
+
+    def set_mode_view(self):
+        self.set_elements_editable(False)
+        self.set_button_bar(self.but_existing_view)
+        self.setWindowTitle(l.view_sample[g.L])
+        self.set_buttons_enabled(True)
+
+    def set_button_bar(self, button):
+        for but in self.buts:
+            but.setParent(None)
+        self.centralWidget().layout().addWidget(button)
+
+    def set_elements_editable(self, editable):
+        for w in self.read_only:
+            w.setReadOnly(not editable)
+        for w in self.not_enabled:
+            w.setEnabled(editable)
+
+    def set_buttons_enabled(self, enabled):
+        for but in self.buts:
+            but.setEnabled(enabled)
+
+    def start_save_new(self):
+        self.set_buttons_enabled(False)
+        if self.validate():
+            self.path = askSaveAsFileName(                           # open a save file dialog which returns the file object
+                filetypes=[(l.filetype_sample_lbl[g.L], g.SAMPLE_FILE_TYPES)],
+                defaultextension=g.SAMPLE_EXT,
+                confirmoverwrite=True,
+                initialfile=guess_filename(self.w_name.text()))
+            if not self.path or self.path == '':            # if the user didn't select a path
+                return                                      # don't try to save, just return
+            self.saveFile()
+    
+    def start_save_existing(self):
+        self.set_buttons_enabled(False)
+        if self.validate():
+            self.saveFile()
+       
+
+
+
+
+
+
+
+
+
+    '''def startSave(self, save_type):
         if self.validate():
             try:
                 if save_type == 'save as':
@@ -156,7 +237,7 @@ class WindowSample(QMainWindow):
                 else:
                     self.saveFile()
             except Exception as e:
-                print(e)
+                print(e)'''
 
     def validate(self):
         """
@@ -170,32 +251,9 @@ class WindowSample(QMainWindow):
         else:
             return True
 
-    def setTextFromFile(self):
-        self.data = get_data_from_file(self.path)
-        w = self.w
-        
-        textedits = w.findChildren(QLineEdit)
-        plaintextedits = w.findChildren(QPlainTextEdit) 
-        dateedits = w.findChildren(QDateEdit)                                  
+    
 
-
-        # loop through all line edit elements, saving entered text
-        for el in textedits:
-            if isCustomName(el.objectName()):
-                el.setText(self.data[decodeCustomName(el.objectName())])
-
-        for el in plaintextedits:
-            if isCustomName(el.objectName()):
-                el.setPlainText(self.data[decodeCustomName(el.objectName())])
-
-        # loop through all date elements, saving date
-        for el in dateedits:
-            if isCustomName(el.objectName()):
-                d = QDate.fromString(self.data[decodeCustomName(el.objectName())], g.DATE_STORAGE_FORMAT)
-                el.setDate(d)    
-
-
-    def saveFileAs(self):
+    '''def saveFileAs(self):
         # get the actual filename and path from user
 
         self.path = askSaveAsFileName(                           # open a save file dialog which returns the file object
@@ -205,47 +263,52 @@ class WindowSample(QMainWindow):
             initialfile=guess_filename(self.w_name.text()))
         if not self.path or self.path == '':            # if the user didn't select a path
             return                                      # don't try to save, just return
-        self.saveFile()                                 # save the file!
-
+        self.saveFile()                                 # save the file!'''
+    
     def saveFile(self):
+        print('saving file!')
+        return
         lineedits = self.findChildren(QLineEdit)            # grab all line edit objects from form
         dateedits = self.findChildren(QDateEdit)            # grab all date edit objects from form
         textedits = self.findChildren(QPlainTextEdit)            # grab all paragraph text edit objects from form
         newSample = True
-        if self.data:
+        data = self.parent.data
+        if data:
             newSample = False
+            
                 
 
         # loop through all line edit elements, saving entered text
         for el in lineedits:
             if isCustomName(el.objectName()):
-                self.data.update({decodeCustomName(el.objectName()): el.text()})
+                data.update({decodeCustomName(el.objectName()): el.text()})
 
         # loop through all date elements, saving date
         for el in dateedits:
             if isCustomName(el.objectName()):
-                self.data.update({decodeCustomName(el.objectName()): el.date().toString(g.DATE_STORAGE_FORMAT)})
+                data.update({decodeCustomName(el.objectName()): el.date().toString(g.DATE_STORAGE_FORMAT)})
 
         # loop through all paragraph edit(textedit) elements, saving text
         for el in textedits:
             if isCustomName(el.objectName()):
-                self.data.update({decodeCustomName(el.objectName()): el.toPlainText()})
+                data.update({decodeCustomName(el.objectName()): el.toPlainText()})
 
         if newSample:
             # append current datetime
-            self.data.update({g.S_DATE_ENTERED: QDateTime.currentDateTime().toString(g.DATETIME_STORAGE_FORMAT)})
+            data.update({g.S_DATE_ENTERED: QDateTime.currentDateTime().toString(g.DATETIME_STORAGE_FORMAT)})
         
             # append empty arrays for future data
             for key in g.S_BLANK_ARRAYS:
-                self.data.update({key:[]})
+                data.update({key:[]})
 
 
         # write dict to file
-        write_data_to_file(self.path, self.data)
+        write_data_to_file(self.path, data)
         self.saved = True                                   # set flag that file has been successfully saved
-        if self.update_on_save:
-            self.parent.update_displayed_info()
-        self.close()                                        # close the new sample window
+        '''if self.update_on_save:
+            self.parent.update_displayed_info()'''
+        self.close()                                        # close the new sample window        
+            
 
     def closeEvent(self, event):
         """
@@ -267,6 +330,7 @@ class WindowSample(QMainWindow):
                     - if cancel is selected, the close action is blocked
         """
         if self.view_only:      # If the pane is view only (no editing possible)
+            self.parent.children.remove(self)
             event.accept()      # we don't need to ask about saving, so close window
         else:
         
@@ -282,17 +346,17 @@ class WindowSample(QMainWindow):
                     else:                                           # otherwise,
                         self.startSave('save as')                   #   run the 'save as' function
                 elif resp == QMessageBox.StandardButton.Discard:    # if the user selects "discard"
+                    self.parent.children.remove(self)
                     event.accept()                                  #   allow the close action to complete
                 else:                                               # if the user selects "cancel" (or anything else)
                     event.ignore()                                  #   block the close action
             else:                                                   # if there is no unsaved content
-                
                 try:
-                    if self.path:
-                        if self.open_on_save:
-                            self.parent.open_sample(self.path)              #   open the recently saved sample
-                        if self.update_on_save:
-                            self.parent.update_displayed_info()
+                    if self.new_sample and self.path:
+                        self.parent.open_sample(self.path)              #   open the recently saved sample
+                    '''if self.update_on_save:
+                            self.parent.update_displayed_info()'''
+                    self.parent.children.remove(self)
                     event.accept()                                  #   then allow the close event to proceed
                 except Exception as e:
                     print(e)

@@ -45,15 +45,16 @@ class WindowWelcome(QMainWindow):
         super().__init__()
 
         self.data = {}
+        self.children = []
         
         # set the window parameters
         self.setWindowTitle(l.window_home[g.L])
         
         # define possible popup windows (not modals)
-        self.w_new_sample = WindowSample(False, self, open_on_save=True)
+        '''self.w_new_sample = WindowSample(False, self)
         self.w_edit_config = WindowMethod(False)
         self.w_samples = []
-        self.ws_view_config = []
+        self.ws_view_config = []'''
         
         # Create the text intro label
         lbl_about = QLabel(l.info_msg[g.L])
@@ -107,7 +108,21 @@ class WindowWelcome(QMainWindow):
         w.setLayout(layout_pane)
         self.setCentralWidget(w)
 
+    def activate_single_window(self, winObj):
+        found = False
+        for win in self.children:
+            if type(win) == type(winObj):
+                win.activateWindow()
+                found = True
+                break
+        if not found:
+            self.children.append(winObj)
+            self.children[-1].show()
+
     def new_sample(self):
+        self.activate_single_window(WindowSample(False, self))
+                
+        '''    
         if (self.w_new_sample.isHidden()):      # check if winow is hidden. If so:
             self.w_new_sample.show()            #   and show it!
         else:                                   # if window is already showing
@@ -117,9 +132,23 @@ class WindowWelcome(QMainWindow):
         
         if not path:                # if no path is passed, ask the user to pick a file path
             path = get_path_from_user('sample')
-        error = False        
         if path:                    # if the path is passed or if the user selected a valid path:
-            w = False                               # placeholder for the current sample window
+            found = False                               
+            for win in self.children:
+                if type(win) == type(WindowMain(path, self)):
+                    if win.path == path:
+                        found = True
+                        win.activateWindow()
+                        break
+            if not found:
+                self.children.append(WindowMain(path, self))
+                self.children[-1].show()
+            self.close()
+        # if user didn't select a path, do nothing
+            
+
+            '''
+
             if len(self.w_samples) > 0:             # if there are current sample windows
                 for w_sample in self.w_samples:     #   loop through them 
                     if w_sample.path == path:       #   if we find one where the path matches our current path
@@ -144,6 +173,7 @@ class WindowWelcome(QMainWindow):
                     
             if not error:
                 self.close()                            # close the home window if open
+            '''
             
 
     def create_sample_window(self, path):
