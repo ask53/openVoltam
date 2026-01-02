@@ -892,10 +892,8 @@ class WindowMain(QMainWindow):
     #############################################
 
     def closeEvent(self, event):
-        '''for win in self.children:
+        for win in self.children:
             win.close()
-        for winDict in self.ws_view_run_config:
-            winDict['w'].close()'''
         self.parent.children.remove(self)       # remove reference for memory cleanup
         event.accept()
 
