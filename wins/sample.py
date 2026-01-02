@@ -133,7 +133,7 @@ class WindowSample(QMainWindow):
         layout_pane = QVBoxLayout()
         layout_pane.addWidget(self.w_name)  # add the name first
         for layout in layouts:              # add all the rest of the label+input rows
-            layout_pane.addLayout(layout)   
+            layout_pane.addLayout(layout)
         
         self.w = QWidget()
         self.w.setLayout(layout_pane)
@@ -178,21 +178,18 @@ class WindowSample(QMainWindow):
 
     def set_mode_new(self):
         self.mode = g.WIN_MODE_NEW
-        #self.view_ony = False
         self.set_elements_editable(True)
         self.set_button_bar(self.but_new)
         self.setWindowTitle(l.new_sample[g.L])
         self.w_name.setPlaceholderText(l.s_edit_name[g.L])
         
     def set_mode_edit(self):
-        #self.view_only = False
         self.mode = g.WIN_MODE_EDIT
         self.set_elements_editable(True)
         self.set_button_bar(self.but_existing_edit)
         self.setWindowTitle(l.edit_sample[g.L])
         
     def set_mode_view(self):
-        #self.view_only = True
         self.mode = g.WIN_MODE_VIEW_ONLY
         self.set_elements_editable(False)
         self.set_button_bar(self.but_existing_view)
@@ -200,6 +197,7 @@ class WindowSample(QMainWindow):
         
     def set_button_bar(self, button):
         for but in self.buts:
+            #self.centralWidget().layout().replaceWidget(but, button)
             but.setParent(None)
         self.centralWidget().layout().addWidget(button)
 

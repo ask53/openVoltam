@@ -179,7 +179,7 @@ class WindowMain(QMainWindow):
         self.buts = [but_view, but_config, but_calc, but_res_sample]
         
         but_view.clicked.connect(self.new_win_sample)
-        but_config.clicked.connect(self.new_win_config_run)
+        but_config.clicked.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
         
         
         vl1 = QVLine()
@@ -740,7 +740,7 @@ class WindowMain(QMainWindow):
         preset to match the currently selected run"""
         run_id = self.get_single_selected_run()
         if run_id:
-            self.new_win_config_run(run_id)     
+            self.new_win_config_run(run_id=run_id)     
         
 
 
@@ -765,8 +765,9 @@ class WindowMain(QMainWindow):
     def new_win_sample(self):
         self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_VIEW_ONLY))
 
-    def new_win_config_run(self, run_id=False):
-        self.new_win_one_of_type(WindowRunConfig(self, run_id))
+    def new_win_config_run(self, mode, run_id=False):
+        print('opening run config window with mode:',mode)
+        self.new_win_one_of_type(WindowRunConfig(self, mode, run_id))
 
     def new_win_view_run(self, run_id):
         self.new_win_one_of_type(WindowRunView(self, run_id))

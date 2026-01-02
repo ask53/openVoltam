@@ -47,16 +47,16 @@ import time # FOR TESTING ONLY
 import sys, os
 
 class WindowRunConfig(QMainWindow):
-    def __init__(self, parent, run_id=False, view_only=False):
+    def __init__(self, parent, mode, run_id=False):
         super().__init__()
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.parent = parent
+        self.mode = mode
+        self.run_id = run_id
      
         self.setWindowTitle(l.rc_window_title[g.L])
         self.run_to_run = False
         self.reps_to_run = []
-        self.view_only = view_only
-        self.view_only_modifiable = False
         self.status = self.statusBar()
         self.saved = False
             
@@ -68,13 +68,9 @@ class WindowRunConfig(QMainWindow):
         method_lbl = QLabel("Method")
         self.method = QComboBox()
         self.method.setPlaceholderText(l.rc_select[g.L])
-        ########## TESTING
-        #
-        if self.parent.data:
-        #
-        ###################
-            for method in self.parent.data[g.S_METHODS]:
-                self.method.addItem(method[g.M_NAME], method)
+
+        for method in self.parent.data[g.S_METHODS]:
+            self.method.addItem(method[g.M_NAME], method)
         self.method.currentIndexChanged.connect(self.method_changed)
 
         but_m_load = QPushButton('load from file')
@@ -98,10 +94,7 @@ class WindowRunConfig(QMainWindow):
         for i in range(0, len(self.types)):                 # for each text item:
             self.run_type.setItemData(i, g.R_TYPES[i])      #   link the corresponding label in English for cross-language data storage
         
-        
         self.run_type.currentIndexChanged.connect(self.run_type_changed)
-
-        
 
         replicates_lbl = QLabel("Repeats")
         self.replicates = QSpinBox()
@@ -110,7 +103,6 @@ class WindowRunConfig(QMainWindow):
         self.replicates.setMaximum(g.RC_REPS_MAX)
         self.replicates.valueChanged.connect(self.refresh_graph)
             
-
         self.graph = MethodPlot()
         graph_area = QScrollArea()
         graph_area.setObjectName('ov-graph-area')
@@ -122,7 +114,6 @@ class WindowRunConfig(QMainWindow):
         notes_lbl = QLabel("Notes")
         self.notes = QLineEdit()
         
-
         # setup stacked layout for options specific to each run type
         self.type_stack = QStackedLayout(self)
         w_blank = QWidget()
@@ -151,11 +142,28 @@ class WindowRunConfig(QMainWindow):
         self.type_stack.addWidget(g_sample)
         self.type_stack.addWidget(g_stdadd)
 
-        but_run = QPushButton('Ready to run!')
-        but_run.clicked.connect(self.run_button_clicked)
+        self.but_new = QPushButton('Ready to run!')
+        self.but_edit = QPushButton('Save changes')
+        self.but_view = QPushButton('Edit configs')
 
-        self.but_edit = QPushButton('Edit run info')
-        self.but_edit.clicked.connect(self.edit_button_clicked)
+        self.but_new.clicked.connect(self.run_button_clicked)
+        self.but_edit.clicked.connect(self.save_changes)
+        self.but_view.clicked.connect(self.edit_button_clicked)
+        
+        self.buts = [self.but_new, self.but_edit, self.but_view]
+
+
+        ############### SORT THIS OUT FOR TOGGLING BUTTONS AND FIELDS!
+        #
+        #
+        #
+        self.ws_to_toggle = {self.run_type, self.w_sample_sample_vol, self.w_sample_total_vol,
+                             self.w_stdadd_vol_std, self.w_stdadd_conc_std, self.notes}
+        #
+        #
+        #           AND UPDATE toggle_widget_editability() function as well
+
+        
 
         # add widgets to layouts 
         
@@ -175,32 +183,22 @@ class WindowRunConfig(QMainWindow):
 
         h1.addLayout(v2)
         h1.addLayout(v1)
-        w = QWidget()
-
-        self.ws_to_toggle = {self.run_type, self.w_sample_sample_vol, self.w_sample_total_vol,
-                             self.w_stdadd_vol_std, self.w_stdadd_conc_std, self.notes}
-
-        if self.view_only:                          # If this is a view-only window
-            v1.addWidget(self.but_edit)             # Add edit info button to view-only layout
-            w.setLayout(h1)                         # Set the layout without the run button for view-only
-
-            self.device.setEnabled(False)           # Always disable these elements during view-only
-            self.method.setEnabled(False)
-            but_m_load.setEnabled(False)
-            self.replicates.setEnabled(False)
-            
-            
-            self.setViewOnly()                      # Sets view only WITHOUT any modification
-            
-        else:                                       # If this is preparing for an actual run!     
-            v3.addLayout(h1)                    
-            v3.addWidget(but_run)                   # Add the run button :)
-            w.setLayout(v3)
         
+        w = QWidget()
+        w.setLayout(h1)
         self.setCentralWidget(w)
 
         if run_id:
             self.set_form(run_id)
+        
+
+        if self.mode == g.WIN_MODE_NEW:
+            self.set_mode_new()
+        elif self.mode == g.WIN_MODE_EDIT:
+            self.set_mode_edit()
+        else:
+            self.set_mode_view()
+            
 
         
 
@@ -247,7 +245,7 @@ class WindowRunConfig(QMainWindow):
                     self.w_stdadd_vol_std.setValue(run[g.R_STD_ADDED_VOL])
                     self.w_stdadd_conc_std.setValue(run[g.R_STD_CONC])
             self.refresh_graph()                                    # refresh the graph pane
-            if self.view_only:
+            if self.mode == g.WIN_MODE_VIEW_ONLY:
                 self.setViewOnly()
 
     def run_type_changed(self, i):
@@ -442,6 +440,40 @@ class WindowRunConfig(QMainWindow):
         self.close()
         self.parent.new_win_view_run(self.run_to_run)
 
+    def set_mode_new(self):
+        print('GOTOMODE:new')
+        self.mode = g.WIN_MODE_NEW
+        self.toggle_widget_editability()
+        self.set_button_bar(self.but_new)
+        self.setWindowTitle("Run configuration | New")
+
+    def set_mode_edit(self):
+        print('GOTOMODE:edit')
+        self.mode = g.WIN_MODE_EDIT
+        self.toggle_widget_editability()
+        self.set_button_bar(self.but_edit)
+        self.setWindowTitle("Run configuration | Edit")  
+
+    def set_mode_view(self):
+        print('GOTOMODE:view')
+        self.mode = g.WIN_MODE_VIEW_ONLY
+        self.toggle_widget_editability()
+        self.set_button_bar(self.but_view)
+        self.setWindowTitle("Run configuration | View")
+
+    def toggle_widget_editability(self):
+        return
+    
+    def set_button_bar(self, button):        
+        for but in self.buts:
+            but.setParent(None)
+        self.centralWidget().layout().children()[-1].addWidget(button)
+
+
+
+    
+        
+
     def setViewOnly(self, modifiable=False):
         if self.run_to_run:
             self.view_only_modifiable = modifiable          # set/reset flag
@@ -470,7 +502,7 @@ class WindowRunConfig(QMainWindow):
             self.setViewOnly(modifiable=True)
 
 
-    def save_modified_run_configs(self):
+    def save_changes(self):
         data = get_data_from_file(self.parent.path)
         runDict = False
         for run in data[g.S_RUNS]:
@@ -530,7 +562,7 @@ class WindowRunConfig(QMainWindow):
 
     def showEvent(self, event):
         try:
-            if not self.view_only:
+            if not self.mode == g.WIN_MODE_VIEW_ONLY:
                 self.parent.setEnabled(False)
                 self.parent.set_enabled_children(False)
                 self.setEnabled(True)
@@ -539,9 +571,8 @@ class WindowRunConfig(QMainWindow):
             print(e)
         
     def closeEvent(self, event):
-        if not self.view_only:
-            self.parent.setEnabled(True)
-            self.parent.set_enabled_children(True)
+        self.parent.setEnabled(True)
+        self.parent.set_enabled_children(True)
         self.accept_close(event)
 
     def accept_close(self, closeEvent):
