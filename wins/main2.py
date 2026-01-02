@@ -183,6 +183,7 @@ class WindowMain(QMainWindow):
         but_config = QPushButton('NEW RUN')
         but_calc = QPushButton('Calculate')
         but_res_sample = QPushButton('Sample results')
+        self.buts = [but_view, but_config, but_calc, but_res_sample]
 
         but_view.clicked.connect(self.new_win_this_sample)
         #but_config.clicked.connect(self.config_run)
@@ -241,6 +242,8 @@ class WindowMain(QMainWindow):
         lay.addWidget(w_sample_header)
         lay.addWidget(self.w_run_header)
         lay.addWidget(self.w_run_history_area)
+
+        setWsEnabled(self.buts, False)
         
         # Display! 
         self.w = QWidget()
@@ -821,9 +824,11 @@ class WindowMain(QMainWindow):
             self.status.showMessage("ERROR: Data read could not complete.", g.SB_DURATION)
         else:
             self.status.showMessage("Data loaded!", g.SB_DURATION)
+            self.update_main()
+            setWsEnabled(self.buts, True)                                                   #   Enable buttons
         self.read_error_flag = False
         self.process = None
-        self.update_main()
+        
 
 
     #############################################

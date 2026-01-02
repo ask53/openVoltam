@@ -49,6 +49,10 @@ def makeLabelsSelectable(w):
         el.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse | Qt.TextInteractionFlag.TextSelectableByKeyboard)
     return w
 
+def setWsEnabled(ws, enabled=True):
+    for w in ws:
+        w.setEnabled(enabled)
+
 def applyStyles():
     g.APP.setStyleSheet(g.STYLES)
 

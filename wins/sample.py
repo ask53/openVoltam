@@ -19,7 +19,6 @@ from tkinter.filedialog import asksaveasfilename as askSaveAsFileName
 from functools import partial
 
 from PyQt6.QtCore import QDateTime, QDate, Qt
-from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QMainWindow,
     QLineEdit,
@@ -37,19 +36,19 @@ from PyQt6.QtWidgets import (
 class WindowSample(QMainWindow):
     def __init__(self, path, parent, view_only=False):  
         super().__init__()                          # if path, load sample deets, else load empty edit window for new sample
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.path = path                            # create an empty string for holding the filepath
         self.parent = parent                        # store the parent object in object-wide scope
         self.saved = True                           # set flag to indicate current data shown reflects what is already saved
         self.setObjectName("window-edit-sample")    # create a name for modifying styles from QSS
         layouts = []                                # create list to hold layouts
         self.view_only = view_only
-        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        self.status = self.statusBar()
-        self.progress_bar = QProgressBar()
         self.close_on_save = False
         self.new_sample = False
         if not self.path:
             self.new_sample = True
+        self.status = self.statusBar()
+        self.progress_bar = QProgressBar()
 
         #####################
         #                   #
@@ -59,6 +58,12 @@ class WindowSample(QMainWindow):
         self.progress_bar.setMaximumWidth(200)  # Set a fixed width
         self.progress_bar.setVisible(False)     # Hide it initially
         self.status.addPermanentWidget(self.progress_bar)
+
+        #####################
+        #                   #
+        #   Set up widgets  #
+        #                   #
+        #####################
         
         # The name field 
         self.w_name = QLineEdit()                                       # init line edit
@@ -115,10 +120,10 @@ class WindowSample(QMainWindow):
         self.but_existing_edit.clicked.connect(self.start_save_existing)
         self.but_existing_view.clicked.connect(self.set_mode_edit)
 
-        self.buts = [self.but_new, self.but_existing_edit, self.but_existing_view]
-        self.read_only = [self.w_date_collected,
+        self.buts = [self.but_new, self.but_existing_edit, self.but_existing_view]  # list of all buttons
+        self.read_only = [self.w_date_collected,                                    # on read_only, set these to read only = True
                           self.w_notes]
-        self.not_enabled = [self.w_name,
+        self.not_enabled = [self.w_name,                                            # on read_only set these to enabled = False
                             self.w_loc,
                             self.w_contact,
                             self.w_sampler]
@@ -135,11 +140,12 @@ class WindowSample(QMainWindow):
             
         # if a path was entered, gather the data from the specified file and display it
         if self.path:
-            self.setText()
+            self.update_win()
 
         self.saved = True               #set this again as the process of setting text may mess with this flag, but no data has changed
         self.setCentralWidget(self.w)
 
+        # Set the current mode (new sample, edit existing sample, or view existing sample)
         if not self.path:
             self.set_mode_new()
         elif not self.view_only:
@@ -147,7 +153,7 @@ class WindowSample(QMainWindow):
         else:
             self.set_mode_view()
 
-    def setText(self):
+    def update_win(self):
         data = self.parent.data
         w = self.w
         
@@ -174,24 +180,21 @@ class WindowSample(QMainWindow):
         self.view_ony = False
         self.set_elements_editable(True)
         self.set_button_bar(self.but_new)
-        self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.new_sample[g.L])
+        self.setWindowTitle(l.new_sample[g.L])
         self.w_name.setPlaceholderText(l.s_edit_name[g.L])
-        self.set_buttons_enabled(True)
-
+        
     def set_mode_edit(self):
         self.view_only = False
         self.set_elements_editable(True)
         self.set_button_bar(self.but_existing_edit)
         self.setWindowTitle(l.edit_sample[g.L])
-        self.set_buttons_enabled(True)
-
+        
     def set_mode_view(self):
         self.view_only = True
         self.set_elements_editable(False)
         self.set_button_bar(self.but_existing_view)
         self.setWindowTitle(l.view_sample[g.L])
-        self.set_buttons_enabled(True)
-
+        
     def set_button_bar(self, button):
         for but in self.buts:
             but.setParent(None)
@@ -221,34 +224,12 @@ class WindowSample(QMainWindow):
         else:
             self.set_buttons_enabled(True)
             
-    
     def start_save_existing(self):
         self.set_buttons_enabled(False)
         if self.validate():
             self.saveFile()
         else:
             self.set_buttons_enabled(True)
-
-    
-       
-
-
-
-
-
-
-
-
-
-    '''def startSave(self, save_type):
-        if self.validate():
-            try:
-                if save_type == 'save as':
-                    self.saveFileAs()
-                else:
-                    self.saveFile()
-            except Exception as e:
-                print(e)'''
 
     def validate(self):
         """
@@ -261,22 +242,9 @@ class WindowSample(QMainWindow):
             return False
         else:
             return True
-
-    
-
-    '''def saveFileAs(self):
-        # get the actual filename and path from user
-
-        self.path = askSaveAsFileName(                           # open a save file dialog which returns the file object
-            filetypes=[(l.filetype_sample_lbl[g.L], g.SAMPLE_FILE_TYPES)],
-            defaultextension=g.SAMPLE_EXT,
-            confirmoverwrite=True,
-            initialfile=guess_filename(self.w_name.text()))
-        if not self.path or self.path == '':            # if the user didn't select a path
-            return                                      # don't try to save, just return
-        self.saveFile()                                 # save the file!'''
     
     def saveFile(self):
+        # Gather all of the data into a dictionary
         lineedits = self.findChildren(QLineEdit)            # grab all line edit objects from form
         dateedits = self.findChildren(QDateEdit)            # grab all date edit objects from form
         textedits = self.findChildren(QPlainTextEdit)            # grab all paragraph text edit objects from form
@@ -309,7 +277,6 @@ class WindowSample(QMainWindow):
         # Do actual save!
         if self.new_sample:                         # iF new sample
             try:
-                self.status.showMessage('Saving...', g.SB_DURATION)
                 write_data_to_file(self.path, data)     # do a synchronous save
                 self.saved = True
                 self.parent.open_sample(self.path)      
@@ -328,12 +295,14 @@ class WindowSample(QMainWindow):
     def after_save_success(self):
         self.saved = True
         self.status.showMessage('Saved!', g.SB_DURATION)
+        self.set_buttons_enabled(True)
         if self.close_on_save:
             self.close()
-
+        
     def after_save_error(self):
         self.status.showMessage('ERROR: File did not save.', g.SB_DURATION)
         self.set_mode_edit()
+        self.set_buttons_enabled(True)
             
     
     def closeEvent(self, event):
@@ -344,17 +313,13 @@ class WindowSample(QMainWindow):
         specification for event handling.
 
         Algorithm:
-        Checks the flag self.view_only.
-            If True, the window is closed (as no editing is possible)
-            Othersiwe:
-            Checks the flag self.saved.
-                If True, window is closed.
-                If False, displays a dialog with three options: save, discard, and cancel.
-                    - if save is selected, the close action is blocked and the save
-                        routine is called
-                    - if discard is selected, the window is closed
-                    - if cancel is selected, the close action is blocked
-        """
+        Checks the self.saved flag.
+            If True, the window is closed (all progress has been saved)
+            Otherwise (if there is data to save): prompts the user to select:
+                - Save: The save routine is called. If it succeeds, window is closed.
+                    If it errors, window is not closed.
+                - Discard: The window is closed without saving
+                - Other (Cancel or the x-button): The close action is blocked"""
         try:
             if self.saved:                      # If all modified content (if any) has been saved
                 self.accept_close(event)        # we don't need to ask about saving, so accept the close action
@@ -375,11 +340,13 @@ class WindowSample(QMainWindow):
         except Exception as e:
             print(e)
                 
-    def accept_close(self, event):
+    def accept_close(self, closeEvent):
+        """Take in a close event. Removes the reference to itself in the parent's
+        self.children list (so reference can be cleared from memory) and accepts
+        the passed event."""
         self.parent.children.remove(self)
-        event.accept()
+        closeEvent.accept()
         
-
     def update_edited_status(self):
         self.saved = False
                                         
