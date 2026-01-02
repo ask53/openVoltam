@@ -7,6 +7,13 @@ QT_NOTHING_SELECTED_INDEX = -1
 
 # Status bar
 SB_DURATION = 6000  # duration of status bar messages in [ms]
+SB_DURATION_ERROR = 10000  # duration of status bar messages in [ms]
+SB_PROGRESS_BAR_WIDTH = 200
+
+# Window modes
+WIN_MODE_NEW = 'new'
+WIN_MODE_VIEW_ONLY = 'view'
+WIN_MODE_EDIT = 'edit'
 
 # Keys for sample (S) dictionary
 S_NAME = "sample_name"
@@ -107,6 +114,7 @@ SAVE_TYPE_REP_DELETE = 'rep-del'
 SAVE_TYPE_REP_MOD = 'rep-no-data'
 SAVE_TYPE_REP_MOD_WITH_DATA = 'rep-w-data'
 SAVE_TYPE_RUN_MOD = 'run-mod'
+SAVE_TYPE_METHOD_TO_SAMPLE = 'method-to-sample'
 
 
 # Input 

@@ -48,7 +48,9 @@ def update_sample(data, params):    # Takes the sample parameters
     return data
 
 def add_new_run(data, params):
-    return
+    newRun = params[0]               
+    data[g.S_RUNS].append(newRun)
+    return data
 
 def delete_rep(data, params):
     return
@@ -80,6 +82,11 @@ def replace_rep(data, params):
 
 def modify_run(data, params):
     return
+
+def method_to_sample(data, params):     # append method to sample file
+    newMethod = params[0]               
+    data[g.S_METHODS].append(newMethod)
+    return data
     
 try:
     path = sys.argv[1]                  # get path of file to read from
@@ -98,6 +105,8 @@ try:
         data=replace_rep(data, params)
     elif saveType == g.SAVE_TYPE_RUN_MOD:
         data=modify_run(data, params)
+    elif saveType == g.SAVE_TYPE_METHOD_TO_SAMPLE:
+        data=method_to_sample(data, params)
 
     write_data_to_file(path, data)
     data = remove_data_from_layout(data) 

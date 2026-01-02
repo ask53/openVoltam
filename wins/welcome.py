@@ -108,7 +108,7 @@ class WindowWelcome(QMainWindow):
         w.setLayout(layout_pane)
         self.setCentralWidget(w)
 
-    def activate_single_window(self, winObj):
+    '''def activate_single_window(self, winObj):
         found = False
         for win in self.children:
             if type(win) == type(winObj):
@@ -117,10 +117,34 @@ class WindowWelcome(QMainWindow):
                 break
         if not found:
             self.children.append(winObj)
-            self.children[-1].show()
+            self.children[-1].show()'''
+
+    def new_win_one_of_type(self, obj):
+        """Takes in a new object to create as child window of self.
+        Checks whether a window with matching type already exists.
+        If it does, activates (bring-to-front) that window and returns it.
+        If not, creates that window, show, it and returns it.
+        Returns: window object."""
+        for win in self.children:       
+            if type(win) == type(obj):  # If there is already a child window with matching type
+                win.activateWindow()    # activate it and return it
+                return win
+        self.children.append(obj)       # If there isn't already one, append the new window to the list of children
+        self.children[-1].show()        # Show the window
+        return self.children[-1]        # And return it
+
+    def new_win_one_with_value(self, obj, key, value):
+        for win in self.children:
+            if type(win) == type(obj):
+                if win.__dict__[key] == value:
+                    win.activateWindow()
+                    return win
+        self.children.append(obj)
+        self.children[-1].show()
+        return self.children[-1]
 
     def new_sample(self):
-        self.activate_single_window(WindowSample(False, self))
+        self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_NEW))
                 
         '''    
         if (self.w_new_sample.isHidden()):      # check if winow is hidden. If so:

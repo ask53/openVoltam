@@ -14,8 +14,8 @@ import ov_lang as l
 from ov_functions import *
 
 from wins.sample import WindowSample
-#from wins.runConfig import WindowRunConfig
-#from wins.runView import WindowRunView
+from wins.runConfig import WindowRunConfig
+from wins.runView import WindowRunView
 
 # import other necessary python tools
 from os.path import join as joindir
@@ -61,17 +61,10 @@ class WindowMain(QMainWindow):
 
     def __init__(self, path, parent):
         super().__init__()
-
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.path = path
         self.parent = parent
         self.data = {}
-
-        '''self.w_view_sample = WindowSample(self.path, self, update_on_save=True, view_only=True)
-        self.w_edit_sample = WindowSample(self.path, self, update_on_save=True, view_only=False)
-        self.w_run_config = WindowRunConfig(self)
-        self.w_run = WindowRunView(self)'''
-
-        self.ws_view_run_config = []
         self.children = []
         self.setObjectName('window-sample')
         self.layout = {}                  # for storing an outline of runs and reps and which are selected
@@ -81,13 +74,6 @@ class WindowMain(QMainWindow):
         self.status = self.statusBar()
         self.progress_bar = QProgressBar()
         self.process = None
-        
-        #####################
-        #                   #
-        #   begin data read #
-        #                   #
-        ##################### 
-        self.start_async_read()
 
         #####################
         #                   #
@@ -96,9 +82,16 @@ class WindowMain(QMainWindow):
         #####################
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(0)
-        self.progress_bar.setMaximumWidth(200)  # Set a fixed width
+        self.progress_bar.setMaximumWidth(g.SB_PROGRESS_BAR_WIDTH)  # Set a fixed width
         self.progress_bar.setVisible(False)     # Hide it initially
         self.status.addPermanentWidget(self.progress_bar)
+
+        #####################
+        #                   #
+        #   begin data read #
+        #                   #
+        ##################### 
+        self.start_async_read()
 
         #####################
         #                   #
@@ -160,7 +153,7 @@ class WindowMain(QMainWindow):
         self.contextmenu_rep.addSeparator()
         self.repAction_delete = self.contextmenu_rep.addAction("Delete replicates(s) [DOES NOTHING YET]")
 
-        #self.runAction_runAgain.triggered.connect(self.config_run_with_uid)
+        self.runAction_runAgain.triggered.connect(self.config_run_with_uid)
         #self.runAction_viewConfig.triggered.connect(self.view_config)
         #self.runAction_editConfig.triggered.connect(partial(self.view_config, True))
         #self.runAction_exportData.triggered.connect(self.export_runs_to_csv)
@@ -184,9 +177,10 @@ class WindowMain(QMainWindow):
         but_calc = QPushButton('Calculate')
         but_res_sample = QPushButton('Sample results')
         self.buts = [but_view, but_config, but_calc, but_res_sample]
-
-        but_view.clicked.connect(self.new_win_this_sample)
-        #but_config.clicked.connect(self.config_run)
+        
+        but_view.clicked.connect(self.new_win_sample)
+        but_config.clicked.connect(self.new_win_config_run)
+        
         
         vl1 = QVLine()
         vl2 = QVLine()
@@ -248,7 +242,8 @@ class WindowMain(QMainWindow):
         # Display! 
         self.w = QWidget()
         self.w.setLayout(lay)
-        self.setCentralWidget(self.w)   
+        self.setCentralWidget(self.w)
+        
 
     def update_main(self):
         sample_name = self.data[g.S_NAME]                       
@@ -258,6 +253,7 @@ class WindowMain(QMainWindow):
         self.widgetize_runs()                                               # get updated run history as a widget    
         self.centralWidget().layout().addWidget(self.w_run_history_area)    # add the updated run history back to layout
         self.update_highlights()
+        
         
     #############################################
     #                                           #
@@ -738,27 +734,70 @@ class WindowMain(QMainWindow):
                     except Exception as e:
                         print(e)
 
+    def config_run_with_uid(self):
+        """Finds the first selected run (assumes there is only one run selected!)
+        and opens up a new run configuration window with all of the parameters
+        preset to match the currently selected run"""
+        run_id = self.get_single_selected_run()
+        if run_id:
+            self.new_win_config_run(run_id)     
+        
+
+
 
     #############################################
     #                                           #
     #   Functions for opening new windows       #
     #                                           #
-    #   1. new_win_this_sample                  #
-    #   2. X                   #
-    #   3. X                   #
+    #   1. new_win_sample                       #
+    #   2. new_win_config_run                   #
+    #   3. new_win_view_run                     #
     #   4. X                 #
+    #   5.
+    #   6.
+    #   7.
+    #   8.
+    #   9. new_win_one_of_type                  #
+    #   10. new_win_one_with_value              #
     #                                           #
     #############################################
-    def new_win_this_sample(self):
-        found = False
+
+    def new_win_sample(self):
+        self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_VIEW_ONLY))
+
+    def new_win_config_run(self, run_id=False):
+        self.new_win_one_of_type(WindowRunConfig(self, run_id))
+
+    def new_win_view_run(self, run_id):
+        self.new_win_one_of_type(WindowRunView(self, run_id))
+
+    def new_win_one_of_type(self, obj):
+        """Takes in a new object to create as child window of self.
+        Checks whether a window with matching type already exists.
+        If it does, activates (bring-to-front) that window and returns it.
+        If not, creates that window, show, it and returns it.
+        Returns: window object."""
+        for win in self.children:       
+            if type(win) == type(obj):  # If there is already a child window with matching type
+                win.activateWindow()    # activate it and return it
+                return win
+        
+        self.children.append(obj)       # If there isn't already one, append the new window to the list of children
+        self.children[-1].show()        # Show the window
+        return self.children[-1]        # And return it
+
+    def new_win_one_with_value(self, obj, key, value):
         for win in self.children:
-            if type(win) == type(WindowSample(self.path, self)):
-                win.activateWindow()
-                found = True
-                break
-        if not found:        
-            self.children.append(WindowSample(self.path, self, view_only=True))
-            self.children[-1].show()
+            if type(win) == type(obj):
+                if win.__dict__[key] == value:
+                    win.activateWindow()
+                    return win
+        
+        self.children.append(obj)
+        self.children[-1].show()
+        return self.children[-1]
+        
+        
 
 
             
@@ -801,8 +840,9 @@ class WindowMain(QMainWindow):
             self.process.readyReadStandardOutput.connect(self.handle_read_stdout)
             self.process.readyReadStandardError.connect(self.handle_read_stderr)
             self.process.finished.connect(self.handle_finished_read)
-            self.process.start("python", ['processes/read.py', self.path])
             self.status.showMessage("Loading data...")
+            self.progress_bar.setVisible(True)
+            self.process.start("python", ['processes/read.py', self.path])
         except Exception as e:
             print(e)
 
@@ -825,7 +865,8 @@ class WindowMain(QMainWindow):
         else:
             self.status.showMessage("Data loaded!", g.SB_DURATION)
             self.update_main()
-            setWsEnabled(self.buts, True)                                                   #   Enable buttons
+            setWsEnabled(self.buts, True)                                   #   Enable buttons
+        self.progress_bar.setVisible(False)
         self.read_error_flag = False
         self.process = None
         
@@ -861,9 +902,7 @@ class WindowMain(QMainWindow):
         data = self.process.readAllStandardOutput()
         stdout = bytes(data).decode("utf8")
         data = literal_eval(stdout)
-        self.data = data
-        
-        
+        self.data = data        
 
     def handle_save_stderr(self):
         print('error msg:')
@@ -889,6 +928,17 @@ class WindowMain(QMainWindow):
             self.process = None                                                             # Wipe the process from memory
         except Exception as e:
             print(e)
+
+            
+    #############################################
+    #                                           #
+    #   Functions that modify children wins     #
+    #                                           #
+    #############################################
+
+    def set_enabled_children(self, enabled=True):
+        for win in self.children:
+            win.setEnabled(enabled)
 
     #############################################
     #                                           #

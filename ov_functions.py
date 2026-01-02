@@ -267,6 +267,16 @@ def get_method_v_extremes(steps):
                 v_max = hi
     return [v_min, v_max]
 
+
+
+
+
+
+
+
+
+
+
 # Classes!
 
 class QVLine(QFrame):

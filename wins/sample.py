@@ -34,19 +34,19 @@ from PyQt6.QtWidgets import (
 )
 
 class WindowSample(QMainWindow):
-    def __init__(self, path, parent, view_only=False):  
+    def __init__(self, parent, mode=g.WIN_MODE_NEW):  
         super().__init__()                          # if path, load sample deets, else load empty edit window for new sample
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        self.path = path                            # create an empty string for holding the filepath
         self.parent = parent                        # store the parent object in object-wide scope
+        self.mode = mode
         self.saved = True                           # set flag to indicate current data shown reflects what is already saved
         self.setObjectName("window-edit-sample")    # create a name for modifying styles from QSS
         layouts = []                                # create list to hold layouts
-        self.view_only = view_only
+        #self.view_only = view_only
         self.close_on_save = False
-        self.new_sample = False
-        if not self.path:
-            self.new_sample = True
+        #self.new_sample = False
+        #if not self.path:
+        #    self.new_sample = True
         self.status = self.statusBar()
         self.progress_bar = QProgressBar()
 
@@ -139,16 +139,16 @@ class WindowSample(QMainWindow):
         self.w.setLayout(layout_pane)
             
         # if a path was entered, gather the data from the specified file and display it
-        if self.path:
+        if not self.mode == g.WIN_MODE_NEW:
             self.update_win()
 
         self.saved = True               #set this again as the process of setting text may mess with this flag, but no data has changed
         self.setCentralWidget(self.w)
 
         # Set the current mode (new sample, edit existing sample, or view existing sample)
-        if not self.path:
+        if self.mode == g.WIN_MODE_NEW:
             self.set_mode_new()
-        elif not self.view_only:
+        elif self.mode == g.WIN_MODE_EDIT:
             self.set_mode_edit()
         else:
             self.set_mode_view()
@@ -177,20 +177,23 @@ class WindowSample(QMainWindow):
                 el.setDate(d)
 
     def set_mode_new(self):
-        self.view_ony = False
+        self.mode = g.WIN_MODE_NEW
+        #self.view_ony = False
         self.set_elements_editable(True)
         self.set_button_bar(self.but_new)
         self.setWindowTitle(l.new_sample[g.L])
         self.w_name.setPlaceholderText(l.s_edit_name[g.L])
         
     def set_mode_edit(self):
-        self.view_only = False
+        #self.view_only = False
+        self.mode = g.WIN_MODE_EDIT
         self.set_elements_editable(True)
         self.set_button_bar(self.but_existing_edit)
         self.setWindowTitle(l.edit_sample[g.L])
         
     def set_mode_view(self):
-        self.view_only = True
+        #self.view_only = True
+        self.mode = g.WIN_MODE_VIEW_ONLY
         self.set_elements_editable(False)
         self.set_button_bar(self.but_existing_view)
         self.setWindowTitle(l.view_sample[g.L])
@@ -266,7 +269,7 @@ class WindowSample(QMainWindow):
             if isCustomName(el.objectName()):
                 data.update({decodeCustomName(el.objectName()): el.toPlainText()})
 
-        if self.new_sample:
+        if self.mode == g.WIN_MODE_NEW:
             # append current datetime
             data.update({g.S_DATE_ENTERED: QDateTime.currentDateTime().toString(g.DATETIME_STORAGE_FORMAT)})
         
@@ -275,7 +278,7 @@ class WindowSample(QMainWindow):
                 data.update({key:[]})
 
         # Do actual save!
-        if self.new_sample:                         # iF new sample
+        if self.mode == g.WIN_MODE_NEW:                         # iF new sample
             try:
                 write_data_to_file(self.path, data)     # do a synchronous save
                 self.saved = True

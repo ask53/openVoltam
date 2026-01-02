@@ -47,22 +47,18 @@ import time # FOR TESTING ONLY
 import sys, os
 
 class WindowRunConfig(QMainWindow):
-    def __init__(self, parent, view_only=False):
+    def __init__(self, parent, run_id=False, view_only=False):
         super().__init__()
-        
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.parent = parent
-        ##### TESTING ####
-        #
-        #self.parent.load_sample_info()                              # make sure data in parent is up-to-date
-        #
-        ##################
+     
         self.setWindowTitle(l.rc_window_title[g.L])
         self.run_to_run = False
         self.reps_to_run = []
-        self.valid = False
         self.view_only = view_only
         self.view_only_modifiable = False
         self.status = self.statusBar()
+        self.saved = False
             
         v1 = QVBoxLayout()
         h1 = QHBoxLayout()
@@ -74,10 +70,10 @@ class WindowRunConfig(QMainWindow):
         self.method.setPlaceholderText(l.rc_select[g.L])
         ########## TESTING
         #
-        if parent.data:
+        if self.parent.data:
         #
         ###################
-            for method in parent.data[g.S_METHODS]:
+            for method in self.parent.data[g.S_METHODS]:
                 self.method.addItem(method[g.M_NAME], method)
         self.method.currentIndexChanged.connect(self.method_changed)
 
@@ -203,6 +199,11 @@ class WindowRunConfig(QMainWindow):
         
         self.setCentralWidget(w)
 
+        if run_id:
+            self.set_form(run_id)
+
+        
+
     def reset_form(self):                                           # resets Run Config window to all blank values
         self.method.setCurrentIndex(g.QT_NOTHING_SELECTED_INDEX)    # set dropdowns to 'nothing selected'
         self.device.setCurrentIndex(g.QT_NOTHING_SELECTED_INDEX)
@@ -245,7 +246,7 @@ class WindowRunConfig(QMainWindow):
                 elif run[g.R_TYPE] == g.R_TYPE_STDADD:              # if this run was the standard addition
                     self.w_stdadd_vol_std.setValue(run[g.R_STD_ADDED_VOL])
                     self.w_stdadd_conc_std.setValue(run[g.R_STD_CONC])
-            self.refresh_graph()                                # refresh the graph pane
+            self.refresh_graph()                                    # refresh the graph pane
             if self.view_only:
                 self.setViewOnly()
 
@@ -271,8 +272,6 @@ class WindowRunConfig(QMainWindow):
             form_is_valid = self.validate_form()    # Validate form
             if form_is_valid:   
                 self.save_method()          # Save the sweep profile
-                self.save_run_configs()     # Save the configs for the run
-                self.run_runs()
                                                     # start running the runs!
         except Exception as e:
             print(e)
@@ -325,7 +324,6 @@ class WindowRunConfig(QMainWindow):
                 show_alert(self, l.alert_header[g.L], 'The concentration of the standard is probably not 0. Please check the standard addition parameters.')
                 return False
 
-        self.valid = True    
         return True
 
     def method_and_device_compatible(self):
@@ -357,42 +355,38 @@ class WindowRunConfig(QMainWindow):
 
     def save_method(self):
 
-        # grab the most up to date version of the sample data from file
-        data = get_data_from_file(self.parent.path)
-        method_id = False
+        # grab the most up to date version of the sample data 
+        data = self.parent.data
+        method_new = self.method.currentData()
 
-        if self.valid:
-            method_new = self.method.currentData()
-            
-            for method in data[g.S_METHODS]:
-                if methods_match(method, method_new):
-                    method_id = method[g.R_UID_SELF]
-                    break
-            
-            if not method_id:                                   # if this is a brand new method for this sample
-                                                                        # Generate a new method id + add it to the data
-                    ids = get_ids(data, g.S_METHODS)                # get existing method uids      
-                    method_id = get_next_id(ids, g.M_UID_PREFIX)   # generate the next method uid
-                    try:
-                        method_new[g.M_UID_SELF] = method_id           # add that new method uid to this current sweep proile
-                    except Exception as e:
-                        print(e)
+        # if this method is already in the file
+        for method in data[g.S_METHODS]:                
+            if methods_match(method, method_new):       
+                self.method_id = method[g.R_UID_SELF]   # grab the id of the stored version and return
+                self.status.showMessage('Method saved.', g.SB_DURATION)
+                self.save_config()
+                return
 
-                    data[g.S_METHODS].append(method_new)            # append the new sweep profile to the old data
-                    write_data_to_file(self.parent.path, data)      # write the data back to the file!
-            
-                
-            self.method_id = method_id   
+        # if this is a brand new method for this sample                                                              
+        ids = get_ids(data, g.S_METHODS)                    # get existing method uids      
+        self.method_id = get_next_id(ids, g.M_UID_PREFIX)   # generate the next method uid
+        method_new[g.M_UID_SELF] = self.method_id           # add that new method uid to this current sweep proile        
+        data[g.S_METHODS].append(method_new)                # append the new sweep profile to the old data
+        #write_data_to_file(self.parent.path, data)          # write the data back to the file!
 
+        self.status.showMessage('Saving method...')
+        self.parent.start_async_save(g.SAVE_TYPE_METHOD_TO_SAMPLE, [method_new], onSuccess=self.after_save_method_success, onError=self.after_save_method_error)
+   
+    def after_save_method_success(self):
+        self.status.showMessage('Method saved.', g.SB_DURATION)
+        self.save_config()
         
-                
-        
-        
+    def after_save_method_error(self):
+        self.status.showMessage('ERROR on method save.', g.SB_DURATION_ERROR)       
 
-    def save_run_configs(self):
+    def save_config(self):
         try:
-            # grab the most up to date version of the sample data from file
-            data = get_data_from_file(self.parent.path)
+            data = self.parent.data
 
             # Create dictionary from new run configs entered by user
             new_data = {}
@@ -423,21 +417,30 @@ class WindowRunConfig(QMainWindow):
                 self.reps_to_run.append(uid_rep)
 
             # Append the new data onto the old dataset
-            data[g.S_RUNS].append(new_data)
+            #data[g.S_RUNS].append(new_data)
 
             # Then write the data back to file
-            write_data_to_file(self.parent.path, data)
-            
-  
+            #write_data_to_file(self.parent.path, data)
+            self.status.showMessage('Saving run configuration...')
+            self.parent.start_async_save(g.SAVE_TYPE_RUN_NEW, [new_data], onSuccess=self.after_save_config_success, onError=self.after_save_config_error)
+   
         except Exception as e:
             #show_alert(self, l.alert_header[g.L], 'Saving the run config produced the following error:\n'+e)
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print(exc_type, fname, exc_tb.tb_lineno)
-            
+
+    def after_save_config_success(self):
+        self.status.showMessage('Run configuration saved.')
+        self.run_runs()
+        
+        
+    def after_save_config_error(self):
+        self.status.showMessage('ERROR on method save.')       
+         
     def run_runs(self):
         self.close()
-        self.parent.start_run(self.run_to_run)
+        self.parent.new_win_view_run(self.run_to_run)
 
     def setViewOnly(self, modifiable=False):
         if self.run_to_run:
@@ -526,17 +529,26 @@ class WindowRunConfig(QMainWindow):
 
 
     def showEvent(self, event):
-        if not self.view_only:
-            self.parent.setEnabled(False)
-            self.parent.setEnabledChildren(False)
-            self.setEnabled(True)
-        event.accept()
+        try:
+            if not self.view_only:
+                self.parent.setEnabled(False)
+                self.parent.set_enabled_children(False)
+                self.setEnabled(True)
+            event.accept()
+        except Exception as e:
+            print(e)
         
     def closeEvent(self, event):
         if not self.view_only:
             self.parent.setEnabled(True)
-            self.parent.setEnabledChildren(True)
-        self.parent.load_sample_info()
-        event.accept()
+            self.parent.set_enabled_children(True)
+        self.accept_close(event)
+
+    def accept_close(self, closeEvent):
+        """Take in a close event. Removes the reference to itself in the parent's
+        self.children list (so reference can be cleared from memory) and accepts
+        the passed event."""
+        self.parent.children.remove(self)
+        closeEvent.accept()
 
     

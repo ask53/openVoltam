@@ -44,9 +44,8 @@ from PyQt6.QtWidgets import (
 )
 
 class WindowRunView(QMainWindow):
-    def __init__(self, parent):
+    def __init__(self, parent, run_id):
         super().__init__()
-        
         self.parent = parent
         self.data = False
         self.uid = False
@@ -108,6 +107,8 @@ class WindowRunView(QMainWindow):
         w = QWidget()
         w.setLayout(h1)
         self.setCentralWidget(w)
+
+        print('here')
         
     def set_run_uid(self, uid):
         self.uid = uid
@@ -296,8 +297,11 @@ class WindowRunView(QMainWindow):
         return new_method
         
     def read_updated_file(self):
-        self.parent.load_sample_info()
-        self.data = self.parent.data
+        try:
+            #self.parent.load_sample_info()
+            self.data = self.parent.data
+        except Exception as e:
+            print(e)
 
     def interrupt_data_getter(self):
         """
@@ -389,15 +393,19 @@ class WindowRunView(QMainWindow):
     
     def showEvent(self, event):
         self.parent.setEnabled(False)
-        self.parent.setEnabledChildren(False)
+        self.parent.set_enabled_children(False)
         self.setEnabled(True)
         event.accept()
         
     def closeEvent(self, event):
-        try:
-            self.parent.setEnabled(True)
-            self.parent.setEnabledChildren(True)
-            self.__init__(self.parent)
-            event.accept()
-        except Exception as e:
-            print(e)
+        self.parent.setEnabled(True)
+        self.parent.set_enabled_children(True)
+        self.accept_close(event)
+
+    def accept_close(self, closeEvent):
+        """Take in a close event. Removes the reference to itself in the parent's
+        self.children list (so reference can be cleared from memory) and accepts
+        the passed event."""
+        self.parent.children.remove(self)
+        closeEvent.accept()
+
