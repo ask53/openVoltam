@@ -36,8 +36,16 @@ def write_error(s):     # Write error to error channel
     sys.stderr.write(s)
     sys.stderr.flush()
 
-def update_sample(data, params):
-    return
+
+def write_progress(pct):
+    write_data(str(pct)+'\n')
+
+
+def update_sample(data, params):    # Takes the sample parameters
+    newData = params[0]             # passed in params[0]
+    for key in g.S_EDITABLES:       # and overwrites the existing values
+        data[key] = newData[key]    # with the passed values
+    return data
 
 def add_new_run(data, params):
     return
@@ -78,7 +86,6 @@ try:
     saveType = sys.argv[2]              # get save type
     params = literal_eval(sys.argv[3])  # cast sys.argv[3] from string to list
     data = get_data_from_file(path)     # read file from path (returns dict)
-
     if saveType == g.SAVE_TYPE_SAMPLE:
         data=update_sample(data, params)
     elif saveType == g.SAVE_TYPE_RUN_NEW:

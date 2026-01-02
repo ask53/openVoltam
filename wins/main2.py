@@ -93,7 +93,9 @@ class WindowMain(QMainWindow):
         #                   #
         #   status bar      #
         #                   #
-        ##################### 
+        #####################
+        self.progress_bar.setMinimum(0)
+        self.progress_bar.setMaximum(0)
         self.progress_bar.setMaximumWidth(200)  # Set a fixed width
         self.progress_bar.setVisible(False)     # Hide it initially
         self.status.addPermanentWidget(self.progress_bar)
@@ -728,8 +730,10 @@ class WindowMain(QMainWindow):
 
                 if ok:
                     rep[g.R_NOTES] = input_text
-                    self.start_async_save(g.SAVE_TYPE_REP_MOD, [(run_id, rep_id), rep])
-
+                    try:
+                        self.start_async_save(g.SAVE_TYPE_REP_MOD, [(run_id, rep_id), rep])
+                    except Exception as e:
+                        print(e)
 
 
     #############################################
@@ -833,14 +837,16 @@ class WindowMain(QMainWindow):
     #                                           #
     #############################################
 
-    def start_async_save(self, saveType, params):
+    def start_async_save(self, saveType, params, onSuccess=False, onError=False):
+        
         try:
             self.process = QProcess()
             self.process.readyReadStandardOutput.connect(self.handle_save_stdout)
             self.process.readyReadStandardError.connect(self.handle_save_stderr)
-            self.process.finished.connect(self.handle_finished_save)
+            self.process.finished.connect(partial(self.handle_finished_save, onSuccess, onError))
             self.process.start("python", ['processes/save.py', self.path, saveType, str(params)])
             self.status.showMessage("Saving...")
+            self.progress_bar.setVisible(True)
             #print('save process started...', g.SB_DURATION)
         except Exception as e:
             print(e)
@@ -849,7 +855,10 @@ class WindowMain(QMainWindow):
         #print('normal msg:')
         data = self.process.readAllStandardOutput()
         stdout = bytes(data).decode("utf8")
-        self.data = literal_eval(stdout)
+        data = literal_eval(stdout)
+        self.data = data
+        
+        
 
     def handle_save_stderr(self):
         print('error msg:')
@@ -858,14 +867,23 @@ class WindowMain(QMainWindow):
         print(stderr)
         self.save_error_flag = True
 
-    def handle_finished_save(self):
-        if self.save_error_flag:
-            self.status.showMessage("ERROR: Save could not complete.", g.SB_DURATION)
-        else:
-            self.status.showMessage("Saved!", g.SB_DURATION)
-        self.save_error_flag = False
-        self.process = None
-        self.update_main()
+    def handle_finished_save(self, onSuccess, onError):
+        try:
+            if self.save_error_flag:                                                        # If run errored
+                self.status.showMessage("ERROR: Save could not complete.", g.SB_DURATION)   #   Show error message
+                if onError:                                                                 #   If there is an onError callback fn
+                    onError()                                                               #   run it! 
+            else:                                                                           # If the run succeeded
+                self.status.showMessage("Saved!", g.SB_DURATION)                            #   Show success message
+                self.update_main()                                                          #   Update main window with new data
+                if onSuccess:                                                               #   If there is an onSuccess callback fn
+                    onSuccess()                                                             #   run it!
+                
+            self.progress_bar.setVisible(False)                                             # Rehide the progress bar
+            self.save_error_flag = False                                                    # Reset the error-on-save flag
+            self.process = None                                                             # Wipe the process from memory
+        except Exception as e:
+            print(e)
 
     #############################################
     #                                           #

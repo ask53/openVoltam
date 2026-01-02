@@ -20,6 +20,7 @@ S_METHODS = "methods"
 S_RUNS = "runs"
 S_PROCESSED = "processed_data"
 
+S_EDITABLES = [S_NAME, S_DATE_COLLECTED, S_LOC_COLLECTED, S_CONTACT, S_COLLECTED_BY, S_NOTES]
 S_BLANK_ARRAYS = [S_METHODS, S_RUNS, S_PROCESSED]
 
 # Keys for method (M) dictionary
