@@ -767,11 +767,7 @@ class WindowMain(QMainWindow):
         self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_VIEW_ONLY))
 
     def new_win_config_run(self, mode, run_id=False):
-        print('opening run config window with mode:',mode)
-        try:
-            self.new_win_one_of_type(WindowRunConfig(self, mode, run_id))
-        except Exception as e:
-            print(e)
+        self.new_win_one_of_type(WindowRunConfig(self, mode, run_id))
 
     def new_win_view_run(self, run_id):
         self.new_win_one_of_type(WindowRunView(self, run_id))

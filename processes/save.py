@@ -36,11 +36,6 @@ def write_error(s):     # Write error to error channel
     sys.stderr.write(s)
     sys.stderr.flush()
 
-
-def write_progress(pct):
-    write_data(str(pct)+'\n')
-
-
 def update_sample(data, params):    # Takes the sample parameters
     newData = params[0]             # passed in params[0]
     for key in g.S_EDITABLES:       # and overwrites the existing values
@@ -68,20 +63,37 @@ def modify_rep(data, params):
                     break
             if found:
                 break
-    prevData = rep[g.R_DATA]    # store the previous raw data
-    keys = list(rep.keys())     # get a list of all keys in saved rep
-    for key in keys:            # removal all keys and values from rep
-        rep.pop(key, None)      
-    for key in newRep:          # add new keys and values to rep (does not include raw data)
-        rep[key] = newRep[key]
-    rep[g.R_DATA] = prevData    # add previous raw data back in
+    if found:
+        prevData = rep[g.R_DATA]    # store the previous raw data
+        keys = list(rep.keys())     # get a list of all keys in saved rep
+        for key in keys:            # removal all keys and values from rep
+            rep.pop(key, None)      
+        for key in newRep:          # add new keys and values to rep (does not include raw data)
+            rep[key] = newRep[key]
+        rep[g.R_DATA] = prevData    # add previous raw data back in
     return data
 
 def replace_rep(data, params):
     return
 
 def modify_run(data, params):
-    return
+    run_id = params[0]
+    newRun = params[1]
+    found = False
+    for run in data[g.S_RUNS]:
+        if run[g.R_UID_SELF] == run_id:
+            found = True
+            break
+    if found:
+        prevReps = run[g.R_REPLICATES]  # store previous replicates (includes raw data)
+        keys = list(run.keys())         # get a list of all keys in saved run
+        for key in keys:                # remove all keys and values from run
+            run.pop(key, None)      
+        for key in newRun:              # add new keys and values to run (does not include replicates)
+            run[key] = newRun[key]
+        run[g.R_REPLICATES] = prevReps  # add the old replicates (with raw data) back in   
+    
+    return data
 
 def method_to_sample(data, params):     # append method to sample file
     newMethod = params[0]               

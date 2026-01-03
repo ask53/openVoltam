@@ -55,10 +55,9 @@ class WindowRunConfig(QMainWindow):
         self.run_id = run_id
      
         self.setWindowTitle(l.rc_window_title[g.L])
-        self.run_to_run = False
-        self.reps_to_run = []
         self.status = self.statusBar()
-        self.saved = False
+        self.saved = True
+        self.close_on_save = False
             
         v1 = QVBoxLayout()
         h1 = QHBoxLayout()
@@ -81,6 +80,7 @@ class WindowRunConfig(QMainWindow):
         self.device.setPlaceholderText(l.rc_select[g.L])
         for dev in devices:
             self.device.addItem(dev['name'], dev)
+        self.device.currentIndexChanged.connect(self.device_changed)
             
         run_type_lbl = QLabel("Run type")
         #####################
@@ -101,7 +101,7 @@ class WindowRunConfig(QMainWindow):
         self.replicates.setValue(g.RC_REPS_MIN)
         self.replicates.setMinimum(g.RC_REPS_MIN)
         self.replicates.setMaximum(g.RC_REPS_MAX)
-        self.replicates.valueChanged.connect(self.refresh_graph)
+        self.replicates.valueChanged.connect(self.reps_changed)
             
         self.graph = MethodPlot()
         graph_area = QScrollArea()
@@ -113,6 +113,7 @@ class WindowRunConfig(QMainWindow):
 
         notes_lbl = QLabel("Notes")
         self.notes = QLineEdit()
+        self.notes.textEdited.connect(self.value_changed)
         
         # setup stacked layout for options specific to each run type
         self.type_stack = QStackedLayout(self)
@@ -137,6 +138,13 @@ class WindowRunConfig(QMainWindow):
         v_stdadd.addLayout(horizontalize([w_stdadd_conc_std_lbl, self.w_stdadd_conc_std], True))
         g_stdadd = QGroupBox("Standard addition parameters")
         g_stdadd.setLayout(v_stdadd)
+
+        ws_in_stack = [self.w_sample_sample_vol,
+                       self.w_sample_total_vol,
+                       self.w_stdadd_vol_std,
+                       self.w_stdadd_conc_std]
+        for w in ws_in_stack:
+            w.valueChanged.connect(self.value_changed)
                
         self.type_stack.addWidget(w_blank)
         self.type_stack.addWidget(g_sample)
@@ -152,23 +160,13 @@ class WindowRunConfig(QMainWindow):
         
         self.buts = [self.but_new, self.but_edit, self.but_view]
 
-
-        ############### SORT THIS OUT FOR TOGGLING BUTTONS AND FIELDS!
-        #
-        #
-        #
+        # Define which buttons are enabled on which modes
         self.ws_for_new = [self.method, but_m_load, self.device, self.replicates]
         self.ws_for_edit = [self.run_type, self.w_sample_sample_vol, self.w_sample_total_vol,
                              self.w_stdadd_vol_std, self.w_stdadd_conc_std, self.notes]
         self.ws_for_view = [but_view_method]
-        #
-        #
-        #           AND UPDATE toggle_widget_editability() function as well
-
-        
-
+      
         # add widgets to layouts 
-        
         v1.addWidget(method_lbl)
         v1.addLayout(horizontalize([self.method, but_m_load]))
         v1.addWidget(device_lbl)
@@ -190,9 +188,9 @@ class WindowRunConfig(QMainWindow):
         w.setLayout(h1)
         self.setCentralWidget(w)
 
-        if run_id:
-            self.set_form(run_id)
-        
+        # If there is a specific run selected, fill out the form with that run's details
+        if run_id:                  
+            self.set_form()
 
         if self.mode == g.WIN_MODE_NEW:
             self.set_mode_new()
@@ -200,9 +198,19 @@ class WindowRunConfig(QMainWindow):
             self.set_mode_edit()
         else:
             self.set_mode_view()
-        
+
+        self.saved = True
 
         
+    #########################################
+    #                                       #
+    #   Window visualization/layout fns     #
+    #                                       #
+    #   1. reset_form                       #
+    #   2. set_form                         #
+    #   3. refresh_graph                    #
+    #                                       #
+    ######################################### 
 
     def reset_form(self):                                           # resets Run Config window to all blank values
         self.method.setCurrentIndex(g.QT_NOTHING_SELECTED_INDEX)    # set dropdowns to 'nothing selected'
@@ -217,16 +225,16 @@ class WindowRunConfig(QMainWindow):
         self.type_stack.setCurrentIndex(0)                          # set stacked view to the 0th view (blank)
         self.refresh_graph()                                        # refresh the graph pane
 
-    def set_form(self, uid=False):                                  # Sets Run Config window to match values from run with uid
+    def set_form(self):                                             # Sets Run Config window to match values from run with uid
         self.reset_form()
-        if uid:
-            self.run_to_run = uid
-            data = get_data_from_file(self.parent.path)
-            run = get_run_from_file_data(data, uid)                 # Look for the relevant run, store it if found, else run=False
+        if self.run_id:
+            data = self.parent.data
+            run = get_run_from_file_data(data, self.run_id)         # Look for the relevant run, store it if found, else run=False
             if run:                                           
                 method = get_method_from_file_data(data, run[g.R_UID_METHOD]) # Look for relevant method, store if found, else method=False
                 if method:                                          # If the method is found in the file
                     self.method.setCurrentText(method[g.M_NAME])    # Select that method in the method dropdown
+                    self.method_id = method[g.M_UID_SELF]
 
                 self.device.setCurrentText(run[g.R_DEVICE])         # set device menu to value from file
                 self.replicates.setValue(len(run[g.R_REPLICATES]))  # set replicates to length of replicate list of run from file
@@ -247,14 +255,63 @@ class WindowRunConfig(QMainWindow):
                     self.w_stdadd_vol_std.setValue(run[g.R_STD_ADDED_VOL])
                     self.w_stdadd_conc_std.setValue(run[g.R_STD_CONC])
             self.refresh_graph()                                    # refresh the graph pane
-            '''if self.mode == g.WIN_MODE_VIEW_ONLY:
-                self.setViewOnly()'''
 
-    def run_type_changed(self, i):
-        self.type_stack.setCurrentIndex(i)
+    def refresh_graph(self):
+        reps = int(self.replicates.value())
+        steps = []
+        if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
+            steps = self.method.currentData()[g.M_STEPS]    
+        self.graph.update_plot(steps, show_labels=False, reps=reps)
+
+    #########################################
+    #                                       #
+    #   Handlers for changed widgets        #
+    #                                       #
+    #   1. method_changed                   #
+    #   2. device_changed                   #
+    #   3. run_type_changed                 #
+    #   4. reps_changed                     #
+    #   5. value_changed                    #
+    #                                       #
+    #########################################
 
     def method_changed(self, i):
+        """Resets flag to indicate that the run config has been modified from
+        saved version and refreshes graph."""
+        self.saved = False
         self.refresh_graph()
+
+    def device_changed(self):
+        """Resets flag to indicate that the run config has been modified from
+        saved version."""
+        self.saved = False
+
+    def run_type_changed(self, i):
+        """Resets flag to indicate that the run config has been modified from
+        saved version and toggles stacked layout to appropriate stack."""
+        self.saved = False
+        self.type_stack.setCurrentIndex(i)
+
+    def reps_changed(self):
+        """Resets flag to indicate that the run config has been modified from
+        saved version and refreshes graph."""
+        self.saved = False
+        self.refresh_graph()
+
+    def value_changed(self):
+        """Generic hanlder: Resets flag to indicate that the run config has
+        been modified from saved version."""
+        self.saved = False
+
+
+    #########################################
+    #                                       #
+    #   Method-related functions            #
+    #                                       #
+    #   1. open_method_from_file            #
+    #   2. view_method                      #
+    #                                       #
+    #########################################      
 
     def open_method_from_file(self):
         path = get_path_from_user('method')
@@ -268,26 +325,75 @@ class WindowRunConfig(QMainWindow):
             self.method.setCurrentIndex(self.method.count()-1)
         except Exception as e:
             print(e)
+
+    def view_method(self):
+        if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
+            self.parent.parent.open_config(data=self.method.currentData(), editable=False)
+
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    ######################3 HERE ######################################################
+
+
+    #########################################
+    #                                       #
+    #   Saving and validation               #
+    #                                       #
+    #   1. run_button_clicked               #
+    #   2. validate_form                    #
+    #   3. method_and_device_compatible     #
+    #   4. save_method                      #
+    #       5. after_save_method_success    #
+    #       6. after_save_method_error      #
+    #   7. save_config                      #
+    #       8. after_save_config_success    #
+    #       9. after_save_config_error      #
+    #   10. save_changes                    #
+    #       11. after_save_changes_success  #
+    #       12. after_save_changes_error    #
+    #   13. run_runs                        #
+    #                                       #
+    #########################################
         
     def run_button_clicked(self):
-        try:
-            form_is_valid = self.validate_form()    # Validate form
-            if form_is_valid:   
-                self.save_method()          # Save the sweep profile
-                                                    # start running the runs!
-        except Exception as e:
-            print(e)
-
-
+        if self.parent.process:                 # If parent is running a process (save or load or whatever)
+            return                              #   ignore this button click
+        form_is_valid = self.validate_form()    # Validate form
+        if form_is_valid:   
+            self.save_method()                  # Start the save process
+                            
     def validate_form(self):
-        ########## FOR TESTING, COMMENT TO RUN ####################################
-        #self.valid = True
-        #return True
-        ###############################################################
-
+        """ Checks a series of validation criteria on self. If any single criteria is
+        not met, an alert is shown to the user and returns False. Thus it only alerts
+        user to first criterion that is not met. 
+        If all criteria are met, returns True."""
         
-
-    
         # Make sure all drop down menus have something selected
         if self.method.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:
             show_alert(self, l.alert_header[g.L], 'please select a sweep profile to proceed.')
@@ -387,82 +493,141 @@ class WindowRunConfig(QMainWindow):
         self.status.showMessage('ERROR on method save.', g.SB_DURATION_ERROR)       
 
     def save_config(self):
-        try:
-            data = self.parent.data
-
-            # Create dictionary from new run configs entered by user
-            new_data = {}
-
-            new_data[g.R_UID_METHOD] = self.method_id
-            new_data[g.R_DEVICE] = self.device.currentText()
-            new_data = self.append_editable_run_info(new_data)
-        
-            # Get the unique run id for this run
-            run_ids = get_ids(data, g.S_RUNS)
-            run_id = get_next_id(run_ids, g.R_RUN_UID_PREFIX)
-            new_data[g.R_UID_SELF] = run_id
-            self.run_to_run = run_id
-
-            # Get the datetime of creation of run
-            new_data[g.R_TIMESTAMP] = QDateTime.currentDateTime().toString(g.DATETIME_STORAGE_FORMAT)
-
-            # Create spaces for replicate info and raw data for each replicate
-            new_data[g.R_REPLICATES] = []
-            for i in range(0, self.replicates.value()):
-                uid_rep = g.R_REPLICATE_UID_PREFIX+str(i)
-                rep = {g.R_UID_SELF: uid_rep,
-                       g.R_STATUS: g.R_STATUS_PENDING,
-                       g.R_NOTES: '',
-                       g.R_DATA: False
-                       }
-                new_data[g.R_REPLICATES].append(rep)
-                self.reps_to_run.append(uid_rep)
-
-            # Append the new data onto the old dataset
-            #data[g.S_RUNS].append(new_data)
-
-            # Then write the data back to file
-            #write_data_to_file(self.parent.path, data)
-            self.status.showMessage('Saving run configuration...')
-            self.parent.start_async_save(g.SAVE_TYPE_RUN_NEW, [new_data], onSuccess=self.after_save_config_success, onError=self.after_save_config_error)
-   
-        except Exception as e:
-            #show_alert(self, l.alert_header[g.L], 'Saving the run config produced the following error:\n'+e)
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            print(exc_type, fname, exc_tb.tb_lineno)
+        self.set_run_id()                       # make sure the correct run id is set 
+        new_data = self.get_config_data_dict()  # get data dict without reps
+        reps = self.get_replicate_list()        # get reps as a list
+        new_data[g.R_REPLICATES] = reps         # add reps list as value to data dict
+            
+        # Then start the save!   
+        self.status.showMessage('Saving run configuration...')
+        self.parent.start_async_save(g.SAVE_TYPE_RUN_NEW, [new_data], onSuccess=self.after_save_config_success, onError=self.after_save_config_error)
 
     def after_save_config_success(self):
-        self.status.showMessage('Run configuration saved.')
+        self.status.showMessage('Run configuration saved.', g.SB_DURATION)
+        self.saved = True
         self.run_runs()
-        
-        
+           
     def after_save_config_error(self):
-        self.status.showMessage('ERROR on method save.')       
-         
+        self.status.showMessage('ERROR: Changes were not saved.', g.SB_DURATION_ERROR)
+
+    def save_changes(self):
+        if self.parent.process:                     # If there is an ongoing parent process (save, load, run, etc.)
+            return                                  #   do nothing (ignore button press)
+        elif self.saved:                            # If there are no changes to save
+            self.after_save_changes_success()       #   run all-changes-saved routine
+            return                                  #   and otherwise do nothing
+        form_is_valid = self.validate_form()        # If there are changes to save, validate form
+        if form_is_valid:                           # If form is valid:
+            new_data = self.get_config_data_dict()  #   get data dict without reps and save
+            self.status.showMessage('Saving run configuration...')
+            self.parent.start_async_save(g.SAVE_TYPE_RUN_MOD, [self.run_id, new_data], onSuccess=self.after_save_changes_success, onError=self.after_save_changes_error)
+
+    def after_save_changes_success(self):
+        self.status.showMessage('All changes saved.', g.SB_DURATION)
+        self.saved = True
+        if self.close_on_save:
+            self.close()
+        else:
+            self.set_mode_view()
+           
+    def after_save_changes_error(self):
+        self.status.showMessage('ERROR: Changes were not saved.', g.SB_DURATION_ERROR)
+        self.close_on_save = False
+
     def run_runs(self):
         self.close()
-        self.parent.new_win_view_run(self.run_to_run)
+        self.parent.new_win_view_run(self.run_id)
 
+
+    #########################################
+    #                                       #
+    #   Data preparation functions          #
+    #                                       #
+    #   1. set_run_id                       #
+    #   2. get_config_data_dict             #
+    #   3. get_replicate_list               # 
+    #                                       #
+    #########################################
+
+    def set_run_id(self):
+        if self.mode == g.WIN_MODE_NEW:                              # If this is a new run:
+            data = self.parent.data                                 #   from up to date data:
+            run_ids = get_ids(data, g.S_RUNS)                       #   grab all previous IDs
+            self.run_id = get_next_id(run_ids, g.R_RUN_UID_PREFIX)  #   and find the next ID
+            
+    def get_config_data_dict(self):
+        try:
+            run = {}    
+                
+            run[g.R_UID_SELF] = self.run_id
+            if self.mode == g.WIN_MODE_NEW:                 # only store time created if this is a new config
+                run[g.R_TIMESTAMP] = QDateTime.currentDateTime().toString(g.DATETIME_STORAGE_FORMAT)
+            run[g.R_UID_METHOD] = self.method_id
+            run[g.R_DEVICE] = self.device.currentText()
+            run[g.R_NOTES] = self.notes.text()              
+
+            run_type = self.run_type.currentData()          # Get the current run type
+            run[g.R_TYPE] = run_type                        # Add current run type to dict
+            
+            if run_type == g.R_TYPE_SAMPLE:                 # If its a sample run, add the relevant parameters   
+                run[g.R_SAMPLE_VOL] = self.w_sample_sample_vol.value()
+                run[g.R_TOTAL_VOL] = self.w_sample_total_vol.value()
+            elif run_type == g.R_TYPE_STDADD:               # If its a standard addition run, add the relevant parameters 
+                run[g.R_STD_ADDED_VOL] = self.w_stdadd_vol_std.value()
+                run[g.R_STD_CONC] = self.w_stdadd_conc_std.value()
+                
+            return run
+        except Exception as e:
+            print(e)
+
+    def get_replicate_list(self):
+        reps = []
+        for i in range(0, self.replicates.value()):
+            uid_rep = g.R_REPLICATE_UID_PREFIX+str(i)
+            rep = {g.R_UID_SELF: uid_rep,
+                    g.R_STATUS: g.R_STATUS_PENDING,
+                   g.R_NOTES: '',
+                   g.R_DATA: False
+                   }
+            reps.append(rep)
+        return reps
+
+
+    #########################################
+    #                                       #
+    #   Mode change functions               #
+    #                                       #
+    #   1. set_mode_new                     #
+    #   2. set_mode_edit                    # 
+    #   3. set_mode_view                    #
+    #   4. toggle_widget_editability        #
+    #   5. set_button_bar                   #
+    #                                       #
+    #########################################
+    
     def set_mode_new(self):
-        self.mode = g.WIN_MODE_NEW
-        self.toggle_widget_editability()
-        self.set_button_bar(self.but_new)
-        self.setWindowTitle("Run configuration | New")
+        """Sets window mode to that of a new run configuration"""
+        self.mode = g.WIN_MODE_NEW                      # Set the mode flag
+        self.toggle_widget_editability()                # enable the appropriate widgets for this mode
+        self.set_button_bar(self.but_new)               # Make sure the button specific to this mode is visible
+        self.setWindowTitle("Run configuration | New")  # Set the window title to indicate current mode
 
     def set_mode_edit(self):
-        self.mode = g.WIN_MODE_EDIT
+        """Sets window mode to editing the configuration of an already-completed run"""
+        self.mode = g.WIN_MODE_EDIT                     
         self.toggle_widget_editability()
         self.set_button_bar(self.but_edit)
         self.setWindowTitle("Run configuration | Edit")  
 
     def set_mode_view(self):
+        """Sets window mode to viewing the configuration of an already-completed run"""
         self.mode = g.WIN_MODE_VIEW_ONLY
         self.toggle_widget_editability()
         self.set_button_bar(self.but_view)
         self.setWindowTitle("Run configuration | View")
 
     def toggle_widget_editability(self):
+        """Depending on the current mode, enables/greys-out certain widgets"""
         if self.mode == g.WIN_MODE_NEW:
             to_enable = self.ws_for_new + self.ws_for_edit + self.ws_for_view
             to_not = []
@@ -477,103 +642,23 @@ class WindowRunConfig(QMainWindow):
         for w in to_not:
             w.setEnabled(False)
     
-    def set_button_bar(self, button):        
+    def set_button_bar(self, button):
+        """Takes in a button widget. Removes all removable buttons from layout, then adds
+        button back in at the appropriate spot"""
         for but in self.buts:
             but.setParent(None)
-        self.centralWidget().layout().children()[-1].addWidget(button)
-
-
-
-    
-        
-
-    '''def setViewOnly(self, modifiable=False):
-        if self.run_to_run:
-            self.view_only_modifiable = modifiable          # set/reset flag
-            for w in self.ws_to_toggle:                     # toggle enabled status of buttoms/inputs
-                w.setEnabled(modifiable)
-            if not modifiable:
-                self.but_edit.setText('Edit run info')          # set button text 
-                self.setWindowTitle('View | '+self.run_to_run)  # and window title
-            else:
-                self.but_edit.setText('Save changes')           # set button text
-                self.setWindowTitle('Edit | '+self.run_to_run)  # and window title    
-
-
-        if self.view_only_modifiable:
-            try:
-                form_is_valid = self.validate_form()    # Validate form
-                if form_is_valid:
-                    self.status.showMessage('saving...')
-                    self.save_modified_run_configs()     # Save the configs for the run
-                    self.setViewOnly()
-                    self.status.showMessage('Saved!', g.SB_DURATION)
-            except Exception as e:
-                show_alert(self, "Error", "Eek! There was an issue saving the data, please try again.")
-                print(e)
-        else:
-            self.setViewOnly(modifiable=True)'''
-
-
-    def save_changes(self):
-        return
-        # REWRITE THIS AS ASYNC SAVE!
-        '''data = get_data_from_file(self.parent.path)
-        runDict = False
-        for run in data[g.S_RUNS]:
-            if run[g.R_UID_SELF] == self.run_to_run:
-                runDict = run
-                break
-        if runDict:
-            runDict = self.append_editable_run_info(runDict)
-            write_data_to_file(self.parent.path, data)'''
-
-    def append_editable_run_info(self, rDict):
-        
-        ### IF THERE IS DATA SPECIFIC TO THE RUN TYPE, INDICATE IT HERE: #####
-        #
-        #
-        sample_info = {g.R_SAMPLE_VOL: self.w_sample_sample_vol,
-                       g.R_TOTAL_VOL:self.w_sample_total_vol}
-
-        stdadd_info = {g.R_STD_ADDED_VOL: self.w_stdadd_vol_std,
-                        g.R_STD_CONC: self.w_stdadd_conc_std}
-        #
-        #
-        ######################################################################
-
-        keys = list(sample_info.keys()) + list(stdadd_info.keys())
-        run_type = self.run_type.currentData()          # Get the current run type
-        rDict[g.R_TYPE] = run_type                      # Add current run type to dict
-        rDict[g.R_NOTES] = self.notes.text()            # Add current note to dict
-        
-        dict_to_save = None                             # If there are type-specific values to save
-        if run_type == g.R_TYPE_SAMPLE:                 # Indicate which ones
-            dict_to_save = sample_info
-        elif run_type == g.R_TYPE_STDADD:
-            dict_to_save = stdadd_info
-            
-        for key in keys:                                # just in case, remove all                        
-            rDict.pop(key, None)                        # key/value pairs for sample and stdadd
-        if dict_to_save:                                # if type-specific daa
-            for key in dict_to_save:                    # Add the data from the given type
-                rDict[key] = dict_to_save[key].value()
-        return rDict
-
+        self.centralWidget().layout().children()[-1].addWidget(button) # Add button to end of right-column layout
    
         
-
-    def refresh_graph(self):
-        reps = int(self.replicates.value())
-        steps = []
-        if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
-            steps = self.method.currentData()[g.M_STEPS]    
-        self.graph.update_plot(steps, show_labels=False, reps=reps)
-
-    def view_method(self):
-        if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
-            self.parent.parent.open_config(data=self.method.currentData(), editable=False)
-
+    #########################################
+    #                                       #
+    #   Window show/hide event handlers     #
+    #                                       #
+    #   1. showEvent                        #
+    #   2. closeEvent                       # 
+    #   3. accept_close                     #
+    #                                       #
+    #########################################
 
     def showEvent(self, event):
         try:
@@ -586,15 +671,25 @@ class WindowRunConfig(QMainWindow):
             print(e)
         
     def closeEvent(self, event):
-        self.parent.setEnabled(True)
-        self.parent.set_enabled_children(True)
-        self.accept_close(event)
+        if not self.saved and self.mode == g.WIN_MODE_EDIT:
+            confirm = saveMessageBox(self)
+            resp = confirm.exec()
+            if resp == QMessageBox.StandardButton.Save:
+                event.ignore()
+                self.close_on_save = True
+                self.save_changes()
+            elif resp == QMessageBox.StandardButton.Discard:
+                self.accept_close(event)
+            else:
+                event.ignore()  
+        else:
+            self.accept_close(event)                     
 
     def accept_close(self, closeEvent):
         """Take in a close event. Removes the reference to itself in the parent's
         self.children list (so reference can be cleared from memory) and accepts
         the passed event."""
+        self.parent.setEnabled(True)
+        self.parent.set_enabled_children(True)
         self.parent.children.remove(self)
         closeEvent.accept()
-
-    
