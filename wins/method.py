@@ -255,17 +255,19 @@ from PyQt6.QtWidgets import (
     )
 
 class WindowMethod(QMainWindow):
-    def __init__(self, path=False, data=False, view_only=False, parent=False, view_only_edit=True):
+    def __init__(self, parent, mode, path=False, run_id=False):
         super().__init__()
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.parent = parent
+        self.mode = mode
+        self.path = path
+        self.run_id = run_id
+
+        self.saved = True
         self.steps = []
         self.selected = []
-        self.editing = False
-        self.adding = False
-        self.view_only = view_only
-        self.path = path
-        self.data = data
+        self.status = self.statusBar()
         
-
         v1 = QVBoxLayout()
         v1top = QVBoxLayout()
         v1bot = QVBoxLayout()
@@ -451,11 +453,12 @@ class WindowMethod(QMainWindow):
         
         but_save = QPushButton('Save')
         but_save_as = QPushButton('Save as')
-        if self.path:
+
+        '''if self.path:
             but_save.clicked.connect(partial(self.start_save, 'save'))
             but_save_as.clicked.connect(partial(self.start_save, 'save-as'))
         else:
-            but_save.clicked.connect(partial(self.start_save, 'save-as'))
+            but_save.clicked.connect(partial(self.start_save, 'save-as'))'''
 
 
         v5.addLayout(horizontalize([dt_lbl_0, self.dt, dt_lbl_1], True))
@@ -476,10 +479,11 @@ class WindowMethod(QMainWindow):
         v1top.addLayout(h1)
         v1bot.addWidget(self.builder)
         
-        if self.path:
+        '''if self.path:
             v1bot.addLayout(horizontalize([but_save, but_save_as]))
         else:
-            v1bot.addWidget(but_save)
+            v1bot.addWidget(but_save)'''
+        
         wtop = QWidget()
         wbot = QWidget()
         wtop.setLayout(v1top)
@@ -489,29 +493,32 @@ class WindowMethod(QMainWindow):
 
         self.init_form_values()
         self.hide_new_step_pane()
-        if self.path or self.data:
+        if self.path: #or self.data:
             self.set_values()
-        self.update_buttons()
-        self.set_header()
+        #self.update_buttons()
+        #self.set_header()
 
-        if self.view_only:
+        print('hi!')
+        
+
+        if self.mode == g.WIN_MODE_VIEW_ONLY or self.mode == g.WIN_MODE_VIEW_WITH_MINOR_EDITS:
             try:
-                but_edit = QPushButton('Edit method')
+                '''but_edit = QPushButton('Edit method')
                 but_edit.clicked.connect(partial(parent.edit_config, path=self.path))
                 but_refresh = QPushButton()
                 but_refresh.setIcon(QIcon(g.ICON_REFRESH))
                 but_refresh.setToolTip('Refresh')
-                but_refresh.clicked.connect(self.set_values)
-                if not view_only_edit:
+                but_refresh.clicked.connect(self.set_values)'''
+                '''if not view_only_edit:
                     but_edit.setEnabled(False)
-                    but_refresh.setEnabled(False)
+                    but_refresh.setEnabled(False)'''
                 v1 = QVBoxLayout()
                 h1 = QHBoxLayout()
                 v2 = QVBoxLayout()
                 h2 = QHBoxLayout()
 
-                h2.addWidget(but_edit)
-                h2.addWidget(but_refresh)
+                #h2.addWidget(but_edit)
+                #h2.addWidget(but_refresh)
                 h2.addStretch()
                 h2.addWidget(self.hide_plot_lbls)
                 v2.addWidget(g2)
@@ -1038,6 +1045,8 @@ class WindowMethod(QMainWindow):
         self.graph.update_plot(self.steps, lbls)
 
     def set_header(self):
+        print('modifying the header, maybe...')
+        return
         if self.view_only:
             self.setWindowTitle(l.window_home[g.L]+g.HEADER_DIVIDER+l.c_edit_header_view[g.L]+self.name.text())   
         elif self.path:
@@ -1059,6 +1068,37 @@ class WindowMethod(QMainWindow):
         if step_type == g.M_RAMP:
             dur = self.ramp_scan_rate_to_duration()
             self.ts[step_type].setValue(dur)
+
+    #########################################
+    #                                       #
+    #   Window show/hide event handlers     #
+    #                                       #
+    #   1. closeEvent                       # 
+    #   2. accept_close                     #
+    #                                       #
+    #########################################
+        
+    def closeEvent(self, event):
+        if not self.saved and self.mode == g.WIN_MODE_EDIT:
+            confirm = saveMessageBox(self)
+            resp = confirm.exec()
+            if resp == QMessageBox.StandardButton.Save:
+                event.ignore()
+                self.close_on_save = True
+                self.save_changes()
+            elif resp == QMessageBox.StandardButton.Discard:
+                self.accept_close(event)
+            else:
+                event.ignore()  
+        else:
+            self.accept_close(event)                     
+
+    def accept_close(self, closeEvent):
+        """Take in a close event. Removes the reference to itself in the parent's
+        self.children list (so reference can be cleared from memory) and accepts
+        the passed event."""
+        self.parent.children.remove(self)
+        closeEvent.accept()
         
         
             

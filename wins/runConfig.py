@@ -54,11 +54,11 @@ class WindowRunConfig(QMainWindow):
         self.mode = mode
         self.run_id = run_id
      
-        self.setWindowTitle(l.rc_window_title[g.L])
-        self.status = self.statusBar()
         self.saved = True
         self.close_on_save = False
-            
+        
+        self.status = self.statusBar()
+        
         v1 = QVBoxLayout()
         h1 = QHBoxLayout()
         v2 = QVBoxLayout()

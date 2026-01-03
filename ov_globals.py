@@ -14,6 +14,7 @@ SB_PROGRESS_BAR_WIDTH = 200
 WIN_MODE_NEW = 'new'
 WIN_MODE_VIEW_ONLY = 'view'
 WIN_MODE_EDIT = 'edit'
+WIN_MODE_VIEW_WITH_MINOR_EDITS = 'view-with-edits'
 
 # Keys for sample (S) dictionary
 S_NAME = "sample_name"

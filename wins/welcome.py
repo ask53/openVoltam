@@ -74,8 +74,8 @@ class WindowWelcome(QMainWindow):
         # Connect relevant button signals to functions ("slots")
         but_sample_new.clicked.connect(self.new_sample)
         but_sample_open.clicked.connect(self.open_sample)
-        but_config_new.clicked.connect(self.new_config)
-        but_config_open.clicked.connect(self.open_config)
+        but_config_new.clicked.connect(self.new_method)
+        but_config_open.clicked.connect(self.open_method)
 
         # layout screen into three horizontal layouts grouped together vertically
         layout_pane = QVBoxLayout()
@@ -146,77 +146,28 @@ class WindowWelcome(QMainWindow):
     def new_sample(self):
         self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_NEW))
                 
-        '''    
-        if (self.w_new_sample.isHidden()):      # check if winow is hidden. If so:
-            self.w_new_sample.show()            #   and show it!
-        else:                                   # if window is already showing
-            self.w_new_sample.activateWindow()  #   bring it to front of screen'''
-
     def open_sample(self, path=False):
-        
         if not path:                # if no path is passed, ask the user to pick a file path
             path = get_path_from_user('sample')
         if path:                    # if the path is passed or if the user selected a valid path:
-            found = False                               
-            for win in self.children:
-                if type(win) == type(WindowMain(path, self)):
-                    if win.path == path:
-                        found = True
-                        win.activateWindow()
-                        break
-            if not found:
-                self.children.append(WindowMain(path, self))
-                self.children[-1].show()
+            self.new_win_one_with_value(WindowMain(self, path), 'path', path)
             self.close()
         # if user didn't select a path, do nothing
-            
 
-            '''
 
-            if len(self.w_samples) > 0:             # if there are current sample windows
-                for w_sample in self.w_samples:     #   loop through them 
-                    if w_sample.path == path:       #   if we find one where the path matches our current path
-                        w = w_sample                #   store the object in our placeholder
-            if w:                                   # if we found a matching window
-                try:
-                    w.update_main()                 #   update sample info
-                except Exception as e:
-                    print(e)
-                    error = True
-                w.activateWindow()                  #   and activate window
-            else:                                   # if we didn't find a match
-                try:
-                    self.create_sample_window(path) #   create a sample window from the path
-                except Exception as e:
-                    print(e)
-                    error = True
-                    exc_type, exc_obj, exc_tb = sys.exc_info()
-                    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                    print(exc_type, fname, exc_tb.tb_lineno)
-                    show_alert(self, "Error", "Uh oh, there was an issue opening the selected file, please try again. If the problem persists, the file may be corrupted.")
-                    
-            if not error:
-                self.close()                            # close the home window if open
-            '''
-            
-
-    def create_sample_window(self, path):
+    def new_method(self):
         try:
-            self.w_samples.append(WindowMain(path, self))     # create new window for sample, append to list
-            print(self.w_samples)
-            self.w_samples[len(self.w_samples)-1].show()        # show most recently added sample window
-            print('thur')
+            self.new_win_one_of_type(WindowMethod(self, g.WIN_MODE_NEW, False))
         except Exception as e:
             print(e)
-
-    def new_config(self):
-        if (self.w_edit_config.isHidden()):                 # check if winow is hidden. If so:
+        
+        '''if (self.w_edit_config.isHidden()):                 # check if winow is hidden. If so:
             self.w_edit_config = WindowMethod(False)    #   Create a new empty edit config window
             self.w_edit_config.show()                       #   and show it!
         else:                                               # if window is already showing
-            self.w_edit_config.activateWindow()             #   bring it to front of screen
+            self.w_edit_config.activateWindow()             #   bring it to front of screen'''
 
-    def open_config(self, path=False, data=False, editable=True):
+    def open_method(self, path=False, data=False, editable=True):
         if data:
             try:       
                 self.ws_view_config.append(WindowMethod(data=data, view_only=True, parent=self, view_only_edit=editable))
@@ -234,7 +185,7 @@ class WindowWelcome(QMainWindow):
                 except Exception as e:
                     print(e)
 
-    def edit_config(self, path=False):
+    def edit_method(self, path=False):
         try:
             if (self.w_edit_config.isHidden()):                 # check if winow is hidden. If so:
                 if not path:                                    # if no path is passed, ask the user to pick a file path

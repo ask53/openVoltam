@@ -14,8 +14,10 @@ import ov_lang as l
 from ov_functions import *
 
 from wins.sample import WindowSample
+from wins.method import WindowMethod
 from wins.runConfig import WindowRunConfig
 from wins.runView import WindowRunView
+
 
 # import other necessary python tools
 from os.path import join as joindir
@@ -59,7 +61,7 @@ import sys, os
 # Define class for Home window
 class WindowMain(QMainWindow):  
 
-    def __init__(self, path, parent):
+    def __init__(self, parent, path):
         super().__init__()
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.path = path
@@ -110,9 +112,9 @@ class WindowMain(QMainWindow):
         # connect menu bar labels with slots 
         action_new_sample.triggered.connect(parent.new_sample)                      # this first group of menu functions come from the home window (parent)
         action_open_sample.triggered.connect(parent.open_sample)
-        action_new_config.triggered.connect(parent.new_config)
-        action_open_config.triggered.connect(parent.open_config)
-        action_edit_config.triggered.connect(parent.edit_config)
+        action_new_config.triggered.connect(parent.new_method)
+        action_open_config.triggered.connect(parent.open_method)
+        action_edit_config.triggered.connect(parent.edit_method)
 
         # Add menu top labels then populate the menus with the above slotted labels
         file_menu = menu.addMenu(l.menu_sample[g.L])
@@ -141,6 +143,9 @@ class WindowMain(QMainWindow):
         self.runAction_viewConfig = self.contextmenu_run.addAction("View run info")
         self.runAction_editConfig = self.contextmenu_run.addAction("Edit run info")
         self.contextmenu_run.addSeparator()
+        self.runAction_viewMethod = self.contextmenu_run.addAction("View method")
+        self.runAction_editMethod = self.contextmenu_run.addAction("Edit method name")
+        self.contextmenu_run.addSeparator()
         self.runAction_viewData = self.contextmenu_run.addAction("Graph data from run(s) [DOES NOTHING YET]")
         self.runAction_exportData = self.contextmenu_run.addAction("Export CSV of run(s)")
         self.contextmenu_run.addSeparator()
@@ -156,12 +161,19 @@ class WindowMain(QMainWindow):
         self.runAction_runAgain.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
         self.runAction_viewConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
         self.runAction_editConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_EDIT))
+        self.runAction_viewMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
+        self.runAction_editMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_WITH_MINOR_EDITS))
+        
         #self.runAction_exportData.triggered.connect(self.export_runs_to_csv)
         
         self.repAction_editNote.triggered.connect(self.edit_rep_note)
         #self.repAction_exportData.triggered.connect(self.export_reps_to_csv)
 
-        self.runActions_oneOnly = [self.runAction_runAgain, self.runAction_editConfig, self.runAction_viewConfig]
+        self.runActions_oneOnly = [self.runAction_runAgain,
+                                   self.runAction_editConfig,
+                                   self.runAction_viewConfig,
+                                   self.runAction_viewMethod,
+                                   self.runAction_editMethod]
         self.repActions_oneOnly = [self.repAction_editNote]
         
         #####################
@@ -742,6 +754,15 @@ class WindowMain(QMainWindow):
         run_id = self.get_single_selected_run()
         if run_id:
             self.new_win_config_run(mode, run_id)
+
+    def open_method_with_uid(self, mode):
+        try:
+            run_id = self.get_single_selected_run()
+            if run_id:
+                self.new_win_method(mode, run_id)
+        except Exception as e:
+            print(e)
+        
         
         
 
@@ -772,6 +793,9 @@ class WindowMain(QMainWindow):
 
     def new_win_view_run(self, run_id):
         self.new_win_one_of_type(WindowRunView(self, run_id))
+
+    def new_win_method(self, mode, run_id):
+        self.new_win_one_with_value(WindowMethod(self, mode, path=False, run_id=run_id), 'run_id', run_id)
 
     def new_win_one_of_type(self, obj):
         """Takes in a new object to create as child window of self.
