@@ -291,11 +291,21 @@ class QHLine(QFrame):
         self.setFrameShape(QFrame.Shape.HLine)
         self.setFrameShadow(QFrame.Shadow.Sunken)
 
+class saveMessageBox(QMessageBox):
+    def __init__(self, parent):                       
+        super().__init__()
+        # set text for save message
+        self.setWindowTitle(l.s_edit_discard[g.L]) 
+        self.setText(l.e_edit_save_dialog[g.L])
+        self.setStandardButtons(QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel)
 
-
-
-
-# 
+        # customize button language text for multi-language support
+        but_save = self.button(QMessageBox.StandardButton.Save)
+        but_save.setText(l.s_edit_save[g.L])
+        but_disc = self.button(QMessageBox.StandardButton.Discard)
+        but_disc.setText(l.s_edit_close_wo_save[g.L])
+        but_canc = self.button(QMessageBox.StandardButton.Cancel)
+        but_canc.setText(l.s_edit_cancel[g.L])
 
     
         

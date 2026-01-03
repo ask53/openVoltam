@@ -329,7 +329,7 @@ class WindowSample(QMainWindow):
                 resp = confirm.exec()                               #   launch the dialog
                 if resp == QMessageBox.StandardButton.Save:         #   if the user selects "Save"
                     event.ignore()                                  #       block the close action
-                    if self.new_sample:                             #       if this is a new sample
+                    if self.mode == g.WIN_MODE_NEW:                 #       if this is a new sample
                         self.start_save_new()                       #           save it as a new sample
                     else:                                           #       otherwise,
                         self.close_on_save = True                   #           tell window to close after saving 
@@ -350,21 +350,4 @@ class WindowSample(QMainWindow):
         
     def update_edited_status(self):
         self.saved = False
-                                        
-
-
-class saveMessageBox(QMessageBox):
-    def __init__(self, parent):                       
-        super().__init__()
-        # set text for save message
-        self.setWindowTitle(l.s_edit_discard[g.L]) 
-        self.setText(l.e_edit_save_dialog[g.L])
-        self.setStandardButtons(QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel)
-
-        # customize button language text for multi-language support
-        but_save = self.button(QMessageBox.StandardButton.Save)
-        but_save.setText(l.s_edit_save[g.L])
-        but_disc = self.button(QMessageBox.StandardButton.Discard)
-        but_disc.setText(l.s_edit_close_wo_save[g.L])
-        but_canc = self.button(QMessageBox.StandardButton.Cancel)
-        but_canc.setText(l.s_edit_cancel[g.L])
+                                    

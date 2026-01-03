@@ -148,7 +148,7 @@ class WindowRunConfig(QMainWindow):
 
         self.but_new.clicked.connect(self.run_button_clicked)
         self.but_edit.clicked.connect(self.save_changes)
-        self.but_view.clicked.connect(self.edit_button_clicked)
+        self.but_view.clicked.connect(self.set_mode_edit)
         
         self.buts = [self.but_new, self.but_edit, self.but_view]
 
@@ -157,8 +157,10 @@ class WindowRunConfig(QMainWindow):
         #
         #
         #
-        self.ws_to_toggle = {self.run_type, self.w_sample_sample_vol, self.w_sample_total_vol,
-                             self.w_stdadd_vol_std, self.w_stdadd_conc_std, self.notes}
+        self.ws_for_new = [self.method, but_m_load, self.device, self.replicates]
+        self.ws_for_edit = [self.run_type, self.w_sample_sample_vol, self.w_sample_total_vol,
+                             self.w_stdadd_vol_std, self.w_stdadd_conc_std, self.notes]
+        self.ws_for_view = [but_view_method]
         #
         #
         #           AND UPDATE toggle_widget_editability() function as well
@@ -198,7 +200,7 @@ class WindowRunConfig(QMainWindow):
             self.set_mode_edit()
         else:
             self.set_mode_view()
-            
+        
 
         
 
@@ -245,8 +247,8 @@ class WindowRunConfig(QMainWindow):
                     self.w_stdadd_vol_std.setValue(run[g.R_STD_ADDED_VOL])
                     self.w_stdadd_conc_std.setValue(run[g.R_STD_CONC])
             self.refresh_graph()                                    # refresh the graph pane
-            if self.mode == g.WIN_MODE_VIEW_ONLY:
-                self.setViewOnly()
+            '''if self.mode == g.WIN_MODE_VIEW_ONLY:
+                self.setViewOnly()'''
 
     def run_type_changed(self, i):
         self.type_stack.setCurrentIndex(i)
@@ -256,6 +258,8 @@ class WindowRunConfig(QMainWindow):
 
     def open_method_from_file(self):
         path = get_path_from_user('method')
+        if not path:
+            return
         data = get_data_from_file(path)
         try:
             if len(self.parent.data[g.S_METHODS]) > 0 and len(self.parent.data[g.S_METHODS]) == self.method.count():
@@ -441,28 +445,37 @@ class WindowRunConfig(QMainWindow):
         self.parent.new_win_view_run(self.run_to_run)
 
     def set_mode_new(self):
-        print('GOTOMODE:new')
         self.mode = g.WIN_MODE_NEW
         self.toggle_widget_editability()
         self.set_button_bar(self.but_new)
         self.setWindowTitle("Run configuration | New")
 
     def set_mode_edit(self):
-        print('GOTOMODE:edit')
         self.mode = g.WIN_MODE_EDIT
         self.toggle_widget_editability()
         self.set_button_bar(self.but_edit)
         self.setWindowTitle("Run configuration | Edit")  
 
     def set_mode_view(self):
-        print('GOTOMODE:view')
         self.mode = g.WIN_MODE_VIEW_ONLY
         self.toggle_widget_editability()
         self.set_button_bar(self.but_view)
         self.setWindowTitle("Run configuration | View")
 
     def toggle_widget_editability(self):
-        return
+        if self.mode == g.WIN_MODE_NEW:
+            to_enable = self.ws_for_new + self.ws_for_edit + self.ws_for_view
+            to_not = []
+        elif self.mode == g.WIN_MODE_EDIT:
+            to_enable = self.ws_for_edit + self.ws_for_view
+            to_not = self.ws_for_new
+        else:
+            to_enable = self.ws_for_view
+            to_not = self.ws_for_edit + self.ws_for_new
+        for w in to_enable:
+            w.setEnabled(True)
+        for w in to_not:
+            w.setEnabled(False)
     
     def set_button_bar(self, button):        
         for but in self.buts:
@@ -474,7 +487,7 @@ class WindowRunConfig(QMainWindow):
     
         
 
-    def setViewOnly(self, modifiable=False):
+    '''def setViewOnly(self, modifiable=False):
         if self.run_to_run:
             self.view_only_modifiable = modifiable          # set/reset flag
             for w in self.ws_to_toggle:                     # toggle enabled status of buttoms/inputs
@@ -486,7 +499,7 @@ class WindowRunConfig(QMainWindow):
                 self.but_edit.setText('Save changes')           # set button text
                 self.setWindowTitle('Edit | '+self.run_to_run)  # and window title    
 
-    def edit_button_clicked(self):
+
         if self.view_only_modifiable:
             try:
                 form_is_valid = self.validate_form()    # Validate form
@@ -499,11 +512,13 @@ class WindowRunConfig(QMainWindow):
                 show_alert(self, "Error", "Eek! There was an issue saving the data, please try again.")
                 print(e)
         else:
-            self.setViewOnly(modifiable=True)
+            self.setViewOnly(modifiable=True)'''
 
 
     def save_changes(self):
-        data = get_data_from_file(self.parent.path)
+        return
+        # REWRITE THIS AS ASYNC SAVE!
+        '''data = get_data_from_file(self.parent.path)
         runDict = False
         for run in data[g.S_RUNS]:
             if run[g.R_UID_SELF] == self.run_to_run:
@@ -511,7 +526,7 @@ class WindowRunConfig(QMainWindow):
                 break
         if runDict:
             runDict = self.append_editable_run_info(runDict)
-            write_data_to_file(self.parent.path, data)
+            write_data_to_file(self.parent.path, data)'''
 
     def append_editable_run_info(self, rDict):
         

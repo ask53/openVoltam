@@ -153,9 +153,9 @@ class WindowMain(QMainWindow):
         self.contextmenu_rep.addSeparator()
         self.repAction_delete = self.contextmenu_rep.addAction("Delete replicates(s) [DOES NOTHING YET]")
 
-        self.runAction_runAgain.triggered.connect(self.config_run_with_uid)
-        #self.runAction_viewConfig.triggered.connect(self.view_config)
-        #self.runAction_editConfig.triggered.connect(partial(self.view_config, True))
+        self.runAction_runAgain.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
+        self.runAction_viewConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
+        self.runAction_editConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_EDIT))
         #self.runAction_exportData.triggered.connect(self.export_runs_to_csv)
         
         self.repAction_editNote.triggered.connect(self.edit_rep_note)
@@ -734,13 +734,14 @@ class WindowMain(QMainWindow):
                     except Exception as e:
                         print(e)
 
-    def config_run_with_uid(self):
+    def open_run_config_with_uid(self, mode):
         """Finds the first selected run (assumes there is only one run selected!)
         and opens up a new run configuration window with all of the parameters
         preset to match the currently selected run"""
         run_id = self.get_single_selected_run()
         if run_id:
-            self.new_win_config_run(run_id=run_id)     
+            self.new_win_config_run(mode, run_id)
+        
         
 
 
@@ -767,7 +768,10 @@ class WindowMain(QMainWindow):
 
     def new_win_config_run(self, mode, run_id=False):
         print('opening run config window with mode:',mode)
-        self.new_win_one_of_type(WindowRunConfig(self, mode, run_id))
+        try:
+            self.new_win_one_of_type(WindowRunConfig(self, mode, run_id))
+        except Exception as e:
+            print(e)
 
     def new_win_view_run(self, run_id):
         self.new_win_one_of_type(WindowRunView(self, run_id))
