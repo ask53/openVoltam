@@ -253,6 +253,7 @@ class WindowMain(QMainWindow):
         self.widgetize_runs()                                               # get updated run history as a widget    
         self.centralWidget().layout().addWidget(self.w_run_history_area)    # add the updated run history back to layout
         self.update_highlights()
+        self.update_children()
         
         
     #############################################
@@ -309,7 +310,7 @@ class WindowMain(QMainWindow):
                 rep_id = rep[g.R_UID_SELF]
                 ws_rep = []
                 for s in rep_strs:
-                    w = self.create_w(s, qss_name, self.rep_clicked, run_id, rep_id)
+                    w = self.create_w(html_escape(s), qss_name, self.rep_clicked, run_id, rep_id)
                     ws_rep.append(w)   
                 row = self.add_row_to_main(ws_rep, row, h_offset=1)
                 self.layout[run_id]['reps'].append(rep_id)
@@ -319,10 +320,10 @@ class WindowMain(QMainWindow):
             run_type = l.rc_types[run[g.R_TYPE]][g.L]
             method_name = get_method_from_file_data(self.data, run[g.R_UID_METHOD])[g.M_NAME]
             run_notes = run[g.R_NOTES]
-            run_str = '<u>'+run_name+'</u><br>'
-            run_str = run_str + '<b>'+'Type'+'</b>: '+run_type+'<br>'
-            run_str = run_str + '<b>'+'Method'+'</b>: '+method_name+'<br>'
-            run_str = run_str + '<b>'+'Notes'+'</b>: '+run_notes
+            run_str = '<u>'+html_escape(run_name)+'</u><br>'
+            run_str = run_str + '<b>'+'Type'+'</b>: '+html_escape(run_type)+'<br>'
+            run_str = run_str + '<b>'+'Method'+'</b>: '+html_escape(method_name)+'<br>'
+            run_str = run_str + '<b>'+'Notes'+'</b>: '+html_escape(run_notes)
 
             if i%2 == 0: qss_name = 'run-even'
             else: qss_name = 'run-odd'
@@ -365,8 +366,8 @@ class WindowMain(QMainWindow):
             ov-rep (contains rep-id)
             ov-qss-name (contains qss_name for resetting styles)
         """
-        
         w = QLabel(s)
+        w.setTextFormat(Qt.TextFormat.RichText)
         w.setWordWrap(word_wrap)
         w.setObjectName(qss_name)
         w.mouseReleaseEvent = partial(onclick_fn, w)
@@ -797,6 +798,10 @@ class WindowMain(QMainWindow):
         self.children.append(obj)
         self.children[-1].show()
         return self.children[-1]
+
+    def update_children(self):
+        for win in self.children:
+            win.update_win()
         
         
 

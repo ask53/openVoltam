@@ -209,6 +209,7 @@ class WindowRunConfig(QMainWindow):
     #   1. reset_form                       #
     #   2. set_form                         #
     #   3. refresh_graph                    #
+    #   4. update_win                       #
     #                                       #
     ######################################### 
 
@@ -262,6 +263,9 @@ class WindowRunConfig(QMainWindow):
         if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
             steps = self.method.currentData()[g.M_STEPS]    
         self.graph.update_plot(steps, show_labels=False, reps=reps)
+
+    def update_win(self):
+        self.set_form()
 
     #########################################
     #                                       #
