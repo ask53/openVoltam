@@ -105,16 +105,16 @@ class WindowMain(QMainWindow):
         # add labels ("actions") for menu bar
         action_new_sample = QAction(l.new_sample[g.L], self)
         action_open_sample = QAction(l.open_sample[g.L], self)
-        action_new_config = QAction(l.new_config[g.L], self)
-        action_open_config = QAction(l.open_config[g.L], self)
-        action_edit_config = QAction(l.edit_config[g.L], self)
+        action_new_method = QAction(l.new_config[g.L], self)
+        action_open_method = QAction(l.open_config[g.L], self)
+        
 
         # connect menu bar labels with slots 
         action_new_sample.triggered.connect(parent.new_sample)                      # this first group of menu functions come from the home window (parent)
         action_open_sample.triggered.connect(parent.open_sample)
-        action_new_config.triggered.connect(parent.new_method)
-        action_open_config.triggered.connect(parent.open_method)
-        action_edit_config.triggered.connect(parent.edit_method)
+        action_new_method.triggered.connect(parent.new_method)
+        action_open_method.triggered.connect(parent.open_method)
+        
 
         # Add menu top labels then populate the menus with the above slotted labels
         file_menu = menu.addMenu(l.menu_sample[g.L])
@@ -122,10 +122,8 @@ class WindowMain(QMainWindow):
         file_menu.addAction(action_open_sample)
         
         file_menu = menu.addMenu(l.menu_config[g.L])
-        file_menu.addAction(action_new_config)
-        file_menu.addAction(action_open_config)
-        file_menu.addSeparator()
-        file_menu.addAction(action_edit_config)
+        file_menu.addAction(action_new_method)
+        file_menu.addAction(action_open_method)
 
         file_menu = menu.addMenu(l.menu_run[g.L])
 

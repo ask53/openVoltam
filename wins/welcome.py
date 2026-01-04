@@ -108,23 +108,12 @@ class WindowWelcome(QMainWindow):
         w.setLayout(layout_pane)
         self.setCentralWidget(w)
 
-    '''def activate_single_window(self, winObj):
-        found = False
-        for win in self.children:
-            if type(win) == type(winObj):
-                win.activateWindow()
-                found = True
-                break
-        if not found:
-            self.children.append(winObj)
-            self.children[-1].show()'''
-
     def new_win_one_of_type(self, obj):
-        """Takes in a new object to create as child window of self.
-        Checks whether a window with matching type already exists.
-        If it does, activates (bring-to-front) that window and returns it.
-        If not, creates that window, show, it and returns it.
-        Returns: window object."""
+        """Checks whether window already exists of obj type.
+        Only allows 1 window of obj type.
+        If it already exists, activates it (brings it to front) and returns it.
+        If it doesn't exist, creates it, shows it, and returns it.
+        Returns: window object with same type as obj."""
         for win in self.children:       
             if type(win) == type(obj):  # If there is already a child window with matching type
                 win.activateWindow()    # activate it and return it
@@ -134,6 +123,11 @@ class WindowWelcome(QMainWindow):
         return self.children[-1]        # And return it
 
     def new_win_one_with_value(self, obj, key, value):
+        """Checks whether window already exists of obj type AND that has self.key==value.
+        Only allows 1 window of type that also matches value.
+        If it already exists, activates it (brings it to front) and returns it.
+        If it doesn't exist, creates it, shows it, and returns it.
+        Returns: window object with same type as obj."""
         for win in self.children:
             if type(win) == type(obj):
                 if win.__dict__[key] == value:
@@ -154,7 +148,6 @@ class WindowWelcome(QMainWindow):
             self.close()
         # if user didn't select a path, do nothing
 
-
     def new_method(self):
         self.new_win_one_with_value(WindowMethod(self, g.WIN_MODE_NEW, False), 'mode', g.WIN_MODE_NEW)
 
@@ -166,28 +159,6 @@ class WindowWelcome(QMainWindow):
                 self.new_win_one_with_value(WindowMethod(self, g.WIN_MODE_EDIT, path), 'path', path)
         except Exception as e:
             print(e)
-            
-    def edit_method(self, path=False):
-        try:
-            if (self.w_edit_config.isHidden()):                 # check if winow is hidden. If so:
-                if not path:                                    # if no path is passed, ask the user to pick a file path
-                    path = get_path_from_user('method')
-                    
-                if path:                                    # if the path is passed or if the user selected a valid path:                        
-                    try:
-                        self.w_edit_config = WindowMethod(path)   #   Create a new empty edit config window
-                        self.w_edit_config.show()                           #   and show it!
-                    except Exception as e:
-                        print(e)
-                        show_alert(self, "Error", "Uh oh, there was an issue opening the selected file, please try again. If the problem persists, the file may be corrupted.")      
-            else:                                               # if window is already showing
-                self.w_edit_config.activateWindow()             #   bring it to front of screen
-        except Exception as e:
-            print(e)
-
-    def go_back(self):
-        self.setCentralWidget(self.homeWidget())
-        self.showNormal()
 
 
 
