@@ -390,6 +390,11 @@ class WindowRunView(QMainWindow):
                 
     def get_uid_of_current_rep(self):
         return g.R_REPLICATE_UID_PREFIX + str(self.rep_current)
+
+    def update_win(self):
+        """This is necessary for parent window to call this one to update.
+        Please do not delete!"""
+        return
     
     def showEvent(self, event):
         self.parent.setEnabled(False)

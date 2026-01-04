@@ -25,7 +25,7 @@ from os.path import exists
 from functools import partial
 from ast import literal_eval
 from tkinter.filedialog import askopenfilename as askOpenFileName
-import csv
+'''import csv'''
 
 
 from PyQt6.QtTest import QTest
@@ -48,8 +48,7 @@ from PyQt6.QtWidgets import (
     QApplication,
     QMenu,
     QInputDialog,
-    QProgressBar
-    
+    QProgressBar  
 )
 
 #######
@@ -73,6 +72,7 @@ class WindowMain(QMainWindow):
         self.select_all_prog_check_flag = False
         self.save_error_flag = False
         self.read_error_flag = False
+        self.export_error_msg = ''
         self.status = self.statusBar()
         self.progress_bar = QProgressBar()
         self.process = None
@@ -161,11 +161,10 @@ class WindowMain(QMainWindow):
         self.runAction_editConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_EDIT))
         self.runAction_viewMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
         self.runAction_editMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_WITH_MINOR_EDITS))
-        
-        #self.runAction_exportData.triggered.connect(self.export_runs_to_csv)
+        self.runAction_exportData.triggered.connect(self.export_selected_reps_as_csv)
         
         self.repAction_editNote.triggered.connect(self.edit_rep_note)
-        #self.repAction_exportData.triggered.connect(self.export_reps_to_csv)
+        self.repAction_exportData.triggered.connect(self.export_selected_reps_as_csv)
 
         self.runActions_oneOnly = [self.runAction_runAgain,
                                    self.runAction_editConfig,
@@ -190,8 +189,7 @@ class WindowMain(QMainWindow):
         
         but_view.clicked.connect(self.new_win_sample)
         but_config.clicked.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
-        
-        
+            
         vl1 = QVLine()
         vl2 = QVLine()
         vl3 = QVLine()
@@ -255,7 +253,7 @@ class WindowMain(QMainWindow):
         self.setCentralWidget(self.w)
         
 
-    def update_main(self):
+    def update_win(self):
         sample_name = self.data[g.S_NAME]                       
         self.setWindowTitle(sample_name)                                    # Set the sample window title
         self.lbl_sample_name.updateTitleLbl(sample_name)                    # Set the sample name
@@ -721,6 +719,13 @@ class WindowMain(QMainWindow):
                 return (run, self.layout[run]['selected'][0])
         return (False, False)
 
+    def get_all_selected_reps(self):
+        reps = []
+        for run in self.layout:
+            for rep in self.layout[run]['selected']:
+                reps.append((run,rep))
+        return reps
+
     def edit_rep_note(self):
         """Opens a dialog """
         (run_id, rep_id) = self.get_single_selected_rep()
@@ -768,7 +773,17 @@ class WindowMain(QMainWindow):
                     self.new_win_method(mode, method_id)
         except Exception as e:
             print(e)
+
+    def export_selected_reps_as_csv(self):
+        reps = self.get_all_selected_reps()
+        dest = get_path_from_user('folder')
+        if dest:
+            self.start_async_export(reps, dest)
         
+        
+        
+        
+
         
         
 
@@ -855,7 +870,89 @@ class WindowMain(QMainWindow):
 
 
 
+    #############################################
+    #                                           #
+    #   Functions for asynchronous export       #
+    #                                           #
+    #   1. start_async_export                   #
+    #   2. handle_export_stdout                 #
+    #   3. handle_export_stderr                 #
+    #   4. handle_finished_export               #
+    #                                           #
+    #############################################
 
+    def start_async_export(self, reps, destPath):
+        if not self.process:
+            self.export_success = []
+            self.export_fail = []
+            self.export_error_msg = ''
+            self.process = QProcess()
+            self.process.readyReadStandardOutput.connect(self.handle_export_stdout)
+            self.process.readyReadStandardError.connect(self.handle_export_stderr)
+            self.process.finished.connect(self.handle_finished_export)
+            self.status.showMessage("Exporting...")
+            self.progress_bar.setVisible(True)
+            self.process.start("python", ['processes/export.py', self.path, destPath, str(reps)])
+
+    def handle_export_stdout(self):
+        print('normal msg!')
+        data = self.process.readAllStandardOutput()
+        stdout = bytes(data).decode("utf8")
+        outs = stdout.split('\r\n')
+        for out in outs:
+            if out:
+                self.export_success.append(out)
+
+    def handle_export_stderr(self):
+        print('error msg:')
+        data = self.process.readAllStandardError()
+        stderr = bytes(data).decode("utf8")
+        #print(stderr)
+        errs = stderr.split('\r\n')                 # If multiple errors come in at once, split them up              
+        for err in errs:                            # Loop thru them all
+            if err:                             
+                try:
+                    literal_eval(err)               # Check if is anything other than string
+                    self.export_fail.append(err)    # if so, it is tuple! store it
+                except:
+                    self.export_error_msg = err     # Set the flag and store the message
+                    print(err)                      
+
+    def handle_finished_export(self):
+        if not self.export_fail and not self.export_error_msg:     # complete success!   
+            self.status.showMessage("Export complete", g.SB_DURATION)
+        elif not self.export_error_msg:                            # some reps w no data didn't export
+            self.status.showMessage("WARNING: Some reps could not be exported.", g.SB_DURATION_ERROR)
+            
+        else:                                                       # error message from export process
+            self.status.showMessage("ERROR: Export could not complete.", g.SB_DURATION_ERROR)
+        self.show_export_results_dialog(self.export_success, self.export_fail, self.export_error_msg)
+        self.progress_bar.setVisible(False)
+        self.export_error_flag = False
+        self.process = None
+
+    def show_export_results_dialog(self, yes, no, error=False):
+        title = "Export complete."
+        msg = "Export complete.\n"
+        if error:
+            msg = "ERROR MESSAGE:\n"
+            msg = msg+error+'\n'
+        if no:
+            msg = msg+"\nWarning: Failed to export:\n"
+            for rep in no:
+                rep = literal_eval(rep)
+                msg = msg+rep[0]+': '+rep[1]+'\n'
+        if yes:
+            msg = msg + "\nSuccessully exported:\n"
+            for rep in yes:
+                rep = literal_eval(rep)
+                msg = msg+rep[0]+': '+rep[1]+'\n'
+
+        if no: title = "Warning: some replicates failed to export"
+        if error: title = "ERROR on export"
+        show_alert(self, title, msg)
+        
+        
 
 
 
@@ -871,7 +968,7 @@ class WindowMain(QMainWindow):
     #############################################
 
     def start_async_read(self):
-        try:
+        if not self.process:
             self.process = QProcess()
             self.process.readyReadStandardOutput.connect(self.handle_read_stdout)
             self.process.readyReadStandardError.connect(self.handle_read_stderr)
@@ -879,8 +976,6 @@ class WindowMain(QMainWindow):
             self.status.showMessage("Loading data...")
             self.progress_bar.setVisible(True)
             self.process.start("python", ['processes/read.py', self.path])
-        except Exception as e:
-            print(e)
 
     def handle_read_stdout(self):
         #print('normal msg!')
@@ -900,7 +995,7 @@ class WindowMain(QMainWindow):
             self.status.showMessage("ERROR: Data read could not complete.", g.SB_DURATION)
         else:
             self.status.showMessage("Data loaded!", g.SB_DURATION)
-            self.update_main()
+            self.update_win()
             setWsEnabled(self.buts, True)                                   #   Enable buttons
         self.progress_bar.setVisible(False)
         self.read_error_flag = False
@@ -919,9 +1014,8 @@ class WindowMain(QMainWindow):
     #                                           #
     #############################################
 
-    def start_async_save(self, saveType, params, onSuccess=False, onError=False):
-        
-        try:
+    def start_async_save(self, saveType, params, onSuccess=False, onError=False):   
+        if not self.process:
             self.process = QProcess()
             self.process.readyReadStandardOutput.connect(self.handle_save_stdout)
             self.process.readyReadStandardError.connect(self.handle_save_stderr)
@@ -929,9 +1023,6 @@ class WindowMain(QMainWindow):
             self.process.start("python", ['processes/save.py', self.path, saveType, str(params)])
             self.status.showMessage("Saving...")
             self.progress_bar.setVisible(True)
-            #print('save process started...', g.SB_DURATION)
-        except Exception as e:
-            print(e)
 
     def handle_save_stdout(self):
         #print('normal msg:')
@@ -955,7 +1046,7 @@ class WindowMain(QMainWindow):
                     onError()                                                               #   run it! 
             else:                                                                           # If the run succeeded
                 self.status.showMessage("Saved!", g.SB_DURATION)                            #   Show success message
-                self.update_main()                                                          #   Update main window with new data
+                self.update_win()                                                           #   Update main window with new data
                 if onSuccess:                                                               #   If there is an onSuccess callback fn
                     onSuccess()                                                             #   run it!
                 
