@@ -116,7 +116,7 @@ SAVE_TYPE_REP_MOD = 'rep-no-data'
 SAVE_TYPE_REP_MOD_WITH_DATA = 'rep-w-data'
 SAVE_TYPE_RUN_MOD = 'run-mod'
 SAVE_TYPE_METHOD_TO_SAMPLE = 'method-to-sample'
-
+SAVE_TYPE_METHOD_MOD = 'method-mod'
 
 # Input 
 RC_REPS_MIN = 1

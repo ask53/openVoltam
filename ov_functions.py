@@ -216,14 +216,14 @@ def get_run_from_file_data(data, run_id):
 
 def get_method_from_file_data(data, method_id):
 
-    """ takes in a full dataset dictionary, data, and the uid of the method
+    """ takes in a full sample dataset dictionary, data, and the uid of the method
     we are seeking, method_id. Loops through all method elements in the data
     looking for one with a matching uid. If found, returns the dictionary
     of that method. Otherwise, returns False."""
-    
-    for method in data[g.S_METHODS]:
-        if method[g.M_UID_SELF] == method_id:
-            return method
+    if method_id:
+        for method in data[g.S_METHODS]:
+            if method[g.M_UID_SELF] == method_id:
+                return method
     return False
 
 def get_v_max_abs(step):

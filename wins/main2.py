@@ -703,6 +703,8 @@ class WindowMain(QMainWindow):
     #   1. get_single_selected_run              #
     #   2. get_single_selected_rep              #
     #   3. edit_rep_note                        #
+    #   4. open_run_config_with_uid             #
+    #   5. open_method_with_uid                 #
     #############################################
 
     def get_single_selected_run(self):
@@ -759,7 +761,13 @@ class WindowMain(QMainWindow):
         try:
             run_id = self.get_single_selected_run()
             if run_id:
-                self.new_win_method(mode, run_id)
+                method_id = ''
+                for run in self.data[g.S_RUNS]:
+                    if run[g.R_UID_SELF] == run_id:
+                        method_id = run[g.R_UID_METHOD]
+                        break
+                if method_id:   
+                    self.new_win_method(mode, method_id)
         except Exception as e:
             print(e)
         
@@ -775,13 +783,13 @@ class WindowMain(QMainWindow):
     #   1. new_win_sample                       #
     #   2. new_win_config_run                   #
     #   3. new_win_view_run                     #
-    #   4. X                 #
-    #   5.
+    #   4. new_win_method                       #
+    #   5. X
     #   6.
-    #   7.
-    #   8.
+    #
     #   9. new_win_one_of_type                  #
     #   10. new_win_one_with_value              #
+    #   11. update_children                     #
     #                                           #
     #############################################
 
@@ -794,8 +802,8 @@ class WindowMain(QMainWindow):
     def new_win_view_run(self, run_id):
         self.new_win_one_of_type(WindowRunView(self, run_id))
 
-    def new_win_method(self, mode, run_id):
-        self.new_win_one_with_value(WindowMethod(self, mode, path=False, run_id=run_id), 'run_id', run_id)
+    def new_win_method(self, mode, method_id):
+        self.new_win_one_with_value(WindowMethod(self, mode, path=False, method_id=method_id), 'method_id', method_id)
 
     def new_win_one_of_type(self, obj):
         """Takes in a new object to create as child window of self.
@@ -977,16 +985,11 @@ class WindowMain(QMainWindow):
     #############################################
 
     def closeEvent(self, event):
-        for win in self.children:
-            win.close()
-        self.parent.children.remove(self)       # remove reference for memory cleanup
+        while self.children:                # loop through children until children is empty
+            self.children[0].close()        # closing the 0th child window (closing pops it from list)
+
+        self.parent.children.remove(self)   # remove reference to this window from parent for memory cleanup
         event.accept()
-
-
-
-
-
-
         
 
 class TitleLbl(QLabel):

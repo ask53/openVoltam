@@ -99,6 +99,22 @@ def method_to_sample(data, params):     # append method to sample file
     newMethod = params[0]               
     data[g.S_METHODS].append(newMethod)
     return data
+
+def modify_method(data, params):        # modify the method in a sample file
+    method_id = params[0]
+    newMethod = params[1]
+    found = False
+    for method in data[g.S_METHODS]:
+        if method[g.M_UID_SELF] == method_id:
+            found = True
+            break
+    if found:
+        keys = list(method.keys())
+        for key in keys:
+            method.pop(key, None)
+        for key in newMethod:
+            method[key] = newMethod[key]
+    return data
     
 try:
     path = sys.argv[1]                  # get path of file to read from
@@ -119,6 +135,8 @@ try:
         data=modify_run(data, params)
     elif saveType == g.SAVE_TYPE_METHOD_TO_SAMPLE:
         data=method_to_sample(data, params)
+    elif saveType == g.SAVE_TYPE_METHOD_MOD:
+        data=modify_method(data, params)
 
     write_data_to_file(path, data)
     data = remove_data_from_layout(data) 

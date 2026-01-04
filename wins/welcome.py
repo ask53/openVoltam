@@ -156,35 +156,17 @@ class WindowWelcome(QMainWindow):
 
 
     def new_method(self):
+        self.new_win_one_with_value(WindowMethod(self, g.WIN_MODE_NEW, False), 'mode', g.WIN_MODE_NEW)
+
+    def open_method(self, path=False):
         try:
-            self.new_win_one_of_type(WindowMethod(self, g.WIN_MODE_NEW, False))
+            if not path:
+                path = get_path_from_user('method')
+            if path:
+                self.new_win_one_with_value(WindowMethod(self, g.WIN_MODE_EDIT, path), 'path', path)
         except Exception as e:
             print(e)
-        
-        '''if (self.w_edit_config.isHidden()):                 # check if winow is hidden. If so:
-            self.w_edit_config = WindowMethod(False)    #   Create a new empty edit config window
-            self.w_edit_config.show()                       #   and show it!
-        else:                                               # if window is already showing
-            self.w_edit_config.activateWindow()             #   bring it to front of screen'''
-
-    def open_method(self, path=False, data=False, editable=True):
-        if data:
-            try:       
-                self.ws_view_config.append(WindowMethod(data=data, view_only=True, parent=self, view_only_edit=editable))
-                self.ws_view_config[-1].show()
-            except Exception as e:
-                print(e)
-        elif not path:
-            path = get_path_from_user('method')
-
-        if not data and path:
-                try:
-                    
-                    self.ws_view_config.append(WindowMethod(path=path, view_only=True, parent=self, view_only_edit=editable))
-                    self.ws_view_config[-1].show()
-                except Exception as e:
-                    print(e)
-
+            
     def edit_method(self, path=False):
         try:
             if (self.w_edit_config.isHidden()):                 # check if winow is hidden. If so:
