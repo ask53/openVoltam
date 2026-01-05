@@ -812,8 +812,8 @@ class WindowMain(QMainWindow):
     def new_win_config_run(self, mode, run_id=False):
         self.new_win_one_of_type(WindowRunConfig(self, mode, run_id))
 
-    def new_win_view_run(self, run_id):
-        self.new_win_one_of_type(WindowRunView(self, run_id))
+    def new_win_view_run(self, tasks):
+        self.new_win_one_of_type(WindowRunView(self, tasks))
 
     def new_win_method(self, mode, method_id):
         self.new_win_one_with_value(WindowMethod(self, mode, path=False, method_id=method_id), 'method_id', method_id)

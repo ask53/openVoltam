@@ -44,29 +44,35 @@ from PyQt6.QtWidgets import (
 )
 
 class WindowRunView(QMainWindow):
-    def __init__(self, parent, run_id):
+    def __init__(self, parent, tasks):
         super().__init__()
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        
         self.parent = parent
-        self.data = False
-        self.uid = False
-        self.run = False
-        self.method = False
-        self.steps = False
-        self.running = False
-        self.stopped = False
-        self.process = None
+        self.tasks = tasks
+
+        self.current_task = 0
+
         self.port = ""
+        self.process = None
+        self.steps = False
+        self.dt = 0
+        self.method = False
+
+
+
+        self.stopped = False
+        
+        
         self.reps_total = 0
         self.rep_current = 0
-        self.dt = 0
+        
         self.i_max = ""
-        self.run_raw_data = []
-        self.t_prev = -1
-        self.t_to_add = 0
-        self.current_step_index = 0
-        self.data_saved = False
-        [self.t, self.v, self.I] = [[],[],[]]
+
+
         self.q = Queue()
+
+        self.status = self.statusBar()
         ##### FOR TESTING ####
         #
         #self.setWindowTitle(l.r_window_title[g.L]+' | '+self.parent.data[g.S_NAME])
@@ -75,12 +81,27 @@ class WindowRunView(QMainWindow):
         
         # Stacked layout in upper left
         self.msg_box = QStackedLayout()
+
+        # Stacked item 0: blank
         self.msg_box.addWidget(QWidget())
 
-        # Stacked item 0: Pre-run
+        # Stacked item 1: Pre-run (**DEFAULT**)
         but_start_run = QPushButton('begin run')
         but_start_run.clicked.connect(self.start_run)
         self.msg_box.addWidget(but_start_run)
+        self.msg_box.setCurrentIndex(1)
+
+        # Stacked item 2: Device not connected
+        lbl_disconnected = QLabel("Sorry, i'm having trouble finding a compatible potentiostat. Please ensure that one is connected and try again.")
+        lbl_disconnected.setWordWrap(True)
+        but_disconnected = QPushButton('try again')
+        but_disconnected.clicked.connect(self.disconnected_try_again)
+        v1 = QVBoxLayout()
+        v1.addWidget(lbl_disconnected)
+        v1.addWidget(but_disconnected)
+        w = QWidget()
+        w.setLayout(v1)
+        self.msg_box.addWidget(w)
 
         self.run_details = QPlainTextEdit()
         but_stop_run = QPushButton('\nSTOP\n')
@@ -96,38 +117,75 @@ class WindowRunView(QMainWindow):
 
         h1.addLayout(v_left)
         h1.addWidget(self.graphs)
-        
-
-
-
-
-
+    
 
         
         w = QWidget()
         w.setLayout(h1)
         self.setCentralWidget(w)
 
-        print('here')
-        
-    def set_run_uid(self, uid):
-        self.uid = uid
-        self.msg_box.setCurrentIndex(1)
+    #########################################
+    #                                       #
+    #   Start run function                  #
+    #                                       #
+    #########################################
 
-    def message(self, s):
-        self.run_details.appendPlainText(s)
-
-    def unpack_msgs(self, str_bundle):
+    def start_run(self):
         try:
-            prefixes = []
-            messages = []
-            str_msgs = str_bundle.split('\n')
-            for s in str_msgs:
-                prefixes.append(s[0:len(g.R_DATA_PREFIX)])
-                messages.append(s[len(g.R_DATA_PREFIX):len(s)])
-            return [prefixes, messages]
+            #self.read_updated_file()
+            if self.current_task < len(self.tasks):
+                if not self.process:
+                    (self.run_id, self.rep_id) = self.tasks[self.current_task]
+                    run = get_run_from_file_data(self.parent.data, self.run_id)
+                    self.method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])      ####### CAN WE MAKE method a local variable? Not self? Check in after modifying data save routine
+                    self.steps = self.get_steps(self.method)
+                    self.dt = self.method[g.M_DT]
+                    self.i_max = self.method[g.M_CURRENT_RANGE]
+
+                    # Reset graphs
+                    self.graphs.init_plot(self.method)
+
+                    # set pre-run variables
+                    [self.t, self.v, self.I] = [[],[],[]]
+                    self.current_step_index = 0
+                    self.t_prev = -1
+                    self.t_to_add = 0
+                    self.error_run_msg = ''
+                    self.error_run_flag = False
+                    self.save_complete_flag = False
+                    #self.raw_data = []
+                    #for step in self.method[g.M_STEPS]:
+                    #    self.raw_data.append([])
+
+                    # Setup some flags at beginning of run
+                    self.running_flag = True
+                    self.data_saved_flag = False
+
+                    # Empty the queue
+                    self.empty_q()
+
+                    # Setup and start interrupt to retreive and plot data (this should end after last data from run is saved)
+                    thread = threading.Thread(target=self.interrupt_data_getter) 
+                    thread.daemon = True                            # interrupt ends when the start_run() fn returns
+                    thread.start()
+
+                    # Initiate and begin external process (that I/Os with potentiostat
+                    self.process = QProcess()
+                    self.process.readyReadStandardOutput.connect(self.handle_stdout)
+                    self.process.readyReadStandardError.connect(self.handle_stderr)
+                    self.process.stateChanged.connect(self.handle_state)
+                    self.process.finished.connect(self.handle_finished)
+                    self.status.showMessage('Running...')
+                    self.process.start("python", ['processes/run.py', str(self.dt), self.i_max, str(self.steps), self.port])      
+                   
         except Exception as e:
             print(e)
+
+    #########################################
+    #                                       #
+    #   Run process handlers                #
+    #                                       #
+    #########################################
 
     def handle_stdout(self):
         print('stdout')
@@ -138,6 +196,11 @@ class WindowRunView(QMainWindow):
         for i, prefix in enumerate(prefixes):
             if prefix == g.R_DATA_PREFIX:
                 self.q.put(msgs[i])
+            elif prefix == g.R_ERROR_PREFIX:
+                self.error_run_flag = True
+                self.error_run_msg = msgs[i]
+                print(prefix)
+                print(msgs[i])
             else:
                 print(prefix)
                 print(msgs[i])
@@ -151,33 +214,53 @@ class WindowRunView(QMainWindow):
     def handle_state(self, state):
         return
 
-    def handle_finished_rep(self):
+    def handle_finished(self):
         if self.stopped:
             return
-        
-           
-        try:
-            self.message("Finished rep "+str(self.rep_current+1)+" of "+str(self.reps_total))
-            self.running = False
-            while not self.data_saved:                  # Wait here until data is saved, before removing reference to process
+            ##########################
+            #
+            # Do stopped stuff here!
+            #
+            #
+            #
+            ##########################
+        try:    
+            self.process = None                     # these two lines must be in this order, because running_flag==False
+            self.running_flag = False               #   is a precondition for the interrupt to begin the save process
+            while not self.save_complete_flag:      # Wait here until data is saved, before removing reference to process
                 time.sleep(0.05)
-            self.process = None                         # Remove reference to process cause its done! 
-            self.rep_current = self.rep_current + 1     # Increment rep
 
-            if self.rep_current < self.reps_total:
-                self.init_pstat_process()
+            self.message("Finished rep "+str(self.current_task+1)+" of "+str(len(self.tasks)))
+            
+            if self.error_run_flag:     # If there was an error during this run
+                if self.error_run_msg == g.R_ERROR_NO_CONNECT:
+                    self.message('error, no device detected')
+                    self.msg_box.setCurrentIndex(2)
+                if self.error_run_msg == g.R_ERROR_VMAX_TOO_HIGH:
+                    self.message("error, this device doesn't support a maximum voltage this high.")
+                
+                ######################
+                #
+                #   HANDLE ERROR ON RUN HERE (Depends on error code...)
+                #
+                ######################
+            
+            
             else:
-                self.message('RUN IS COMPLETE!')
-                self.process = None
-                self.running = False
+                self.current_task = self.current_task + 1   # Increment task
+
+                if self.current_task < len(self.tasks):
+                    self.start_run()
+                else:
+                    self.message('RUN IS COMPLETE!')
+                    print('run complete!')
+                    #self.process = None
+                    #self.running = False
             
         except Exception as e:
             print(e)
-        
 
-        
-
-    def init_pstat_process(self):
+        '''def init_pstat_process(self):
         if self.process is None:
             # Reset graphs and set pre-run variables
             self.graphs.init_plot(self.method)
@@ -203,39 +286,45 @@ class WindowRunView(QMainWindow):
             self.process.stateChanged.connect(self.handle_state)
             self.process.finished.connect(self.handle_finished_rep)
             self.process.start("python", ['processes/run.py', str(self.dt), self.i_max, str(self.steps), self.port])
-            self.message('Process started!')
+            self.message('Process started!')'''
+
+    def message(self, s):
+        self.run_details.appendPlainText(s)
+
+    def unpack_msgs(self, str_bundle):
+        try:
+            prefixes = []
+            messages = []
+            str_msgs = str_bundle.split('\r\n')
+            for s in str_msgs:
+                prefixes.append(s[0:len(g.R_DATA_PREFIX)])
+                messages.append(s[len(g.R_DATA_PREFIX):len(s)])
+            return [prefixes, messages]
+        except Exception as e:
+            print(e)
+
+    
+        
+
+        
+
+
 
     def empty_q(self):
         while not self.q.empty():   # As long as there is any data in queue                    
             self.q.get()            # Pop the next item!
 
-    def init_raw_data(self):
-        [self.t, self.v, self.I] = [[],[],[]]
-        self.current_step_index = 0
-        self.t_prev = -1
-        self.t_to_add = 0
-        self.raw_data = []
-        for step in self.method[g.M_STEPS]:
-            self.raw_data.append([])
-        
-     
-    def start_run(self):
-        try:
-            self.read_updated_file()
-            self.run = get_run_from_file_data(self.data, self.uid)
-            self.reps_total = len(self.run[g.R_REPLICATES])
-            self.rep_current = 0
-            self.method = get_method_from_file_data(self.data, self.run[g.R_UID_METHOD])
-            self.steps = self.get_steps()
-            self.dt = self.method[g.M_DT]
-            self.i_max = self.method[g.M_CURRENT_RANGE]
 
-            # Start run
-            self.init_pstat_process()
-              
-               
-        except Exception as e:
-            print(e)
+
+    #########################################
+    #                                       #
+    #   Functions for msg_box buttons       #
+    #                                       #
+    #########################################
+     
+    def disconnected_try_again(self):
+        self.msg_box.setCurrentIndex(0)
+        self.start_run()
 
      
 
@@ -246,7 +335,7 @@ class WindowRunView(QMainWindow):
         try:
             if self.process:
                 self.stopped = True
-                self.running = False
+                self.running_flag = False
                 self.process.kill()
                 self.process = None
                 self.message("Run STOPPED by user")
@@ -256,9 +345,9 @@ class WindowRunView(QMainWindow):
         except Exception as e:
             print(e)
             
-    def get_steps(self):
+    def get_steps(self, method):
         """
-        Assumes that there is a method loaded into self.method. Takes this method and
+        Takes this method and
         figures out when each relay should be turned on/off, creating a new array entry
         (separate step) for modifying the state of each relay. Makes sure all relays are
         off at the end of the run. Returns a list of steps where each step either changes
@@ -270,7 +359,7 @@ class WindowRunView(QMainWindow):
             relay_on.append(False)
         
         
-        for step in self.method[g.M_STEPS]:
+        for step in method[g.M_STEPS]:
             #new_steps = []
             for i, relay in enumerate(g.M_RELAYS):
                 if not relay_on[i] and step[relay]:     # if the relay is OFF and needs to be ON for this step
@@ -303,6 +392,19 @@ class WindowRunView(QMainWindow):
         except Exception as e:
             print(e)
 
+    #########################################
+    #                                       #
+    #   Interrupt data getter               #
+    #    (and associated functions)         #
+    #                                       #
+    #   1. interrupt_data_getter            #
+    #   2. store_and_graph_from_queue       #
+    #   3. graph_new_data                   #
+    #   4. store_queued_data                #
+    #   5. save_rep_raw_data                #
+    #                                       #
+    #########################################
+
     def interrupt_data_getter(self):
         """
         This function is designed to be run as an interrupt and should only be started
@@ -317,7 +419,7 @@ class WindowRunView(QMainWindow):
 
         """
         
-        while self.running:          # while run is ongoing
+        while self.running_flag:          # while run is ongoing
             print('checking')
             self.store_and_graph_from_queue()   
             time.sleep(g.R_PLOT_REFRESH_TIME)   # (this controls frequency of interrupt)
@@ -353,13 +455,22 @@ class WindowRunView(QMainWindow):
         self.t.append(t_now + self.t_to_add)                        # Append values for plotting 
         self.v.append(v_new)
         self.I.append(I_new)                                        # Append tuple to appropriate method list
-        self.raw_data[self.current_step_index].append((t_new, v_new, I_new))
         self.t_prev = t_now                                         # Store this time as the previous time for next
 
-    def update_replicate_msg(self, this_rep, total_reps):
-        print("--- Running replicate", this_rep+1, "of", total_reps, "---")
-
     def save_rep_raw_data(self):
+        print('this is where we would start an async save of the raw data...')
+        self.save_complete_flag = True      # For debugging, pretending like we did a successful save here...
+
+
+
+
+
+
+
+
+
+        
+        return
         self.message("Saving data for rep "+str(self.rep_current+1))
         raw_data = []
         for i,step in enumerate(self.method[g.M_STEPS]):
@@ -379,10 +490,31 @@ class WindowRunView(QMainWindow):
         try:
             self.parent.data = self.data
             write_data_to_file(self.parent.path, self.data)
-            self.data_saved = True
+            self.data_saved_flag = True
         except Exception as e:
             print(e)
             self.message('Sorry! We were unable to save the data!')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    '''def update_replicate_msg(self, this_rep, total_reps):
+        print("--- Running replicate", this_rep+1, "of", total_reps, "---")'''
+
+
 
         
         

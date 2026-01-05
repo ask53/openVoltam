@@ -539,8 +539,14 @@ class WindowRunConfig(QMainWindow):
         self.close_on_save = False
 
     def run_runs(self):
+        tasks = []
+        for run in self.parent.data[g.S_RUNS]:
+            if run[g.R_UID_SELF] == self.run_id:
+                for rep in run[g.R_REPLICATES]:
+                    tasks.append((self.run_id, rep[g.R_UID_SELF]))
+                break
         self.close()
-        self.parent.new_win_view_run(self.run_id)
+        self.parent.new_win_view_run(tasks)
 
 
     #########################################
