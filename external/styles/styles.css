@@ -115,3 +115,11 @@ WindowMethod QSplitter::handle {
 QScrollArea#ov-graph-area {
 	background-color: white;
 }
+
+WindowRunView QWidget#msg_container {
+	border: 1px solid grey;
+}
+
+WindowRunView QWidget#msg_container QWidget#error {
+	border: 5px solid red;
+}

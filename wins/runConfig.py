@@ -323,12 +323,12 @@ class WindowRunConfig(QMainWindow):
         if not path:
             return
         data = get_data_from_file(path)
-            if len(self.parent.data[g.S_METHODS]) > 0 and len(self.parent.data[g.S_METHODS]) == self.method.count():
-                self.method.insertSeparator(self.method.count())
-            self.method.addItem(data[g.M_NAME], {'type':g.M_FROM_FILE,
-                                                 'path': path,
-                                                 'method': data})
-            self.method.setCurrentIndex(self.method.count()-1)
+        if len(self.parent.data[g.S_METHODS]) > 0 and len(self.parent.data[g.S_METHODS]) == self.method.count():
+            self.method.insertSeparator(self.method.count())
+        self.method.addItem(data[g.M_NAME], {'type':g.M_FROM_FILE,
+                                            'path': path,
+                                            'method': data})
+        self.method.setCurrentIndex(self.method.count()-1)
         
 
     def view_method(self):

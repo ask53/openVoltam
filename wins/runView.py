@@ -81,6 +81,9 @@ class WindowRunView(QMainWindow):
         
         # Stacked layout in upper left
         self.msg_box = QStackedLayout()
+        self.msg_box_container = QWidget()
+        self.msg_box_container.setLayout(self.msg_box)
+        self.msg_box_container.setObjectName('msg_container')
 
         # Stacked item 0: blank
         self.msg_box.addWidget(QWidget())
@@ -92,7 +95,7 @@ class WindowRunView(QMainWindow):
         self.msg_box.setCurrentIndex(1)
 
         # Stacked item 2: Device not connected
-        lbl_disconnected = QLabel("Sorry, i'm having trouble finding a compatible potentiostat. Please ensure that one is connected and try again.")
+        lbl_disconnected = QLabel("No potentiostat detected. Please ensure that one is connected and try again.")
         lbl_disconnected.setWordWrap(True)
         but_disconnected = QPushButton('try again')
         but_disconnected.clicked.connect(self.disconnected_try_again)
@@ -101,6 +104,7 @@ class WindowRunView(QMainWindow):
         v1.addWidget(but_disconnected)
         w = QWidget()
         w.setLayout(v1)
+        w.setObjectName('error')
         self.msg_box.addWidget(w)
 
         self.run_details = QPlainTextEdit()
@@ -111,7 +115,7 @@ class WindowRunView(QMainWindow):
         v_left = QVBoxLayout()
         h1 = QHBoxLayout()
 
-        v_left.addLayout(self.msg_box)
+        v_left.addWidget(self.msg_box_container)
         v_left.addWidget(self.run_details)
         v_left.addWidget(but_stop_run)
 
@@ -201,6 +205,13 @@ class WindowRunView(QMainWindow):
                 self.error_run_msg = msgs[i]
                 print(prefix)
                 print(msgs[i])
+            elif prefix == g.R_PORT_PREFIX:
+                print('port is:',msgs[i])
+                self.port = msgs[i]
+            elif prefix == g.R_STATUS_PREFIX:
+                print(prefix)
+                print(msgs[i])
+                # do something with statuses here if you want! 
             else:
                 print(prefix)
                 print(msgs[i])
@@ -209,6 +220,8 @@ class WindowRunView(QMainWindow):
         print('stderr')
         data = self.process.readAllStandardError()
         stderr = bytes(data).decode("utf8")
+        self.error_run_flag = True
+        self.error_run_msg = stderr
         self.message(stderr)
 
     def handle_state(self, state):
@@ -236,8 +249,10 @@ class WindowRunView(QMainWindow):
                 if self.error_run_msg == g.R_ERROR_NO_CONNECT:
                     self.message('error, no device detected')
                     self.msg_box.setCurrentIndex(2)
-                if self.error_run_msg == g.R_ERROR_VMAX_TOO_HIGH:
+                elif self.error_run_msg == g.R_ERROR_VMAX_TOO_HIGH:
                     self.message("error, this device doesn't support a maximum voltage this high.")
+                #elif MID RUN ERROR:
+                    # Change status to mid-run error
                 
                 ######################
                 #
