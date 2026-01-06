@@ -69,7 +69,8 @@ class WindowRunConfig(QMainWindow):
         self.method.setPlaceholderText(l.rc_select[g.L])
 
         for method in self.parent.data[g.S_METHODS]:
-            self.method.addItem(method[g.M_NAME], method)
+            self.method.addItem(method[g.M_NAME], {'type':g.M_FROM_SAMPLE,
+                                                   'method': method})
         self.method.currentIndexChanged.connect(self.method_changed)
 
         but_m_load = QPushButton('load from file')
@@ -261,7 +262,7 @@ class WindowRunConfig(QMainWindow):
         reps = int(self.replicates.value())
         steps = []
         if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
-            steps = self.method.currentData()[g.M_STEPS]    
+            steps = self.method.currentData()['method'][g.M_STEPS]    
         self.graph.update_plot(steps, show_labels=False, reps=reps)
 
     def update_win(self):
@@ -322,17 +323,27 @@ class WindowRunConfig(QMainWindow):
         if not path:
             return
         data = get_data_from_file(path)
-        try:
             if len(self.parent.data[g.S_METHODS]) > 0 and len(self.parent.data[g.S_METHODS]) == self.method.count():
                 self.method.insertSeparator(self.method.count())
-            self.method.addItem(data[g.M_NAME], data)
+            self.method.addItem(data[g.M_NAME], {'type':g.M_FROM_FILE,
+                                                 'path': path,
+                                                 'method': data})
             self.method.setCurrentIndex(self.method.count()-1)
-        except Exception as e:
-            print(e)
+        
 
     def view_method(self):
         if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
-            self.parent.parent.open_config(data=self.method.currentData(), editable=False)
+            try:
+                if self.method.currentData()['type'] == g.M_FROM_SAMPLE:    # if method is from an existing run in sample file
+                    method_id = self.method.currentData()['method'][g.M_UID_SELF]
+                    self.parent.new_win_method_by_id(g.WIN_MODE_VIEW_ONLY, method_id, False)
+                else:                                                       # if method is from a separatemethod file
+                    path = self.method.currentData()['path']
+                    self.parent.new_win_method_by_path(g.WIN_MODE_VIEW_ONLY, path, False)
+            except Exception as e:
+                print(e)
+                
+            #self.parent.parent.open_config(data=self.method.currentData(), editable=False)
 
     #
     #
@@ -469,7 +480,7 @@ class WindowRunConfig(QMainWindow):
 
         # grab the most up to date version of the sample data 
         data = self.parent.data
-        method_new = self.method.currentData()
+        method_new = self.method.currentData()['method']
 
         # if this method is already in the file
         for method in data[g.S_METHODS]:                

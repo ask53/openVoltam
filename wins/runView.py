@@ -455,6 +455,7 @@ class WindowRunView(QMainWindow):
         self.t.append(t_now + self.t_to_add)                        # Append values for plotting 
         self.v.append(v_new)
         self.I.append(I_new)                                        # Append tuple to appropriate method list
+        #self.raw_data[self.current_step_index].append((t_new, v_new, I_new))
         self.t_prev = t_now                                         # Store this time as the previous time for next
 
     def save_rep_raw_data(self):

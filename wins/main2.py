@@ -770,7 +770,7 @@ class WindowMain(QMainWindow):
                         method_id = run[g.R_UID_METHOD]
                         break
                 if method_id:   
-                    self.new_win_method(mode, method_id)
+                    self.new_win_method_by_id(mode, method_id)
         except Exception as e:
             print(e)
 
@@ -796,7 +796,7 @@ class WindowMain(QMainWindow):
     #   1. new_win_sample                       #
     #   2. new_win_config_run                   #
     #   3. new_win_view_run                     #
-    #   4. new_win_method                       #
+    #   4. new_win_method_by_id                 #
     #   5. X
     #   6.
     #
@@ -815,8 +815,11 @@ class WindowMain(QMainWindow):
     def new_win_view_run(self, tasks):
         self.new_win_one_of_type(WindowRunView(self, tasks))
 
-    def new_win_method(self, mode, method_id):
-        self.new_win_one_with_value(WindowMethod(self, mode, path=False, method_id=method_id), 'method_id', method_id)
+    def new_win_method_by_id(self, mode, m_id, changable=True):
+        self.new_win_one_with_value(WindowMethod(self, mode, method_id=m_id, mode_changable=changable), 'method_id', m_id)
+
+    def new_win_method_by_path(self, mode, path, changable=True):
+        self.new_win_one_with_value(WindowMethod(self, mode, path=path, mode_changable=changable), 'path', path)
 
     def new_win_one_of_type(self, obj):
         """Takes in a new object to create as child window of self.

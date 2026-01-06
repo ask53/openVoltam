@@ -253,13 +253,14 @@ from PyQt6.QtWidgets import (
     )
 
 class WindowMethod(QMainWindow):
-    def __init__(self, parent, mode, path=False, method_id=False):
+    def __init__(self, parent, mode, path=False, method_id=False, mode_changable=True):
         super().__init__()
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.parent = parent
         self.mode = mode
         self.path = path
         self.method_id = method_id
+        self.mode_changable = mode_changable
 
         self.saved = True
         self.adding = False     # flag for whether step is being added
@@ -523,6 +524,7 @@ class WindowMethod(QMainWindow):
             try:
                 self.set_values()
             except Exception as e:
+                print('here!')
                 print(e)
 
 
@@ -632,10 +634,11 @@ class WindowMethod(QMainWindow):
         button back in at the appropriate spot"""
         for but in self.buts:
             but.setParent(None)
-        h = QHBoxLayout()
-        for but in buttonList:
-            h.addWidget(but)
-        self.centralWidget().layout().addLayout(h) # Add button to end of right-column layout
+        if self.mode_changable:
+            h = QHBoxLayout()
+            for but in buttonList:
+                h.addWidget(but)
+            self.centralWidget().layout().addLayout(h) # Add button to end of right-column layout
 
     def set_buttons_enabled(self, enabled=True):
         for but in self.buts:
