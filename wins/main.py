@@ -13,10 +13,11 @@ import ov_globals as g
 import ov_lang as l
 from ov_functions import *
 
-#from wins.viewSample import WindowViewSample
-#from wins.sample import WindowSample
-#from wins.runConfig import WindowRunConfig
-#from wins.runView import WindowRunView
+from wins.sample import WindowSample
+from wins.method import WindowMethod
+from wins.runConfig import WindowRunConfig
+from wins.runView import WindowRunView
+
 
 # import other necessary python tools
 from os.path import join as joindir
@@ -24,7 +25,7 @@ from os.path import exists
 from functools import partial
 from ast import literal_eval
 from tkinter.filedialog import askopenfilename as askOpenFileName
-import csv
+'''import csv'''
 
 
 from PyQt6.QtTest import QTest
@@ -47,8 +48,7 @@ from PyQt6.QtWidgets import (
     QApplication,
     QMenu,
     QInputDialog,
-    QProgressBar
-    
+    QProgressBar  
 )
 
 #######
@@ -60,49 +60,40 @@ import sys, os
 # Define class for Home window
 class WindowMain(QMainWindow):  
 
-    def __init__(self, path, parent):
+    def __init__(self, parent, path):
         super().__init__()
-        
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.path = path
         self.parent = parent
         self.data = {}
-
-        '''self.w_view_sample = WindowSample(self.path, self, update_on_save=True, view_only=True)
-        self.w_edit_sample = WindowSample(self.path, self, update_on_save=True, view_only=False)
-        self.w_run_config = WindowRunConfig(self)
-        self.w_run = WindowRunView(self)'''
-
-        self.ws_view_run_config = []
-        #self.children = [self.w_view_sample, self.w_edit_sample, self.w_run_config, self.w_run]
-
-
-
-        
-        #self.config_pane_displayed = False
+        self.children = []
         self.setObjectName('window-sample')
         self.layout = {}                  # for storing an outline of runs and reps and which are selected
         self.select_all_prog_check_flag = False
-        #self.num_runs = 0
-        
+        self.save_error_flag = False
+        self.read_error_flag = False
+        self.export_error_msg = ''
         self.status = self.statusBar()
         self.progress_bar = QProgressBar()
         self.process = None
-
-        #self.start_async_read()
-
-        print(self.path)
-
-
 
         #####################
         #                   #
         #   status bar      #
         #                   #
-        ##################### 
-        self.progress_bar.setMaximumWidth(200)  # Set a fixed width
+        #####################
+        self.progress_bar.setMinimum(0)
+        self.progress_bar.setMaximum(0)
+        self.progress_bar.setMaximumWidth(g.SB_PROGRESS_BAR_WIDTH)  # Set a fixed width
         self.progress_bar.setVisible(False)     # Hide it initially
         self.status.addPermanentWidget(self.progress_bar)
-   
+
+        #####################
+        #                   #
+        #   begin data read #
+        #                   #
+        ##################### 
+        self.start_async_read()
 
         #####################
         #                   #
@@ -114,16 +105,16 @@ class WindowMain(QMainWindow):
         # add labels ("actions") for menu bar
         action_new_sample = QAction(l.new_sample[g.L], self)
         action_open_sample = QAction(l.open_sample[g.L], self)
-        action_new_config = QAction(l.new_config[g.L], self)
-        action_open_config = QAction(l.open_config[g.L], self)
-        action_edit_config = QAction(l.edit_config[g.L], self)
+        action_new_method = QAction(l.new_config[g.L], self)
+        action_open_method = QAction(l.open_config[g.L], self)
+        
 
         # connect menu bar labels with slots 
         action_new_sample.triggered.connect(parent.new_sample)                      # this first group of menu functions come from the home window (parent)
         action_open_sample.triggered.connect(parent.open_sample)
-        action_new_config.triggered.connect(parent.new_config)
-        action_open_config.triggered.connect(parent.open_config)
-        action_edit_config.triggered.connect(parent.edit_config)
+        action_new_method.triggered.connect(parent.new_method)
+        action_open_method.triggered.connect(parent.open_method)
+        
 
         # Add menu top labels then populate the menus with the above slotted labels
         file_menu = menu.addMenu(l.menu_sample[g.L])
@@ -131,14 +122,10 @@ class WindowMain(QMainWindow):
         file_menu.addAction(action_open_sample)
         
         file_menu = menu.addMenu(l.menu_config[g.L])
-        file_menu.addAction(action_new_config)
-        file_menu.addAction(action_open_config)
-        file_menu.addSeparator()
-        file_menu.addAction(action_edit_config)
+        file_menu.addAction(action_new_method)
+        file_menu.addAction(action_open_method)
 
         file_menu = menu.addMenu(l.menu_run[g.L])
-
-
 
         #####################################
         #                                   #
@@ -154,6 +141,9 @@ class WindowMain(QMainWindow):
         self.runAction_viewConfig = self.contextmenu_run.addAction("View run info")
         self.runAction_editConfig = self.contextmenu_run.addAction("Edit run info")
         self.contextmenu_run.addSeparator()
+        self.runAction_viewMethod = self.contextmenu_run.addAction("View method")
+        self.runAction_editMethod = self.contextmenu_run.addAction("Edit method name")
+        self.contextmenu_run.addSeparator()
         self.runAction_viewData = self.contextmenu_run.addAction("Graph data from run(s) [DOES NOTHING YET]")
         self.runAction_exportData = self.contextmenu_run.addAction("Export CSV of run(s)")
         self.contextmenu_run.addSeparator()
@@ -166,70 +156,60 @@ class WindowMain(QMainWindow):
         self.contextmenu_rep.addSeparator()
         self.repAction_delete = self.contextmenu_rep.addAction("Delete replicates(s) [DOES NOTHING YET]")
 
-        #self.runAction_runAgain.triggered.connect(self.config_run_with_uid)
-        #self.runAction_viewConfig.triggered.connect(self.view_config)
-        #self.runAction_editConfig.triggered.connect(partial(self.view_config, True))
-        #self.runAction_exportData.triggered.connect(self.export_runs_to_csv)
+        self.runAction_runAgain.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
+        self.runAction_viewConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
+        self.runAction_editConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_EDIT))
+        self.runAction_viewMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
+        self.runAction_editMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_WITH_MINOR_EDITS))
+        self.runAction_exportData.triggered.connect(self.export_selected_reps_as_csv)
         
-        #self.repAction_editNote.triggered.connect(self.edit_rep_note)
-        #self.repAction_exportData.triggered.connect(self.export_reps_to_csv)
+        self.repAction_editNote.triggered.connect(self.edit_rep_note)
+        self.repAction_exportData.triggered.connect(self.export_selected_reps_as_csv)
 
+        self.runActions_oneOnly = [self.runAction_runAgain,
+                                   self.runAction_editConfig,
+                                   self.runAction_viewConfig,
+                                   self.runAction_viewMethod,
+                                   self.runAction_editMethod]
+        self.repActions_oneOnly = [self.repAction_editNote]
         
-
-        #self.runActions_oneOnly = [self.runAction_runAgain, self.runAction_editConfig, self.runAction_viewConfig]
-        #self.repActions_oneOnly = [self.repAction_editNote]
-
-
-        
-
-
         #####################
         #                   #
         #   page layout     #
         #                   #
         #####################
-        
-        #self.load_sample_info()                                                 # reads sample info into self.data
-        #self.set_sample_info()
 
-        
-
-        lay = QVBoxLayout()                             # this is the main vertical layout we'll add things to
-
-        #
-        #   Define the top row ("sample header")
-        #
-        
+        lay = QVBoxLayout()
         
         but_view = QPushButton('info')
         but_config = QPushButton('NEW RUN')
         but_calc = QPushButton('Calculate')
         but_res_sample = QPushButton('Sample results')
-
-        #but_view.clicked.connect(self.view_sample_info)
-        #but_config.clicked.connect(self.config_run)
+        self.buts = [but_view, but_config, but_calc, but_res_sample]
         
-        v1 = QVLine()
-        v2 = QVLine()
-        v3 = QVLine()
+        but_view.clicked.connect(self.new_win_sample)
+        but_config.clicked.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
+            
+        vl1 = QVLine()
+        vl2 = QVLine()
+        vl3 = QVLine()
 
         self.lbl_sample_name = TitleLbl("")
         
         l_sample_header = QHBoxLayout()
         l_sample_header.addWidget(self.lbl_sample_name)
         l_sample_header.addWidget(but_view)
-        l_sample_header.addWidget(v1)
+        l_sample_header.addWidget(vl1)
         l_sample_header.addStretch()
-        l_sample_header.addWidget(v2)
+        l_sample_header.addWidget(vl2)
         l_sample_header.addWidget(but_config)
-        l_sample_header.addWidget(v3)
+        l_sample_header.addWidget(vl3)
         l_sample_header.addWidget(but_calc)
         l_sample_header.addWidget(but_res_sample)
 
         w_sample_header = QWidget()                         # create a widget to hold the layout (which can be styled)
         w_sample_header.setLayout(l_sample_header)          # add the layout to the widget
         w_sample_header.setObjectName("sample-header")      # add a name to target with QSS
-
 
         ###########################################################################################################################
         #
@@ -257,234 +237,53 @@ class WindowMain(QMainWindow):
         #
         #
         ############################################################################################################################
-
-
-        # Grab the run history as a widget
-        try:
-            self.widgetize_run_history()
-        except Exception as e:
-            print(e)
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            print(exc_type, fname, exc_tb.tb_lineno)
+        
+        self.w_run_history_area = QScrollArea()
         
         # Add all of these three widgets to our vertical layout
         lay.addWidget(w_sample_header)
         lay.addWidget(self.w_run_header)
         lay.addWidget(self.w_run_history_area)
 
+        setWsEnabled(self.buts, False)
         
-
         # Display! 
         self.w = QWidget()
         self.w.setLayout(lay)
         self.setCentralWidget(self.w)
-
-        print('hullo')
-        
         
 
-    def select_all_lbl_clicked(self, event):        # this exists so that the "select all" label can be clicked
-        self.cb_all.toggle()                        #   as well as the checkbox itself
-
-    def load_sample_info(self):                     # this grabs all data from file and lays it out on the window
-        ### FOR TESTING ###
-        #
-        self.data = {}
-        return
-        #
-        ####################                        # this can be called to update the window when the file has been updated
-        if self.path:                               # if there is a path, read in the data
-            self.data = get_data_from_file(self.path)
-
-    def set_sample_info(self):      
-        #self.w_view_sample = WindowSample(self.path, self, view_only=True)  # Update info in view sample pane (even if hidden)
+    def update_win(self):
         sample_name = self.data[g.S_NAME]                       
-        self.setWindowTitle(sample_name)                        # Set the sample window title to the sample name
-        try:
-            self.lbl_sample_name.updateTitleLbl(sample_name)    # Set the Title label to the sample name...if this 
-        except:                                                 #   throws and error, there is not yet a title label
-            self.lbl_sample_name = TitleLbl(sample_name)        #   so create one! 
-
-
-
-    '''def view_sample_info(self):
-        self.w_view_sample.setTextFromFile()        # update content
-        if self.w_view_sample.isHidden():           # if window is closed,
-            self.w_view_sample.show()               # show it
-        else:                                       # if it is showing,
-            self.w_view_sample.activateWindow()     # bring it to front'''
-
-    '''def edit_sample(self):
-        try:
-            self.w_edit_sample.setTextFromFile()        # update content
-            if self.w_edit_sample.isHidden():           # if window is closed,
-                self.w_edit_sample.show()               # show it
-            else:                                       # if it is showing,
-                self.w_edit_sample.activateWindow()     # bring it to front
-        except Exception as e:
-            print(e)'''
-
-    def update_displayed_info(self):
-        
-        self.load_sample_info()                                             # reload the sample info from file
-        self.set_sample_info()                                          
-                                                                            #   are selected to start.
+        self.setWindowTitle(sample_name)                                    # Set the sample window title
+        self.lbl_sample_name.updateTitleLbl(sample_name)                    # Set the sample name
         self.w_run_history_area.setParent(None)                             # remove run history pane from layout
-        self.widgetize_run_history()                                        # get updated run history as a widget    
+        self.widgetize_runs()                                               # get updated run history as a widget    
         self.centralWidget().layout().addWidget(self.w_run_history_area)    # add the updated run history back to layout
-
-        print('here!')
-        ### FOR TESTING
-        #
-        #self.w_view_sample.setTextFromFile()                                # Update info in view-sample pane'''
-        #
-        #################
-
-    '''def config_run(self):
-        self.w_run_config.set_form()
-        self.w_run_config.show()'''
-
-    def get_single_selected_run(self):
-        """Loops through layout, returns ID of first selected run.
-        If no runs are selected, returns False."""
-        for run in self.layout:                         # Loop thru layout
-            if self.all_reps_of_run_are_selected(run):  # if this run is selected
-                return(run)                             # return unique ID of this run
-        return False
-
-    def get_single_selected_rep(self):
-        """Loops through layout, returns (runID, repID) for first selected rep.
-        If no reps are selected, returns (False, False)."""
-        for run in self.layout:
-            if self.layout[run]['selected']:
-                return (run, self.layout[run]['selected'][0])
-        return (False, False)
-        
-            
-    '''def config_run_with_uid(self):
-        """Finds the first selected run (assumes there is only one run selected!)
-        and opens up a new run configuration window with all of the parameters
-        preset to match the currently selected run"""
-        run_id = self.get_single_selected_run()
-        if run_id:
-            self.w_run_config.set_form(run_id)              # set the run config window to match config from run
-            self.w_run_config.show()                        # show the run config window'''
-        
-    def view_config(self, modifiable=False):
-        # Assumes only one run is selected.
-        try:
-            run = self.get_single_selected_run()
-            if run:
-                w = self.view_config_window(run)
-                w.setViewOnly(modifiable=modifiable)
-                if w.isHidden():
-                    w.show()
-                else:
-                    w.activateWindow()
-                    
-        except Exception as e:
-            print(e)
-
-    def view_config_window(self, run):
-        for winDict in self.ws_view_run_config:
-            if winDict['run']==run:
-                return winDict['w']
-        self.ws_view_run_config.append({
-            'run': run,
-            'w': WindowRunConfig(self, view_only=True)
-            })
-        self.ws_view_run_config[-1]['w'].set_form(run)
-        return self.ws_view_run_config[-1]['w']
-
-        
-            
-
-
-
-        #########################################
-        #
-        #
-        #       HERE
-        #   1. Append new window to self.ws_view_run_config
-        #       ^-- figure out how to manage references to windows
-        #       a. when window is closed, make sure to delete reference
-        #   2. Launch new window!
-        #   3. Modify runConfig.py for view-only! 
-        
-        return
-        
-
-    def do_nothing_with_widget(self, w):
-        """This is necessary so that each widget has a callback function if clicked.
-        Pls don't delete even tho is looks oh so deleteable!"""
-        return
-
-    def add_row_to_main(self, ws, row, h_offset=0, v_merge=1, h_merge=1):
-        """
-        Adds a new row of QWidgets to the self.grid object. Requires there being one self.grid object.
-        Arguments:
-            ws             List: of widgets to add to row
-            row            Int: index of the row to add to the grid
-            h_offset=0     Int: column offset of first widget (eg. if h_offset==2, this leaves first 2 cols
-                           blank and ws[0] is placed in 2nd column)
-            v_merge=1      Int: # of rows to merge together vertically
-            h_merge=1      Int: # of columns to merge together horizontally
-        Returns:
-            The incremented row index
-        """
-        for i, w in enumerate(ws):
-            self.grid.addWidget(w, row, i+h_offset, v_merge, h_merge)
-        return row+1
-    
-    def create_w(self, s, qss_name, onclick_fn=do_nothing_with_widget, run_id=False, rep_id=False, word_wrap=True):
-        """
-        Returns a QLabel widget according the following arguments:
-            s:          String: contains the text of the label
-            qss_name    String: will be accessed by Qt Style Sheet for styling
-            onclick_fn  Function handle: that runs when widget is clicked (default: do nothing)
-            run_id      String: The UID of the related run (default False for cases where widget is not connected to specific run)
-            rep_id      String: The UID of the related replicate (default False for cases where widget is not connected to specific replicate)
-            word_wrap   Boolean: True to enable word wrapping, False to disable
-        Sets the QLabel's current object name to qss_name (this can be modified elsewhere to adjust styling)
-        Also creates properties within the QLabel (see documentation for QObject) for:
-            ov-run (contains run=id)
-            ov-rep (contains rep-id)
-            ov-qss-name (contains qss_name for resetting styles)
-        """
-        
-        w = QLabel(s)
-        w.setWordWrap(word_wrap)
-        w.setObjectName(qss_name)
-        w.mouseReleaseEvent = partial(onclick_fn, w)
-        w.setProperty('ov-run', run_id)
-        w.setProperty('ov-rep', rep_id)     
-        w.setProperty('ov-qss-name', qss_name)          # store qss name for easy access later (to reset styles)
-        w.setProperty('ov-selected-qss-name', 'selected-'+qss_name)
-        return w
-
-    def widgetize_run_history(self):
+        self.update_highlights()
+        self.update_children()
         
         
-        self.w_run_history_area = QScrollArea()             # init the scroll area
-        #self.w_run_history_area.resizeEvent = self.resize
+    #############################################
+    #                                           #
+    #   Functions for creating run layout       #
+    #                                           #
+    #   1. widgetize_runs                       #
+    #   2. do_nothing                           #
+    #   3. create_w                             #
+    #   4. add_row_to_main                      #
+    #                                           #
+    #############################################
 
+    def widgetize_runs(self):
+        layout_old = self.layout.copy()
         
-
         self.grid = QGridLayout()                           # init grid layout (that is inside scroll area)
         self.grid.setHorizontalSpacing(0)
         self.grid.setVerticalSpacing(0)
-
-        self.w_run_history_container = QWidget()
-        self.w_run_history_container.setLayout(self.grid)
-        self.w_run_history_container.setObjectName('runs-container')
-        self.w_run_history_area.setWidget(self.w_run_history_container)
-
-        if not self.data:
-            return
-
+        
         # create column headers and add them to the grid layout
-        headers = ['RUN INFO','REPLICATE', 'STATUS', 'COMPLETED', 'NOTES', 'PROCESSING']
+        headers = ['RUN INFO','REPLICATE', 'STATUS', 'LAST ATTEMPTED', 'NOTES', 'PROCESSING']
         w_heads = []
         for header in headers:
             w = self.create_w(header, qss_name='run-col-header')
@@ -503,7 +302,7 @@ class WindowMain(QMainWindow):
             for j, rep in enumerate(run[g.R_REPLICATES]):
                 rep_name = l.r_rep_abbrev[g.L] + ' '+str(j)
                 rep_status = rep[g.R_STATUS]
-                rep_time = 'TIMESTAMP WHEN RUN COMPLETED'
+                rep_time = rep[g.R_TIMESTAMP_REP]
                 rep_notes = rep[g.R_NOTES]
                 rep_proc = 'PROCESSING ICONS HERE'
                 rep_strs = [rep_name,rep_status,rep_time,rep_notes,rep_proc]
@@ -519,23 +318,20 @@ class WindowMain(QMainWindow):
                 rep_id = rep[g.R_UID_SELF]
                 ws_rep = []
                 for s in rep_strs:
-                    w = self.create_w(s, qss_name, self.rep_clicked, run_id, rep_id)
-                    ws_rep.append(w)
-
-                    
+                    w = self.create_w(html_escape(s), qss_name, self.rep_clicked, run_id, rep_id)
+                    ws_rep.append(w)   
                 row = self.add_row_to_main(ws_rep, row, h_offset=1)
                 self.layout[run_id]['reps'].append(rep_id)
-
             
             # Vertically merge all the first cells for this run's replicates and add run information
             run_name = 'Run '+str(i)
             run_type = l.rc_types[run[g.R_TYPE]][g.L]
             method_name = get_method_from_file_data(self.data, run[g.R_UID_METHOD])[g.M_NAME]
             run_notes = run[g.R_NOTES]
-            run_str = '<u>'+run_name+'</u><br>'
-            run_str = run_str + '<b>'+'Type'+'</b>: '+run_type+'<br>'
-            run_str = run_str + '<b>'+'Method'+'</b>: '+method_name+'<br>'
-            run_str = run_str + '<b>'+'Notes'+'</b>: '+run_notes
+            run_str = '<u>'+html_escape(run_name)+'</u><br>'
+            run_str = run_str + '<b>'+'Type'+'</b>: '+html_escape(run_type)+'<br>'
+            run_str = run_str + '<b>'+'Method'+'</b>: '+html_escape(method_name)+'<br>'
+            run_str = run_str + '<b>'+'Notes'+'</b>: '+html_escape(run_notes)
 
             if i%2 == 0: qss_name = 'run-even'
             else: qss_name = 'run-odd'
@@ -544,11 +340,76 @@ class WindowMain(QMainWindow):
             
             self.add_row_to_main([w], start_row, v_merge=row-start_row)
 
-        #self.num_runs = row+1
-        self.grid.setColumnStretch(len(headers)-1,1)                    # Set column stretch on last col so grid fills whole window
+        self.grid.setColumnStretch(len(headers)-1,1)
 
-
+        # update self.layout to ensure that highlights maintain over update
+        for run in layout_old:
+            if run in self.layout:
+                for rep in layout_old[run]['selected']:
+                    if rep in self.layout[run]['reps']:
+                        self.layout[run]['selected'].append(rep)  
         
+        self.w_run_history_container = QWidget()
+        self.w_run_history_container.setLayout(self.grid)
+        self.w_run_history_container.setObjectName('runs-container')
+        self.w_run_history_area.setWidget(self.w_run_history_container)
+
+    def do_nothing(self, w):
+        """This is necessary so that each widget has a callback function if clicked.
+        Pls don't delete even tho is looks oh so deleteable!"""
+        return
+
+    def create_w(self, s, qss_name, onclick_fn=do_nothing, run_id=False, rep_id=False, word_wrap=True):
+        """
+        Returns a QLabel widget according the following arguments:
+            s:          String: contains the text of the label
+            qss_name    String: will be accessed by Qt Style Sheet for styling
+            onclick_fn  Function handle: that runs when widget is clicked (default: do nothing)
+            run_id      String: The UID of the related run (default False for cases where widget is not connected to specific run)
+            rep_id      String: The UID of the related replicate (default False for cases where widget is not connected to specific replicate)
+            word_wrap   Boolean: True to enable word wrapping, False to disable
+        Sets the QLabel's current object name to qss_name (this can be modified elsewhere to adjust styling)
+        Also creates properties within the QLabel (see documentation for QObject) for:
+            ov-run (contains run=id)
+            ov-rep (contains rep-id)
+            ov-qss-name (contains qss_name for resetting styles)
+        """
+        w = QLabel(s)
+        w.setTextFormat(Qt.TextFormat.RichText)
+        w.setWordWrap(word_wrap)
+        w.setObjectName(qss_name)
+        w.mouseReleaseEvent = partial(onclick_fn, w)
+        w.setProperty('ov-run', run_id)
+        w.setProperty('ov-rep', rep_id)     
+        w.setProperty('ov-qss-name', qss_name)          # store qss name for easy access later (to reset styles)
+        w.setProperty('ov-selected-qss-name', 'selected-'+qss_name)
+        return w
+
+    def add_row_to_main(self, ws, row, h_offset=0, v_merge=1, h_merge=1):
+        """
+        Adds a new row of QWidgets to the self.grid object. Requires there being one self.grid object.
+        Arguments:
+            ws             List: of widgets to add to row
+            row            Int: index of the row to add to the grid
+            h_offset=0     Int: column offset of first widget (eg. if h_offset==2, this leaves first 2 cols
+                           blank and ws[0] is placed in 2nd column)
+            v_merge=1      Int: # of rows to merge together vertically
+            h_merge=1      Int: # of columns to merge together horizontally
+        Returns:
+            The incremented row index
+        """
+        for i, w in enumerate(ws):
+            self.grid.addWidget(w, row, i+h_offset, v_merge, h_merge)
+        return row+1
+
+    #############################################
+    #                                           #
+    #   Click handlers                          #
+    #                                           #
+    #   1. rep_clicked                          #
+    #   2. run_clicked                          #
+    #                                           #
+    #############################################
 
     def rep_clicked(self, w, event):
         keys = QApplication.keyboardModifiers()
@@ -596,7 +457,6 @@ class WindowMain(QMainWindow):
         run = w.property('ov-run')
 
         if btn == Qt.MouseButton.RightButton and keys == Qt.KeyboardModifier.NoModifier:    # regular right click
-            print('regular right click')
             if not self.all_reps_of_run_are_selected(run):
                 self.clear_selected()
                 self.add_run_to_selected(run)
@@ -624,7 +484,30 @@ class WindowMain(QMainWindow):
             ##################
 
         self.update_select_all_checkbox()
-        self.update_highlights() 
+        self.update_highlights()
+
+    #####################################################
+    #                                                   #
+    #   Functions involved in selecting runs or reps    #
+    #                                                   #
+    #   1. rep_is_selected                              #
+    #   2. all_reps_of_run_are_selected                 #
+    #   3. this_entire_run_and_nothing_else_is_selected #
+    #   4. all_reps_are_selected                        #
+    #   5. N_reps_selected                              #
+    #   6. N_runs_selected                              #
+    #   7. add_rep_to_selected                          #
+    #   8. remove_rep_from_selected                     #
+    #   9. add_run_to_selected                          #
+    #   10. remove_run_from_selected                    #
+    #   11. add_all_to_selected                         #
+    #   12. clear_selected                              #
+    #   13. update_highlights                           #   
+    #   14. select_all_lbl_clicked                      #   
+    #   15. select_all_toggle                           #
+    #   16. update_select_all_checkbox                  # 
+    #                                                   #
+    #####################################################
 
     def rep_is_selected(self, run, rep):
         """Takes in a widget and returns True if that widget is part of a selected row.
@@ -745,7 +628,10 @@ class WindowMain(QMainWindow):
                 else:
                     w.setObjectName(w.property('ov-qss-name'))
         applyStyles()                                           #Grab QSS Stylesheet and apply it, now that names have been changed
-      
+
+    def select_all_lbl_clicked(self, event):        # this exists so that the "select all" label can be clicked
+        self.cb_all.toggle()                        #   as well as the checkbox itself
+
     def select_all_toggle(self, w):
         """Click handler for select-all checkbox. This runs when select-all checkbox is checked
         programatically or by the user. The first step is to filter out programatic changes.
@@ -772,6 +658,16 @@ class WindowMain(QMainWindow):
             self.select_all_prog_check_flag = True
             self.cb_all.setChecked(False)
 
+
+    #############################################
+    #                                           #
+    # Handlers for right-click "context" menus  #
+    #                                           #
+    #   1. open_rightclick_menu_run             #
+    #   2. open_rightclick_menu_rep             #
+    #                                           #
+    #############################################
+
     def open_rightclick_menu_run(self, event):
         """Opens the right-click context menu for runs. Takes in a mouseclick QEvent object
         that contains the location of the click. Menu is displayed at that location"""
@@ -794,153 +690,288 @@ class WindowMain(QMainWindow):
         if reps_selected > 0:                       # If any reps at all are selected
             for action in self.repActions_oneOnly:  # Setup which actions are enabled
                 action.setEnabled(is_enabled)
-            self.contextmenu_rep.exec(event.globalPosition().toPoint())     # And show the menu! 
+            self.contextmenu_rep.exec(event.globalPosition().toPoint())     # And show the menu!
 
-    
-    def get_run_data(self, run):
-        """Takes in:
-            run    String. Unique ID of run in dataset
-        Returns:
-            The dictionary from the Runs list in the dataset whose unique ID matches run_id"""
-        return next(filter(lambda x: x[g.R_UID_SELF] == run, self.data[g.S_RUNS]), None)
+    #############################################
+    #                                           #
+    # Menu functions and their friends          #
+    #                                           #
+    #   1. get_single_selected_run              #
+    #   2. get_single_selected_rep              #
+    #   3. edit_rep_note                        #
+    #   4. open_run_config_with_uid             #
+    #   5. open_method_with_uid                 #
+    #############################################
 
-    def get_rep_data(self, run, rep):
-        """Takes in:
-            run    String. Unique ID of run in dataset
-            rep    String. Unique ID of replicate in dataset
-        Returns:
-            The dictionary of raw data that corresponds to rep of run."""
-        run_data = self.get_run_data(run)
-        rep_data = next(filter(lambda x: x[g.R_UID_SELF] == rep, run_data[g.R_REPLICATES]), None)
-        return rep_data[g.R_DATA]
+    def get_single_selected_run(self):
+        """Loops through layout, returns ID of first selected run.
+        If no runs are selected, returns False."""
+        for run in self.layout:                         # Loop thru layout
+            if self.all_reps_of_run_are_selected(run):  # if this run is selected
+                return(run)                             # return unique ID of this run
+        return False
 
-    def export_to_csv_message(self, yes, no):
-        try:
-            title = "Export complete."
-            msg = "Export complete.\n"
-            if no:
-                msg = msg+"\nERROR: Failed to export:\n"
-                for rep in no:
-                    msg = msg+rep[0]+': '+rep[1]+'\n'
-                title = "Warning: some replicates failed to export"
-            if yes:
-                msg = msg + "\nSuccessully exported:\n"
-                for rep in yes:
-                    msg = msg+rep[0]+': '+rep[1]+'\n'  
-            show_alert(self, title, msg)
-        except Exception as e:
-            print(e)
-                
+    def get_single_selected_rep(self):
+        """Loops through layout, returns (runID, repID) for first selected rep.
+        If no reps are selected, returns (False, False)."""
+        for run in self.layout:
+            if self.layout[run]['selected']:
+                return (run, self.layout[run]['selected'][0])
+        return (False, False)
 
-    def export_runs_to_csv(self):
-        path = get_path_from_user('folder')
-        saved = []
-        errored = []
-        if path:
-            for run in self.layout:
-                if self.all_reps_of_run_are_selected(run):
-                    for rep in self.layout[run]['selected']:
-                        success = self.export_rep_to_csv(path, run, rep)
-                        if success:
-                            saved.append((run, rep))
-                        else:
-                            errored.append((run, rep))
-            self.export_to_csv_message(saved, errored)
-            
-
-    def export_reps_to_csv(self):
-        path = get_path_from_user('folder')
-        saved = []
-        errored = []
-        if path:
-            for run in self.layout:
-                for rep in self.layout[run]['selected']:
-                    success = self.export_rep_to_csv(path, run, rep)
-                    if success:
-                        saved.append((run, rep))
-                    else:
-                        errored.append((run, rep))
-            self.export_to_csv_message(saved, errored)
-                    
-    def export_rep_to_csv(self, loc, run, rep):
-        try:
-            keys = []
-            data = self.get_rep_data(run, rep)
-            '''if not data:
-                show_alert(self, "Heads up!", "No data available to export from "+run+", "+rep+".")
-                return'''
-                
-            for key in data[0]:
-                keys.append(key)
-
-            samplename=self.path.split('/')[-1]             # get filename from path 
-            groups = samplename.split('.')                  # begin removing the extension (split at all periods)
-            samplename = '.'.join(groups[:len(groups)-1])   #   finish removing the extension (rejoin all with periods except for last)
-            filename = samplename+'_'+run+'_'+rep           # add on the run and rep IDs
-            path = loc+'/'+filename                         # append filename to path
-            suffix = ''
-            i = 1
-            while exists(path+suffix+'.csv'):               # while the file already exists
-                suffix = '_COPY'+str(i)                     # tack on a suffix
-                i = i+1                                     # and increment the counter until we find a filename that is not taken!
-            path = path+suffix+'.csv'                       # generate that novel filename
-                
-     
-            with open(path, 'w', encoding='UTF8', newline='') as f:
-                writer = csv.DictWriter(f, fieldnames=keys) # Tell the writer we are writing from a dictionary with 'keys' as headers
-                writer.writeheader()                        # Write the header row
-                writer.writerows(data)                      # Write  the data
-            return True
-                
-                
-        except Exception as e:
-            return False
+    def get_all_selected_reps(self):
+        reps = []
+        for run in self.layout:
+            for rep in self.layout[run]['selected']:
+                reps.append((run,rep))
+        return reps
 
     def edit_rep_note(self):
         """Opens a dialog """
         (run_id, rep_id) = self.get_single_selected_rep()
-        if run_id and rep_id:
-            note = ''
-            gotNote = False
-            for run in self.data[g.S_RUNS]:
-                if run[g.R_UID_SELF] == run_id:
-                    for rep in run[g.R_REPLICATES]:
-                        if rep[g.R_UID_SELF] == rep_id:
-                            note = rep[g.R_NOTES]
-                            gotNote = True
-                            break
-                    if gotNote:
-                        break
-            if gotNote:
-                title = "Replicate Note | "+run_id+': '+rep_id
-                input_text, ok = QInputDialog.getText(self, title, "", text=note)
+        rep = get_rep(self.data, (run_id, rep_id))
+        note = rep[g.R_NOTES]
 
-                if ok:
-                    rep[g.R_NOTES] = input_text
-                    write_data_to_file(self.path, self.data)
-                        
-        
-            
-        
+        #if note:
+        title = "Replicate Note | "+run_id+': '+rep_id
+        input_text, ok = QInputDialog.getText(self, title, "", text=note)
 
+        if ok:
+            if rep[g.R_NOTES] != input_text:
+                rep[g.R_NOTES] = input_text
+                print(rep)
+                self.start_async_save(g.SAVE_TYPE_REP_MOD, [(run_id, rep_id), rep])
 
+    def open_run_config_with_uid(self, mode):
+        """Finds the first selected run (assumes there is only one run selected!)
+        and opens up a new run configuration window with all of the parameters
+        preset to match the currently selected run"""
+        run_id = self.get_single_selected_run()
+        if run_id:
+            self.new_win_config_run(mode, run_id)
 
-
-
-            
-    def start_async_read(self):
+    def open_method_with_uid(self, mode):
         try:
-            self.process = QProcess()
-            self.process.readyReadStandardOutput.connect(self.handle_read_stdout)
-            self.process.readyReadStandardError.connect(self.handle_read_stderr)
-            self.process.finished.connect(self.handle_finished_rep)
-            self.process.start("python", ['processes/read.py', self.path])
-            print('read process started!')
+            run_id = self.get_single_selected_run()
+            if run_id:
+                method_id = ''
+                for run in self.data[g.S_RUNS]:
+                    if run[g.R_UID_SELF] == run_id:
+                        method_id = run[g.R_UID_METHOD]
+                        break
+                if method_id:   
+                    self.new_win_method_by_id(mode, method_id)
         except Exception as e:
             print(e)
 
-    def handle_read_stdout(self):
+    def export_selected_reps_as_csv(self):
+        reps = self.get_all_selected_reps()
+        dest = get_path_from_user('folder')
+        if dest:
+            self.start_async_export(reps, dest)
+        
+        
+        
+        
+
+        
+        
+
+
+
+    #############################################
+    #                                           #
+    #   Functions for opening new windows       #
+    #                                           #
+    #   1. new_win_sample                       #
+    #   2. new_win_config_run                   #
+    #   3. new_win_view_run                     #
+    #   4. new_win_method_by_id                 #
+    #   5. X
+    #   6.
+    #
+    #   9. new_win_one_of_type                  #
+    #   10. new_win_one_with_value              #
+    #   11. update_children                     #
+    #                                           #
+    #############################################
+
+    def new_win_sample(self):
+        self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_VIEW_ONLY))
+
+    def new_win_config_run(self, mode, run_id=False):
+        self.new_win_one_of_type(WindowRunConfig(self, mode, run_id))
+
+    def new_win_view_run(self, tasks):
+        self.new_win_one_of_type(WindowRunView(self, tasks))
+
+    def new_win_method_by_id(self, mode, m_id, changable=True):
+        self.new_win_one_with_value(WindowMethod(self, mode, method_id=m_id, mode_changable=changable), 'method_id', m_id)
+
+    def new_win_method_by_path(self, mode, path, changable=True):
+        self.new_win_one_with_value(WindowMethod(self, mode, path=path, mode_changable=changable), 'path', path)
+
+    def new_win_one_of_type(self, obj):
+        """Takes in a new object to create as child window of self.
+        Checks whether a window with matching type already exists.
+        If it does, activates (bring-to-front) that window and returns it.
+        If not, creates that window, show, it and returns it.
+        Returns: window object."""
+        for win in self.children:       
+            if type(win) == type(obj):  # If there is already a child window with matching type
+                win.activateWindow()    # activate it and return it
+                return win
+        
+        self.children.append(obj)       # If there isn't already one, append the new window to the list of children
+        self.children[-1].show()        # Show the window
+        return self.children[-1]        # And return it
+
+    def new_win_one_with_value(self, obj, key, value):
+        for win in self.children:
+            if type(win) == type(obj):
+                if win.__dict__[key] == value:
+                    win.activateWindow()
+                    return win
+        
+        self.children.append(obj)
+        self.children[-1].show()
+        return self.children[-1]
+
+    def update_children(self):
+        for win in self.children:
+            win.update_win()
+        
+        
+
+
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    #############################################
+    #                                           #
+    #   Functions for asynchronous export       #
+    #                                           #
+    #   1. start_async_export                   #
+    #   2. handle_export_stdout                 #
+    #   3. handle_export_stderr                 #
+    #   4. handle_finished_export               #
+    #                                           #
+    #############################################
+
+    def start_async_export(self, reps, destPath):
+        if not self.process:
+            self.export_success = []
+            self.export_fail = []
+            self.export_error_msg = ''
+            self.process = QProcess()
+            self.process.readyReadStandardOutput.connect(self.handle_export_stdout)
+            self.process.readyReadStandardError.connect(self.handle_export_stderr)
+            self.process.finished.connect(self.handle_finished_export)
+            self.status.showMessage("Exporting...")
+            self.progress_bar.setVisible(True)
+            self.process.start("python", ['processes/export.py', self.path, destPath, str(reps)])
+
+    def handle_export_stdout(self):
         print('normal msg!')
+        data = self.process.readAllStandardOutput()
+        stdout = bytes(data).decode("utf8")
+        outs = stdout.split('\r\n')
+        for out in outs:
+            if out:
+                self.export_success.append(out)
+
+    def handle_export_stderr(self):
+        print('error msg:')
+        data = self.process.readAllStandardError()
+        stderr = bytes(data).decode("utf8")
+        #print(stderr)
+        errs = stderr.split('\r\n')                 # If multiple errors come in at once, split them up              
+        for err in errs:                            # Loop thru them all
+            if err:                             
+                try:
+                    literal_eval(err)               # Check if is anything other than string
+                    self.export_fail.append(err)    # if so, it is tuple! store it
+                except:
+                    self.export_error_msg = err     # Set the flag and store the message
+                    print(err)                      
+
+    def handle_finished_export(self):
+        if not self.export_fail and not self.export_error_msg:     # complete success!   
+            self.status.showMessage("Export complete", g.SB_DURATION)
+        elif not self.export_error_msg:                            # some reps w no data didn't export
+            self.status.showMessage("WARNING: Some reps could not be exported.", g.SB_DURATION_ERROR)
+            
+        else:                                                       # error message from export process
+            self.status.showMessage("ERROR: Export could not complete.", g.SB_DURATION_ERROR)
+        self.show_export_results_dialog(self.export_success, self.export_fail, self.export_error_msg)
+        self.progress_bar.setVisible(False)
+        self.export_error_flag = False
+        self.process = None
+
+    def show_export_results_dialog(self, yes, no, error=False):
+        title = "Export complete."
+        msg = "Export complete.\n"
+        if error:
+            msg = "ERROR MESSAGE:\n"
+            msg = msg+error+'\n'
+        if no:
+            msg = msg+"\nWarning: Failed to export:\n"
+            for rep in no:
+                rep = literal_eval(rep)
+                msg = msg+rep[0]+': '+rep[1]+'\n'
+        if yes:
+            msg = msg + "\nSuccessully exported:\n"
+            for rep in yes:
+                rep = literal_eval(rep)
+                msg = msg+rep[0]+': '+rep[1]+'\n'
+
+        if no: title = "Warning: some replicates failed to export"
+        if error: title = "ERROR on export"
+        show_alert(self, title, msg)
+        
+        
+
+
+
+    #############################################
+    #                                           #
+    #   Functions for asynchronous data read    #
+    #                                           #
+    #   1. start_async_read                     #
+    #   2. handle_read_stdout                   #
+    #   3. handle_read_stderr                   #
+    #   4. handle_finished_read                 #
+    #                                           #
+    #############################################
+
+    def start_async_read(self):
+        if not self.process:
+            self.process = QProcess()
+            self.process.readyReadStandardOutput.connect(self.handle_read_stdout)
+            self.process.readyReadStandardError.connect(self.handle_read_stderr)
+            self.process.finished.connect(self.handle_finished_read)
+            self.status.showMessage("Loading data...")
+            self.progress_bar.setVisible(True)
+            self.process.start("python", ['processes/read.py', self.path])
+
+    def handle_read_stdout(self):
+        #print('normal msg!')
         data = self.process.readAllStandardOutput()
         stdout = bytes(data).decode("utf8")
         self.data = literal_eval(stdout)
@@ -950,42 +981,102 @@ class WindowMain(QMainWindow):
         data = self.process.readAllStandardError()
         stderr = bytes(data).decode("utf8")
         print(stderr)
+        self.read_error_flag = True
 
-    def handle_finished_rep(self):
-        print('DONE!')
+    def handle_finished_read(self):
+        if self.read_error_flag:
+            self.status.showMessage("ERROR: Data read could not complete.", g.SB_DURATION)
+        else:
+            self.status.showMessage("Data loaded!", g.SB_DURATION)
+            self.update_win()
+            setWsEnabled(self.buts, True)                                   #   Enable buttons
+        self.progress_bar.setVisible(False)
+        self.read_error_flag = False
         self.process = None
-        self.set_sample_info()
         
-        
-        
-    
 
 
-    def resize(self, event):
-        outer = self.w_run_history_area
-        inner = self.w_run_history_container
-        scroll_area_resized(outer, inner, event)
+    #############################################
+    #                                           #
+    #   Functions for asynchronous data save    #
+    #                                           #
+    #   1. start_async_save                     #
+    #   2. handle_save_stdout                   #
+    #   3. handle_save_stderr                   #
+    #   4. handle_finished_save                 #
+    #                                           #
+    #############################################
 
-    def setEnabledChildren(self, enable):
-        """Takes in a boolean, "enable" and sets all child window's enabled status
-        to that boolean, either enabling or disabling all"""
-        for win in self.children:
-            win.setEnabled(enable)
-        for winDict in self.ws_view_run_config:
-            winDict['w'].setEnabled(enable)
+    def start_async_save(self, saveType, params, onSuccess=False, onError=False):
+        if not self.process:
+            self.process = QProcess()
+            self.process.readyReadStandardOutput.connect(self.handle_save_stdout)
+            self.process.readyReadStandardError.connect(self.handle_save_stderr)
+            self.process.finished.connect(partial(self.handle_finished_save, onSuccess, onError))
+            self.process.start("python", ['processes/save.py', self.path, saveType, str(params)])
+            self.status.showMessage("Saving...")
+            self.progress_bar.setVisible(True)
+
+    def handle_save_stdout(self):
+        print('normal msg:')
+        data = self.process.readAllStandardOutput()
+        stdout = bytes(data).decode("utf8")
+        try:
+            data = literal_eval(stdout)
+            self.data = data
+        except:
+            print(data)
+
+    def handle_save_stderr(self):
+        print('error msg:')
+        data = self.process.readAllStandardError()
+        stderr = bytes(data).decode("utf8")
+        print(stderr)
+        self.save_error_flag = True
+
+    def handle_finished_save(self, onSuccess, onError):
+        print('here in finished handler!')
+        try:
+            self.progress_bar.setVisible(False)                                             # Rehide the progress bar
+            self.process = None                                                             # Wipe the process from memory
+            if self.save_error_flag:                                                        # If run errored
+                self.save_error_flag = False                                                #   Reset flag
+                self.status.showMessage("ERROR: Save could not complete.", g.SB_DURATION)   #   Show error message
+                if onError:                                                                 #   If there is an onError callback fn
+                    onError()                                                               #   run it! 
+            else:                                                                           # If the run succeeded
+                self.status.showMessage("Saved!", g.SB_DURATION)                            #   Show success message
+                self.update_win()                                                           #   Update main window with new data
+                if onSuccess:                                                               #   If there is an onSuccess callback fn
+                    onSuccess()                                                             #   run it!
+                                                                     
+        except Exception as e:
+            print(e)
+
             
+    #############################################
+    #                                           #
+    #   Functions that modify children wins     #
+    #                                           #
+    #############################################
 
-    '''def start_run(self, uid):
-        self.w_run.set_run_uid(uid)
-        self.w_run.show()'''
+    def set_enabled_children(self, enabled=True):
+        for win in self.children:
+            win.setEnabled(enabled)
+
+    #############################################
+    #                                           #
+    #   Close window event handler              #
+    #                                           #
+    #############################################
 
     def closeEvent(self, event):
-        for win in self.children:
-            win.close()
-        for winDict in self.ws_view_run_config:
-            winDict['w'].close()
-        event.accept()
+        while self.children:                # loop through children until children is empty
+            self.children[0].close()        # closing the 0th child window (closing pops it from list)
 
+        self.parent.children.remove(self)   # remove reference to this window from parent for memory cleanup
+        event.accept()
+        
 
 class TitleLbl(QLabel):
     def __init__(self, name):
@@ -995,3 +1086,9 @@ class TitleLbl(QLabel):
                  
     def updateTitleLbl(self, new_name):
         self.setText(new_name)
+
+
+        
+        
+
+    

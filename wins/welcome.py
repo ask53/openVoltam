@@ -6,7 +6,7 @@ from ov_functions import *
 # import custom window objects
 from wins.sample import WindowSample
 from wins.method import WindowMethod
-from wins.main2 import WindowMain
+from wins.main import WindowMain
 
 # import other necessary python tools
 from os.path import join as joindir

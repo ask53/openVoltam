@@ -195,6 +195,7 @@ class WindowRunConfig(QMainWindow):
 
         if self.mode == g.WIN_MODE_NEW:
             self.set_mode_new()
+            #self.run_id = False             # if there was a run_id entered to preload values for a new run, forget about it now.
         elif self.mode == g.WIN_MODE_EDIT:
             self.set_mode_edit()
         else:
@@ -258,6 +259,7 @@ class WindowRunConfig(QMainWindow):
                     self.w_stdadd_conc_std.setValue(run[g.R_STD_CONC])
             self.refresh_graph()                                    # refresh the graph pane
 
+
     def refresh_graph(self):
         reps = int(self.replicates.value())
         steps = []
@@ -266,7 +268,8 @@ class WindowRunConfig(QMainWindow):
         self.graph.update_plot(steps, show_labels=False, reps=reps)
 
     def update_win(self):
-        self.set_form()
+        if self.mode != g.WIN_MODE_NEW:
+            self.set_form()
 
     #########################################
     #                                       #
@@ -501,10 +504,12 @@ class WindowRunConfig(QMainWindow):
         self.parent.start_async_save(g.SAVE_TYPE_METHOD_TO_SAMPLE, [method_new], onSuccess=self.after_save_method_success, onError=self.after_save_method_error)
    
     def after_save_method_success(self):
+        print('method save SUCCESS')
         self.status.showMessage('Method saved.', g.SB_DURATION)
         self.save_config()
         
     def after_save_method_error(self):
+        print('method save ERROR')
         self.status.showMessage('ERROR on method save.', g.SB_DURATION_ERROR)       
 
     def save_config(self):
@@ -512,17 +517,21 @@ class WindowRunConfig(QMainWindow):
         new_data = self.get_config_data_dict()  # get data dict without reps
         reps = self.get_replicate_list()        # get reps as a list
         new_data[g.R_REPLICATES] = reps         # add reps list as value to data dict
-            
+
+        print(new_data)
         # Then start the save!   
         self.status.showMessage('Saving run configuration...')
         self.parent.start_async_save(g.SAVE_TYPE_RUN_NEW, [new_data], onSuccess=self.after_save_config_success, onError=self.after_save_config_error)
-
+        print('ASYNC SAVER LAUNCHED!')
+        
     def after_save_config_success(self):
+        print('AFTERSHAVE SUCCESS!')
         self.status.showMessage('Run configuration saved.', g.SB_DURATION)
         self.saved = True
         self.run_runs()
            
     def after_save_config_error(self):
+        print('AFTERSHAVE eRr0rrr!')
         self.status.showMessage('ERROR: Changes were not saved.', g.SB_DURATION_ERROR)
 
     def save_changes(self):
@@ -606,7 +615,8 @@ class WindowRunConfig(QMainWindow):
         for i in range(0, self.replicates.value()):
             uid_rep = g.R_REPLICATE_UID_PREFIX+str(i)
             rep = {g.R_UID_SELF: uid_rep,
-                    g.R_STATUS: g.R_STATUS_PENDING,
+                   g.R_STATUS: g.R_STATUS_PENDING,
+                   g.R_TIMESTAMP_REP: '',
                    g.R_NOTES: '',
                    g.R_DATA: []
                    }

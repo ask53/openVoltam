@@ -63,13 +63,14 @@ def modify_rep(data, params):
     rep = get_rep(data, (run_id, rep_id))
 
     if rep:
-        prevData = rep[g.R_DATA]    # store the previous raw data
+        #prevData = rep[g.R_DATA]    # store the previous raw data
         keys = list(rep.keys())     # get a list of all keys in saved rep
-        for key in keys:            # remove all keys and values from rep
+        keys.remove(g.R_DATA)       #   except for the data key
+        for key in keys:            # remove all keys and values from rep except data
             rep.pop(key, None)      
         for key in newRep:          # add new keys and values to rep (does not include raw data)
             rep[key] = newRep[key]
-        rep[g.R_DATA] = prevData    # add previous raw data back in
+        #rep[g.R_DATA] = prevData    # add previous raw data back in
     return data
 
 def modify_run(data, params):
