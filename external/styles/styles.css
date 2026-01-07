@@ -121,5 +121,9 @@ WindowRunView QWidget#msg_container {
 }
 
 WindowRunView QWidget#msg_container QWidget#error {
-	border: 5px solid red;
+	border: 5px solid #fc7171;					/* red alert */
+}
+
+WindowRunView QWidget#msg_container QWidget#success {
+	border: 5px solid #92ef92; 					/* green success */
 }

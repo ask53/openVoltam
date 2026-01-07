@@ -144,6 +144,7 @@ def init_run():
     if not dev:
         return
     write_status('device is connected!')
+
     PSTAT.set_sample_period(DT)
     PSTAT.set_curr_range(I_MAX)
     v_max = calc_v_max()
@@ -151,7 +152,7 @@ def init_run():
         return
     PSTAT.set_volt_range(v_max)
     PSTAT.set_auto_connect(True)
-    
+        
     write_status('sample period is: '+str(PSTAT.get_sample_period()))
     write_status('current range is: '+str(PSTAT.get_curr_range()))
     write_status('voltage range is: '+str(PSTAT.get_volt_range()))     
@@ -165,5 +166,6 @@ def init_run():
             run_const(step)
         elif step_type == g.M_RAMP:
             run_ramp(step)
+
     
 init_run()

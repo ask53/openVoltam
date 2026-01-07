@@ -1031,8 +1031,11 @@ class WindowMain(QMainWindow):
         #print('normal msg:')
         data = self.process.readAllStandardOutput()
         stdout = bytes(data).decode("utf8")
-        data = literal_eval(stdout)
-        self.data = data        
+        try:
+            data = literal_eval(stdout)
+            self.data = data
+        except:
+            print(data)
 
     def handle_save_stderr(self):
         print('error msg:')

@@ -212,7 +212,22 @@ def get_run_from_file_data(data, run_id):
         if run[g.R_UID_SELF] == run_id: 
             return run
     return False
-    
+
+def get_rep(data, ids):
+    """ Takes in:
+        - data     Dict.  With structure of .ovs data file
+        - ids      Tuple. With structure (run-id, rep-id)
+    Gets the run with ID that matches run-id from the data.
+    If it finds one, finds the rep whose ID matches rep-id.
+    If found, returns the rep dictionary. If not, returns False."""
+    runid = ids[0]
+    repid = ids[1]
+    run = get_run_from_file_data(data, runid)
+    if run:
+        for rep in run[g.R_REPLICATES]:
+            if rep[g.R_UID_SELF] == repid:
+                return rep
+    return False
 
 def get_method_from_file_data(data, method_id):
 

@@ -608,7 +608,7 @@ class WindowRunConfig(QMainWindow):
             rep = {g.R_UID_SELF: uid_rep,
                     g.R_STATUS: g.R_STATUS_PENDING,
                    g.R_NOTES: '',
-                   g.R_DATA: False
+                   g.R_DATA: []
                    }
             reps.append(rep)
         return reps

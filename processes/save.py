@@ -24,7 +24,12 @@ import os
 sys.path.append(os.getcwd()) # current working directory must be appended to path for custom ("ov_") imports
 
 import ov_globals as g
-from ov_functions import get_data_from_file, write_data_to_file, remove_data_from_layout
+from ov_functions import (get_data_from_file,
+                          write_data_to_file,
+                          remove_data_from_layout,
+                          get_method_from_file_data,
+                          get_run_from_file_data,
+                          get_rep)
 
 from ast import literal_eval
 
@@ -54,37 +59,26 @@ def modify_rep(data, params):
     run_id = params[0][0]
     rep_id = params[0][1]
     newRep = params[1]
-    found = False
-    for run in data[g.S_RUNS]:
-        if run[g.R_UID_SELF] == run_id:
-            for rep in run[g.R_REPLICATES]:
-                if rep[g.R_UID_SELF] == rep_id:
-                    found = True
-                    break
-            if found:
-                break
-    if found:
+
+    rep = get_rep(data, (run_id, rep_id))
+
+    if rep:
         prevData = rep[g.R_DATA]    # store the previous raw data
         keys = list(rep.keys())     # get a list of all keys in saved rep
-        for key in keys:            # removal all keys and values from rep
+        for key in keys:            # remove all keys and values from rep
             rep.pop(key, None)      
         for key in newRep:          # add new keys and values to rep (does not include raw data)
             rep[key] = newRep[key]
         rep[g.R_DATA] = prevData    # add previous raw data back in
     return data
 
-def replace_rep(data, params):
-    return
-
 def modify_run(data, params):
     run_id = params[0]
     newRun = params[1]
-    found = False
-    for run in data[g.S_RUNS]:
-        if run[g.R_UID_SELF] == run_id:
-            found = True
-            break
-    if found:
+
+    run = get_run_from_file_data(data, run_id)
+    
+    if run:
         prevReps = run[g.R_REPLICATES]  # store previous replicates (includes raw data)
         keys = list(run.keys())         # get a list of all keys in saved run
         for key in keys:                # remove all keys and values from run
@@ -103,12 +97,10 @@ def method_to_sample(data, params):     # append method to sample file
 def modify_method(data, params):        # modify the method in a sample file
     method_id = params[0]
     newMethod = params[1]
-    found = False
-    for method in data[g.S_METHODS]:
-        if method[g.M_UID_SELF] == method_id:
-            found = True
-            break
-    if found:
+    
+    method = get_method_from_file_data(data, method_id)
+
+    if method:
         keys = list(method.keys())
         for key in keys:
             method.pop(key, None)
@@ -121,6 +113,7 @@ try:
     saveType = sys.argv[2]              # get save type
     params = literal_eval(sys.argv[3])  # cast sys.argv[3] from string to list
     data = get_data_from_file(path)     # read file from path (returns dict)
+
     if saveType == g.SAVE_TYPE_SAMPLE:
         data=update_sample(data, params)
     elif saveType == g.SAVE_TYPE_RUN_NEW:
@@ -129,8 +122,6 @@ try:
         data=delete_rep(data, params)
     elif saveType == g.SAVE_TYPE_REP_MOD:
         data=modify_rep(data, params)
-    elif saveType == g.SAVE_TYPE_REP_MOD_WITH_DATA:
-        data=replace_rep(data, params)
     elif saveType == g.SAVE_TYPE_RUN_MOD:
         data=modify_run(data, params)
     elif saveType == g.SAVE_TYPE_METHOD_TO_SAMPLE:
