@@ -52,13 +52,21 @@ class RunPlots(QMainWindow):
         self.method = method
         duration = get_method_duration(method[g.M_STEPS])
         [v_min, v_max] = get_method_v_extremes(method[g.M_STEPS])
+        measurement_bounds = get_method_measurement_bounds(method[g.M_STEPS])
         overhang = 0.05 * (v_max - v_min)
         
         self.clear_axes()
         self.set_axis_labels()
         self.canvas.axes_v.set_xlim(left=0, right=1.02*duration)
         self.canvas.axes_v.set_ylim(bottom=v_min-overhang, top=v_max+overhang)
-        self.canvas.draw()    
+
+        for t_step in measurement_bounds:
+            self.canvas.axes_v.axvspan(t_step[0],t_step[1],facecolor='#f6e3fc')
+            self.canvas.axes_I.axvspan(t_step[0],t_step[1],facecolor='#f6e3fc')
+
+        self.canvas.draw()
+
+        
 
     def set_axis_labels(self):
         self.canvas.axes_v.set_ylabel('Voltage [V]')
@@ -72,8 +80,8 @@ class RunPlots(QMainWindow):
 
         self.remove_all_lines()
             
-        self.canvas.axes_v.plot(t, v, 'pink')
-        self.canvas.axes_I.plot(t, I, 'purple')
+        self.canvas.axes_v.plot(t, v, 'grey')
+        self.canvas.axes_I.plot(t, I, 'black')
         self.canvas.draw()
 
     def clear_axes(self):

@@ -282,6 +282,16 @@ def get_method_v_extremes(steps):
                 v_max = hi
     return [v_min, v_max]
 
+def get_method_measurement_bounds(steps):
+    bounds = []
+    t_tot = 0
+    for step in steps:
+        t_step = step[g.M_T]
+        if step[g.M_DATA_COLLECT]:
+            bounds.append((t_tot, t_tot+t_step))
+        t_tot = t_tot+t_step
+    return bounds
+
 def html_escape(s):
     s = s.replace("&", "&amp;")
     s = s.replace("<", "&lt;")

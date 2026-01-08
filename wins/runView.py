@@ -156,6 +156,23 @@ class WindowRunView(QMainWindow):
         w.setObjectName('success')
         self.msg_box.addWidget(w)
 
+        # Stacked item 6: Error with potentiostat configuration.
+        lbl_error = QLabel("Error with potentiostat configuration:")
+        self.lbl_error_msg = QLabel()
+        but_next = QPushButton("Continue")
+        but_done = QPushButton("Exit without saving")
+        but_next.clicked.connect(self.next_run_with_save)
+        but_done.clicked.connect(self.close)
+        v1 = QVBoxLayout()
+        v1.addWidget(lbl_error)
+        v1.addWidget(self.lbl_error_msg)
+        v1.addWidget(but_next)
+        v1.addWidget(but_done)
+        w = QWidget()
+        w.setLayout(v1)
+        w.setObjectName('error')
+        self.msg_box.addWidget(w)
+
         self.run_details = QPlainTextEdit()
         but_stop_run = QPushButton('\nSTOP\n')
         but_stop_run.clicked.connect(self.stop_run)
@@ -309,6 +326,8 @@ class WindowRunView(QMainWindow):
                     self.msg_box.setCurrentIndex(2)
                 elif self.error_run_msg == g.R_ERROR_VMAX_TOO_HIGH: # if the error is that method is incompatible with device
                     self.message("error, this device doesn't support a maximum voltage this high.")
+                    self.lbl_error_msg.setText("The method's voltage is too extreme for this device!")
+                    self.msg_box.setCurrentIndex(6)
                     #########################################
                     #
                     #   SHOULD THIS ACTUALLY BE HERE? WE SHOULD BE DOING COMPATIBILITY CHECKING IN PREVIOUS WINDOW =0
@@ -403,6 +422,7 @@ class WindowRunView(QMainWindow):
             write_data_to_file(self.parent.path, data)
             data = remove_data_from_layout(data)
             self.parent.data = data
+            self.parent.update_win()
             self.message('...saved!')
             self.go_to_next_step()
 
