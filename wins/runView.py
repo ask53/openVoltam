@@ -193,6 +193,52 @@ class WindowRunView(QMainWindow):
 
         h1.addLayout(v_left)
         h1.addWidget(self.graphs)
+
+        #Status bar messaging
+
+        # Count
+        count_status_lbl1 = QLabel('Task ')
+        self.count_status = QLabel('...')               # stored to self for access later
+        count_status_lbl2 = QLabel(' of ')
+        count_status_lbl3 = QLabel(str(len(self.tasks)))
+
+        # Relays        #####################################################################
+        #
+        #
+        #       CONVERT THIS WHOLE THING TO A FOR-LOOP THAT CREATES THESE BASED ON THE PASSED METHOD
+        #       ONCE WE'VE MOVED ALL RELAYS TO A LOOPING AND NUMBERED FORMAT
+        #       THEN GET RELAY NAMES FROM THE METHOD.
+        #
+        
+        r0_lbl = QLabel('STIR: ')
+        r0_status = QLabel('OFF')
+        r1_lbl = QLabel('VIBRATE: ')
+        r1_status = QLabel('OFF')
+        
+
+        self.relay_statuses = {'stir': r0_status,       # stored to self for access later
+                               'vibrate': r1_status}
+
+        ########################################################################################
+
+        # Lay out status bar "permanent" widgets
+        h2 = QHBoxLayout()
+        h2.addWidget(r0_lbl)
+        h2.addWidget(r0_status)
+        h2.addWidget(QVLine())
+        h2.addWidget(r1_lbl)
+        h2.addWidget(r1_status)
+        h2.addWidget(QVLine())
+        h2.addWidget(count_status_lbl1)
+        h2.addWidget(self.count_status)
+        h2.addWidget(count_status_lbl2)
+        h2.addWidget(count_status_lbl3)
+        
+        w_perm_status = QWidget()
+        w_perm_status.setLayout(h2)
+        self.status.addPermanentWidget(w_perm_status)
+        
+        
     
 
         
@@ -228,10 +274,7 @@ class WindowRunView(QMainWindow):
                     self.error_run_msg = ''
                     self.error_run_flag = False
                     self.data_storage_complete_flag = False
-                    #self.raw_data = []
-                    #for step in self.method[g.M_STEPS]:
-                    #    self.raw_data.append([])
-
+                    
                     # Setup some flags at beginning of run
                     self.running_flag = True
                     self.data_saved_flag = False
@@ -250,7 +293,10 @@ class WindowRunView(QMainWindow):
                     self.process.readyReadStandardError.connect(self.handle_stderr)
                     self.process.stateChanged.connect(self.handle_state)
                     self.process.finished.connect(self.handle_finished)
+                    
                     self.status.showMessage('Running...')
+                    self.count_status.setText(str(self.current_task+1))
+                    
                     self.process.start("python", ['processes/run.py', str(self.dt), i_max, str(self.steps), self.port])      
                    
         except Exception as e:
@@ -280,6 +326,21 @@ class WindowRunView(QMainWindow):
             elif prefix == g.R_PORT_PREFIX:
                 print('port is:',msgs[i])
                 self.port = msgs[i]
+            elif prefix == g.R_RELAY_PREFIX:
+                try:
+                    #rels = literal_eval(msgs[i])
+                    [relay, state] = msgs[i].split('-')
+                    #relay = int(relay)                 # <<<--- enable this line when we setup integer numbering of relays!
+                    state = literal_eval(state)
+                
+                    #self.message('relay '+relay+' has been turned to '+str(state)+'!')
+                    if state:
+                        self.relay_statuses[relay].setText('ON')
+                    else:
+                        self.relay_statuses[relay].setText('OFF')
+                except Exception as e:
+                    self.message(e)
+                    print(e)
             elif prefix == g.R_STATUS_PREFIX:
                 print(prefix)
                 print(msgs[i])
@@ -319,9 +380,10 @@ class WindowRunView(QMainWindow):
             while not self.data_storage_complete_flag:  # Wait here until data is saved, before removing reference to process
                 time.sleep(0.25)
 
-            self.message("Finished rep "+str(self.current_task+1)+" of "+str(len(self.tasks)))
+            #self.message("Finished rep "+str(self.current_task+1)+" of "+str(len(self.tasks)))
             
             if self.error_run_flag:     # If there was an error during this run
+                self.status.showMessage('Error!')
                 if self.error_run_msg == g.R_ERROR_NO_CONNECT:      # if the error was a failure to connect
                     self.message('error, no device detected')
                     self.msg_box.setCurrentIndex(2)
@@ -340,8 +402,9 @@ class WindowRunView(QMainWindow):
                 
             else:                       # If run completed withou an error
                 #self.current_task = self.current_task + 1   # Increment task
-                
+                self.status.showMessage('Saving...')        # This will only appear if we sort out async saves here....oh well.
                 self.synchronous_data_save()
+                
 
                 '''if self.current_task < len(self.tasks):
                     self.start_run()
@@ -424,8 +487,9 @@ class WindowRunView(QMainWindow):
             data = remove_data_from_layout(data)
             self.parent.data = data
             self.parent.update_win()
-            self.message('...saved!')
+            self.status.showMessage('Complete.')
             self.go_to_next_step()
+            
 
         except Exception as e:
             self.msg_box.setCurrentIndex(4)
@@ -523,6 +587,7 @@ class WindowRunView(QMainWindow):
                     g.M_RELAY: relay,
                     g.M_RELAY_STATE: False})
 
+        print(new_method)
         return new_method
         
     def raw_data_to_dict(self):

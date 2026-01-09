@@ -43,6 +43,10 @@ def write_port(s):
     s = g.R_PORT_PREFIX + str(s)
     write(s)
 
+def write_relay_state(relay, state):
+    s = g.R_RELAY_PREFIX+str(relay)+'-'+str(state)
+    write(s)
+
 def calc_v_max():
         v_max_method = 0                                        # Get the maximum abs() voltage of the entire method
         for step in STEPS:
@@ -106,7 +110,12 @@ def on_data(chan, t, volt, curr):
     write_data((t,volt,curr))
 
 def set_relay(step):
-    write_status('relay step here')
+        # set relay here
+        #
+        #
+
+        # then report change to user
+    write_relay_state(step[g.M_RELAY], step[g.M_RELAY_STATE])
 
 def run_const(step):
     v = step[g.M_CONST_V]
