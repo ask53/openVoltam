@@ -40,7 +40,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QStackedLayout,
     QPushButton,
-    QPlainTextEdit
+    QTextEdit
 )
 
 class WindowRunView(QMainWindow):
@@ -117,7 +117,7 @@ class WindowRunView(QMainWindow):
         but_er_next = QPushButton('go to next rep WITHOUT saving')
         but_er_try_agian = QPushButton('erase data and try again')
         but_er_save.clicked.connect(self.next_run_with_save)
-        but_er_next.clicked.connect(self.skip_save)
+        but_er_next.clicked.connect(self.next_run_save_nothing)
         but_er_try_agian.clicked.connect(self.try_again)
         v1 = QVBoxLayout()
         v1.addWidget(lbl_error_in_run)
@@ -174,7 +174,22 @@ class WindowRunView(QMainWindow):
         w.setObjectName('error')
         self.msg_box.addWidget(w)
 
-        self.run_details = QPlainTextEdit()
+        # Run details scrolling text (in html or markdown format)
+        self.run_details = QTextEdit()
+        self.run_details.setReadOnly(True)
+        s = '<b>Tasks to run:</b><br>'
+        for task in self.tasks:
+            s = s + str(task[0])+', '+str(task[1])+'<br>'
+        self.run_details.setHtml(s)
+
+
+
+
+
+
+
+
+        
         but_stop_run = QPushButton('\nSTOP\n')
         but_stop_run.clicked.connect(self.stop_run)
         ######### KEEPING THIS BUTTON GREYED OUT UNTIL IT WORKS!
@@ -256,9 +271,10 @@ class WindowRunView(QMainWindow):
         try:
             if self.current_task < len(self.tasks):
                 if not self.process:
+                    self.msg_box.setCurrentIndex(0)
                     (self.run_id, self.rep_id) = self.tasks[self.current_task]
-                    run = get_run_from_file_data(self.parent.data, self.run_id)
-                    self.method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])      ####### CAN WE MAKE method a local variable? Not self? Check in after modifying data save routine
+                    self.run = get_run_from_file_data(self.parent.data, self.run_id)
+                    self.method = get_method_from_file_data(self.parent.data, self.run[g.R_UID_METHOD])      ####### CAN WE MAKE method a local variable? Not self? Check in after modifying data save routine
                     self.steps = self.get_steps(self.method)
                     self.dt = self.method[g.M_DT]
                     i_max = self.method[g.M_CURRENT_RANGE]
@@ -282,6 +298,9 @@ class WindowRunView(QMainWindow):
                     # Empty the queue
                     self.empty_q()
 
+                    self.set_run_details()
+                    
+
                     # Setup and start interrupt to retreive and plot data (this should end after last data from run is saved)
                     thread = threading.Thread(target=self.interrupt_data_getter) 
                     thread.daemon = True                            # interrupt ends when the start_run() fn returns
@@ -293,7 +312,7 @@ class WindowRunView(QMainWindow):
                     self.process.readyReadStandardError.connect(self.handle_stderr)
                     self.process.stateChanged.connect(self.handle_state)
                     self.process.finished.connect(self.handle_finished)
-                    
+
                     self.status.showMessage('Running...')
                     self.count_status.setText(str(self.current_task+1))
                     
@@ -302,6 +321,25 @@ class WindowRunView(QMainWindow):
         except Exception as e:
             print(e)
 
+    def set_run_details(self):
+
+        rep = get_rep(self.parent.data, self.tasks[self.current_task])
+        
+        s = '<u>'+self.tasks[self.current_task][0]+', '+self.tasks[self.current_task][1]+'</u><br>'
+        s = s + '<b>Run type: </b>'+l.rc_types[self.run[g.R_TYPE]][g.L] +'<br>'
+        s = s + '<b>Method: </b>'+self.method[g.M_NAME] +'<br><br>'
+        
+        s = s + '<b>Device: </b>'+self.run[g.R_DEVICE]+'<br>'
+        s = s + '<b>Current range: </b>'+self.method[g.M_CURRENT_RANGE]+'<br>'
+        s = s + '<b>Sample frequency:</b> Every '+str(self.dt)+' miliseconds<br><br>'
+
+        s = s + '<b>Run note: </b>'+self.run[g.R_NOTES]+'<br>'
+        s = s + '<b>Replicate note: </b>'+rep[g.R_NOTES]+'<br>'
+        
+        self.run_details.setHtml(s)
+            
+            
+
     #########################################
     #                                       #
     #   Run process handlers                #
@@ -309,7 +347,7 @@ class WindowRunView(QMainWindow):
     #########################################
 
     def handle_stdout(self):
-        print('stdout')
+        #print('stdout')
         data = self.process.readAllStandardOutput()
         stdout = bytes(data).decode("utf8")
         
@@ -320,11 +358,11 @@ class WindowRunView(QMainWindow):
             elif prefix == g.R_ERROR_PREFIX:
                 self.error_run_flag = True
                 self.error_run_msg = msgs[i]
-                print('HERE ERROR DETECTED IN STDOUT')
+                #print('HERE ERROR DETECTED IN STDOUT')
                 #print(prefix)
-                print(msgs[i])
+                #print(msgs[i])
             elif prefix == g.R_PORT_PREFIX:
-                print('port is:',msgs[i])
+                #print('port is:',msgs[i])
                 self.port = msgs[i]
             elif prefix == g.R_RELAY_PREFIX:
                 try:
@@ -333,30 +371,29 @@ class WindowRunView(QMainWindow):
                     #relay = int(relay)                 # <<<--- enable this line when we setup integer numbering of relays!
                     state = literal_eval(state)
                 
-                    #self.message('relay '+relay+' has been turned to '+str(state)+'!')
                     if state:
                         self.relay_statuses[relay].setText('ON')
                     else:
                         self.relay_statuses[relay].setText('OFF')
                 except Exception as e:
-                    self.message(e)
                     print(e)
             elif prefix == g.R_STATUS_PREFIX:
-                print(prefix)
-                print(msgs[i])
+                pass
+                #print(prefix)
+                #print(msgs[i])
                 # do something with statuses here if you want! 
             else:
-                print(prefix)
-                print(msgs[i])
+                pass
+                #print(prefix)
+                #print(msgs[i])
 
     def handle_stderr(self):
-        print('stderr')
+        #print('stderr')
         data = self.process.readAllStandardError()
         stderr = bytes(data).decode("utf8")
         self.error_run_flag = True
         self.error_run_msg = stderr
-        self.message(stderr)
-        print('HERE ERROR DETECTED IN STD ERR')
+        #print('HERE ERROR DETECTED IN STD ERR')
 
     def handle_state(self, state):
         return
@@ -380,15 +417,11 @@ class WindowRunView(QMainWindow):
             while not self.data_storage_complete_flag:  # Wait here until data is saved, before removing reference to process
                 time.sleep(0.25)
 
-            #self.message("Finished rep "+str(self.current_task+1)+" of "+str(len(self.tasks)))
-            
             if self.error_run_flag:     # If there was an error during this run
                 self.status.showMessage('Error!')
                 if self.error_run_msg == g.R_ERROR_NO_CONNECT:      # if the error was a failure to connect
-                    self.message('error, no device detected')
                     self.msg_box.setCurrentIndex(2)
                 elif self.error_run_msg == g.R_ERROR_VMAX_TOO_HIGH: # if the error is that method is incompatible with device
-                    self.message("error, this device doesn't support a maximum voltage this high.")
                     self.lbl_error_msg.setText("The method's voltage is too extreme for this device!")
                     self.msg_box.setCurrentIndex(6)
                     #########################################
@@ -397,29 +430,19 @@ class WindowRunView(QMainWindow):
                     #
                     ####################################
                 else:                                               # assume error during the run, likely cable issue
-                    self.message('error during run, yikes!')
                     self.msg_box.setCurrentIndex(3)
                 
-            else:                       # If run completed withou an error
-                #self.current_task = self.current_task + 1   # Increment task
-                self.status.showMessage('Saving...')        # This will only appear if we sort out async saves here....oh well.
+            else:                                       # If run completed withou an error
+                self.status.showMessage('Saving...')    # ...This will only appear if we sort out async saves here....oh well. ####
                 self.synchronous_data_save()
                 
-
-                '''if self.current_task < len(self.tasks):
-                    self.start_run()
-                else:
-                    self.message('RUN IS COMPLETE!')
-                    print('run complete!')
-                    #self.process = None
-                    #self.running = False'''
             
         except Exception as e:
             print(e)
 
 
     def message(self, s):
-        self.run_details.appendPlainText(s)
+        self.run_details.append(s)
 
     def unpack_msgs(self, str_bundle):
         try:
@@ -460,6 +483,11 @@ class WindowRunView(QMainWindow):
         self.msg_box.setCurrentIndex(0)
         self.synchronous_data_save()
 
+    def next_run_save_nothing(self):
+        self.msg_box.setCurrentIndex(0)
+        [self.t, self.v, self.I] = [[],[],[]]
+        self.synchronous_data_save()
+
     def skip_save(self):
         self.msg_box.setCurrentIndex(0)
         self.go_to_next_step()
@@ -472,7 +500,6 @@ class WindowRunView(QMainWindow):
     #########################################
 
     def synchronous_data_save(self):
-        self.message('Saving...')
         try:
             data = get_data_from_file(self.parent.path)
             rep = get_rep(data, self.tasks[self.current_task])
@@ -492,7 +519,7 @@ class WindowRunView(QMainWindow):
             
 
         except Exception as e:
-            self.msg_box.setCurrentIndex(4)
+            self.msg_box.setCurrentIndex(4) # if save error, alert the user!
             print(e)
 
     def go_to_next_step(self):
@@ -503,7 +530,19 @@ class WindowRunView(QMainWindow):
             self.all_done()
             
     def all_done(self):
-        self.message('ALL DONE!')
+        s = '<u>Run summary</u><br><br>'
+        ers = False
+        for task in self.tasks:
+            rep = get_rep(self.parent.data, task)
+            if rep[g.R_STATUS] == g.R_STATUS_COMPLETE:
+                s = s +'<b>'+ task[0] + ', ' + task[1] +'</b>:   <u>Complete</u><br>'
+            elif rep[g.R_STATUS] == g.R_STATUS_ERROR:
+                ers = True
+                s = s +'<b>'+ task[0] + ', ' + task[1] +'</b>:   <u>Error</u> during the run (caution: some data may have been saved)<br>'
+        if not ers:
+            s = s + '<br>:)'
+
+        self.run_details.setHtml(s)
         self.msg_box.setCurrentIndex(5)
         
 
@@ -512,18 +551,19 @@ class WindowRunView(QMainWindow):
 
         
         
-
-        '''self.status.showMessage('Saving run...')
+    # STUFF FOR ASYNC SAVE...REHAB THIS SOMEDAY?
+    '''self.status.showMessage('Saving run...')
         self.parent.start_async_save(g.SAVE_TYPE_REP_WITH_DATA,
                                      [self.tasks[self.current_task], newRep],
                                      onSuccess=self.after_save_success,
                                      onError=self.after_save_error)'''
 
-    def after_save_success(self):
+    '''def after_save_success(self):
         print('saved successfully!')
 
     def after_save_error(self):
-        print('save ErR0r!')
+        print('save ErR0r!')'''
+    ##########################
 
                          
     
@@ -542,7 +582,6 @@ class WindowRunView(QMainWindow):
                 self.running_flag = False
                 self.process.kill()
                 self.process = None
-                self.message("Run STOPPED by user")
                 # Display message that allows user to resume from start of active run
                 #
                 #
@@ -587,7 +626,6 @@ class WindowRunView(QMainWindow):
                     g.M_RELAY: relay,
                     g.M_RELAY_STATE: False})
 
-        print(new_method)
         return new_method
         
     def raw_data_to_dict(self):
@@ -626,7 +664,7 @@ class WindowRunView(QMainWindow):
         """
         
         while self.running_flag:          # while run is ongoing
-            print('checking')
+            #print('checking')
             self.store_and_graph_from_queue()   
             time.sleep(g.R_PLOT_REFRESH_TIME)   # (this controls frequency of interrupt)
 
@@ -663,43 +701,7 @@ class WindowRunView(QMainWindow):
         self.I.append(I_new)                                        # Append tuple to appropriate method list
         self.t_prev = t_now                                         # Store this time as the previous time for next
 
-    '''def save_rep_raw_data(self):
-        print('this is where we would start an async save of the raw data...')
-        self.save_complete_flag = True      # For debugging, pretending like we did a successful save here...
-
-
-
-
-
-
-
-
-
-        
-        return
-        self.message("Saving data for rep "+str(self.rep_current+1))
-        raw_data = []
-        for i,step in enumerate(self.method[g.M_STEPS]):
-            if step[g.M_DATA_COLLECT]:
-                for datum in self.raw_data[i]:
-                    raw_data.append({
-                        g.R_DATA_TIME: datum[0],
-                        g.R_DATA_VOLT: datum[1],
-                        g.R_DATA_CURR: datum[2]
-                        })
-        for run in self.data[g.S_RUNS]:
-            if run[g.R_UID_SELF] == self.uid:
-                print(run)
-                for rep in run[g.R_REPLICATES]:
-                    if rep[g.R_UID_SELF] == self.get_uid_of_current_rep():
-                        rep[g.R_DATA] = raw_data
-        try:
-            self.parent.data = self.data
-            write_data_to_file(self.parent.path, self.data)
-            self.data_saved_flag = True
-        except Exception as e:
-            print(e)
-            self.message('Sorry! We were unable to save the data!')'''
+    
 
 
 
@@ -714,15 +716,6 @@ class WindowRunView(QMainWindow):
 
 
 
-
-
-
-    '''def update_replicate_msg(self, this_rep, total_reps):
-        print("--- Running replicate", this_rep+1, "of", total_reps, "---")'''
-
-
-
-        
         
         
                 
