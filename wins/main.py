@@ -48,7 +48,8 @@ from PyQt6.QtWidgets import (
     QApplication,
     QMenu,
     QInputDialog,
-    QProgressBar  
+    QProgressBar,
+    QMessageBox
 )
 
 #######
@@ -136,7 +137,8 @@ class WindowMain(QMainWindow):
         self.contextmenu_run = QMenu(self)      # Menu for when run is clicked
         self.contextmenu_rep = QMenu(self)      # Menu for when rep is clicked
 
-        self.runAction_runAgain = self.contextmenu_run.addAction("Run from config")
+        self.runAction_runAgain = self.contextmenu_run.addAction("New run from config")
+        self.runAction_redoRun = self.contextmenu_run.addAction("Redo this run")
         self.contextmenu_run.addSeparator()
         self.runAction_viewConfig = self.contextmenu_run.addAction("View run info")
         self.runAction_editConfig = self.contextmenu_run.addAction("Edit run info")
@@ -149,6 +151,8 @@ class WindowMain(QMainWindow):
         self.contextmenu_run.addSeparator()
         self.runAction_delete = self.contextmenu_run.addAction("Delete run(s) [DOES NOTHING YET]")
 
+        self.runAction_redoRep = self.contextmenu_rep.addAction("Redo this rep")
+        self.contextmenu_rep.addSeparator()
         self.repAction_editNote = self.contextmenu_rep.addAction("Edit replicate note")
         self.contextmenu_rep.addSeparator()
         self.repAction_viewData = self.contextmenu_rep.addAction("Graph replicate(s) data [DOES NOTHING YET]")
@@ -157,21 +161,25 @@ class WindowMain(QMainWindow):
         self.repAction_delete = self.contextmenu_rep.addAction("Delete replicates(s) [DOES NOTHING YET]")
 
         self.runAction_runAgain.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
+        self.runAction_redoRun.triggered.connect(self.redo_run)
         self.runAction_viewConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
         self.runAction_editConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_EDIT))
         self.runAction_viewMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
         self.runAction_editMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_WITH_MINOR_EDITS))
         self.runAction_exportData.triggered.connect(self.export_selected_reps_as_csv)
         
+        self.runAction_redoRep.triggered.connect(self.redo_run)
         self.repAction_editNote.triggered.connect(self.edit_rep_note)
         self.repAction_exportData.triggered.connect(self.export_selected_reps_as_csv)
 
         self.runActions_oneOnly = [self.runAction_runAgain,
+                                   self.runAction_redoRun,
                                    self.runAction_editConfig,
                                    self.runAction_viewConfig,
                                    self.runAction_viewMethod,
                                    self.runAction_editMethod]
-        self.repActions_oneOnly = [self.repAction_editNote]
+        self.repActions_oneOnly = [self.repAction_editNote,
+                                   self.runAction_redoRep]
         
         #####################
         #                   #
@@ -701,6 +709,8 @@ class WindowMain(QMainWindow):
     #   3. edit_rep_note                        #
     #   4. open_run_config_with_uid             #
     #   5. open_method_with_uid                 #
+    #   6. export_selected_reps_as_csv          #
+    #   7. redo_run                             #
     #############################################
 
     def get_single_selected_run(self):
@@ -769,6 +779,30 @@ class WindowMain(QMainWindow):
         dest = get_path_from_user('folder')
         if dest:
             self.start_async_export(reps, dest)
+
+    def redo_run(self):
+        try:
+            msg_box = QMessageBox()
+            
+            msg_box.setWindowTitle("Just checking...") 
+            msg_box.setText('This modifies a previous run.\nAll data and analysis for this run will be lost.\nAre you sure you want to rerun?\n\n(To create a *new run* with this run\'s configuration,  select "New run from config".)')
+            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+
+            # customize button language text for multi-language support
+            but_save = msg_box.button(QMessageBox.StandardButton.Ok)
+            but_save.setText('Rerun')
+            but_canc = msg_box.button(QMessageBox.StandardButton.Cancel)
+            but_canc.setText('Cancel')
+
+            resp = msg_box.exec()
+            
+            if resp == QMessageBox.StandardButton.Ok:
+                reps = self.get_all_selected_reps()
+                self.new_win_view_run(reps)
+        except Exception as e:
+            print(e)
+
+        
         
         
         

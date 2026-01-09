@@ -59,6 +59,7 @@ class WindowRunView(QMainWindow):
         self.dt = 0
         self.method = False
         self.time_completed = None
+        self.running_flag = False
 
 
 
