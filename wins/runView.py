@@ -675,9 +675,13 @@ class WindowRunView(QMainWindow):
         event.accept()
         
     def closeEvent(self, event):
-        self.parent.setEnabled(True)
-        self.parent.set_enabled_children(True)
-        self.accept_close(event)
+        if self.running_flag:
+            event.ignore()
+            show_alert(self, "Alert!", "Sorry, cannot close this window while the run is ongoing. If you need to stop an ongoing run, just unplug the potentiostat!")
+        else:
+            self.parent.setEnabled(True)
+            self.parent.set_enabled_children(True)
+            self.accept_close(event)
 
     def accept_close(self, closeEvent):
         """Take in a close event. Removes the reference to itself in the parent's
