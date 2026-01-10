@@ -228,7 +228,6 @@ from wins.sample import QVLine
 from embeds.methodPlot import MethodPlot
 
 from functools import partial
-from tkinter.filedialog import asksaveasfilename as askSaveAsFileName
 
 from PyQt6.QtCore import Qt, QProcess
 from PyQt6.QtGui import QIcon, QPixmap, QCloseEvent
@@ -249,7 +248,8 @@ from PyQt6.QtWidgets import (
     QScrollArea,
     QComboBox,
     QTabWidget,
-    QApplication  
+    QApplication,
+    QFileDialog
     )
 
 class WindowMethod(QMainWindow):
@@ -1104,11 +1104,9 @@ class WindowMethod(QMainWindow):
     
     def method_save_as(self):     
         # get the actual filename and path from user
-        self.path = askSaveAsFileName(          # open a save file dialog which returns the file object
-            filetypes=[(l.filetype_sp_lbl[g.L], g.METHOD_FILE_TYPES)],
-            defaultextension=g.METHOD_EXT,
-            confirmoverwrite=True,
-            initialfile=guess_filename(self.name.text()))
+        initial_name = guess_filename(self.name.text())
+        self.path = QFileDialog.getSaveFileName(self, 'Save method', initial_name, g.METHOD_FILE_TYPES)[0]
+            
         if not self.path or self.path == '':    # if the user didn't select a path
             return                              # don't try to save, just return
         self.method_save()                      # save the file!

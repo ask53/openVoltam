@@ -15,7 +15,6 @@ import ov_globals as g
 import ov_lang as l
 from ov_functions import *
 
-from tkinter.filedialog import asksaveasfilename as askSaveAsFileName
 from functools import partial
 
 from PyQt6.QtCore import QDateTime, QDate, Qt
