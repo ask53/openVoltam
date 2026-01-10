@@ -144,7 +144,7 @@ class WindowWelcome(QMainWindow):
     def open_sample(self, path=False):
         try:
             if not path:                # if no path is passed, ask the user to pick a file path
-                path = get_path_from_user('sample')
+                path = get_path_from_user(self, 'sample')
             if path:                    # if the path is passed or if the user selected a valid path:
                 self.new_win_one_with_value(WindowMain(self, path), 'path', path)
                 self.close()
@@ -158,7 +158,7 @@ class WindowWelcome(QMainWindow):
     def open_method(self, path=False):
         try:
             if not path:
-                path = get_path_from_user('method')
+                path = get_path_from_user(self, 'method')
             if path:
                 self.new_win_one_with_value(WindowMethod(self, g.WIN_MODE_EDIT, path), 'path', path)
         except Exception as e:

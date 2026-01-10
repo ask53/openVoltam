@@ -322,7 +322,7 @@ class WindowRunConfig(QMainWindow):
     #########################################      
 
     def open_method_from_file(self):
-        path = get_path_from_user('method')
+        path = get_path_from_user(self, 'method')
         if not path:
             return
         data = get_data_from_file(path)

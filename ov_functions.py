@@ -3,10 +3,8 @@
 
 from tabularjson import parse, stringify, StringifyOptions, is_homogeneous
 from re import sub
-from tkinter.filedialog import askopenfilename, askdirectory
 
 from json import dumps
-
 
 import ov_globals as g
 import ov_lang as l
@@ -17,7 +15,8 @@ from PyQt6.QtWidgets import (
     QLabel,
     QMessageBox,
     QScrollArea,
-    QFrame
+    QFrame,
+    QFileDialog
 )
 
 def encodeCustomName(custom_name):
@@ -72,15 +71,17 @@ def guess_filename(name):
     guess = guess.replace(' ', '-')         # replace all spaces with em-dashes
     return guess
 
-def get_path_from_user(pathtype):
+def get_path_from_user(win, pathtype):
+    """Takes in a parent window and type of path
+    Returns a path if one is selected, otherwise returns an empty string"""
     try:
         path = ''
         if pathtype=='sample':
-            path = askopenfilename(filetypes = [(l.filetype_sample_lbl[g.L], g.SAMPLE_FILE_TYPES)])
+            path = QFileDialog.getOpenFileName(win, 'Open sample', '', g.SAMPLE_FILE_TYPES)[0]
         elif pathtype=='method':
-            path = askopenfilename(filetypes = [(l.filetype_sp_lbl[g.L], g.METHOD_FILE_TYPES)])
+            path = QFileDialog.getOpenFileName(win, 'Open method', '', g.METHOD_FILE_TYPES)[0]
         elif pathtype=='folder':
-            path = askdirectory()
+            path = QFileDialog.getExistingDirectory(win, "Select a folder")
             
         return path
     except Exception as e:

@@ -24,7 +24,6 @@ from os.path import join as joindir
 from os.path import exists
 from functools import partial
 from ast import literal_eval
-from tkinter.filedialog import askopenfilename as askOpenFileName
 
 # import PyQt6/PySide6 stuff
 from PyQt6.QtTest import QTest
@@ -939,7 +938,7 @@ class WindowMain(QMainWindow):
 
     def export_selected_reps_as_csv(self):
         reps = self.get_all_selected_reps()
-        dest = get_path_from_user('folder')
+        dest = get_path_from_user(self, 'folder')
         if dest:
             self.start_async_export(reps, dest)
 
