@@ -409,7 +409,7 @@ class WindowMain(QMainWindow):
             run_id = run[g.R_UID_SELF]
             self.layout[run_id] = {'selected':[],'reps':[]}                     # initialize holing spot for run data 
             for j, rep in enumerate(run[g.R_REPLICATES]):
-                rep_name = l.r_rep_abbrev[g.L] + ' '+str(j)
+                rep_name = l.r_rep_abbrev[g.L] + ' '+rep[g.R_UID_SELF].split('-')[-1]
                 rep_status = rep[g.R_STATUS]
                 rep_time = rep[g.R_TIMESTAMP_REP]
                 rep_notes = rep[g.R_NOTES]
@@ -433,7 +433,7 @@ class WindowMain(QMainWindow):
                 self.layout[run_id]['reps'].append(rep_id)
             
             # Vertically merge all the first cells for this run's replicates and add run information
-            run_name = 'Run '+str(i)
+            run_name = 'Run '+run[g.R_UID_SELF].split('-')[-1]
             run_type = l.rc_types[run[g.R_TYPE]][g.L]
             method_name = get_method_from_file_data(self.data, run[g.R_UID_METHOD])[g.M_NAME]
             run_notes = run[g.R_NOTES]
