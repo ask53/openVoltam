@@ -53,7 +53,74 @@ def add_new_run(data, params):
     return data
 
 def delete_rep(data, params):
-    return
+    """ Args:
+        params[0] -- list of tuples w format (runID, repID)
+
+        Function:
+        Deletes all of the replicates indicated in the argument list.
+        Then checks whether there are any runs whose reps have all been deleted.
+            if so, deletes them too.
+        Then checks whether there are any methods which are no longer referenced
+            by any runs in the sample file. If so, deletes these methods too.
+
+        Returns: data"""
+    tasks = params[0]
+
+    #Delete the requested replicates
+    while tasks:                                            
+        task = tasks[0]
+        run_id = task[0]
+        rep_id = task[1]
+
+        found = False
+        index = False
+        for run in data[g.S_RUNS]:                  # First, find the replicate 
+            if run[g.R_UID_SELF] == run_id:
+                for i, rep in enumerate(run[g.R_REPLICATES]):
+                    if rep[g.R_UID_SELF] == rep_id:
+                        found = True
+                        index = i
+                        break
+                if found:
+                    break
+
+        if found:                                   # If it was found, remove it!
+            run[g.R_REPLICATES].pop(index)
+        tasks.pop(0)
+
+    # Delete empty runs
+    some_runs_empty = True
+    while some_runs_empty:                          # Now that we've deleted all reps
+        found = False                               # Check whether there are any runs where al;
+        for i,run in enumerate(data[g.S_RUNS]):     #   reps have been deleted
+            if not run[g.R_REPLICATES]:
+                found = True
+                break
+
+        if found:                                   # Delete these empty runs as well!
+            data[g.S_RUNS].pop(i)                           
+        else:
+            some_runs_empty = False
+
+    # Delete unreferenced methods
+    methods_to_keep = []                            # Get list of uids of methods to keep
+    for run in data[g.S_RUNS]:
+        if not run[g.R_UID_METHOD] in methods_to_keep:
+            methods_to_keep.append(run[g.R_UID_METHOD])
+            
+    methods_floating = True                         
+    while methods_floating:
+        found = False                               # If there is a floating method
+        for i,method in enumerate(data[g.S_METHODS]):
+            if not method[g.M_UID_SELF] in methods_to_keep:
+                found = True
+                break
+        if found:
+            data[g.S_METHODS].pop(i)                # delete it!
+        else:
+            methods_floating = False
+          
+    return data
 
 def modify_rep(data, params):
     run_id = params[0][0]

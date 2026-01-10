@@ -138,15 +138,19 @@ class WindowWelcome(QMainWindow):
         return self.children[-1]
 
     def new_sample(self):
+        
         self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_NEW))
                 
     def open_sample(self, path=False):
-        if not path:                # if no path is passed, ask the user to pick a file path
-            path = get_path_from_user('sample')
-        if path:                    # if the path is passed or if the user selected a valid path:
-            self.new_win_one_with_value(WindowMain(self, path), 'path', path)
-            self.close()
-        # if user didn't select a path, do nothing
+        try:
+            if not path:                # if no path is passed, ask the user to pick a file path
+                path = get_path_from_user('sample')
+            if path:                    # if the path is passed or if the user selected a valid path:
+                self.new_win_one_with_value(WindowMain(self, path), 'path', path)
+                self.close()
+            # if user didn't select a path, do nothing
+        except Exception as e:
+            print(e)
 
     def new_method(self):
         self.new_win_one_with_value(WindowMethod(self, g.WIN_MODE_NEW, False), 'mode', g.WIN_MODE_NEW)

@@ -1,3 +1,4 @@
+
 #ov_globals.py
 
 CURRENT_RANGES = ['1uA', '10uA', '100uA', '1000uA', '10000uA']
@@ -86,14 +87,14 @@ R_TYPES = [R_TYPE_BLANK, R_TYPE_SAMPLE, R_TYPE_STDADD]
 # Run window
 R_PLOT_REFRESH_TIME = 0.1   # refreshes graph every x seconds
 R_POST_RUN_WAIT_TIME = 0.5  # time after run to wait for last data [s]
-R_ERROR_PREFIX = 'ERR'
 R_STATUS_PREFIX = 'STA'
 R_DATA_PREFIX = 'DAT'
 R_PORT_PREFIX = 'POR'
 R_RELAY_PREFIX = 'REL'
-R_ERROR_NO_CONNECT = '0'
-R_ERROR_VMAX_TOO_HIGH = '1'
+R_ERROR_NO_CONNECT = 'Could not find a potentiostat.'
+R_ERROR_VMAX_TOO_HIGH = 'Vmax of the method exceeds capacity of device.'
 R_ERROR_DURING_RUN = '2'
+R_ERROR_SET_RELAY = 'Error while setting the potentiostat relay state.'
 R_FINISHED_MSG = 'FIN'
 R_DATA_TIME = 'time_s'
 R_DATA_VOLT = 'voltage_V'
@@ -158,8 +159,8 @@ PADDING = 4
 #File system navigation
 SAMPLE_EXT = '.ovs'
 METHOD_EXT = '.ovm'
-SAMPLE_FILE_TYPES = '*'+SAMPLE_EXT
-METHOD_FILE_TYPES = '*'+METHOD_EXT
+SAMPLE_FILE_TYPES = 'OV Sample (*'+SAMPLE_EXT+')'
+METHOD_FILE_TYPES = 'OV Method (*'+METHOD_EXT+')'
 
 # Unit conversions
 MM2IN = 1. / 25.4   # milimeters to inches

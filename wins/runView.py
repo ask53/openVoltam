@@ -60,6 +60,7 @@ class WindowRunView(QMainWindow):
         self.method = False
         self.time_completed = None
         self.running_flag = False
+        self.relays_enabled = True
 
 
 
@@ -147,6 +148,7 @@ class WindowRunView(QMainWindow):
 
         # Stacked item 5: All done.
         lbl_done = QLabel("Run complete!")
+        lbl_done.setWordWrap(True)
         but_done = QPushButton("Close")
         but_done.clicked.connect(self.close)
         v1 = QVBoxLayout()
@@ -159,6 +161,7 @@ class WindowRunView(QMainWindow):
 
         # Stacked item 6: Error with potentiostat configuration.
         lbl_error = QLabel("Error with potentiostat configuration:")
+        lbl_error.setWordWrap(True)
         self.lbl_error_msg = QLabel()
         but_next = QPushButton("Continue")
         but_done = QPushButton("Exit without saving")
@@ -174,6 +177,27 @@ class WindowRunView(QMainWindow):
         w.setObjectName('error')
         self.msg_box.addWidget(w)
 
+        # Stacked item 7: Error with re/setting a relay.
+        lbl_error = QLabel("There was an error while setting the relay state.")
+        lbl_error.setWordWrap(True)
+        but_repeat = QPushButton("Try again")
+        but_no_relays = QPushButton("Disable relays and try again")
+        but_continue = QPushButton("Save and go to next task")
+        but_repeat.clicked.connect(self.try_again)
+        but_no_relays.clicked.connect(self.toggle_relays_and_repeat)
+        but_continue.clicked.connect(self.next_run_with_save)
+        v1 = QVBoxLayout()
+        v1.addWidget(lbl_error)
+        v1.addWidget(but_repeat)
+        v1.addWidget(but_no_relays)
+        v1.addWidget(but_continue)
+        w = QWidget()
+        w.setLayout(v1)
+        w.setObjectName('error')
+        self.msg_box.addWidget(w)
+
+
+
         # Run details scrolling text (in html or markdown format)
         self.run_details = QTextEdit()
         self.run_details.setReadOnly(True)
@@ -183,15 +207,10 @@ class WindowRunView(QMainWindow):
         self.run_details.setHtml(s)
 
 
-
-
-
-
-
-
-        
+     
         but_stop_run = QPushButton('\nSTOP\n')
         but_stop_run.clicked.connect(self.stop_run)
+        but_stop_run.setToolTip('To stop run, just unplug device from computer!')
         ######### KEEPING THIS BUTTON GREYED OUT UNTIL IT WORKS!
         #
         but_stop_run.setEnabled(False)
@@ -276,6 +295,8 @@ class WindowRunView(QMainWindow):
                     self.run = get_run_from_file_data(self.parent.data, self.run_id)
                     self.method = get_method_from_file_data(self.parent.data, self.run[g.R_UID_METHOD])      ####### CAN WE MAKE method a local variable? Not self? Check in after modifying data save routine
                     self.steps = self.get_steps(self.method)
+                    if not self.relays_in_steps(self.steps):
+                        self.relays_enabled = False
                     self.dt = self.method[g.M_DT]
                     i_max = self.method[g.M_CURRENT_RANGE]
 
@@ -316,7 +337,7 @@ class WindowRunView(QMainWindow):
                     self.status.showMessage('Running...')
                     self.count_status.setText(str(self.current_task+1))
                     
-                    self.process.start("python", ['processes/run.py', str(self.dt), i_max, str(self.steps), self.port])      
+                    self.process.start("python", ['processes/run.py', str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled)])
                    
         except Exception as e:
             print(e)
@@ -355,12 +376,6 @@ class WindowRunView(QMainWindow):
         for i, prefix in enumerate(prefixes):
             if prefix == g.R_DATA_PREFIX:
                 self.q.put(msgs[i])
-            elif prefix == g.R_ERROR_PREFIX:
-                self.error_run_flag = True
-                self.error_run_msg = msgs[i]
-                #print('HERE ERROR DETECTED IN STDOUT')
-                #print(prefix)
-                #print(msgs[i])
             elif prefix == g.R_PORT_PREFIX:
                 #print('port is:',msgs[i])
                 self.port = msgs[i]
@@ -391,10 +406,17 @@ class WindowRunView(QMainWindow):
         #print('stderr')
         data = self.process.readAllStandardError()
         stderr = bytes(data).decode("utf8")
+        print('ERROR PASSED THRU STDERR STREAM')
+        err = ''
+        try:
+            err = stderr.split('\r\n')[-2].replace('ValueError: ','')   # Grab error message 
+            print(err)
+        except:                                                         # if grabbing msg errors, no worries, report error w no message
+            pass
         self.error_run_flag = True
-        self.error_run_msg = stderr
-        #print('HERE ERROR DETECTED IN STD ERR')
-
+        self.error_run_msg = err
+        
+                                                    #   typically by a return/newline (\r\n)
     def handle_state(self, state):
         return
 
@@ -429,6 +451,8 @@ class WindowRunView(QMainWindow):
                     #   SHOULD THIS ACTUALLY BE HERE? WE SHOULD BE DOING COMPATIBILITY CHECKING IN PREVIOUS WINDOW =0
                     #
                     ####################################
+                elif self.error_run_msg == g.R_ERROR_SET_RELAY:    # there was an error setting a relay
+                    self.msg_box.setCurrentIndex(7)
                 else:                                               # assume error during the run, likely cable issue
                     self.msg_box.setCurrentIndex(3)
                 
@@ -480,6 +504,7 @@ class WindowRunView(QMainWindow):
         self.start_run()
         
     def next_run_with_save(self):
+        print('here! yay!')
         self.msg_box.setCurrentIndex(0)
         self.synchronous_data_save()
 
@@ -491,6 +516,10 @@ class WindowRunView(QMainWindow):
     def skip_save(self):
         self.msg_box.setCurrentIndex(0)
         self.go_to_next_step()
+
+    def toggle_relays_and_repeat(self):
+        self.relays_enabled = False
+        self.try_again()
         
 
     #########################################
@@ -627,6 +656,15 @@ class WindowRunView(QMainWindow):
                     g.M_RELAY_STATE: False})
 
         return new_method
+
+    def relays_in_steps(self, steps):
+        relays = False
+        for step in steps:
+            print(step)
+            if step[g.M_TYPE] == g.M_RELAY:
+                relays = True
+                break
+        return relays
         
     def raw_data_to_dict(self):
         data = []

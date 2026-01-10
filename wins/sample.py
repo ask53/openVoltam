@@ -30,7 +30,8 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QWidget,
     QMessageBox,
-    QProgressBar
+    QProgressBar,
+    QFileDialog
 )
 
 class WindowSample(QMainWindow):
@@ -212,13 +213,12 @@ class WindowSample(QMainWindow):
             but.setEnabled(enabled)
 
     def start_save_new(self):
+        print('here!')
         self.set_buttons_enabled(False)
         if self.validate():
-            self.path = askSaveAsFileName(                           # open a save file dialog which returns the file object
-                filetypes=[(l.filetype_sample_lbl[g.L], g.SAMPLE_FILE_TYPES)],
-                defaultextension=g.SAMPLE_EXT,
-                confirmoverwrite=True,
-                initialfile=guess_filename(self.w_name.text()))
+            initial_name = guess_filename(self.w_name.text())
+            self.path = QFileDialog.getSaveFileName(self, 'Save sample', initial_name, g.SAMPLE_FILE_TYPES)[0]
+            
             if not self.path or self.path == '':            # if the user didn't select a path
                 return                                      # don't try to save, just return
             self.saveFile()

@@ -1,6 +1,57 @@
 #run.py
 #
 # This is the script that runs the method directly on the potentiostat
+#
+# Args:
+#   - sys.argv[1] - dt             int or float    the pstat will report a datapoint every dt miliseconds
+#   - sys.argv[2] - i_max          string          this string is specific to the device and sets the current range
+#   - sys.argv[3] - steps          list of steps   a list of steps to send to the device (may include runs and relay setting)
+#   - sys.argv[4] - port           string          name of port to try first to find device
+#   - sys.argv[5] - relays_enabled boolean         T/f whether relays are enabled. If False, all relay toggle steps are ignored
+#
+# Communication:
+#   As a script that is designed to be called asynchrounously, it is designed to communicate
+#       back with the program that called it. It does so through by using the sys.stdout()
+#       and sys.stderr() streams.
+#
+#   Regular communication is passed through sys.stdout() and
+#       messages are given a prefix to indicate which type of communication is being shared
+#       The types of messages shared on sys.stdout() are:
+#           - Status messages: These are primarily used for debugging
+#           - Port: indicates which port holds the pstat
+#           - Relay stat: indicates the state of a specific relay which has just been set
+#           - Data: this is the data from the pstat!
+#
+#   Error messages (that shut down run.py) are passed through the sys.stderr() channel. This
+#       is accomplished by raising a ValueError() with a custom error message that the
+#       calling program can receive, interpret, and act on.
+#
+# How the run works:
+#   This script is designed to be run by another script as an asynchronous process.
+#   It takes in system command line arguments through sys.argv.
+#   It first tries to find a potentiostat at port.
+#   If it cannot, it looks thru all other available ports and uses the first potentiostat
+#       that it encounters.
+#   Once a pstat has been connected with, various parameters are set (eg. dt, i_max, v_max
+#       [v_max is calculated from steps], etc.) on the device.
+#   Then the script loops thru steps. For each step, the step is run on the potentiostat.
+#       the pstat returns data every dt miliseconds. This data is immediately returned
+#       to the calling program through sys.stdout(). This script just passes the data
+#       along and assumes that the calling program will handle it.
+#   When the steps have all been run, this program finishes.
+#
+# Limitations:
+#   1. At this time, this script can only run the following types of steps:
+#       - Set relay on/off
+#       - Hold a constant voltage for a time
+#       - Run a ramp from v1 to v2 over a time
+#      Other types of steps are supported by the potentiostat but would need to be added here
+#
+#   2. Relay activation does not yet work.
+#       Need to implement the script for actually changing the relay state!
+#       (see placeholder in the code below.) Right now, relays aren't actually set.
+#       this also requires a firmware update of the Rodeostat...
+
 
 import sys
 import os
@@ -16,20 +67,17 @@ import ov_globals as g
 from ov_functions import *
 
 # Grab arguments and convert them from strings to intended types, store in script global scope  
-DT = literal_eval(sys.argv[1])          # int or float
-I_MAX = sys.argv[2]                     # string
-STEPS = literal_eval(sys.argv[3])       # list
-PORT = sys.argv[4]                      # string
-PSTAT = None                            # Potentiostat object 
+DT = literal_eval(sys.argv[1])              # int or float
+I_MAX = sys.argv[2]                         # string
+STEPS = literal_eval(sys.argv[3])           # list
+PORT = sys.argv[4]                          # string
+RELAYS_ENABLED = literal_eval(sys.argv[5])  # bool
+PSTAT = None                                # Potentiostat object 
 
 
 def write(s):
     sys.stdout.write(s+'\n')
     sys.stdout.flush()
-
-def write_error(s):
-    s = g.R_ERROR_PREFIX + str(s)
-    write(s)
 
 def write_status(s):
     s = g.R_STATUS_PREFIX + str(s)
@@ -55,7 +103,7 @@ def calc_v_max():
                 if v_max_step > v_max_method:
                     v_max_method = v_max_step
 
-        v_ranges = PSTAT.get_all_volt_range()              # Grab the v_max options from the device
+        v_ranges = PSTAT.get_all_volt_range()                   # Grab the v_max options from the device
         v_ranges_int = []
         for v_range in v_ranges:
             v_ranges_int.append(int(sub("[^0-9]", "",v_range))) # And convert them from strings to integers
@@ -69,18 +117,9 @@ def calc_v_max():
         if v_max_i != g.QT_NOTHING_SELECTED_INDEX:              # if we have found a vmax, return it
             return v_ranges[v_max_i]
         else:                                                   # otherwise, the V is too high, return error!!!
-            write_error(g.R_ERROR_VMAX_TOO_HIGH)
-            return False
+            raise ValueError(g.R_ERROR_VMAX_TOO_HIGH)
 
 def connect_to_device(port):
-    ###############################3
-    #
-    #   TODO
-    #
-    # 1. Rework this so we can confirm connection to the correct type of device.
-    #       Currently, this fn just connects to the first device found whose
-    #       name contains the string "USB Serial Device" which could be any
-    #       number of devices =0
     
     global PSTAT
     global PORT
@@ -101,21 +140,30 @@ def device_is_connected():
             return True
     for port in serial.tools.list_ports.comports(): # If not: try to connect: loop thru all serial ports with connections
         if 'USB Serial Device' in port.description: # if the device name contains "USB Serial Device"
-            if connect_to_device(port.device):      # Try to connect to it, if so, great! 
+            if connect_to_device(port.device):      # Try to connect to it, if so, great!
                 return True 
-    write_error(g.R_ERROR_NO_CONNECT)               # If we don't connect at all, write the error message
-    return False
+    raise ValueError(g.R_ERROR_NO_CONNECT)               # If we don't connect at all, write the error message
 
 def on_data(chan, t, volt, curr):
     write_data((t,volt,curr))
 
 def set_relay(step):
-        # set relay here
-        #
-        #
-
-        # then report change to user
-    write_relay_state(step[g.M_RELAY], step[g.M_RELAY_STATE])
+    if RELAYS_ENABLED:
+        try:
+            relay = step[g.M_RELAY]
+            state = step[g.M_RELAY_STATE]
+            ####################################################################################################
+            #
+            #
+            #
+            set_relay_state(relay, state)       # THIS DOESN'T DO ANYTING YET (other than generate an error lol).....
+            #
+            #
+            #
+            #######################################
+            write_relay_state(relay, state)
+        except:
+            raise ValueError(g.R_ERROR_SET_RELAY)
 
 def run_const(step):
     v = step[g.M_CONST_V]

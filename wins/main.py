@@ -8,16 +8,16 @@ user will primarily use while operating the GUI.
 The user can configure new runs, initiate runs, collect data, analyze data,
 export data, view all past runs and analysis, and perhaps run calculations
 """
-
+# import global vars, language pack, and functions
 import ov_globals as g
 import ov_lang as l
 from ov_functions import *
 
+# import necessary windows
 from wins.sample import WindowSample
 from wins.method import WindowMethod
 from wins.runConfig import WindowRunConfig
 from wins.runView import WindowRunView
-
 
 # import other necessary python tools
 from os.path import join as joindir
@@ -25,9 +25,8 @@ from os.path import exists
 from functools import partial
 from ast import literal_eval
 from tkinter.filedialog import askopenfilename as askOpenFileName
-'''import csv'''
 
-
+# import PyQt6/PySide6 stuff
 from PyQt6.QtTest import QTest
 from PyQt6.QtGui import QAction, QFont, QIcon
 from PyQt6.QtCore import QDate, Qt, QProcess
@@ -104,29 +103,123 @@ class WindowMain(QMainWindow):
         menu = self.menuBar()
 
         # add labels ("actions") for menu bar
-        action_new_sample = QAction(l.new_sample[g.L], self)
-        action_open_sample = QAction(l.open_sample[g.L], self)
-        action_new_method = QAction(l.new_config[g.L], self)
-        action_open_method = QAction(l.open_config[g.L], self)
+        action_sample_new = QAction(l.new_sample[g.L], self)
+        action_sample_open = QAction(l.open_sample[g.L], self)
+        action_sample_close = QAction('Close', self)
+        
+        action_method_new = QAction(l.new_config[g.L], self)
+        action_method_open = QAction(l.open_config[g.L], self)
+        action_method_run_view = QAction('View run method', self)
+        action_method_run_edit = QAction('Change run method name', self)
+
+        action_run_new = QAction('New run', self)
+        action_run_new_from = QAction('New run from config', self)
+        action_run_redo = QAction('Redo run', self)
+        action_run_view = QAction('View info', self)
+        action_run_edit = QAction('Edit info', self)
+        action_run_export = QAction('Export as CSV', self)
+        action_run_delete = QAction('Delete', self)
+
+        action_rep_redo = QAction('Redo replicate', self)
+        action_rep_edit = QAction('Edit note', self)
+        action_rep_export = QAction('Export as CSV', self)
+        action_rep_delete = QAction('Delete', self)
+
+        action_analyze_start = QAction('Analyze', self)
+        action_analyze_results = QAction('Results', self)
+        
+        
+        # connect menu bar labels with slots 
+        action_sample_new.triggered.connect(parent.new_sample)                      # this first group of menu functions come from the home window (parent)
+        action_sample_open.triggered.connect(parent.open_sample)
+        action_sample_close.triggered.connect(self.close)
+
+        action_method_new.triggered.connect(parent.new_method)
+        action_method_open.triggered.connect(parent.open_method)
+        action_method_run_view.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
+        action_method_run_edit.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_WITH_MINOR_EDITS))
+
+        action_run_new.triggered.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
+        action_run_new_from.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
+        action_run_redo.triggered.connect(self.redo_run)
+        action_run_view.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
+        action_run_edit.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_EDIT))
+        action_run_export.triggered.connect(self.export_selected_reps_as_csv)
+        action_run_delete.triggered.connect(self.delete_runs)
+
+        action_rep_redo.triggered.connect(self.redo_run)
+        action_rep_edit.triggered.connect(self.edit_rep_note)
+        action_rep_export.triggered.connect(self.export_selected_reps_as_csv)
+        action_rep_delete.triggered.connect(self.delete_reps)
+
+        '''action_analyze_start.triggered.connect()
+        action_analyze_results.triggered.connect()'''
+
         
 
-        # connect menu bar labels with slots 
-        action_new_sample.triggered.connect(parent.new_sample)                      # this first group of menu functions come from the home window (parent)
-        action_open_sample.triggered.connect(parent.open_sample)
-        action_new_method.triggered.connect(parent.new_method)
-        action_open_method.triggered.connect(parent.open_method)
+        
+
+        
+
+        
         
 
         # Add menu top labels then populate the menus with the above slotted labels
         file_menu = menu.addMenu(l.menu_sample[g.L])
-        file_menu.addAction(action_new_sample)
-        file_menu.addAction(action_open_sample)
+        file_menu.addAction(action_sample_new)
+        file_menu.addAction(action_sample_open)
+        file_menu.addSeparator()
+        file_menu.addAction(action_sample_close)
         
-        file_menu = menu.addMenu(l.menu_config[g.L])
-        file_menu.addAction(action_new_method)
-        file_menu.addAction(action_open_method)
+        file_menu = menu.addMenu(l.menu_config[g.L])      
+        file_menu.addAction(action_method_new)
+        file_menu.addAction(action_method_open)
+        file_menu.addSeparator()
+        file_menu.addAction(action_method_run_view)
+        file_menu.addAction(action_method_run_edit)
 
         file_menu = menu.addMenu(l.menu_run[g.L])
+        file_menu.addAction(action_run_new)
+        file_menu.addAction(action_run_new_from)
+        file_menu.addSeparator()
+        file_menu.addAction(action_run_redo)
+        file_menu.addSeparator()
+        file_menu.addAction(action_run_view)
+        file_menu.addAction(action_run_edit)
+        file_menu.addSeparator()
+        file_menu.addAction(action_method_run_view)
+        file_menu.addAction(action_method_run_edit)
+        file_menu.addSeparator()
+        file_menu.addAction(action_run_export)
+        file_menu.addSeparator()
+        file_menu.addAction(action_run_delete)
+
+        file_menu = menu.addMenu('Replicate')
+        file_menu.addAction(action_rep_redo)
+        file_menu.addSeparator()
+        file_menu.addAction(action_rep_edit)
+        file_menu.addSeparator()
+        file_menu.addAction(action_rep_export)
+        file_menu.addSeparator()
+        file_menu.addAction(action_rep_delete)
+
+        file_menu = menu.addMenu('Analysis')
+        file_menu.addAction(action_analyze_start)
+        file_menu.addAction(action_analyze_results)
+
+        self.actions_run_one_only = [action_run_new_from,
+                                     action_run_redo,
+                                     action_run_view,
+                                     action_run_edit,
+                                     action_method_run_view,
+                                     action_method_run_edit]
+        self.actions_run_one_plus = [action_run_export,
+                                     action_run_delete]
+        self.actions_rep_one_only = [action_rep_redo,
+                                     action_rep_edit]
+        self.actions_rep_one_plus = [action_rep_export,
+                                     action_rep_delete]
+        
 
         #####################################
         #                                   #
@@ -149,7 +242,7 @@ class WindowMain(QMainWindow):
         self.runAction_viewData = self.contextmenu_run.addAction("Graph data from run(s) [DOES NOTHING YET]")
         self.runAction_exportData = self.contextmenu_run.addAction("Export CSV of run(s)")
         self.contextmenu_run.addSeparator()
-        self.runAction_delete = self.contextmenu_run.addAction("Delete run(s) [DOES NOTHING YET]")
+        self.runAction_delete = self.contextmenu_run.addAction("Delete run(s)")
 
         self.runAction_redoRep = self.contextmenu_rep.addAction("Redo this rep")
         self.contextmenu_rep.addSeparator()
@@ -158,7 +251,7 @@ class WindowMain(QMainWindow):
         self.repAction_viewData = self.contextmenu_rep.addAction("Graph replicate(s) data [DOES NOTHING YET]")
         self.repAction_exportData = self.contextmenu_rep.addAction("Export CSV of rep(s)")
         self.contextmenu_rep.addSeparator()
-        self.repAction_delete = self.contextmenu_rep.addAction("Delete replicates(s) [DOES NOTHING YET]")
+        self.repAction_delete = self.contextmenu_rep.addAction("Delete replicates(s)")
 
         self.runAction_runAgain.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
         self.runAction_redoRun.triggered.connect(self.redo_run)
@@ -167,10 +260,12 @@ class WindowMain(QMainWindow):
         self.runAction_viewMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
         self.runAction_editMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_WITH_MINOR_EDITS))
         self.runAction_exportData.triggered.connect(self.export_selected_reps_as_csv)
+        self.runAction_delete.triggered.connect(self.delete_runs)
         
         self.runAction_redoRep.triggered.connect(self.redo_run)
         self.repAction_editNote.triggered.connect(self.edit_rep_note)
         self.repAction_exportData.triggered.connect(self.export_selected_reps_as_csv)
+        self.repAction_delete.triggered.connect(self.delete_reps)
 
         self.runActions_oneOnly = [self.runAction_runAgain,
                                    self.runAction_redoRun,
@@ -262,14 +357,20 @@ class WindowMain(QMainWindow):
         
 
     def update_win(self):
-        sample_name = self.data[g.S_NAME]                       
-        self.setWindowTitle(sample_name)                                    # Set the sample window title
-        self.lbl_sample_name.updateTitleLbl(sample_name)                    # Set the sample name
-        self.w_run_history_area.setParent(None)                             # remove run history pane from layout
-        self.widgetize_runs()                                               # get updated run history as a widget    
-        self.centralWidget().layout().addWidget(self.w_run_history_area)    # add the updated run history back to layout
-        self.update_highlights()
-        self.update_children()
+        try:
+            sample_name = self.data[g.S_NAME]
+            self.setWindowTitle(sample_name)                                    # Set the sample window title
+            self.lbl_sample_name.updateTitleLbl(sample_name)                    # Set the sample name
+            pos = self.w_run_history_area.verticalScrollBar().sliderPosition()  # Get scroll bar slider position
+            self.w_run_history_area.setParent(None)                             # remove run history pane from layout
+            self.widgetize_runs()                                               # get updated run history as a widget    
+            self.centralWidget().layout().addWidget(self.w_run_history_area)    # add the updated run history back to layout
+            self.update_highlights()
+            self.update_menu()
+            self.w_run_history_area.verticalScrollBar().setSliderPosition(pos)  # set scrollbar slider to previous position
+            self.update_children()
+        except Exception as e:
+            print(e)
         
         
     #############################################
@@ -284,7 +385,8 @@ class WindowMain(QMainWindow):
     #############################################
 
     def widgetize_runs(self):
-        layout_old = self.layout.copy()
+        layout_old = self.layout.copy()                     # Store copy of old layout
+        self.layout = {}                                    # Reinit self.layout to be refilled 
         
         self.grid = QGridLayout()                           # init grid layout (that is inside scroll area)
         self.grid.setHorizontalSpacing(0)
@@ -355,7 +457,7 @@ class WindowMain(QMainWindow):
             if run in self.layout:
                 for rep in layout_old[run]['selected']:
                     if rep in self.layout[run]['reps']:
-                        self.layout[run]['selected'].append(rep)  
+                        self.layout[run]['selected'].append(rep)
         
         self.w_run_history_container = QWidget()
         self.w_run_history_container.setLayout(self.grid)
@@ -454,6 +556,7 @@ class WindowMain(QMainWindow):
             #   ADD SHIFT+CLICK IMPLEMENTATION HERE...
             #
             ##################
+        self.update_menu()
         self.update_select_all_checkbox()
         self.update_highlights()                                                            # update styles to apply hightlighting
         
@@ -491,6 +594,7 @@ class WindowMain(QMainWindow):
             #
             ##################
 
+        self.update_menu()
         self.update_select_all_checkbox()
         self.update_highlights()
 
@@ -513,7 +617,8 @@ class WindowMain(QMainWindow):
     #   13. update_highlights                           #   
     #   14. select_all_lbl_clicked                      #   
     #   15. select_all_toggle                           #
-    #   16. update_select_all_checkbox                  # 
+    #   16. update_select_all_checkbox                  #
+    #   17. update_menu                                 #
     #                                                   #
     #####################################################
 
@@ -652,6 +757,7 @@ class WindowMain(QMainWindow):
         else:                                       # If triggered by a user click and box is now unchecked
             self.clear_selected()                      # Remove all selected
         self.update_highlights()
+        self.update_menu()
 
     def update_select_all_checkbox(self):
         """This function adjusts the state of the select-all checkbox programatically. To indicate that
@@ -665,6 +771,36 @@ class WindowMain(QMainWindow):
         elif not self.all_reps_are_selected() and self.cb_all.checkState() != Qt.CheckState.Unchecked:
             self.select_all_prog_check_flag = True
             self.cb_all.setChecked(False)
+
+    def update_menu(self):
+        runs = self.N_runs_selected()
+        reps = self.N_reps_selected()
+        yes = []
+        no = []
+        # For reps 
+        if reps == 0:
+            no = self.actions_rep_one_only + self.actions_rep_one_plus
+        elif reps == 1:
+            yes = self.actions_rep_one_only + self.actions_rep_one_plus
+        else:
+            yes = self.actions_rep_one_plus
+            no = self.actions_rep_one_only
+
+        # For runs
+        if runs == 0:
+            no = no + self.actions_run_one_only + self.actions_run_one_plus
+        elif runs == 1:
+            yes = yes + self.actions_run_one_only + self.actions_run_one_plus
+        else:
+            yes = yes + self.actions_run_one_plus
+            no = no + self.actions_run_one_only
+
+        for action in yes:
+            action.setEnabled(True)
+        for action in no:
+            action.setEnabled(False)
+
+    
 
 
     #############################################
@@ -704,13 +840,21 @@ class WindowMain(QMainWindow):
     #                                           #
     # Menu functions and their friends          #
     #                                           #
-    #   1. get_single_selected_run              #
-    #   2. get_single_selected_rep              #
-    #   3. edit_rep_note                        #
-    #   4. open_run_config_with_uid             #
-    #   5. open_method_with_uid                 #
-    #   6. export_selected_reps_as_csv          #
-    #   7. redo_run                             #
+    #   a. get_single_selected_run              #
+    #   b. get_single_selected_rep              #
+    #   c. get_all_selected_runs                #
+    #   d. get_all_selected_reps                #
+    #   e. get_all_reps_in_runs                 #
+    #                                           #
+    #   1. edit_rep_note                        #
+    #   2. open_run_config_with_uid             #
+    #   3. open_method_with_uid                 #
+    #   4. export_selected_reps_as_csv          #
+    #   5. redo_run                             #
+    #   6. delete_runs                          #
+    #   7. delete_reps                          #
+    #   8. confirm_delete                       #
+    #                                           #
     #############################################
 
     def get_single_selected_run(self):
@@ -729,12 +873,31 @@ class WindowMain(QMainWindow):
                 return (run, self.layout[run]['selected'][0])
         return (False, False)
 
+    def get_all_selected_runs(self):
+        runs = []
+        for run in self.layout:
+            if self.all_reps_of_run_are_selected(run):
+                runs.append(run)
+        return runs
+
     def get_all_selected_reps(self):
         reps = []
         for run in self.layout:
             for rep in self.layout[run]['selected']:
                 reps.append((run,rep))
         return reps
+
+    def get_all_reps_in_runs(self, runs):
+        """ Takes in a list of run ids. Returns all reps that correpond to each
+        of those runs in a list of tuples with format:
+        [(runID_1), repID_1), (runID_2, repID_2), ... ,(runID_N, repID_N)]"""
+        reps = []
+        for run in self.layout:
+            if run in runs:
+                for rep in self.layout[run]['reps']:
+                    reps.append((run, rep))
+        return reps
+
 
     def edit_rep_note(self):
         """Opens a dialog """
@@ -781,26 +944,45 @@ class WindowMain(QMainWindow):
             self.start_async_export(reps, dest)
 
     def redo_run(self):
-        try:
-            msg_box = QMessageBox()
-            
-            msg_box.setWindowTitle("Just checking...") 
-            msg_box.setText('This modifies a previous run.\nAll data and analysis for this run will be lost.\nAre you sure you want to rerun?\n\n(To create a *new run* with this run\'s configuration,  select "New run from config".)')
-            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+        msg_box = QMessageBox()    
+        msg_box.setWindowTitle("Just checking...") 
+        msg_box.setText('This modifies a previous run.\nAll data and analysis for this run will be lost.\nAre you sure you want to rerun?\n\n(To create a *new run* with this run\'s configuration,  select "New run from config".)')
+        msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
 
-            # customize button language text for multi-language support
-            but_save = msg_box.button(QMessageBox.StandardButton.Ok)
-            but_save.setText('Rerun')
-            but_canc = msg_box.button(QMessageBox.StandardButton.Cancel)
-            but_canc.setText('Cancel')
+        # customize button language text for multi-language support
+        but_save = msg_box.button(QMessageBox.StandardButton.Ok)
+        but_save.setText('Rerun')
+        but_canc = msg_box.button(QMessageBox.StandardButton.Cancel)
+        but_canc.setText('Cancel')
 
-            resp = msg_box.exec()
+        resp = msg_box.exec()
             
-            if resp == QMessageBox.StandardButton.Ok:
-                reps = self.get_all_selected_reps()
-                self.new_win_view_run(reps)
-        except Exception as e:
-            print(e)
+        if resp == QMessageBox.StandardButton.Ok:
+            reps = self.get_all_selected_reps()
+            self.new_win_view_run(reps)
+
+    def delete_runs(self):
+        if self.confirm_delete():
+            runs = self.get_all_selected_runs()                     # Get selected runs (ignore selected reps that aren't part of selected runs)
+            reps = self.get_all_reps_in_runs(runs)                  # Get all reps of selected runs
+            self.start_async_save(g.SAVE_TYPE_REP_DELETE, [reps])
+
+    def delete_reps(self):
+        if self.confirm_delete():
+            reps = self.get_all_selected_reps()                     # Get all selected reps
+            self.start_async_save(g.SAVE_TYPE_REP_DELETE, [reps])
+
+    def confirm_delete(self):
+        title = 'Confirm delete'
+        text = 'This will permanently delete all configurations and data associated with the selected runs or replicates.\n\nIf you are sure you want to delete, type DELETE below.'
+        text, ok = QInputDialog.getText(self, title, text)
+
+        if ok:
+            if text == 'DELETE':
+                return True
+        return False
+        
+        
 
         
         
@@ -1005,13 +1187,13 @@ class WindowMain(QMainWindow):
             self.process.start("python", ['processes/read.py', self.path])
 
     def handle_read_stdout(self):
-        #print('normal msg!')
+        #print('load normal msg!')
         data = self.process.readAllStandardOutput()
         stdout = bytes(data).decode("utf8")
         self.data = literal_eval(stdout)
 
     def handle_read_stderr(self):
-        print('error msg!')
+        print('load error msg!')
         data = self.process.readAllStandardError()
         stderr = bytes(data).decode("utf8")
         print(stderr)
@@ -1069,7 +1251,7 @@ class WindowMain(QMainWindow):
         self.save_error_flag = True
 
     def handle_finished_save(self, onSuccess, onError):
-        print('here in finished handler!')
+        #print('here in finished handler!')
         try:
             self.progress_bar.setVisible(False)                                             # Rehide the progress bar
             self.process = None                                                             # Wipe the process from memory
