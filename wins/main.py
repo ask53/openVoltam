@@ -1184,16 +1184,21 @@ class WindowMain(QMainWindow):
             self.process.finished.connect(self.handle_finished_read)
             self.status.showMessage("Loading data...")
             self.progress_bar.setVisible(True)
-            script = 'external/processes/read.py'
-            self.process.start("python", [script, self.path])
+            #programEX = 'external/processes/read.exe'
+            #self.process.start(programEX, [self.path])
+            programPY = 'processes/read.py'
+            self.process.start('python', [programPY, self.path])
 
     def handle_read_stdout(self):
-        #print('load normal msg!')
+        print('load normal msg!')
         data = self.process.readAllStandardOutput()
         stdout = bytes(data).decode("utf8")
-        print(stdout)
-        self.data = literal_eval(stdout)
-        print(self.data)
+        try:
+            self.data = literal_eval(stdout)
+            print(self.data)
+        except:
+            print('ERROR on literal eval of stdout:')
+            print(stdout)
 
     def handle_read_stderr(self):
         print('load error msg!')
