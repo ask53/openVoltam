@@ -9,9 +9,9 @@ The user can configure new runs, initiate runs, collect data, analyze data,
 export data, view all past runs and analysis, and perhaps run calculations
 """
 # import global vars, language pack, and functions
-import ov_globals as g
-import ov_lang as l
-from ov_functions import *
+from external.globals import ov_globals as g
+from external.globals import ov_lang as l
+from external.globals.ov_functions import *
 
 # import necessary windows
 from wins.sample import WindowSample
@@ -1100,7 +1100,8 @@ class WindowMain(QMainWindow):
             self.process.finished.connect(self.handle_finished_export)
             self.status.showMessage("Exporting...")
             self.progress_bar.setVisible(True)
-            self.process.start("python", ['processes/export.py', self.path, destPath, str(reps)])
+            script = 'external/processes/export.py'
+            self.process.start("python", [script, self.path, destPath, str(reps)])
 
     def handle_export_stdout(self):
         print('normal msg!')
@@ -1183,13 +1184,16 @@ class WindowMain(QMainWindow):
             self.process.finished.connect(self.handle_finished_read)
             self.status.showMessage("Loading data...")
             self.progress_bar.setVisible(True)
-            self.process.start("python", ['processes/read.py', self.path])
+            script = 'external/processes/read.py'
+            self.process.start("python", [script, self.path])
 
     def handle_read_stdout(self):
         #print('load normal msg!')
         data = self.process.readAllStandardOutput()
         stdout = bytes(data).decode("utf8")
+        print(stdout)
         self.data = literal_eval(stdout)
+        print(self.data)
 
     def handle_read_stderr(self):
         print('load error msg!')
@@ -1228,7 +1232,8 @@ class WindowMain(QMainWindow):
             self.process.readyReadStandardOutput.connect(self.handle_save_stdout)
             self.process.readyReadStandardError.connect(self.handle_save_stderr)
             self.process.finished.connect(partial(self.handle_finished_save, onSuccess, onError))
-            self.process.start("python", ['processes/save.py', self.path, saveType, str(params)])
+            script = 'external/processes/save.py'
+            self.process.start("python", [script, self.path, saveType, str(params)])
             self.status.showMessage("Saving...")
             self.progress_bar.setVisible(True)
 

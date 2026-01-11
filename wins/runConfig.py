@@ -16,9 +16,9 @@ set a bunch of other parameters as well.
     #       4. Run the run(s)!
     #       5. (Make sure the QDoubleSpinBoxes handle decimals well)
 
-import ov_globals as g
-import ov_lang as l
-from ov_functions import *
+from external.globals import ov_globals as g
+from external.globals import ov_lang as l
+from external.globals.ov_functions import *
 
 from embeds.methodPlot import MethodPlot
 from devices.supportedDevices import devices

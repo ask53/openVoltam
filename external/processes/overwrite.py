@@ -11,7 +11,7 @@ import sys
 import os
 sys.path.append(os.getcwd()) # current working directory must be appended to path for custom ("ov_") imports
 
-from ov_functions import write_data_to_file
+from external.globals.ov_functions import write_data_to_file
 from ast import literal_eval
 
 def write_data(s):      # Write data to data channel 

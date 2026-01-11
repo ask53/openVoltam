@@ -220,9 +220,9 @@ FUNCTIONALITY TO ADD
 #
 #############################
 
-import ov_globals as g
-import ov_lang as l
-from ov_functions import *
+from external.globals import ov_globals as g
+from external.globals import ov_lang as l
+from external.globals.ov_functions import *
 
 from wins.sample import QVLine
 from embeds.methodPlot import MethodPlot
@@ -1128,7 +1128,8 @@ class WindowMethod(QMainWindow):
         self.process.readyReadStandardOutput.connect(self.handle_overwrite_stdout)
         self.process.readyReadStandardError.connect(self.handle_overwrite_stderr)
         self.process.finished.connect(partial(self.handle_finished_overwrite))
-        self.process.start("python", ['processes/overwrite.py', self.path, str(toWrite)])
+        script = 'external/processes/overwrite.py'
+        self.process.start("python", [script, self.path, str(toWrite)])
         self.status.showMessage("Saving method...")
 
     def handle_overwrite_stdout(self):

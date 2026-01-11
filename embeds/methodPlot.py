@@ -19,9 +19,9 @@ Both .ovs and .ovp files use tabular json format (an extension of json that allo
 for tabular, comma-separated-value type data to be embedded within a json.
 
 """
-import ov_globals as g
-import ov_lang as l
-from ov_functions import *
+from external.globals import ov_globals as g
+from external.globals import ov_lang as l
+from external.globals.ov_functions import *
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
 from matplotlib.figure import Figure

@@ -1,56 +1,38 @@
-#launchLoader.py
+#save.py
 #
+# This is the script that can be called to write asynchronously to the data file.
+#   There are several types of saves supported. Arguments are passed through commande line sys.argv:
+#
+#       1. path     str.                path to find file for reading/writing
+#       2. saveType str.                defines which type of save is requested 
+#       3. params   list cast as str.    a string-cast list with parameters that depend on saveType
+#
+#   The different types of save are as follows:
+#
+#       - sample        params = [dict of sample params]                    Saves new sample parameters
+#       - new run       params = [dict of run params]                       Saves a new run 
+#       - delete rep    params = [(runID, repID),(runID,repID),...]         Deletes all listed reps. Also deletes runs and methods as needed
+#       - rep no data   params = [(runID,repID), dict of rep params]        Modifies existing rep parameters but maintains raw data
+#       - rep w data    params = [(runID,repID), dict of rep params]        Replaces existing rep parameters (including raw data)
+#       - run modified  params = [runID, dict of run params]                Modifies existing run parameters but maintains replicates
+#   
+#   For each type of save, when the save completes, it sends a writes the data dictionary (not including raw data)
+#   back as data. 
+
 import sys
 import os
 sys.path.append(os.getcwd()) # current working directory must be appended to path for custom ("ov_") imports
-import fileinput
-from time import sleep
-import threading
 
-from PyQt6.QtWidgets import QApplication
-from wins.loader import WindowLoader
+from external.globals import ov_globals as g
+from external.globals.ov_functions import (get_data_from_file,
+                          write_data_to_file,
+                          remove_data_from_layout,
+                          get_method_from_file_data,
+                          get_run_from_file_data,
+                          get_rep)
 
-def write(s):
-    sys.stdout.write(s+'\n')
-    sys.stdout.flush()
+from ast import literal_eval
 
-app = QApplication([])
-win = WindowLoader()
-win.show()
-
-def run_loader():
-    global app
-    app.exec()
-
-thread = threading.Thread(target=run_loader) 
-#thread.daemon = True                            
-thread.start()
-
-
-keep_it_up = True
-write('loopin')
-while keep_it_up:
-    write('loopd')
-    for line in fileinput.input():
-        write('hi')
-    #write(str(inp))
-    #if lines:
-    #    write('found input')
-    #    for line in lines:
-    #        write(line)
-            
-            
-    '''for line in fileinput.input():
-        raise ValueError(line)
-        if 'stop' in line:
-            keep_it_up = False'''
-    sleep(0.5)
-
-app.closeAllWindows()
-    
-
-
-'''
 def write_data(s):      # Write data to data channel 
     sys.stdout.write(s)
     sys.stdout.flush()
@@ -223,4 +205,4 @@ try:
 
     
 except Exception as e:                  # If process generates an error:
-    write_error(str(e))                 #   Write that error to error channel'''
+    write_error(str(e))                 #   Write that error to error channel

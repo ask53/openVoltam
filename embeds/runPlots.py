@@ -3,9 +3,9 @@ runVoltagePlot.py
 
 
 """
-import ov_globals as g
-import ov_lang as l
-from ov_functions import *
+from external.globals import ov_globals as g
+from external.globals import ov_lang as l
+from external.globals.ov_functions import *
 
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT, FigureCanvasQTAgg  
 from matplotlib.figure import Figure

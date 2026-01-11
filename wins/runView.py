@@ -20,9 +20,9 @@ the following algorithm:
 """
 import sys
 
-import ov_globals as g
-import ov_lang as l
-from ov_functions import *
+from external.globals import ov_globals as g
+from external.globals import ov_lang as l
+from external.globals.ov_functions import *
 
 from ast import literal_eval
 import threading
@@ -336,8 +336,9 @@ class WindowRunView(QMainWindow):
 
                     self.status.showMessage('Running...')
                     self.count_status.setText(str(self.current_task+1))
-                    
-                    self.process.start("python", ['processes/run.py', str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled)])
+
+                    script = 'external/processes/run.py'
+                    self.process.start("python", [script, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled)])
                    
         except Exception as e:
             print(e)

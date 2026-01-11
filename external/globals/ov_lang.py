@@ -1,5 +1,5 @@
 #lang.py
-import ov_globals as g
+from external.globals import ov_globals as g
 
 # Window: Home
 new_sample = ['New sample', 'Muestra nueva']

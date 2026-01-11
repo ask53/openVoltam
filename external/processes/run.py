@@ -63,8 +63,8 @@ import serial.tools.list_ports
 
 from potentiostat import Potentiostat
 
-import ov_globals as g
-from ov_functions import *
+from external.globals import ov_globals as g
+from external.globals.ov_functions import *
 
 # Grab arguments and convert them from strings to intended types, store in script global scope  
 DT = literal_eval(sys.argv[1])              # int or float

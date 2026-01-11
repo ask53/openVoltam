@@ -1,7 +1,8 @@
 # import custom stuff
-import ov_globals as g
-import ov_lang as l
-from ov_functions import *
+from external.globals import ov_globals as g
+from external.globals import ov_lang as l
+from external.globals.ov_functions import *
+
 # import other python functions (be as specific as possible to keep filesize down)
 from os.path import dirname
 from os.path import join as joindir     #   many seconds depending on caches

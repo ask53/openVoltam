@@ -6,8 +6,8 @@ from re import sub
 
 from json import dumps
 
-import ov_globals as g
-import ov_lang as l
+from external.globals import ov_globals as g
+from external.globals import ov_lang as l
 
 from PyQt6.QtCore import Qt 
 from PyQt6.QtWidgets import (

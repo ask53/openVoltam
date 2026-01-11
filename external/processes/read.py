@@ -8,8 +8,8 @@ import sys
 import os
 sys.path.append(os.getcwd()) # current working directory must be appended to path for custom ("ov_") imports
 
-import ov_globals as g
-from ov_functions import get_data_from_file
+from external.globals import ov_globals as g
+from external.globals.ov_functions import get_data_from_file
 
 def write_data(s):      # Write data to data channel 
     sys.stdout.write(s)
