@@ -1128,8 +1128,8 @@ class WindowMethod(QMainWindow):
         self.process.readyReadStandardOutput.connect(self.handle_overwrite_stdout)
         self.process.readyReadStandardError.connect(self.handle_overwrite_stderr)
         self.process.finished.connect(partial(self.handle_finished_overwrite))
-        script = 'external/processes/overwrite.py'
-        self.process.start("python", [script, self.path, str(toWrite)])
+
+        self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_OVERWRITE, self.path, str(toWrite)])
         self.status.showMessage("Saving method...")
 
     def handle_overwrite_stdout(self):

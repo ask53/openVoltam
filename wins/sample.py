@@ -42,11 +42,7 @@ class WindowSample(QMainWindow):
         self.saved = True                           # set flag to indicate current data shown reflects what is already saved
         self.setObjectName("window-edit-sample")    # create a name for modifying styles from QSS
         layouts = []                                # create list to hold layouts
-        #self.view_only = view_only
         self.close_on_save = False
-        #self.new_sample = False
-        #if not self.path:
-        #    self.new_sample = True
         self.status = self.statusBar()
         self.progress_bar = QProgressBar()
 

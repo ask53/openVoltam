@@ -1,4 +1,3 @@
-
 #ov_globals.py
 
 CURRENT_RANGES = ['1uA', '10uA', '100uA', '1000uA', '10000uA']
@@ -112,6 +111,14 @@ ICON_STIR = 'external/icons/stirer.png'
 ICON_VIB = 'external/icons/vibrator.png'
 ICON_MEASURE = 'external/icons/measure.png'
 ICON_REFRESH = 'external/icons/refresh.png'
+
+# Asynchronous process types
+PROC_TYPE_SAVE = 'save'
+PROC_TYPE_OVERWRITE = 'overwrite'
+PROC_TYPE_EXPORT = 'export'
+PROC_TYPE_READ = 'read'
+PROC_TYPE_RUN = 'run'
+PROC_SCRIPT = 'external/process.exe'
 
 # Asynchronous save
 SAVE_TYPE_SAMPLE = 'sample'

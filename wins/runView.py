@@ -337,8 +337,8 @@ class WindowRunView(QMainWindow):
                     self.status.showMessage('Running...')
                     self.count_status.setText(str(self.current_task+1))
 
-                    script = 'external/processes/run.py'
-                    self.process.start("python", [script, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled)])
+                    
+                    self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_RUN, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled)])
                    
         except Exception as e:
             print(e)
@@ -408,6 +408,7 @@ class WindowRunView(QMainWindow):
         data = self.process.readAllStandardError()
         stderr = bytes(data).decode("utf8")
         print('ERROR PASSED THRU STDERR STREAM')
+        print(stderr)
         err = ''
         try:
             err = stderr.split('\r\n')[-2].replace('ValueError: ','')   # Grab error message 

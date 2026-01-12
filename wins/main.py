@@ -1100,8 +1100,7 @@ class WindowMain(QMainWindow):
             self.process.finished.connect(self.handle_finished_export)
             self.status.showMessage("Exporting...")
             self.progress_bar.setVisible(True)
-            script = 'external/processes/export.py'
-            self.process.start("python", [script, self.path, destPath, str(reps)])
+            self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_EXPORT, self.path, destPath, str(reps)])
 
     def handle_export_stdout(self):
         print('normal msg!')
@@ -1184,10 +1183,7 @@ class WindowMain(QMainWindow):
             self.process.finished.connect(self.handle_finished_read)
             self.status.showMessage("Loading data...")
             self.progress_bar.setVisible(True)
-            #programEX = 'external/processes/read.exe'
-            #self.process.start(programEX, [self.path])
-            programPY = 'processes/read.py'
-            self.process.start('python', [programPY, self.path])
+            self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_READ, self.path])
 
     def handle_read_stdout(self):
         print('load normal msg!')
@@ -1237,8 +1233,7 @@ class WindowMain(QMainWindow):
             self.process.readyReadStandardOutput.connect(self.handle_save_stdout)
             self.process.readyReadStandardError.connect(self.handle_save_stderr)
             self.process.finished.connect(partial(self.handle_finished_save, onSuccess, onError))
-            script = 'external/processes/save.py'
-            self.process.start("python", [script, self.path, saveType, str(params)])
+            self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_SAVE, self.path, saveType, str(params)])
             self.status.showMessage("Saving...")
             self.progress_bar.setVisible(True)
 
