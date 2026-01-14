@@ -379,6 +379,7 @@ class WindowMethod(QMainWindow):
             self.ramp_scan_rate = QDoubleSpinBox()
             self.ramp_scan_rate.setMaximum(g.M_SCAN_RATE_MAX)
             ramp_t = QDoubleSpinBox()
+            ramp_t.setDecimals(12)
             
             v_ramp = QVBoxLayout()
             v_ramp.addLayout(horizontalize([ramp_v_start_lbl, self.ramp_v_start]))
@@ -1206,7 +1207,7 @@ class WindowMethod(QMainWindow):
         return abs(v0-v1)/scan_rate
 
     def ramp_duration_to_scan_rate(self, v0, v1, duration):
-        return abs(v0-v1)/duration
+        return round(abs(v0-v1)/duration, 2)
 
     def set_duration(self, step_type):
         if step_type == g.M_RAMP:
