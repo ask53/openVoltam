@@ -1291,11 +1291,27 @@ class WindowMain(QMainWindow):
     #############################################
 
     def closeEvent(self, event):
-        while self.children:                # loop through children until children is empty
-            self.children[0].close()        # closing the 0th child window (closing pops it from list)
+        msg_box = QMessageBox()    
+        msg_box.setWindowTitle("Are you sure?") 
+        msg_box.setText('This will close this sample and all associated windows including active runs, run configurations, and analysis.\n\nAre you sure you want to close?\n')
+        msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
 
-        self.parent.children.remove(self)   # remove reference to this window from parent for memory cleanup
-        event.accept()
+        # customize button language text for multi-language support
+        but_close = msg_box.button(QMessageBox.StandardButton.Ok)
+        but_close.setText('Close')
+        but_canc = msg_box.button(QMessageBox.StandardButton.Cancel)
+        but_canc.setText('Cancel')
+
+        resp = msg_box.exec()
+            
+        if resp == QMessageBox.StandardButton.Ok:
+            while self.children:                # loop through children until children is empty
+                self.children[0].close()        # closing the 0th child window (closing pops it from list)
+
+            self.parent.children.remove(self)   # remove reference to this window from parent for memory cleanup
+            event.accept()
+        else:
+            event.ignore()
         
 
 class TitleLbl(QLabel):
