@@ -443,15 +443,16 @@ def set_relay(pstat, step, relays_enabled):
         try:
             relay = step[g.M_RELAY]
             state = step[g.M_RELAY_STATE]
-            ####################################################################################################
+            ################################ MODIFY THIS FOR DEVICE SPECIFIC LOGIC
             #
             #
+            if state:
+                resp = pstat.set_dio_value('ExpDioPin3', 'High')
+            else:
+                resp = pstat.set_dio_value('ExpDioPin3', 'Low')
             #
-            set_relay_state(relay, state)       # THIS DOESN'T DO ANYTING YET (other than generate an error lol).....
             #
-            #
-            #
-            #######################################
+            #############################################################
             write_run_relay_state(relay, state)
         except:
             raise ValueError(g.R_ERROR_SET_RELAY)
@@ -509,6 +510,17 @@ def run():
         return
     PSTAT.set_volt_range(v_max)
     PSTAT.set_auto_connect(True)
+
+    ############## MODIFY THIS TO ACCOUNT FOR DIFFERENCES IN RELAY PINS FOR DIFFERNT DEVICES #######3
+    #
+    #
+    relays= ['ExpDioPin3', 'ExpDioPin4', 'ExpDioPin5', 'ExpDioPin6', 'ExpDioPin7', 'ExpDioPin8', 'ExpDioPin9', 'ExpDioPin10']
+    for relay in relays:
+        PSTAT.set_dio_pin_mode(relay, 'Output')
+        PSTAT.set_dio_value(relay, 'Low')
+    #
+    #
+    ######################################
         
     write_run_status('sample period is: '+str(PSTAT.get_sample_period()))
     write_run_status('current range is: '+str(PSTAT.get_curr_range()))
@@ -523,7 +535,16 @@ def run():
             run_const(PSTAT, step)
         elif step_type == g.M_RAMP:
             run_ramp(PSTAT, step)
-    
+
+    #### MODIFY THIS TO ACCOUNT FOR DIFFERENT DEVICES WITH DIFFERENT IO PINS
+    #
+    #
+    # Turn off all relays at end of run
+    for relay in relays:
+        PSTAT.set_dio_value(relay, 'Low')
+    #
+    #
+    #####################################################
 
 
     

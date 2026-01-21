@@ -119,6 +119,7 @@ PROC_TYPE_EXPORT = 'export'
 PROC_TYPE_READ = 'read'
 PROC_TYPE_RUN = 'run'
 PROC_SCRIPT = 'external/process.exe'
+PROC_SCRIPT_PYTHON = 'processes/process.py'
 
 # Asynchronous save
 SAVE_TYPE_SAMPLE = 'sample'

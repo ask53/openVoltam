@@ -338,8 +338,8 @@ class WindowRunView(QMainWindow):
                     self.count_status.setText(str(self.current_task+1))
 
                     
-                    self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_RUN, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled)])
-                   
+                    #self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_RUN, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled)])
+                    self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_RUN, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled)])
         except Exception as e:
             print(e)
 
