@@ -21,9 +21,9 @@ WindowViewSample QTextEdit {
 	border: 0;
 }
 
-QTableWidget::item QLabel {
-	padding: 2px 6px;
-}
+/*QTableWidget::item QLabel {
+	padding: 0 0;
+}*/
 
 QMainWindow QStatusBar {
 	border-top: 1px solid grey;

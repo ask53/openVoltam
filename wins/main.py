@@ -413,7 +413,7 @@ class WindowMain(QMainWindow):
                 rep_status = rep[g.R_STATUS]
                 rep_time = rep[g.R_TIMESTAMP_REP]
                 rep_notes = rep[g.R_NOTES]
-                rep_proc = 'PROCESSING ICONS HERE'
+                rep_proc = 'PROCESSING ICONS'
                 rep_strs = [rep_name,rep_status,rep_time,rep_notes,rep_proc]
 
                 is_last = False

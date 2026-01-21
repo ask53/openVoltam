@@ -147,7 +147,6 @@ class WindowWelcome(QMainWindow):
                 path = get_path_from_user(self, 'sample')
             if path:                    # if the path is passed or if the user selected a valid path:
                 self.new_win_one_with_value(WindowMain(self, path), 'path', path)
-                self.close()
             # if user didn't select a path, do nothing
         except Exception as e:
             print(e)
