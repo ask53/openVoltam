@@ -139,14 +139,20 @@ class MethodPlot(Canvas):
 
             if len(t)>0:
                 self.axes.set_xlim(left=0, right=t[-1])
-            self.axes.set_xticks(t_ticks)
+            
             self.axes.set_yticks(v_ticks, v_ticks_lbl)
             self.axes.grid(True, linestyle='--', linewidth=0.2)
-            for i,t in enumerate(t_ticks):
-                if t%1==0:
-                    t_ticks[i] = int(t)
-            
-            self.axes.set_xticklabels(t_ticks, rotation=300)
+
+            if show_labels:
+                self.axes.set_xticks(t_ticks)
+                for i,t in enumerate(t_ticks):
+                    if t%1==0:
+                        t_ticks[i] = int(t)
+                    else:
+                        t_ticks[i] = round(t, 2)
+                self.axes.set_xticklabels(t_ticks, rotation=300)
+            else:
+                self.axes.set_xticks([])
 
             
             self.draw()
