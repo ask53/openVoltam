@@ -539,7 +539,10 @@ class WindowRunView(QMainWindow):
             else:
                 rep[g.R_STATUS] = g.R_STATUS_COMPLETE
             rep[g.R_TIMESTAMP_REP] = self.time_completed
-            rep[g.R_DATA] = self.raw_data_to_dict()
+            try:
+                rep[g.R_DATA] = self.raw_data_to_dict()
+            except Exception as e:
+                print(e)
 
             write_data_to_file(self.parent.path, data)
             data = remove_data_from_layout(data)
@@ -634,7 +637,6 @@ class WindowRunView(QMainWindow):
         
         
         for step in method[g.M_STEPS]:
-            #new_steps = []
             for i, relay in enumerate(g.M_RELAYS):
                 if not relay_on[i] and step[relay]:     # if the relay is OFF and needs to be ON for this step
                     new_method.append({                 # append a step to the method turning this relay ON
@@ -669,11 +671,34 @@ class WindowRunView(QMainWindow):
         return relays
         
     def raw_data_to_dict(self):
+        # figure out which data to actually keep
+        t = []
+        collects = []
+        for step in self.steps:
+            if step[g.M_TYPE] != g.M_RELAY:
+                if not t:
+                    t0 = 0
+                    t1 = step[g.M_T]
+                else:
+                    t0 = t[-1]
+                    t1 = t[-1]+step[g.M_T]
+
+                t.append(t0)
+                t.append(t1)
+                
+                if step[g.M_DATA_COLLECT]:
+                    collects.append((t0,t1))
+            
+
+        
         data = []
         for i, t in enumerate(self.t):
-            data.append({g.R_DATA_TIME: self.t[i],
-                         g.R_DATA_VOLT: self.v[i],
-                         g.R_DATA_CURR: self.I[i]})
+            for collect in collects:
+                if t >= collect[0] and t <= collect[1]:
+                    data.append({g.R_DATA_TIME: self.t[i],
+                                 g.R_DATA_VOLT: self.v[i],
+                                 g.R_DATA_CURR: self.I[i]})
+                    break
         return data
 
     #########################################
