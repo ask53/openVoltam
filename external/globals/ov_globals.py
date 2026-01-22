@@ -35,7 +35,7 @@ S_BLANK_ARRAYS = [S_METHODS, S_RUNS, S_PROCESSED]
 M_UID_SELF = 'uid'
 M_UID_PREFIX = 'method-'
 M_NAME = 'name'
-M_DT = 'dt'
+M_SAMPLE_FREQ = 'sample-frequency-hz'
 M_CURRENT_RANGE = 'current-range'
 M_STEPS = 'steps'
 M_STEP_NAME = 'name'
@@ -137,8 +137,8 @@ RC_REPS_MAX = 99
 M_V_MIN = -99.99
 M_T_MAX = 9999
 M_SCAN_RATE_MAX = 99.99
-M_DT_MIN = 1
-M_DT_MAX = 86399999         # 86,400,000 miliseconds in a day
+M_SAMPLE_FREQ_MIN = 0.01
+M_SAMPLE_FREQ_MAX = 1000         # 86,400,000 miliseconds in a day
 
 # Language globals 
 ENG = 0

@@ -490,7 +490,7 @@ def run_ramp(pstat, step):
 
 def run():
     # Grab arguments and convert them from strings to intended types, store in script global scope  
-    DT = literal_eval(sys.argv[2])              # int or float
+    S_FREQ = literal_eval(sys.argv[2])              # int or float
     I_MAX = sys.argv[3]                         # string
     STEPS = literal_eval(sys.argv[4])           # list
     PORT = sys.argv[5]                          # string
@@ -503,7 +503,7 @@ def run():
     
     write_run_status('device is connected!')
     (PSTAT, PORT) = resp
-    PSTAT.set_sample_period(DT)                 # set sample parameters to device
+    PSTAT.set_sample_rate(S_FREQ)               # set sample parameters to device
     PSTAT.set_curr_range(I_MAX)
     v_max = calc_v_max(PSTAT, STEPS)
     if not v_max:

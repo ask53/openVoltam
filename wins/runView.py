@@ -297,7 +297,7 @@ class WindowRunView(QMainWindow):
                     self.steps = self.get_steps(self.method)
                     if not self.relays_in_steps(self.steps):
                         self.relays_enabled = False
-                    self.dt = self.method[g.M_DT]
+                    self.dt = self.method[g.M_SAMPLE_FREQ]
                     i_max = self.method[g.M_CURRENT_RANGE]
 
                     # Reset graphs
@@ -690,12 +690,12 @@ class WindowRunView(QMainWindow):
                     collects.append((t0,t1))
             
 
-        
+        # only store for saving the data that the user has asked to save
         data = []
         for i, t in enumerate(self.t):
             for collect in collects:
                 if t >= collect[0] and t <= collect[1]:
-                    data.append({g.R_DATA_TIME: self.t[i],
+                    data.append({g.R_DATA_TIME: round(self.t[i], 4),
                                  g.R_DATA_VOLT: self.v[i],
                                  g.R_DATA_CURR: self.I[i]})
                     break

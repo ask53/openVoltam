@@ -279,11 +279,11 @@ class WindowMethod(QMainWindow):
         self.name.textChanged.connect(self.changed_name)
     
         # Define method-wide parameters
-        dt_lbl_0 = QLabel('Sample every')   # sample frequency
-        self.dt = QSpinBox()
-        dt_lbl_1 = QLabel('miliseconds.')
-        self.dt.setMinimum(g.M_DT_MIN)
-        self.dt.setMaximum(g.M_DT_MAX)
+        dt_lbl_0 = QLabel('Sample frequency:')   # sample frequency
+        self.dt = QDoubleSpinBox()
+        dt_lbl_1 = QLabel('Hz')
+        self.dt.setMinimum(g.M_SAMPLE_FREQ_MIN)
+        self.dt.setMaximum(g.M_SAMPLE_FREQ_MAX)
         self.dt.valueChanged.connect(self.changed_value)
 
         current_range_lbl = QLabel("Device current range")  # Current range
@@ -575,7 +575,7 @@ class WindowMethod(QMainWindow):
         elif self.method_id:                            # otherwise, if there is a method id given,
             data = get_method_from_file_data(self.parent.data, self.method_id)   #  use it to grab the method data
         self.name.setText(data[g.M_NAME])               # set name
-        self.dt.setValue(data[g.M_DT])                  # set dt
+        self.dt.setValue(data[g.M_SAMPLE_FREQ])                  # set dt
         cr_text = data[g.M_CURRENT_RANGE]               # set current range
         self.current_range.setCurrentIndex(g.CURRENT_RANGES.index(cr_text))
         self.steps = data[g.M_STEPS]                    # set steps 
@@ -1114,7 +1114,7 @@ class WindowMethod(QMainWindow):
 
     def method_save(self):
         data = {g.M_NAME: self.name.text(),
-                g.M_DT: self.dt.value(),
+                g.M_SAMPLE_FREQ: self.dt.value(),
                 g.M_CURRENT_RANGE: self.current_range.currentText(),
                 g.M_STEPS: self.steps}
         if self.mode == g.WIN_MODE_NEW or self.mode == g.WIN_MODE_EDIT:
