@@ -46,7 +46,7 @@ class MethodPlot(Canvas):
 
         
 
-    def update_plot(self, steps, show_labels=False, reps=1):
+    def update_plot(self, steps, show_labels=False, show_xticks=True, reps=1):
 
         self.axes.cla()
         
@@ -143,7 +143,7 @@ class MethodPlot(Canvas):
             self.axes.set_yticks(v_ticks, v_ticks_lbl)
             self.axes.grid(True, linestyle='--', linewidth=0.2)
 
-            if show_labels:
+            if show_xticks:
                 self.axes.set_xticks(t_ticks)
                 for i,t in enumerate(t_ticks):
                     if t%1==0:

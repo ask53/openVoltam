@@ -1191,7 +1191,7 @@ class WindowMethod(QMainWindow):
         lbls = True
         if self.hide_plot_lbls.checkState() == Qt.CheckState.Checked:
             lbls = False
-        self.graph.update_plot(self.steps, lbls)
+        self.graph.update_plot(self.steps, show_labels=lbls, show_xticks=lbls)
 
     def set_header(self):  
         if self.mode == g.WIN_MODE_NEW or self.mode == g.WIN_MODE_EDIT :
