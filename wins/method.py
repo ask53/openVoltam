@@ -457,13 +457,13 @@ class WindowMethod(QMainWindow):
             v3.addLayout(horizontalize([self.but_add, self.but_edit, but_dup, but_del]))
 
             # Create horizontal layout of new-step pane and steps chart/buttons
-            h1 = QHBoxLayout()
-            h1.addWidget(self.g_step)
-            h1.addLayout(v3)
+            vbot = QVBoxLayout()
+            vbot.addWidget(self.g_step)
+            vbot.addLayout(v3)
 
             # Put it all inside tabs for custom and standard method builder...DELETE THIS?
             w_custom = QWidget()
-            w_custom.setLayout(h1)    # update this with custom layout! 
+            w_custom.setLayout(vbot)    # update this with custom layout! 
             w_standard = QLabel('nothing here yet...')
 
             self.builder = QTabWidget()
@@ -474,26 +474,20 @@ class WindowMethod(QMainWindow):
             v4 = QVBoxLayout()
             v4.addWidget(g1)
             v4.addStretch()
-            v4.addWidget(self.hide_plot_lbls)
-
-            h2 = QHBoxLayout()
-            h2.addLayout(v4)
-            h2.addWidget(graph_area)
+            v4.addWidget(self.builder)
 
             v5 = QVBoxLayout()
-            v5.addWidget(self.name)
-            v5.addLayout(h2)
-
-            wtop = QWidget()
-            wtop.setLayout(v5)
-            
-            split = QSplitter()
-            split.setOrientation(Qt.Orientation.Vertical)
-            split.addWidget(wtop)
-            split.addWidget(self.builder)
+            v5.addWidget(graph_area)
+            v5.addWidget(self.hide_plot_lbls)
+                
+            h2 = QHBoxLayout()
+            h2.addLayout(v4)
+            h2.addLayout(v5)
 
             v6 = QVBoxLayout()
-            v6.addWidget(split)
+            v6.addWidget(self.name)
+            v6.addLayout(h2)
+
             w = QWidget()
             w.setLayout(v6)
 
