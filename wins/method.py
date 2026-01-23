@@ -284,6 +284,7 @@ class WindowMethod(QMainWindow):
         dt_lbl_1 = QLabel('Hz')
         self.dt.setMinimum(g.M_SAMPLE_FREQ_MIN)
         self.dt.setMaximum(g.M_SAMPLE_FREQ_MAX)
+        self.dt.setValue(1)
         self.dt.valueChanged.connect(self.changed_value)
 
         current_range_lbl = QLabel("Device current range")  # Current range
@@ -672,7 +673,7 @@ class WindowMethod(QMainWindow):
         # Modify title and button text
         self.g_step.setTitle(l.sp_edit_step[g.L])
         self.but_add_step.setText(l.sp_edit_btn[g.L])
-
+        
         # Set top values to values from step
         self.step_name.setText(step[g.M_STEP_NAME])
         
@@ -927,6 +928,7 @@ class WindowMethod(QMainWindow):
         self.editing = True
         self.update_buttons()
         self.but_edit.setIcon(QIcon(g.ICON_X))
+        self.but_edit.setToolTip('Cancel')
         step = self.steps[self.selected[0]]
         self.set_step_values_for_editing(step)
         self.g_step.show()
@@ -934,6 +936,7 @@ class WindowMethod(QMainWindow):
 
     def hide_edit_step(self):
         self.but_edit.setIcon(QIcon(g.ICON_EDIT))
+        self.but_edit.setToolTip('Cancel')
         self.g_step.hide()                              # hide the add/edit step pane
         self.init_form_values()                     # and wipe the form 
         self.editing = False
@@ -988,11 +991,13 @@ class WindowMethod(QMainWindow):
         self.update_buttons()
         self.g_step.show()
         self.but_add.setIcon(QIcon(g.ICON_X))
+        self.but_add.setToolTip('Cancel')
 
     def hide_new_step_pane(self):
         self.g_step.hide()                              # hide the pane
         self.but_add.setIcon(QIcon(g.ICON_PLUS))    # make sure the add icon is a + (instead of an x) 
-        self.but_edit.setIcon(QIcon(g.ICON_EDIT))    # make sure the add icon is a + (instead of an x) 
+        self.but_edit.setIcon(QIcon(g.ICON_EDIT))    # make sure the add icon is a + (instead of an x)
+        self.but_add.setToolTip('Add new step')
         self.adding = False
         self.editing = False
         self.init_form_values()                     # and wipe the form
