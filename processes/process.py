@@ -308,11 +308,13 @@ def save():
 def read():
     path = sys.argv[2]                  #   Get path of file to read from
     data = get_data_from_file(path)     #   Read file from path (returns dict)
-    for run in data[g.S_RUNS]:          #   For each run in data dict
-        for rep in run[g.R_REPLICATES]: #   And for each rep of the run
-            rep.pop(g.R_DATA, None)     #   Remove the raw data
-    write_data(str(data))               #   Write the data (with raw data stripped) to data channel
-
+    if data:
+        for run in data[g.S_RUNS]:          #   For each run in data dict
+            for rep in run[g.R_REPLICATES]: #   And for each rep of the run
+                rep.pop(g.R_DATA, None)     #   Remove the raw data
+        write_data(str(data))               #   Write the data (with raw data stripped) to data channel
+    else:
+        raise ValueError('Could not read the file, check to make sure file is not corrupted.')
 
 #################################
 #                               #

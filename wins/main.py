@@ -1183,7 +1183,8 @@ class WindowMain(QMainWindow):
             self.process.finished.connect(self.handle_finished_read)
             self.status.showMessage("Loading data...")
             self.progress_bar.setVisible(True)
-            self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_READ, self.path])
+            #self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_READ, self.path])
+            self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_READ, self.path])
 
     def handle_read_stdout(self):
         print('load normal msg!')
