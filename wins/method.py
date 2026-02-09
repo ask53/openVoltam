@@ -346,9 +346,10 @@ class WindowMethod(QMainWindow):
             self.step_name = QLineEdit()
             self.step_name.setMaxLength(8)
 
-            self.data_collect = QCheckBox('Collect data during step?')
-            self.stirrer = QCheckBox('Stirrer on during step?')
-            self.vibrator = QCheckBox('Vibrator on during step?')
+            self.data_collect = QCheckBox('Collect DATA during step?')
+            self.background_collect = QCheckBox('Collect BACKGROUND during step?')
+            '''self.stirrer = QCheckBox('Stirrer on during step?')
+            self.vibrator = QCheckBox('Vibrator on during step?')'''
             
             step_type_lbl = QLabel('Step type')
             self.step_type = QComboBox()                                        # Create dropdown menu
@@ -407,17 +408,24 @@ class WindowMethod(QMainWindow):
             self.s_type.addWidget(w_const)
             self.s_type.addWidget(w_ramp)
 
-            # Set up the group box where user enters step information
-            v2 = QVBoxLayout()
-            v2.addLayout(horizontalize([step_name_lbl,self.step_name]))
-            v2.addWidget(self.data_collect)
-            v2.addWidget(QHLine())
-            self.vStepRelays = QVBoxLayout()
-            v2.addLayout(self.vStepRelays)
-            v2.addWidget(QHLine())
-            v2.addLayout(horizontalize([step_type_lbl,self.step_type]))
-            v2.addLayout(self.s_type)
-            v2.addWidget(self.but_add_step)
+            try:
+                self.vStepRelays = QVBoxLayout()
+
+                
+
+                # Set up the group box where user enters step information
+                v2 = QVBoxLayout()
+                v2.addLayout(horizontalize([step_name_lbl,self.step_name]))
+                v2.addWidget(self.data_collect)
+                v2.addWidget(self.background_collect)
+                v2.addWidget(QHLine())
+                v2.addLayout(self.vStepRelays)
+                v2.addWidget(QHLine())
+                v2.addLayout(horizontalize([step_type_lbl,self.step_type]))
+                v2.addLayout(self.s_type)
+                v2.addWidget(self.but_add_step)
+            except Exception as e:
+                print(e)
 
             self.g_step = QGroupBox(l.sp_add_step[g.L]) 
             self.g_step.setLayout(v2)           
@@ -563,8 +571,8 @@ class WindowMethod(QMainWindow):
         # Reset all values common to all runs
         self.step_name.setText('')
         self.data_collect.setCheckState(Qt.CheckState.Unchecked)
-        self.stirrer.setCheckState(Qt.CheckState.Unchecked)
-        self.vibrator.setCheckState(Qt.CheckState.Unchecked)
+        '''self.stirrer.setCheckState(Qt.CheckState.Unchecked)
+        self.vibrator.setCheckState(Qt.CheckState.Unchecked)'''
         self.step_type.setCurrentIndex(g.QT_NOTHING_SELECTED_INDEX)
 
         # Reset values specific to constant voltage steps
@@ -676,9 +684,11 @@ class WindowMethod(QMainWindow):
 
 
     
-    def add_relay(self):
-        self.relays.append('')
+    def add_relay(self, txt=False):
+        if txt: self.relays.append(txt)
+        else: self.relays.append("") 
         self.refresh_relays()
+
 
     def refresh_relays(self):
         
@@ -705,6 +715,7 @@ class WindowMethod(QMainWindow):
                 fill = relay
             val = QLineEdit(fill)
             val.textEdited.connect(partial(self.relay_edited, i))
+            val.setMaxLength(24)
             delete = QPushButton('delete')
             delete.clicked.connect(partial(self.delete_relay, i))
             h = QHBoxLayout()
@@ -715,6 +726,8 @@ class WindowMethod(QMainWindow):
 
             step_chk = QCheckBox(fill+' on during step?')
             self.vStepRelays.addWidget(step_chk)
+
+        print(self.vStepRelays.count())
 
         # Add 'add' button back in to upper pane
         but = QPushButton('Add relay')
@@ -756,11 +769,11 @@ class WindowMethod(QMainWindow):
         if step[g.M_DATA_COLLECT]:
             self.data_collect.setCheckState(Qt.CheckState.Checked)
         
-        if step[g.M_STIR]:
+        '''if step[g.M_STIR]:
             self.stirrer.setCheckState(Qt.CheckState.Checked)
 
         if step[g.M_VIBRATE]:
-            self.vibrator.setCheckState(Qt.CheckState.Checked)
+            self.vibrator.setCheckState(Qt.CheckState.Checked)'''
 
         this_type = step[g.M_TYPE]
         self.step_type.setCurrentIndex(g.M_TYPES.index(this_type))
