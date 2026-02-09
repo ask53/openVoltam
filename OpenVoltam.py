@@ -23,7 +23,7 @@ from wins.welcome import WindowWelcome  # this imports entire app including depe
 import sys
 import time
 
-time.sleep(2)
+#time.sleep(2)
 
 
 # Give this app a unique windows ID (windows only) so icon displays on taskbar

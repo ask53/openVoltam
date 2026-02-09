@@ -270,6 +270,7 @@ class WindowMethod(QMainWindow):
         self.save_error_flag = False
         self.steps = []
         self.selected = []
+        self.relays = []
         self.status = self.statusBar()
 
         # Method name field
@@ -293,6 +294,11 @@ class WindowMethod(QMainWindow):
         for cr in g.CURRENT_RANGES:    
             self.current_range.addItem(cr)
         self.current_range.currentIndexChanged.connect(self.changed_value)
+
+        gRelay = QGroupBox('Relays')
+        self.vRelay = QVBoxLayout()
+        self.vRelay.addStretch()
+        gRelay.setLayout(self.vRelay)
 
         # Graph stuff
         self.hide_plot_lbls = QCheckBox('Hide plot labels')
@@ -326,6 +332,7 @@ class WindowMethod(QMainWindow):
         v1 = QVBoxLayout()
         v1.addLayout(horizontalize([dt_lbl_0, self.dt, dt_lbl_1], True))
         v1.addLayout(horizontalize([current_range_lbl, self.current_range], True))
+        v1.addStretch()
         g1 = QGroupBox('Method parameters')
         g1.setLayout(v1)
 
@@ -405,8 +412,8 @@ class WindowMethod(QMainWindow):
             v2.addLayout(horizontalize([step_name_lbl,self.step_name]))
             v2.addWidget(self.data_collect)
             v2.addWidget(QHLine())
-            v2.addWidget(self.stirrer)
-            v2.addWidget(self.vibrator)
+            self.vStepRelays = QVBoxLayout()
+            v2.addLayout(self.vStepRelays)
             v2.addWidget(QHLine())
             v2.addLayout(horizontalize([step_type_lbl,self.step_type]))
             v2.addLayout(self.s_type)
@@ -472,8 +479,12 @@ class WindowMethod(QMainWindow):
             self.builder.addTab(w_custom, 'custom')
             self.builder.addTab(w_standard, 'standard')
 
+            h1 = QHBoxLayout()
+            h1.addWidget(g1)
+            h1.addWidget(gRelay)
+
             v4 = QVBoxLayout()
-            v4.addWidget(g1)
+            v4.addLayout(h1)
             v4.addStretch()
             v4.addWidget(self.builder)
 
@@ -497,10 +508,14 @@ class WindowMethod(QMainWindow):
             h1 = QHBoxLayout()
             v2 = QVBoxLayout()
             h2 = QHBoxLayout()
+            h3 = QHBoxLayout()
+
+            h3.addWidget(g1)
+            h3.addWidget(gRelay)
 
             h2.addStretch()
             h2.addWidget(self.hide_plot_lbls)
-            v2.addWidget(g1)
+            v2.addLayout(h3)
             v2.addWidget(self.profile_chart)
             v2.addLayout(h2)
             h1.addLayout(v2)
@@ -510,6 +525,8 @@ class WindowMethod(QMainWindow):
 
             w = QWidget()
             w.setLayout(v1)
+
+        self.refresh_relays()
 
         self.setCentralWidget(w)
         
@@ -658,9 +675,68 @@ class WindowMethod(QMainWindow):
 
 
 
+    
+    def add_relay(self):
+        self.relays.append('')
+        self.refresh_relays()
 
+    def refresh_relays(self):
+        
+        # clear upper relay content
+        for child in self.vRelay.children():
+            for i in reversed(range(child.count())):
+                print(child.itemAt(i).widget())
+                if type(child.itemAt(i).widget()) != type(None):    # Remove all widgets within horizontal layout
+                    child.itemAt(i).widget().setParent(None)
+                else:
+                    print('---NOT DELETING---')
+            child.layout().setParent(None)                          # Remove the H layout itself
 
+        # clear relay content within the add/edit step pane
+        for i in reversed(range(self.vStepRelays.count())):
+            self.vStepRelays.itemAt(i).widget().setParent(None)
 
+        # reset relay boxes in upper pane     
+        for i,relay in enumerate(self.relays):
+            txt = QLabel("Relay "+str(i+1)+" controls:")
+            if relay == "":
+                fill = 'relay '+str(i+1)
+            else:
+                fill = relay
+            val = QLineEdit(fill)
+            val.textEdited.connect(partial(self.relay_edited, i))
+            delete = QPushButton('delete')
+            delete.clicked.connect(partial(self.delete_relay, i))
+            h = QHBoxLayout()
+            h.addWidget(txt)
+            h.addWidget(val)
+            h.addWidget(delete)
+            self.vRelay.insertLayout(self.vRelay.count()-1, h)
+
+            step_chk = QCheckBox(fill+' on during step?')
+            self.vStepRelays.addWidget(step_chk)
+
+        # Add 'add' button back in to upper pane
+        but = QPushButton('Add relay')
+        but.clicked.connect(self.add_relay)
+        h = QHBoxLayout()
+        #h.addStretch()
+        h.addWidget(but)
+        self.vRelay.insertLayout(self.vRelay.count()-1, h)
+
+        
+    def delete_relay(self, i):
+        del self.relays[i]
+        self.refresh_relays()
+
+    def relay_edited(self, i):
+        txt = self.vRelay.children()[i].itemAt(1).widget().text()
+        self.relays[i] = txt
+        self.vStepRelays.itemAt(i).widget().setText(txt+' on during step?')
+        
+        
+                
+            
 
 
 
