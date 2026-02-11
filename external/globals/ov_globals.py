@@ -111,8 +111,13 @@ ICON_EDIT = 'external/icons/edit.png'
 ICON_DUP = 'external/icons/duplicate.png'
 ICON_TRASH = 'external/icons/trash.png'
 ICON_X = 'external/icons/x.png'
-ICON_STIR = 'external/icons/stirer.png'
-ICON_VIB = 'external/icons/vibrator.png'
+ICON_RELAY = ['external/icons/relay1.png',
+              'external/icons/relay2.png',
+              'external/icons/relay3.png',
+              'external/icons/relay4.png',
+              'external/icons/relay5.png',
+              'external/icons/relay6.png']
+ICON_BACKGROUND = 'external/icons/measure_background.png'
 ICON_MEASURE = 'external/icons/measure.png'
 ICON_REFRESH = 'external/icons/refresh.png'
 

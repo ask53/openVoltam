@@ -159,6 +159,10 @@ class WindowWelcome(QMainWindow):
             self.new_win_one_with_value(WindowMethod(self, g.WIN_MODE_NEW, False), 'mode', g.WIN_MODE_NEW)
         except Exception as e:
             print(e)
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print(exc_type, fname, exc_tb.tb_lineno)
+            
     def open_method(self, path=False):
         try:
             if not path:
