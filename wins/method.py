@@ -443,7 +443,7 @@ class WindowMethod(QMainWindow):
                 '''#v2a.addWidget(self.data_collect)
                 #v2a.addWidget(self.background_collect)'''
                 v2a.addLayout(horizontalize([data_collect_lbl,self.data_collect]))
-                '''v2a.addWidget(QHLine())'''
+                v2a.addWidget(QHLine())
                 v2a.addLayout(horizontalize([step_type_lbl,self.step_type]))
                 v2a.addLayout(self.s_type)
 
