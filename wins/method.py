@@ -255,12 +255,16 @@ from PyQt6.QtWidgets import (
 class WindowMethod(QMainWindow):
     def __init__(self, parent, mode, path=False, method_id=False, mode_changable=True):
         super().__init__()
+
+        print('hi!')
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.parent = parent
         self.mode = mode
         self.path = path
         self.method_id = method_id
         self.mode_changable = mode_changable
+
+        print('a')
 
         self.saved = True
         self.adding = False     # flag for whether step is being added
@@ -273,11 +277,15 @@ class WindowMethod(QMainWindow):
         self.relays = []
         self.status = self.statusBar()
 
+        print('b')
+
         # Method name field
         self.name = QLineEdit()
         self.name.setObjectName('ov-method-name')
         self.name.setPlaceholderText('Profile name')
         self.name.textChanged.connect(self.changed_name)
+
+        print('c')
     
         # Define method-wide parameters
         dt_lbl_0 = QLabel('Sample frequency:')   # sample frequency
@@ -288,6 +296,8 @@ class WindowMethod(QMainWindow):
         self.dt.setValue(1)
         self.dt.valueChanged.connect(self.changed_value)
 
+        print('d')
+
         current_range_lbl = QLabel("Device current range")  # Current range
         self.current_range = QComboBox()
         self.current_range.setPlaceholderText('Select...')
@@ -295,10 +305,12 @@ class WindowMethod(QMainWindow):
             self.current_range.addItem(cr)
         self.current_range.currentIndexChanged.connect(self.changed_value)
 
-        gRelay = QGroupBox('Relays')
+        gRelay = QGroupBox('External devices')
         self.vRelay = QVBoxLayout()
         self.vRelay.addStretch()
         gRelay.setLayout(self.vRelay)
+
+        print('e')
 
         # Graph stuff
         self.hide_plot_lbls = QCheckBox('Hide plot labels')
@@ -307,8 +319,11 @@ class WindowMethod(QMainWindow):
         graph_area = QScrollArea()
         graph_area.setObjectName('ov-graph-area')
         graph_area.setWidget(self.graph)
- 
-        self.profile_chart = QScrollArea()          # Initialize scroll area
+
+        print('f')
+
+        # Initialize scroll area for steps
+        self.profile_chart = QScrollArea()          
 
         # Create buttons for the different window states
         self.but_new_save = QPushButton('Save')
@@ -329,6 +344,8 @@ class WindowMethod(QMainWindow):
                      self.but_view_only,
                      self.but_edit_name_only]
 
+        print('g')
+
         v1 = QVBoxLayout()
         v1.addLayout(horizontalize([dt_lbl_0, self.dt, dt_lbl_1], True))
         v1.addLayout(horizontalize([current_range_lbl, self.current_range], True))
@@ -339,6 +356,8 @@ class WindowMethod(QMainWindow):
         self.ws_for_new = [self.dt, self.current_range]
         self.ws_for_viewish = [self.name]
 
+       
+
         if self.mode == g.WIN_MODE_NEW or self.mode == g.WIN_MODE_EDIT:     # if this window can actually edit the method steps
 
             # Step-specific inputs
@@ -346,10 +365,15 @@ class WindowMethod(QMainWindow):
             self.step_name = QLineEdit()
             self.step_name.setMaxLength(8)
 
-            self.data_collect = QCheckBox('Collect DATA during step?')
-            self.background_collect = QCheckBox('Collect BACKGROUND during step?')
+            '''self.data_collect = QCheckBox('Collect DATA during step?')
+            self.background_collect = QCheckBox('Collect BACKGROUND during step?')'''
             '''self.stirrer = QCheckBox('Stirrer on during step?')
             self.vibrator = QCheckBox('Vibrator on during step?')'''
+            data_collect_lbl = QLabel('On this step collect:')
+            self.data_collect = QComboBox()
+            self.data_collect.addItem('None', g.M_DATA_NONE)
+            self.data_collect.addItem('Data', g.M_DATA_SIGNAL)
+            self.data_collect.addItem('Background', g.M_DATA_BACKGROUND)
             
             step_type_lbl = QLabel('Step type')
             self.step_type = QComboBox()                                        # Create dropdown menu
@@ -410,20 +434,33 @@ class WindowMethod(QMainWindow):
 
             try:
                 self.vStepRelays = QVBoxLayout()
-
+                self.vStepRelays.addStretch()
                 
 
                 # Set up the group box where user enters step information
+
+                v2a = QVBoxLayout()
+                '''#v2a.addWidget(self.data_collect)
+                #v2a.addWidget(self.background_collect)'''
+                v2a.addLayout(horizontalize([data_collect_lbl,self.data_collect]))
+                '''v2a.addWidget(QHLine())'''
+                v2a.addLayout(horizontalize([step_type_lbl,self.step_type]))
+                v2a.addLayout(self.s_type)
+
+                v2b = QVBoxLayout()
+                v2b.addLayout(self.vStepRelays)
+
+                hstep = QHBoxLayout()
+                hstep.addLayout(v2a)
+                hstep.addWidget(QVLine())
+                hstep.addLayout(v2b)
+
                 v2 = QVBoxLayout()
                 v2.addLayout(horizontalize([step_name_lbl,self.step_name]))
-                v2.addWidget(self.data_collect)
-                v2.addWidget(self.background_collect)
-                v2.addWidget(QHLine())
-                v2.addLayout(self.vStepRelays)
-                v2.addWidget(QHLine())
-                v2.addLayout(horizontalize([step_type_lbl,self.step_type]))
-                v2.addLayout(self.s_type)
+                v2.addLayout(hstep)
                 v2.addWidget(self.but_add_step)
+                
+
             except Exception as e:
                 print(e)
 
@@ -535,7 +572,6 @@ class WindowMethod(QMainWindow):
             w.setLayout(v1)
 
         self.refresh_relays()
-
         self.setCentralWidget(w)
         
         if self.mode == g.WIN_MODE_NEW or self.mode == g.WIN_MODE_EDIT:
@@ -570,7 +606,8 @@ class WindowMethod(QMainWindow):
         
         # Reset all values common to all runs
         self.step_name.setText('')
-        self.data_collect.setCheckState(Qt.CheckState.Unchecked)
+        '''self.data_collect.setCheckState(Qt.CheckState.Unchecked)'''
+        self.data_collect.setCurrentIndex(0)
         '''self.stirrer.setCheckState(Qt.CheckState.Unchecked)
         self.vibrator.setCheckState(Qt.CheckState.Unchecked)'''
         self.step_type.setCurrentIndex(g.QT_NOTHING_SELECTED_INDEX)
@@ -686,8 +723,9 @@ class WindowMethod(QMainWindow):
     
     def add_relay(self, txt=False):
         if txt: self.relays.append(txt)
-        else: self.relays.append("") 
+        else: self.relays.append("")
         self.refresh_relays()
+        
 
 
     def refresh_relays(self):
@@ -695,22 +733,20 @@ class WindowMethod(QMainWindow):
         # clear upper relay content
         for child in self.vRelay.children():
             for i in reversed(range(child.count())):
-                print(child.itemAt(i).widget())
                 if type(child.itemAt(i).widget()) != type(None):    # Remove all widgets within horizontal layout
                     child.itemAt(i).widget().setParent(None)
-                else:
-                    print('---NOT DELETING---')
             child.layout().setParent(None)                          # Remove the H layout itself
 
         # clear relay content within the add/edit step pane
         for i in reversed(range(self.vStepRelays.count())):
-            self.vStepRelays.itemAt(i).widget().setParent(None)
+            if type(self.vStepRelays.itemAt(i).widget()) != type(None):
+                self.vStepRelays.itemAt(i).widget().setParent(None)
 
         # reset relay boxes in upper pane     
         for i,relay in enumerate(self.relays):
             txt = QLabel("Relay "+str(i+1)+" controls:")
             if relay == "":
-                fill = 'relay '+str(i+1)
+                fill = 'device '+str(i+1)
             else:
                 fill = relay
             val = QLineEdit(fill)
@@ -725,17 +761,23 @@ class WindowMethod(QMainWindow):
             self.vRelay.insertLayout(self.vRelay.count()-1, h)
 
             step_chk = QCheckBox(fill+' on during step?')
-            self.vStepRelays.addWidget(step_chk)
+            self.vStepRelays.insertWidget(self.vStepRelays.count()-1, step_chk)
 
-        print(self.vStepRelays.count())
-
+        
+        
         # Add 'add' button back in to upper pane
-        but = QPushButton('Add relay')
-        but.clicked.connect(self.add_relay)
+        self.add_relay_but = QPushButton('Add external device')
+        self.add_relay_but.clicked.connect(self.add_relay)
         h = QHBoxLayout()
-        #h.addStretch()
-        h.addWidget(but)
+        h.addWidget(self.add_relay_but)
         self.vRelay.insertLayout(self.vRelay.count()-1, h)
+        try:
+            if len(self.relays) >= g.M_RELAY_MAX:
+                self.add_relay_but.setEnabled(False)
+            else:
+                self.add_relay_but.setEnabled(True)
+        except Exception as e:
+            print(e)
 
         
     def delete_relay(self, i):
@@ -765,9 +807,11 @@ class WindowMethod(QMainWindow):
         
         # Set top values to values from step
         self.step_name.setText(step[g.M_STEP_NAME])
-        
+
+        ################################# HERE ################################################
         if step[g.M_DATA_COLLECT]:
             self.data_collect.setCheckState(Qt.CheckState.Checked)
+        ###########################################################################
         
         '''if step[g.M_STIR]:
             self.stirrer.setCheckState(Qt.CheckState.Checked)
@@ -867,7 +911,7 @@ class WindowMethod(QMainWindow):
                 w_volt.setText('ramp: '+str(v0)+'V'+' --> '+str(vf)+'V')
                 w_t = QLabel(str(sr)+'V/s')
 
-            w_stir = QLabel()
+            '''w_stir = QLabel()
             w_stir.setToolTip('Stirrer OFF')
             if step[g.M_STIR]:
                 w_stir.setPixmap(QPixmap(g.ICON_STIR))
@@ -877,7 +921,7 @@ class WindowMethod(QMainWindow):
             w_vib.setToolTip('Vibrator OFF')
             if step[g.M_VIBRATE]:
                 w_vib.setPixmap(QPixmap(g.ICON_VIB))
-                w_vib.setToolTip('Vibrator ON')
+                w_vib.setToolTip('Vibrator ON')'''
 
             w_collect = QLabel()
             w_collect.setToolTip('Data collection OFF')
@@ -885,7 +929,8 @@ class WindowMethod(QMainWindow):
                 w_collect.setPixmap(QPixmap(g.ICON_MEASURE))
                 w_collect.setToolTip('Data collection ON')
             
-            ws = [w_name, w_volt, w_t, w_stir, w_vib, w_collect]
+            '''ws = [w_name, w_volt, w_t, w_stir, w_vib, w_collect]'''
+            ws = [w_name, w_volt, w_t, w_collect]
             ####### THEN ADD THEM TO THE ws LIST. THATS IT YAYYYYY 
 
             if (i%2 == 0):
@@ -1099,16 +1144,28 @@ class WindowMethod(QMainWindow):
             step_type = g.M_TYPES[self.step_type.currentIndex()]
 
             self.set_duration(step_type)
+
+            relays_on = []
+            for i in range(self.vStepRelays.count()):
+                w = self.vStepRelays.itemAt(i).widget()
+                if type(w) == type(QCheckBox()):
+                    if w.isChecked():
+                        relays_on.append(i)
             
             # Grab the data that all steps contain   
             data_general = {
                 g.M_STEP_NAME: self.step_name.text(),
-                g.M_DATA_COLLECT: self.is_checked(self.data_collect),
-                g.M_STIR: self.is_checked(self.stirrer),
-                g.M_VIBRATE: self.is_checked(self.vibrator),
+                g.M_DATA_COLLECT: self.data_collect.currentData(), 
+                g.M_RELAYS_ON: relays_on,
                 g.M_TYPE: step_type,
                 g.M_T: self.ts[step_type].value()
                 }
+            '''g.M_STIR: self.is_checked(self.stirrer),
+                g.M_VIBRATE: self.is_checked(self.vibrator),'''
+            print(self.relays)
+            print(data_general)
+
+            
             
             ############################################ IF ADDING ANOTHER STEP TYPE, ADD ANOTHER ELIF TO THE CODE BELOW ############
             data_specific = {}                                                                                                      #

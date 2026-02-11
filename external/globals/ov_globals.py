@@ -40,8 +40,12 @@ M_CURRENT_RANGE = 'current-range'
 M_STEPS = 'steps'
 M_STEP_NAME = 'name'
 M_DATA_COLLECT = 'data-collect'
-M_STIR = 'stir'
-M_VIBRATE = 'vibrate'
+M_DATA_NONE = 'no'
+M_DATA_SIGNAL = 'signal'
+M_DATA_BACKGROUND = 'background'
+"""M_STIR = 'stir'
+M_VIBRATE = 'vibrate'"""
+M_RELAYS_ON = 'relays-on'
 M_TYPE = 'type'
 M_CONSTANT = 'constant'
 M_RAMP = 'ramp'
@@ -53,7 +57,7 @@ M_RAMP_V2 = 'V2'
 M_SCAN_RATE = 'scan-rate'
 M_RELAY = 'relay'
 M_RELAY_STATE = 'relay-state'
-M_RELAYS = [M_STIR, M_VIBRATE]
+"""M_RELAYS = [M_STIR, M_VIBRATE]"""
 M_FROM_SAMPLE = 'from-sample'
 M_FROM_FILE = 'from-file'
 
@@ -139,6 +143,7 @@ M_T_MAX = 9999
 M_SCAN_RATE_MAX = 99.99
 M_SAMPLE_FREQ_MIN = 0.01
 M_SAMPLE_FREQ_MAX = 1000         # 86,400,000 miliseconds in a day
+M_RELAY_MAX = 6
 
 # Language globals 
 ENG = 0

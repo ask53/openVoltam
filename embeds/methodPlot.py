@@ -56,10 +56,19 @@ class MethodPlot(Canvas):
         lbls = []
         t_ticks = [0]
         v_ticks = []
-        segs = {g.M_STIR:[],
+
+
+        ###################3 SORT THIS WITH NEW RELAY CONFIG ########
+        '''segs = {g.M_STIR:[],
                 g.M_VIBRATE:[],
                 g.M_DATA_COLLECT:[]
-                }
+                }'''
+
+        segs = {g.M_DATA_COLLECT:[]}
+        ###########################################
+
+
+        
         v_ticks_lbl = []
 
         for rep in range(0,reps):
@@ -112,9 +121,13 @@ class MethodPlot(Canvas):
             
             adj = self.get_indicator_adjustment()
             [ymin, ymax] = self.axes.get_ylim()
-            seg_props = {g.M_STIR:{'pos':ymin-adj, 'color':'pink', 'lbl':'stir'},
+            
+            ################## AND HERE ###########################3
+            '''seg_props = {g.M_STIR:{'pos':ymin-adj, 'color':'pink', 'lbl':'stir'},
                 g.M_VIBRATE:{'pos':ymin-2*adj, 'color':'green', 'lbl':'vibrate'},
-                g.M_DATA_COLLECT:{'pos':ymin-4*adj, 'color':'purple', 'lbl':'measure'}}
+                g.M_DATA_COLLECT:{'pos':ymin-4*adj, 'color':'purple', 'lbl':'measure'}}'''
+            #############################################################################################
+            
             for k in seg_props:
                 v_ticks.append(seg_props[k]['pos'])
                 v_ticks_lbl.append(seg_props[k]['lbl'])

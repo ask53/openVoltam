@@ -150,10 +150,15 @@ class WindowWelcome(QMainWindow):
             # if user didn't select a path, do nothing
         except Exception as e:
             print(e)
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print(exc_type, fname, exc_tb.tb_lineno)
 
     def new_method(self):
-        self.new_win_one_with_value(WindowMethod(self, g.WIN_MODE_NEW, False), 'mode', g.WIN_MODE_NEW)
-
+        try:
+            self.new_win_one_with_value(WindowMethod(self, g.WIN_MODE_NEW, False), 'mode', g.WIN_MODE_NEW)
+        except Exception as e:
+            print(e)
     def open_method(self, path=False):
         try:
             if not path:
