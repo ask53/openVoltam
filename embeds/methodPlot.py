@@ -177,7 +177,7 @@ class MethodPlot(Canvas):
                     y = seg_relay_props[k]['pos']
                     c = seg_relay_props[k]['color']
                     self.axes.plot(seg, [y, y], color=c, linewidth=4)
-
+            
             if show_labels:
                 v_max = self.get_step_name_position()
                 lbl_x_adj = self.get_x_adj()
@@ -194,9 +194,9 @@ class MethodPlot(Canvas):
             if len(t)>0:
                 self.axes.set_xlim(left=0, right=t[-1])
             
-            self.axes.set_yticks(v_ticks, v_ticks_lbl)
+            self.axes.set_yticks(v_ticks, v_ticks_lbl, rotation=45)
             self.axes.grid(True, linestyle='--', linewidth=0.2)
-
+            
             if show_xticks:
                 self.axes.set_xticks(t_ticks)
                 for i,t in enumerate(t_ticks):
@@ -207,7 +207,7 @@ class MethodPlot(Canvas):
                 self.axes.set_xticklabels(t_ticks, rotation=300)
             else:
                 self.axes.set_xticks([])
-
+            
             
             self.draw()
             
