@@ -41,13 +41,13 @@ class MethodPlot(Canvas):
         
         super().__init__(self.fig)
         
-        self.steps = []
-        self.update_plot(self.steps)
+        #self.steps = []
+        #self.update_plot(self.steps, [])
+        self.update_plot([], [])
 
         
 
-    def update_plot(self, steps, show_labels=False, show_xticks=True, reps=1):
-
+    def update_plot(self, steps, relays, show_labels=False, show_xticks=True, reps=1):
         self.axes.cla()
         
 
@@ -64,9 +64,12 @@ class MethodPlot(Canvas):
                 g.M_DATA_COLLECT:[]
                 }'''
 
-        segs = {g.M_DATA_COLLECT:[]}
+        segs_data = []
+        segs_background = []
+        segs_relays = []
+        for i in range(len(relays)):
+            segs_relays.append([])
         ###########################################
-
 
         
         v_ticks_lbl = []
@@ -107,11 +110,23 @@ class MethodPlot(Canvas):
                     v_ticks.append(v1)
                     v_ticks_lbl.append(str(v1)+'V')
 
+                if step[g.M_DATA_COLLECT] == g.M_DATA_SIGNAL:
+                    segs_data.append((t0,t1))
+                elif step[g.M_DATA_COLLECT] == g.M_DATA_BACKGROUND:
+                    segs_background.append((t0,t1))
+                for relay_id in step[g.M_RELAYS_ON]:
+                    segs_relays[relay_id].append((t0,t1))
+                    
+
+
+                '''seg_data = []
+                seg_background = []
+                seg_relays = {}
                 
                 for key in segs:
                     if step[key]:
-                        segs[key].append((t0,t1))
-                    
+                        segs[key].append((t0,t1))'''
+        
         try:
             self.axes.plot(t, v, 'black')
             self.axes.set_title('Applied voltage [V] vs. time [s]')
@@ -126,15 +141,41 @@ class MethodPlot(Canvas):
             '''seg_props = {g.M_STIR:{'pos':ymin-adj, 'color':'pink', 'lbl':'stir'},
                 g.M_VIBRATE:{'pos':ymin-2*adj, 'color':'green', 'lbl':'vibrate'},
                 g.M_DATA_COLLECT:{'pos':ymin-4*adj, 'color':'purple', 'lbl':'measure'}}'''
+            
+
+            relay_colors = ['magenta','springgreen']
+            N_relays = len(relays)
+            seg_relay_props = []
+            k = 0
+            for k in range(N_relays):
+                seg_relay_props.append({'pos':ymin-k*adj, 'color':relay_colors[k%2], 'lbl':get_relay_text(relays[k], k)})
+            seg_data_props = {'pos':ymin-(k+2)*adj, 'color':'darkviolet', 'lbl':'data'}
+            seg_background_props = {'pos':ymin-(k+3)*adj, 'color':'thistle', 'lbl':'background'}
+
             #############################################################################################
             
-            for k in seg_props:
-                v_ticks.append(seg_props[k]['pos'])
-                v_ticks_lbl.append(seg_props[k]['lbl'])
-            for k in segs:
-                for seg in segs[k]:
-                    y = seg_props[k]['pos']
-                    c = seg_props[k]['color']
+            v_ticks.append(seg_data_props['pos'])
+            v_ticks_lbl.append(seg_data_props['lbl'])
+            v_ticks.append(seg_background_props['pos'])
+            v_ticks_lbl.append(seg_background_props['lbl'])
+            for prop in seg_relay_props:
+                v_ticks.append(prop['pos'])
+                v_ticks_lbl.append(prop['lbl'])
+           
+            for seg in segs_data:
+                y = seg_data_props['pos']
+                c = seg_data_props['color']
+                self.axes.plot(seg, [y, y], color=c, linewidth=4)
+           
+            for seg in segs_background:
+                y = seg_background_props['pos']
+                c = seg_background_props['color']
+                self.axes.plot(seg, [y, y], color=c, linewidth=4)
+            
+            for k, segs in enumerate(segs_relays):
+                for seg in segs_relays[k]:
+                    y = seg_relay_props[k]['pos']
+                    c = seg_relay_props[k]['color']
                     self.axes.plot(seg, [y, y], color=c, linewidth=4)
 
             if show_labels:

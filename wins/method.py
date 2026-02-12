@@ -255,8 +255,7 @@ from PyQt6.QtWidgets import (
 class WindowMethod(QMainWindow):
     def __init__(self, parent, mode, path=False, method_id=False, mode_changable=True):
         super().__init__()
-
-        print('hi!')
+        
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.parent = parent
         self.mode = mode
@@ -709,12 +708,11 @@ class WindowMethod(QMainWindow):
         if txt: self.relays.append(txt)
         else: self.relays.append("")
         self.refresh_relays()           # refresh list of relays in add/edit step pane
-        
+
         
 
 
     def refresh_relays(self):
-        
         # clear upper relay content
         for child in self.vRelay.children():
             for i in reversed(range(child.count())):
@@ -730,7 +728,7 @@ class WindowMethod(QMainWindow):
         # reset relay boxes in upper pane     
         for i,relay in enumerate(self.relays):
             txt = QLabel("Relay "+str(i+1)+" controls:")
-            fill = self.get_relay_text(relay, i)
+            fill = get_relay_text(relay, i)
             val = QLineEdit(fill)
             val.textEdited.connect(partial(self.relay_edited, i))
             val.setMaxLength(24)
@@ -744,9 +742,7 @@ class WindowMethod(QMainWindow):
 
             step_chk = QCheckBox(fill+' on during step?')
             self.vStepRelays.insertWidget(self.vStepRelays.count()-1, step_chk)
-
-        
-        
+              
         # Add 'add' button back in to upper pane
         self.add_relay_but = QPushButton('Add external device')
         self.add_relay_but.clicked.connect(self.add_relay)
@@ -779,11 +775,6 @@ class WindowMethod(QMainWindow):
         self.relays[i] = txt
         self.vStepRelays.itemAt(i).widget().setText(txt+' on during step?')
         self.refresh_list()
-
-    def get_relay_text(self, name, i):
-        if name == "":
-            return 'device '+str(i+1)
-        return name
         
         
                 
@@ -843,7 +834,7 @@ class WindowMethod(QMainWindow):
     def refresh_list(self):
         """ Clears the sweep list and rebuilds it"""
         try:
-            self.erase_list_visualization()
+            #self.erase_list_visualization()
             self.build_new_list()
             self.refresh_graph()
             self.update_highlights()
@@ -853,18 +844,22 @@ class WindowMethod(QMainWindow):
             print('here, issue with refreshing the list!')
             print(e)
 
-    def erase_list_visualization(self):
+    '''def erase_list_visualization(self):
         """ Erases the content of the current sweep list that is displayed"""
         w = self.profile_chart.findChild(QWidget)
         lay = w.layout()
+        print(w)
+        print(lay)
+        print(lay.count)
         try:
-            for i in reversed(range(lay.count())): 
+            for i in reversed(range(lay.count())):
+                print(lay.itemAt(i).widget())
                 lay.itemAt(i).widget().setParent(None)
         except Exception as e:
             print('<---issue erasing!')
             print(e)
             print('--->')
-            return
+            return'''
 
     def update_buttons(self):
         yes = []
@@ -924,7 +919,7 @@ class WindowMethod(QMainWindow):
             ws_relay = []
             for j,relay in enumerate(self.relays):
                 w = QLabel()
-                name = self.get_relay_text(relay, j)
+                name = get_relay_text(relay, j)
                 w.setToolTip(name+' OFF')
                 if j in step[g.M_RELAYS_ON]:
                     w.setPixmap(QPixmap(g.ICON_RELAY[j]))
@@ -975,7 +970,6 @@ class WindowMethod(QMainWindow):
         self.profile_chart.setWidget(self.w_pc)
 
     def row_clicked(self, w, event):
-        print('hi!')
         # If the window is view-only, block the user from modifying the rows
         if self.mode == g.WIN_MODE_VIEW_ONLY or self.mode == g.WIN_MODE_VIEW_WITH_MINOR_EDITS:                          
             return    
@@ -1356,7 +1350,9 @@ class WindowMethod(QMainWindow):
         lbls = True
         if self.hide_plot_lbls.checkState() == Qt.CheckState.Checked:
             lbls = False
-        self.graph.update_plot(self.steps, show_labels=lbls, show_xticks=lbls)
+        print('A')
+        self.graph.update_plot(self.steps, self.relays, show_labels=lbls, show_xticks=lbls)
+        print('B')
 
     def set_header(self):  
         if self.mode == g.WIN_MODE_NEW or self.mode == g.WIN_MODE_EDIT :

@@ -43,8 +43,6 @@ M_DATA_COLLECT = 'data-collect'
 M_DATA_NONE = 'no'
 M_DATA_SIGNAL = 'signal'
 M_DATA_BACKGROUND = 'background'
-"""M_STIR = 'stir'
-M_VIBRATE = 'vibrate'"""
 M_RELAYS_ON = 'relays-on'
 M_TYPE = 'type'
 M_CONSTANT = 'constant'
@@ -57,10 +55,8 @@ M_RAMP_V2 = 'V2'
 M_SCAN_RATE = 'scan-rate'
 M_RELAY = 'relay'
 M_RELAY_STATE = 'relay-state'
-"""M_RELAYS = [M_STIR, M_VIBRATE]"""
 M_FROM_SAMPLE = 'from-sample'
 M_FROM_FILE = 'from-file'
-
 
 # Keys for run (R) dictionary
 R_UID_SELF = 'uid'

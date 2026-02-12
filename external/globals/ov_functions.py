@@ -301,6 +301,11 @@ def html_escape(s):
     s = s.replace("'", "&#39;")
     return s
 
+def get_relay_text(name, i):
+    if name == "":
+        return 'device '+str(i+1)
+    return name
+
 
 
 
