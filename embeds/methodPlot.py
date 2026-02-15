@@ -63,63 +63,72 @@ class MethodPlot(Canvas):
                 g.M_VIBRATE:[],
                 g.M_DATA_COLLECT:[]
                 }'''
-
-        segs_data = []
-        segs_background = []
-        segs_relays = []
-        for i in range(len(relays)):
-            segs_relays.append([])
+        try:
+            segs_data = []
+            segs_background = []
+            segs_relays = []
+            for i in range(len(relays)):
+                segs_relays.append([])
+        except Exception as e:
+            print('error in plot #1')
+            print(e)
         ###########################################
 
-        
-        v_ticks_lbl = []
+        try:
+            v_ticks_lbl = []
 
-        for rep in range(0,reps):
-            for step in steps:
-                if not t:
-                    t0 = 0
-                    t1 = step[g.M_T]
-                else:
-                    t0 = t[-1]
-                    t1 = t[-1]+step[g.M_T]
+            for rep in range(0,reps):
+                for step in steps:
+                    if not t:
+                        t0 = 0
+                        t1 = step[g.M_T]
+                    else:
+                        t0 = t[-1]
+                        t1 = t[-1]+step[g.M_T]
 
-                step_type = step[g.M_TYPE]
-                if step_type == g.M_CONSTANT:
-                    v0 = step[g.M_CONST_V]
-                    v1 = v0
-                elif step_type == g.M_RAMP:
-                    v0 = step[g.M_RAMP_V1]
-                    v1 = step[g.M_RAMP_V2]
-                else:
-                    show_alert(self, "Error!", "There was an issue plotting this method.")
-                    return
+                    step_type = step[g.M_TYPE]
+                    if step_type == g.M_CONSTANT:
+                        v0 = step[g.M_CONST_V]
+                        v1 = v0
+                    elif step_type == g.M_RAMP:
+                        v0 = step[g.M_RAMP_V1]
+                        v1 = step[g.M_RAMP_V2]
+                    else:
+                        show_alert(self, "Error!", "There was an issue plotting this method.")
+                        return
 
-                lbls.append(step[g.M_STEP_NAME])
+                    lbls.append(step[g.M_STEP_NAME])
 
-                t.append(t0)
-                t.append(t1)
-                v.append(v0)
-                v.append(v1)
+                    t.append(t0)
+                    t.append(t1)
+                    v.append(v0)
+                    v.append(v1)
 
-                if t1 not in t_ticks:
-                    t_ticks.append(t1)
-                if v0 not in v_ticks:
-                    v_ticks.append(v0)
-                    v_ticks_lbl.append(str(v0)+'V')
-                if v1 not in v_ticks:
-                    v_ticks.append(v1)
-                    v_ticks_lbl.append(str(v1)+'V')
+                    if t1 not in t_ticks:
+                        t_ticks.append(t1)
+                    if v0 not in v_ticks:
+                        v_ticks.append(v0)
+                        v_ticks_lbl.append(str(v0)+'V')
+                    if v1 not in v_ticks:
+                        v_ticks.append(v1)
+                        v_ticks_lbl.append(str(v1)+'V')
 
-                if step[g.M_DATA_COLLECT] == g.M_DATA_SIGNAL:
-                    segs_data.append((t0,t1))
-                elif step[g.M_DATA_COLLECT] == g.M_DATA_BACKGROUND:
-                    segs_background.append((t0,t1))
-                for relay_id in step[g.M_RELAYS_ON]:
-                    segs_relays[relay_id].append((t0,t1))
+                    if step[g.M_DATA_COLLECT] == g.M_DATA_SIGNAL:
+                        segs_data.append((t0,t1))
+                    elif step[g.M_DATA_COLLECT] == g.M_DATA_BACKGROUND:
+                        segs_background.append((t0,t1))
+                    
+                    for relay_id in step[g.M_RELAYS_ON]:
+                        segs_relays[relay_id].append((t0,t1))
+
+                    
+        except Exception as e:
+            print('error in plot #2')
+            print(e)
                     
 
 
-                '''seg_data = []
+        '''seg_data = []
                 seg_background = []
                 seg_relays = {}
                 
@@ -213,6 +222,7 @@ class MethodPlot(Canvas):
             
             
         except Exception as e:
+            print('error exception 3!')
             print(e)
 
     def get_step_name_position(self):

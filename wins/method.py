@@ -228,6 +228,7 @@ from wins.sample import QVLine
 from embeds.methodPlot import MethodPlot
 
 from functools import partial
+from copy import deepcopy
 
 from PyQt6.QtCore import Qt, QProcess
 from PyQt6.QtGui import QIcon, QPixmap, QCloseEvent
@@ -757,18 +758,17 @@ class WindowMethod(QMainWindow):
         self.refresh_list()             # refresh steps pane (as it contains references to releays)
 
         
-    def delete_relay(self, i):
-        del self.relays[i]                                      # delete from relay list
-        
-        for step in self.steps:                                 # adjust all existing relay references in steps accordingly
-            if i in step[g.M_RELAYS_ON]:                        #   1. Delete references to deleted relay
-                step[g.M_RELAYS_ON].remove(i)
+    def delete_relay(self, del_index):
+        del self.relays[del_index]                                      # delete from relay list
+
+        for step in self.steps:                   # adjust all existing relay references in steps accordingly
+            if del_index in step[g.M_RELAYS_ON]:                        #   1. Delete references to deleted relay
+                step[g.M_RELAYS_ON].remove(del_index)
             for j, relay_id in enumerate(step[g.M_RELAYS_ON]):  #   2. Adjust all higher indices down by 1
-                if relay_id > i:
+                if relay_id > del_index:
                     step[g.M_RELAYS_ON][j] = relay_id-1
                     
-        self.refresh_relays()
-        
+        self.refresh_relays()  
 
     def relay_edited(self, i):
         txt = self.vRelay.children()[i].itemAt(1).widget().text()
@@ -970,23 +970,24 @@ class WindowMethod(QMainWindow):
         self.profile_chart.setWidget(self.w_pc)
 
     def row_clicked(self, w, event):
-        # If the window is view-only, block the user from modifying the rows
-        if self.mode == g.WIN_MODE_VIEW_ONLY or self.mode == g.WIN_MODE_VIEW_WITH_MINOR_EDITS:                          
-            return    
-        keys = QApplication.keyboardModifiers()
-        i = w.property('row')
-        if keys == Qt.KeyboardModifier.ControlModifier:             # If this is a ctrl+click  
-            if i in self.selected:                                  # If the clicked row is already selected
-                self.selected.remove(i)
-            else:                                                   # If it was not already selected 
-                self.selected.append(i) 
-        else:                                                       # If this is a regular click
-            if (len(self.selected) == 1 and (i in self.selected)):  # If there is exactly one row selected and it was clicked
-                self.selected = []
-            else:                                                   # Otherwise
-                self.selected = [i]                                 #   Set the clicked row as the only one selected
-        self.update_highlights()                                    # update the highlights of the whole list
-        self.update_buttons()                                       # update which buttons are greyed out
+        if not self.editing and not self.adding:
+            # If the window is view-only, block the user from modifying the rows
+            if self.mode == g.WIN_MODE_VIEW_ONLY or self.mode == g.WIN_MODE_VIEW_WITH_MINOR_EDITS:                          
+                return    
+            keys = QApplication.keyboardModifiers()
+            i = w.property('row')
+            if keys == Qt.KeyboardModifier.ControlModifier:             # If this is a ctrl+click  
+                if i in self.selected:                                  # If the clicked row is already selected
+                    self.selected.remove(i)
+                else:                                                   # If it was not already selected 
+                    self.selected.append(i) 
+            else:                                                       # If this is a regular click
+                if (len(self.selected) == 1 and (i in self.selected)):  # If there is exactly one row selected and it was clicked
+                    self.selected = []
+                else:                                                   # Otherwise
+                    self.selected = [i]                                 #   Set the clicked row as the only one selected
+            self.update_highlights()                                    # update the highlights of the whole list
+            self.update_buttons()                                       # update which buttons are greyed out
 
 
     def update_highlights(self):                    
@@ -1060,11 +1061,14 @@ class WindowMethod(QMainWindow):
         for block in index_blocks:                                                  # for each consecutive block of indices                  
             for i in block:                                                         # loop thru the indices
                 new_selected.append(i+rows_added+len(block))                        #   store the index of where the new row will be
-                self.steps.insert(i+rows_added+len(block), self.steps[i+rows_added])#   insert the duplicate row there!
+                new_step = deepcopy(self.steps[i+rows_added])                       #   create a totally new duplicate row and...
+                self.steps.insert(i+rows_added+len(block), new_step)                #   ...insert the duplicate row there!
             rows_added = rows_added + len(block)                                    # add the adjustment for going forwards thru th list
         self.selected = new_selected
         self.refresh_list()
         self.changed_value()
+
+            
 
     def edit_step(self):
         if self.g_step.isHidden():
@@ -1176,8 +1180,7 @@ class WindowMethod(QMainWindow):
                 }
             '''g.M_STIR: self.is_checked(self.stirrer),
                 g.M_VIBRATE: self.is_checked(self.vibrator),'''
-            print(self.relays)
-            print(data_general)
+
 
             
             
