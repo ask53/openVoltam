@@ -727,21 +727,25 @@ class WindowMethod(QMainWindow):
                 self.vStepRelays.itemAt(i).widget().setParent(None)
 
         # reset relay boxes in upper pane     
-        for i,relay in enumerate(self.relays):
-            txt = QLabel("Relay "+str(i+1)+" controls:")
-            fill = get_relay_text(relay, i)
-            val = QLineEdit(fill)
-            val.textEdited.connect(partial(self.relay_edited, i))
-            val.setMaxLength(24)
-            delete = QPushButton('delete')
-            delete.clicked.connect(partial(self.delete_relay, i))
-            h = QHBoxLayout()
+        for i,relay in enumerate(self.relays):                      # For each relay
+            txt = QLabel("Relay "+str(i+1)+" controls:")            # Create the label
+            fill = get_relay_text(relay, i)                         # Get the value for the textbox
+            val = QLineEdit()                                       # Create the textbox
+            if relay == "":                                         # If no device name has been entered by user
+                val.setPlaceholderText(fill)                        #   Set placeholder text
+            else:                                                   # If device name HAS been entered by user
+                val.setText(fill)                                   #   Fill it in.
+            val.textEdited.connect(partial(self.relay_edited, i))   # When text is modified, do some stuff
+            val.setMaxLength(16)                                    # Only allow pretty short strings    
+            delete = QPushButton('delete')                          # Add a delete button to each row
+            delete.clicked.connect(partial(self.delete_relay, i))   # When the delete button is pushed, do some stuff
+            h = QHBoxLayout()                                       # Put it all in a horizontal layout
             h.addWidget(txt)
             h.addWidget(val)
             h.addWidget(delete)
-            self.vRelay.insertLayout(self.vRelay.count()-1, h)
+            self.vRelay.insertLayout(self.vRelay.count()-1, h)      # Add the layout at the bottom (but above the stretch)
 
-            step_chk = QCheckBox(fill+' on during step?')
+            step_chk = QCheckBox(fill+' on during step?')           # Add a checkbox to the "Add/Edit Step" pane for this relay
             self.vStepRelays.insertWidget(self.vStepRelays.count()-1, step_chk)
               
         # Add 'add' button back in to upper pane
@@ -1271,6 +1275,7 @@ class WindowMethod(QMainWindow):
         self.path = QFileDialog.getSaveFileName(self, 'Save method', initial_name, g.METHOD_FILE_TYPES)[0]
             
         if not self.path or self.path == '':    # if the user didn't select a path
+            self.set_buttons_enabled()
             return                              # don't try to save, just return
         self.method_save()                      # save the file!
 
@@ -1278,6 +1283,7 @@ class WindowMethod(QMainWindow):
         data = {g.M_NAME: self.name.text(),
                 g.M_SAMPLE_FREQ: self.dt.value(),
                 g.M_CURRENT_RANGE: self.current_range.currentText(),
+                g.M_EXT_DEVICES: self.relays, 
                 g.M_STEPS: self.steps}
         if self.mode == g.WIN_MODE_NEW or self.mode == g.WIN_MODE_EDIT:
             self.start_async_overwrite(data)
@@ -1345,6 +1351,9 @@ class WindowMethod(QMainWindow):
             return False
         elif len(self.steps) == 0:                                                              # if no steps have been added
             show_alert(self, 'Error!', 'Please add at least one step to the method.')
+            return False
+        elif "" in self.relays:
+            show_alert(self, 'Error!', 'Please entere a device name for all external devices/relays.')
             return False
       
         return True
