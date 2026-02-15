@@ -108,10 +108,6 @@ QWidget#runs-container QLabel#selected-run-rep-even-last {
 	margin-bottom: 10px;
 }
 
-WindowMethod QSplitter::handle {
-	background-color: #dddddd;
-}
-
 QScrollArea#ov-graph-area {
 	background-color: white;
 }
@@ -127,3 +123,5 @@ WindowRunView QWidget#msg_container QWidget#error {
 WindowRunView QWidget#msg_container QWidget#success {
 	border: 5px solid #92ef92; 					/* green success */
 }
+
+

@@ -157,9 +157,9 @@ class MethodPlot(Canvas):
             seg_relay_props = []
             k = 0
             for k in range(N_relays):
-                seg_relay_props.append({'pos':ymin-k*adj, 'color':relay_colors[k%2], 'lbl':get_relay_text(relays[k], k)})
-            seg_data_props = {'pos':ymin-(k+2)*adj, 'color':'darkviolet', 'lbl':'data'}
-            seg_background_props = {'pos':ymin-(k+3)*adj, 'color':'thistle', 'lbl':'background'}
+                seg_relay_props.append({'pos':ymin-(k+1)*adj, 'color':relay_colors[k%2], 'lbl':get_relay_text(relays[k], k)})
+            seg_data_props = {'pos':ymin-(k+3)*adj, 'color':'darkviolet', 'lbl':'data'}
+            seg_background_props = {'pos':ymin-(k+4)*adj, 'color':'thistle', 'lbl':'background'}
 
             #############################################################################################
             

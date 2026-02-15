@@ -445,7 +445,8 @@ class WindowMethod(QMainWindow):
             v2.addLayout(hstep)
             v2.addWidget(self.but_add_step)
 
-            self.g_step = QGroupBox(l.sp_add_step[g.L]) 
+            self.g_step = QGroupBox(l.sp_add_step[g.L])
+            self.g_step.setObjectName('add-edit-step')
             self.g_step.setLayout(v2)           
             #policy = self.g_step.sizePolicy()      # get existing size policy of g_step
             #policy.setRetainSizeWhenHidden(True)   # modify policy so that g1 takes up space regardless of whether shown or hidden
@@ -619,6 +620,8 @@ class WindowMethod(QMainWindow):
         self.dt.setValue(data[g.M_SAMPLE_FREQ])                  # set dt
         cr_text = data[g.M_CURRENT_RANGE]               # set current range
         self.current_range.setCurrentIndex(g.CURRENT_RANGES.index(cr_text))
+        self.relays = data[g.M_EXT_DEVICES]
+        self.refresh_relays()
         self.steps = data[g.M_STEPS]                    # set steps 
         self.refresh_list()                             # rebuild visual steps list based on self.steps
 
@@ -703,14 +706,42 @@ class WindowMethod(QMainWindow):
             w.setEnabled(False)
 
 
-
+    #########################################
+    #                                       #
+    #   Relay / External device functions   #
+    #                                       #
+    # 1. add_relay                          #
+    # 2. delete_relay                       #
+    # 3. relay_edited                       #
+    # 4. refresh_relays                     #
+    #                                       #
+    #########################################
     
     def add_relay(self, txt=False):
+        self.saved = False
         if txt: self.relays.append(txt)
         else: self.relays.append("")
         self.refresh_relays()           # refresh list of relays in add/edit step pane
 
-        
+    def delete_relay(self, del_index):
+        self.saved = False
+        del self.relays[del_index]                                      # delete from relay list
+
+        for step in self.steps:                   # adjust all existing relay references in steps accordingly
+            if del_index in step[g.M_RELAYS_ON]:                        #   1. Delete references to deleted relay
+                step[g.M_RELAYS_ON].remove(del_index)
+            for j, relay_id in enumerate(step[g.M_RELAYS_ON]):  #   2. Adjust all higher indices down by 1
+                if relay_id > del_index:
+                    step[g.M_RELAYS_ON][j] = relay_id-1
+                    
+        self.refresh_relays()  
+
+    def relay_edited(self, i):
+        self.saved = False
+        txt = self.vRelay.children()[i].itemAt(1).widget().text()
+        self.relays[i] = txt
+        self.vStepRelays.itemAt(i).widget().setText(txt+' on during step?')
+        self.refresh_list()    
 
 
     def refresh_relays(self):
@@ -762,23 +793,7 @@ class WindowMethod(QMainWindow):
         self.refresh_list()             # refresh steps pane (as it contains references to releays)
 
         
-    def delete_relay(self, del_index):
-        del self.relays[del_index]                                      # delete from relay list
-
-        for step in self.steps:                   # adjust all existing relay references in steps accordingly
-            if del_index in step[g.M_RELAYS_ON]:                        #   1. Delete references to deleted relay
-                step[g.M_RELAYS_ON].remove(del_index)
-            for j, relay_id in enumerate(step[g.M_RELAYS_ON]):  #   2. Adjust all higher indices down by 1
-                if relay_id > del_index:
-                    step[g.M_RELAYS_ON][j] = relay_id-1
-                    
-        self.refresh_relays()  
-
-    def relay_edited(self, i):
-        txt = self.vRelay.children()[i].itemAt(1).widget().text()
-        self.relays[i] = txt
-        self.vStepRelays.itemAt(i).widget().setText(txt+' on during step?')
-        self.refresh_list()
+    
         
         
                 
@@ -892,7 +907,7 @@ class WindowMethod(QMainWindow):
 
     def build_new_list(self):
 
-        print(self.steps)
+        #print(self.steps)
 
         grid = QGridLayout()
         grid.setHorizontalSpacing(0)
@@ -1255,8 +1270,8 @@ class WindowMethod(QMainWindow):
         return True
 
     def start_save(self, save_as=False):
-        if self.saved:
-            self.status.showMessage('Method saved.', g.SB_DURATION)
+        if self.saved and not save_as:
+            self.status.showMessage('All changes saved.', g.SB_DURATION)
             if self.mode == g.WIN_MODE_VIEW_WITH_MINOR_EDITS:
                 self.set_mode_view()
         else:
@@ -1329,6 +1344,8 @@ class WindowMethod(QMainWindow):
             self.close()
         elif self.mode == g.WIN_MODE_VIEW_WITH_MINOR_EDITS:
             self.set_mode_view()
+        elif self.mode == g.WIN_MODE_NEW:
+            self.set_mode_edit()
 
     def after_save_method_error(self):
         self.status.showMessage('ERROR: Method did not save.', g.SB_DURATION_ERROR)
