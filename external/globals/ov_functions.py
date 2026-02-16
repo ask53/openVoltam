@@ -284,14 +284,17 @@ def get_method_v_extremes(steps):
     return [v_min, v_max]
 
 def get_method_measurement_bounds(steps):
-    bounds = []
+    signal_bounds = []
+    background_bounds = []
     t_tot = 0
     for step in steps:
         t_step = step[g.M_T]
-        if step[g.M_DATA_COLLECT]:
-            bounds.append((t_tot, t_tot+t_step))
+        if step[g.M_DATA_COLLECT] == g.M_DATA_SIGNAL:
+            signal_bounds.append((t_tot, t_tot+t_step))
+        elif step[g.M_DATA_COLLECT] == g.M_DATA_BACKGROUND:
+            background_bounds.append((t_tot, t_tot+t_step))
         t_tot = t_tot+t_step
-    return bounds
+    return (signal_bounds, background_bounds)
 
 def html_escape(s):
     s = s.replace("&", "&amp;")

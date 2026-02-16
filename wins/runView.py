@@ -52,7 +52,6 @@ class WindowRunView(QMainWindow):
         self.tasks = tasks
 
         self.current_task = 0
-
         self.port = ""
         self.process = None
         self.steps = False
@@ -61,21 +60,19 @@ class WindowRunView(QMainWindow):
         self.time_completed = None
         self.running_flag = False
         self.relays_enabled = True
-
-
-
+        self.relays = []
         self.stopped = False
+        self.q = Queue()
+        self.status = self.statusBar()
         
         #### DELETE THIS WHEN POSSIBLE
         #
-        self.rep_current = 0
+        '''self.rep_current = 0'''
         #
         ############
 
 
-        self.q = Queue()
-
-        self.status = self.statusBar()
+        
         
         ##### FOR TESTING ####
         #
@@ -243,27 +240,37 @@ class WindowRunView(QMainWindow):
         #       ONCE WE'VE MOVED ALL RELAYS TO A LOOPING AND NUMBERED FORMAT
         #       THEN GET RELAY NAMES FROM THE METHOD.
         #
+
+        ws_relay = []
+        self.relay_statuses = {}
+
+        (run_id, rep_id) = self.tasks[0]
+        run = get_run_from_file_data(self.parent.data, run_id)
+        method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
+        devs = method[g.M_EXT_DEVICES]
+        for dev in devs:
+            self.relays.append(dev)
+            ws_relay.append((QLabel(dev+': '),QLabel('OFF')))
+            self.relay_statuses[dev] = QLabel('OFF')
         
-        r0_lbl = QLabel('STIR: ')
+        '''r0_lbl = QLabel('STIR: ')
         r0_status = QLabel('OFF')
         r1_lbl = QLabel('VIBRATE: ')
-        r1_status = QLabel('OFF')
+        r1_status = QLabel('OFF')'''
         
 
-        self.relay_statuses = {'stir': r0_status,       # stored to self for access later
-                               'vibrate': r1_status}
+        '''self.relay_statuses = {'stir': r0_status,       # stored to self for access later
+                               'vibrate': r1_status}'''
 
         ########################################################################################
 
         # Lay out status bar "permanent" widgets
         h2 = QHBoxLayout()
-        h2.addWidget(r0_lbl)
-        h2.addWidget(r0_status)
-        h2.addWidget(QVLine())
-        h2.addWidget(r1_lbl)
-        h2.addWidget(r1_status)
-        h2.addWidget(QVLine())
-        h2.addWidget(count_status_lbl1)
+        for relay_lbls in ws_relay:     # Add relay stuff
+            h2.addWidget(relay_lbls[0])
+            h2.addWidget(relay_lbls[1])
+            h2.addWidget(QVLine())
+        h2.addWidget(count_status_lbl1) # Add task n of N label
         h2.addWidget(self.count_status)
         h2.addWidget(count_status_lbl2)
         h2.addWidget(count_status_lbl3)
@@ -271,10 +278,6 @@ class WindowRunView(QMainWindow):
         w_perm_status = QWidget()
         w_perm_status.setLayout(h2)
         self.status.addPermanentWidget(w_perm_status)
-        
-        
-    
-
         
         w = QWidget()
         w.setLayout(h1)
@@ -630,45 +633,48 @@ class WindowRunView(QMainWindow):
         off at the end of the run. Returns a list of steps where each step either changes
         the state of a relay or does a run on the potentiostat.
         """
+        print('a')
         new_method = []
         relay_on = []
-        for i in enumerate(g.M_RELAYS):
+        for relay in self.relays:
             relay_on.append(False)
-        
+        print('b')
         
         for step in method[g.M_STEPS]:
-            for i, relay in enumerate(g.M_RELAYS):
-                if not relay_on[i] and step[relay]:     # if the relay is OFF and needs to be ON for this step
+            
+            for i, relay in enumerate(self.relays):
+                if not relay_on[i] and i in step[g.M_RELAYS_ON]:     # if the relay is OFF and needs to be ON for this step
                     new_method.append({                 # append a step to the method turning this relay ON
-                        g.M_TYPE: g.M_RELAY,
-                        g.M_RELAY: relay,
+                        g.M_TYPE: g.M_RELAY_STEP,
+                        g.M_RELAY_NAME: relay,
+                        g.M_RELAY_INDEX: i,
                         g.M_RELAY_STATE: True})
                     relay_on[i] = True
-                elif relay_on[i] and not step[relay]:   # if the relay is ON and needs to be OFF for this step
+                elif relay_on[i] and not i in step[g.M_RELAYS_ON]:   # if the relay is ON and needs to be OFF for this step
                     new_method.append({                 # append a step to the method turning this relay OFF
-                        g.M_TYPE: g.M_RELAY,
-                        g.M_RELAY: relay,
+                        g.M_TYPE: g.M_RELAY_STEP,
+                        g.M_RELAY_NAME: relay,
+                        g.M_RELAY_INDEX: i,
                         g.M_RELAY_STATE: False})
                     relay_on[i] = False
             new_method.append(step)                     # then append the step itself
-
-        for i, relay in enumerate(g.M_RELAYS):          # at end, add steps for turning off all relays as needed
+        print('c')
+        for i, relay in enumerate(self.relays):          # at end, add steps for turning off all relays as needed
             if relay_on[i]:
                 new_method.append({
-                    g.M_TYPE: g.M_RELAY,
-                    g.M_RELAY: relay,
+                    g.M_TYPE: g.M_RELAY_STEP,
+                    g.M_RELAY_NAME: relay,
+                    g.M_RELAY_INDEX: i,
                     g.M_RELAY_STATE: False})
 
+        print(new_method)
         return new_method
 
     def relays_in_steps(self, steps):
-        relays = False
         for step in steps:
-            print(step)
-            if step[g.M_TYPE] == g.M_RELAY:
-                relays = True
-                break
-        return relays
+            if step[g.M_TYPE] == g.M_RELAY_STEP:
+                return True      
+        return False
         
     def raw_data_to_dict(self):
         # figure out which data to actually keep
@@ -784,8 +790,8 @@ class WindowRunView(QMainWindow):
         
         
                 
-    def get_uid_of_current_rep(self):
-        return g.R_REPLICATE_UID_PREFIX + str(self.rep_current)
+    '''def get_uid_of_current_rep(self):
+        return g.R_REPLICATE_UID_PREFIX + str(self.rep_current)'''
 
     def update_win(self):
         """This is necessary for parent window to call this one to update.
