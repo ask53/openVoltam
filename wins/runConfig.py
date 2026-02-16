@@ -8,14 +8,6 @@ profile. This window allows the user the select the sweep profile and
 set a bunch of other parameters as well.
 """
 
-    #####################################################################
-    #
-    #
-    #   TODO
-    #       
-    #       4. Run the run(s)!
-    #       5. (Make sure the QDoubleSpinBoxes handle decimals well)
-
 from external.globals import ov_globals as g
 from external.globals import ov_lang as l
 from external.globals.ov_functions import *
@@ -43,12 +35,15 @@ from PyQt6.QtWidgets import (
     QLineEdit
 )
 
-import time # FOR TESTING ONLY
+# FOR TESTING ONLY ############
+import time 
 import sys, os
+#####################################
 
 class WindowRunConfig(QMainWindow):
     def __init__(self, parent, mode, run_id=False):
         super().__init__()
+
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.parent = parent
         self.mode = mode
@@ -227,7 +222,7 @@ class WindowRunConfig(QMainWindow):
         self.notes.setText('')                                      # set notes to an empty string
         self.type_stack.setCurrentIndex(0)                          # set stacked view to the 0th view (blank)
         self.refresh_graph()                                        # refresh the graph pane
-
+        
     def set_form(self):                                             # Sets Run Config window to match values from run with uid
         self.reset_form()
         if self.run_id:
@@ -259,10 +254,10 @@ class WindowRunConfig(QMainWindow):
                     self.w_stdadd_conc_std.setValue(run[g.R_STD_CONC])
             self.refresh_graph()                                    # refresh the graph pane
 
-
     def refresh_graph(self):
         reps = int(self.replicates.value())
         steps = []
+        relays = []
         if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
             steps = self.method.currentData()['method'][g.M_STEPS]
             relays = self.method.currentData()['method'][g.M_EXT_DEVICES]

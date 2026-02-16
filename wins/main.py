@@ -918,9 +918,15 @@ class WindowMain(QMainWindow):
         """Finds the first selected run (assumes there is only one run selected!)
         and opens up a new run configuration window with all of the parameters
         preset to match the currently selected run"""
-        run_id = self.get_single_selected_run()
-        if run_id:
-            self.new_win_config_run(mode, run_id)
+        try:
+            run_id = self.get_single_selected_run()
+            if run_id:
+                self.new_win_config_run(mode, run_id)
+        except Exception as e:
+            print(e)
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print(exc_type, fname, exc_tb.tb_lineno)
 
     def open_method_with_uid(self, mode):
         try:
