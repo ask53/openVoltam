@@ -61,11 +61,11 @@ class RunPlots(QMainWindow):
         self.canvas.axes_v.set_ylim(bottom=v_min-overhang, top=v_max+overhang)
 
         for t_step in signal_bounds:
+            self.canvas.axes_v.axvspan(t_step[0],t_step[1],facecolor='#edbdfc')
+            self.canvas.axes_I.axvspan(t_step[0],t_step[1],facecolor='#edbdfc')
+        for t_step in background_bounds:
             self.canvas.axes_v.axvspan(t_step[0],t_step[1],facecolor='#f6e3fc')
             self.canvas.axes_I.axvspan(t_step[0],t_step[1],facecolor='#f6e3fc')
-        for t_step in background_bounds:
-            self.canvas.axes_v.axvspan(t_step[0],t_step[1],facecolor='#fbf7fc')
-            self.canvas.axes_I.axvspan(t_step[0],t_step[1],facecolor='#fbf7fc')
 
         self.canvas.draw()
 

@@ -393,7 +393,7 @@ def write_run_relay_state(relay, state):
 def calc_v_max(pstat, steps):
         v_max_method = 0                                        # Get the maximum abs() voltage of the entire method
         for step in steps:
-            if step[g.M_TYPE] != g.M_RELAY:
+            if step[g.M_TYPE] != g.M_RELAY_STEP:
                 v_max_step = get_v_max_abs(step)
                 if v_max_step > v_max_method:
                     v_max_method = v_max_step
@@ -440,22 +440,18 @@ def device_is_connected(port):
 def on_data(chan, t, volt, curr):
     write_run_data((t,volt,curr))
 
-def set_relay(pstat, step, relays_enabled):
+def set_relay(pstat, step, relays_enabled, pins):
     if relays_enabled:
         try:
-            relay = step[g.M_RELAY]
+            index = step[g.M_RELAY_INDEX]
             state = step[g.M_RELAY_STATE]
-            ################################ MODIFY THIS FOR DEVICE SPECIFIC LOGIC
-            #
-            #
+            name = step[g.M_RELAY_NAME]
+
             if state:
-                resp = pstat.set_dio_value('ExpDioPin3', 'High')
+                resp = pstat.set_dio_value(pins[index], 'High')
             else:
-                resp = pstat.set_dio_value('ExpDioPin3', 'Low')
-            #
-            #
-            #############################################################
-            write_run_relay_state(relay, state)
+                resp = pstat.set_dio_value(pins[index], 'Low')
+            write_run_relay_state(name, state)
         except:
             raise ValueError(g.R_ERROR_SET_RELAY)
 
@@ -494,9 +490,10 @@ def run():
     # Grab arguments and convert them from strings to intended types, store in script global scope  
     S_FREQ = literal_eval(sys.argv[2])              # int or float
     I_MAX = sys.argv[3]                         # string
-    STEPS = literal_eval(sys.argv[4])           # list
+    STEPS = literal_eval(sys.argv[4])           # list of dicts (step info)
     PORT = sys.argv[5]                          # string
     RELAYS_ENABLED = literal_eval(sys.argv[6])  # bool
+    GPIO_PINS = literal_eval(sys.argv[7])       # list of strings (GPIO pin names)
     PSTAT = None                                # Potentiostat object 
 
     resp = device_is_connected(PORT)            # try to connect to device
@@ -513,16 +510,15 @@ def run():
     PSTAT.set_volt_range(v_max)
     PSTAT.set_auto_connect(True)
 
-    ############## MODIFY THIS TO ACCOUNT FOR DIFFERENCES IN RELAY PINS FOR DIFFERNT DEVICES #######3
-    #
-    #
-    relays= ['ExpDioPin3', 'ExpDioPin4', 'ExpDioPin5', 'ExpDioPin6', 'ExpDioPin7', 'ExpDioPin8', 'ExpDioPin9', 'ExpDioPin10']
-    for relay in relays:
-        PSTAT.set_dio_pin_mode(relay, 'Output')
-        PSTAT.set_dio_value(relay, 'Low')
-    #
-    #
-    ######################################
+    try:
+        # Set all device GPIO pins as outputs and turn them off to start
+        if RELAYS_ENABLED:
+            for pin in GPIO_PINS:
+                PSTAT.set_dio_pin_mode(pin, 'Output')
+                PSTAT.set_dio_value(pin, 'Low')
+    except:
+        raise ValueError(g.R_ERROR_SET_RELAY)
+    
         
     write_run_status('sample period is: '+str(PSTAT.get_sample_period()))
     write_run_status('current range is: '+str(PSTAT.get_curr_range()))
@@ -531,8 +527,8 @@ def run():
 
     for step in STEPS:
         step_type = step[g.M_TYPE]
-        if step_type == g.M_RELAY:
-            set_relay(PSTAT, step, RELAYS_ENABLED)
+        if step_type == g.M_RELAY_STEP:
+            set_relay(PSTAT, step, RELAYS_ENABLED, GPIO_PINS)
         elif step_type == g.M_CONSTANT:
             run_const(PSTAT, step)
         elif step_type == g.M_RAMP:
@@ -542,8 +538,8 @@ def run():
     #
     #
     # Turn off all relays at end of run
-    for relay in relays:
-        PSTAT.set_dio_value(relay, 'Low')
+    '''for relay in relays:
+        PSTAT.set_dio_value(relay, 'Low')'''
     #
     #
     #####################################################

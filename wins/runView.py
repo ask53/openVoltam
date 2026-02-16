@@ -29,7 +29,7 @@ import threading
 from queue import SimpleQueue as Queue
 import time
 
-#from devices.supportedDevices import devices
+from devices.supportedDevices import devices as DEVICES
 from embeds.runPlots import RunPlots
 
 from PyQt6.QtCore import QProcess, QDateTime
@@ -175,10 +175,10 @@ class WindowRunView(QMainWindow):
         self.msg_box.addWidget(w)
 
         # Stacked item 7: Error with re/setting a relay.
-        lbl_error = QLabel("There was an error while setting the relay state.")
+        lbl_error = QLabel("There was an error with the pins that connect to external devices.")
         lbl_error.setWordWrap(True)
         but_repeat = QPushButton("Try again")
-        but_no_relays = QPushButton("Disable relays and try again")
+        but_no_relays = QPushButton("Disable external devices and try again")
         but_continue = QPushButton("Save and go to next task")
         but_repeat.clicked.connect(self.try_again)
         but_no_relays.clicked.connect(self.toggle_relays_and_repeat)
@@ -323,7 +323,10 @@ class WindowRunView(QMainWindow):
                     self.empty_q()
 
                     self.set_run_details()
-                    
+
+                    # Get list of GPIO pins for specific device
+                    this_device = next((device for device in DEVICES if device['name'] == self.run[g.R_DEVICE]), None)
+                    relay_pins = this_device['gpio']
 
                     # Setup and start interrupt to retreive and plot data (this should end after last data from run is saved)
                     thread = threading.Thread(target=self.interrupt_data_getter) 
@@ -342,8 +345,9 @@ class WindowRunView(QMainWindow):
 
                     
                     #self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_RUN, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled)])
-                    self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_RUN, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled)])
+                    self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_RUN, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled), str(relay_pins)])
         except Exception as e:
+            print('you are here!')
             print(e)
 
     def set_run_details(self):
