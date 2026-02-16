@@ -264,8 +264,9 @@ class WindowRunConfig(QMainWindow):
         reps = int(self.replicates.value())
         steps = []
         if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
-            steps = self.method.currentData()['method'][g.M_STEPS]    
-        self.graph.update_plot(steps, show_labels=False, reps=reps)
+            steps = self.method.currentData()['method'][g.M_STEPS]
+            relays = self.method.currentData()['method'][g.M_EXT_DEVICES]
+        self.graph.update_plot(steps, relays, show_labels=False, reps=reps)
 
     def update_win(self):
         if self.mode != g.WIN_MODE_NEW:
@@ -453,13 +454,20 @@ class WindowRunConfig(QMainWindow):
         return True
 
     def method_and_device_compatible(self):
+
+        # Check whether selected device has enough general purpose input output pins for this method
+        if len(self.device.currentData()['gpio']) < len(self.method.currentData()['method'][g.M_EXT_DEVICES]):
+            show_alert(self, l.alert_header[g.L], 'This device does not have enough input/output pins to control all the external devices in that method.\nPlease try either another device or another method.')
+            return False
+        
         ###############################################
         #
         # THIS IS WHERE WE VALIDATE WHETHER THE DEVICE IS COMPATIBLE WITH THE METHOD
         #
         #       BUILD THIS!!
-        #
-        #
+        #       Check:
+        #           - Max V
+        #           - Current range?
         #
         #
         #

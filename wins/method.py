@@ -418,10 +418,8 @@ class WindowMethod(QMainWindow):
             self.s_type.addWidget(w_const)
             self.s_type.addWidget(w_ramp)
 
-
             self.vStepRelays = QVBoxLayout()
             self.vStepRelays.addStretch()
-                
 
             # Set up the group box where user enters step information
             v2a = QVBoxLayout()
@@ -740,7 +738,8 @@ class WindowMethod(QMainWindow):
         self.saved = False
         txt = self.vRelay.children()[i].itemAt(1).widget().text()
         self.relays[i] = txt
-        self.vStepRelays.itemAt(i).widget().setText(txt+' on during step?')
+        if self.mode == g.WIN_MODE_NEW or self.mode == g.WIN_MODE_EDIT:
+            self.vStepRelays.itemAt(i).widget().setText(txt+' on during step?')
         self.refresh_list()    
 
 
@@ -752,11 +751,6 @@ class WindowMethod(QMainWindow):
                     child.itemAt(i).widget().setParent(None)
             child.layout().setParent(None)                          # Remove the H layout itself
 
-        # clear relay content within the add/edit step pane
-        for i in reversed(range(self.vStepRelays.count())):
-            if type(self.vStepRelays.itemAt(i).widget()) != type(None):
-                self.vStepRelays.itemAt(i).widget().setParent(None)
-
         # reset relay boxes in upper pane     
         for i,relay in enumerate(self.relays):                      # For each relay
             txt = QLabel("Relay "+str(i+1)+" controls:")            # Create the label
@@ -767,28 +761,52 @@ class WindowMethod(QMainWindow):
             else:                                                   # If device name HAS been entered by user
                 val.setText(fill)                                   #   Fill it in.
             val.textEdited.connect(partial(self.relay_edited, i))   # When text is modified, do some stuff
-            val.setMaxLength(16)                                    # Only allow pretty short strings    
-            delete = QPushButton('delete')                          # Add a delete button to each row
-            delete.clicked.connect(partial(self.delete_relay, i))   # When the delete button is pushed, do some stuff
+            val.setMaxLength(16)                                    # Only allow pretty short strings
+
             h = QHBoxLayout()                                       # Put it all in a horizontal layout
             h.addWidget(txt)
             h.addWidget(val)
-            h.addWidget(delete)
+            
+            if self.mode == g.WIN_MODE_NEW or self.mode == g.WIN_MODE_EDIT:
+                delete = QPushButton('delete')                          # Add a delete button to each row
+                delete.clicked.connect(partial(self.delete_relay, i))   # When the delete button is pushed, do some stuff
+                h.addWidget(delete)
+            else:
+                val.setEnabled(False)
+
             self.vRelay.insertLayout(self.vRelay.count()-1, h)      # Add the layout at the bottom (but above the stretch)
 
-            step_chk = QCheckBox(fill+' on during step?')           # Add a checkbox to the "Add/Edit Step" pane for this relay
-            self.vStepRelays.insertWidget(self.vStepRelays.count()-1, step_chk)
+            
               
-        # Add 'add' button back in to upper pane
-        self.add_relay_but = QPushButton('Add external device')
-        self.add_relay_but.clicked.connect(self.add_relay)
-        h = QHBoxLayout()
-        h.addWidget(self.add_relay_but)
-        self.vRelay.insertLayout(self.vRelay.count()-1, h)
-        if len(self.relays) >= g.M_RELAY_MAX:
-            self.add_relay_but.setEnabled(False)
-        else:
-            self.add_relay_but.setEnabled(True)
+        
+
+
+        if self.mode == g.WIN_MODE_NEW or self.mode == g.WIN_MODE_EDIT:
+
+            # Add 'add' button back in to upper pane
+            self.add_relay_but = QPushButton('Add external device')
+            self.add_relay_but.clicked.connect(self.add_relay)
+            h = QHBoxLayout()
+            h.addWidget(self.add_relay_but)
+            self.vRelay.insertLayout(self.vRelay.count()-1, h)
+            if len(self.relays) >= g.M_RELAY_MAX:
+                self.add_relay_but.setEnabled(False)
+            else:
+                self.add_relay_but.setEnabled(True)
+
+            # clear relay content within the add/edit step pane
+            checked = []
+            for i in reversed(range(self.vStepRelays.count())):
+                if type(self.vStepRelays.itemAt(i).widget()) != type(None):
+                    self.vStepRelays.itemAt(i).widget().setParent(None)
+
+            for relay in self.relays:
+                fill = get_relay_text(relay, i)                         # Get the value for the textbox
+                step_chk = QCheckBox(fill+' on during step?')           # Add a checkbox to the "Add/Edit Step" pane for this relay
+                self.vStepRelays.insertWidget(self.vStepRelays.count()-1, step_chk)
+                
+                
+            
 
         self.refresh_list()             # refresh steps pane (as it contains references to releays)
 
@@ -823,14 +841,6 @@ class WindowMethod(QMainWindow):
         # Check all the appropriate relays for this step
         for relay_index in step[g.M_RELAYS_ON]:
             self.vStepRelays.itemAt(relay_index).widget().setChecked(True)
-            
-
-        
-        '''if step[g.M_STIR]:
-            self.stirrer.setCheckState(Qt.CheckState.Checked)
-
-        if step[g.M_VIBRATE]:
-            self.vibrator.setCheckState(Qt.CheckState.Checked)'''
 
         this_type = step[g.M_TYPE]
         self.step_type.setCurrentIndex(g.M_TYPES.index(this_type))
@@ -899,10 +909,7 @@ class WindowMethod(QMainWindow):
         for but in no:
             but.setEnabled(False)
         for but in yes:
-            but.setEnabled(True)
-
-            
-                
+            but.setEnabled(True)            
 
 
     def build_new_list(self):
