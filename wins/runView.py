@@ -685,7 +685,7 @@ class WindowRunView(QMainWindow):
         t = []
         collects = []
         for step in self.steps:
-            if step[g.M_TYPE] != g.M_RELAY:
+            if step[g.M_TYPE] != g.M_RELAY_STEP:
                 if not t:
                     t0 = 0
                     t1 = step[g.M_T]
@@ -695,8 +695,10 @@ class WindowRunView(QMainWindow):
 
                 t.append(t0)
                 t.append(t1)
+
+                ############################################################# HERE MODIFY THIS TO INCLUDE SIGNAL AND BACKGROUND ALIGNMENT
                 
-                if step[g.M_DATA_COLLECT]:
+                if step[g.M_DATA_COLLECT] == g.M_DATA_SIGNAL:
                     collects.append((t0,t1))
             
 
@@ -709,6 +711,9 @@ class WindowRunView(QMainWindow):
                                  g.R_DATA_VOLT: self.v[i],
                                  g.R_DATA_CURR: self.I[i]})
                     break
+
+                #########################################################################################################
+                
         return data
 
     #########################################

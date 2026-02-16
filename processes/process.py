@@ -516,7 +516,7 @@ def run():
             for pin in GPIO_PINS:
                 PSTAT.set_dio_pin_mode(pin, 'Output')
                 PSTAT.set_dio_value(pin, 'Low')
-    except:
+    except Exception as e:
         raise ValueError(g.R_ERROR_SET_RELAY)
     
         
