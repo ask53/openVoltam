@@ -241,17 +241,18 @@ class WindowRunView(QMainWindow):
         #       THEN GET RELAY NAMES FROM THE METHOD.
         #
 
-        ws_relay = []
-        self.relay_statuses = {}
-
+        self.ws_relay = []
+        '''self.relay_statuses = {}'''
+        
         (run_id, rep_id) = self.tasks[0]
         run = get_run_from_file_data(self.parent.data, run_id)
         method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
         devs = method[g.M_EXT_DEVICES]
         for dev in devs:
             self.relays.append(dev)
-            ws_relay.append((QLabel(dev+': '),QLabel('OFF')))
-            self.relay_statuses[dev] = QLabel('OFF')
+            self.ws_relay.append([QLabel(dev+': '),QLabel('OFF')])
+        
+            
         
         '''r0_lbl = QLabel('STIR: ')
         r0_status = QLabel('OFF')
@@ -266,7 +267,7 @@ class WindowRunView(QMainWindow):
 
         # Lay out status bar "permanent" widgets
         h2 = QHBoxLayout()
-        for relay_lbls in ws_relay:     # Add relay stuff
+        for relay_lbls in self.ws_relay:     # Add relay stuff
             h2.addWidget(relay_lbls[0])
             h2.addWidget(relay_lbls[1])
             h2.addWidget(QVLine())
@@ -391,13 +392,15 @@ class WindowRunView(QMainWindow):
                 try:
                     #rels = literal_eval(msgs[i])
                     [relay, state] = msgs[i].split('-')
-                    #relay = int(relay)                 # <<<--- enable this line when we setup integer numbering of relays!
+                    index = self.relays.index(relay)      # <<<--- enable this line when we setup integer numbering of relays!
                     state = literal_eval(state)
                 
                     if state:
-                        self.relay_statuses[relay].setText('ON')
+                        self.ws_relay[index][1].setText('ON')
+                        '''self.relay_statuses[relay_index].setText('ON')'''
                     else:
-                        self.relay_statuses[relay].setText('OFF')
+                        self.ws_relay[index][1].setText('OFF')
+                        '''self.relay_statuses[relay_index].setText('OFF')'''
                 except Exception as e:
                     print(e)
             elif prefix == g.R_STATUS_PREFIX:
