@@ -40,7 +40,8 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QStackedLayout,
     QPushButton,
-    QTextEdit
+    QTextEdit,
+    QTabWidget
 )
 
 class WindowRunView(QMainWindow):
@@ -193,8 +194,6 @@ class WindowRunView(QMainWindow):
         w.setObjectName('error')
         self.msg_box.addWidget(w)
 
-
-
         # Run details scrolling text (in html or markdown format)
         self.run_details = QTextEdit()
         self.run_details.setReadOnly(True)
@@ -203,6 +202,12 @@ class WindowRunView(QMainWindow):
             s = s + str(task[0])+', '+str(task[1])+'<br>'
         self.run_details.setHtml(s)
 
+        ext_dev_info = QTextEdit()
+        ext_dev_info.setReadOnly(True)
+
+        tab_box = QTabWidget()
+        tab_box.addTab(self.run_details, 'Run details')
+        tab_box.addTab(ext_dev_info, 'External devices')
 
      
         but_stop_run = QPushButton('\nSTOP\n')
@@ -219,7 +224,8 @@ class WindowRunView(QMainWindow):
         h1 = QHBoxLayout()
 
         v_left.addWidget(self.msg_box_container)
-        v_left.addWidget(self.run_details)
+        #v_left.addWidget(self.run_details)
+        v_left.addWidget(tab_box)
         v_left.addWidget(but_stop_run)
 
         h1.addLayout(v_left)
@@ -233,25 +239,26 @@ class WindowRunView(QMainWindow):
         count_status_lbl2 = QLabel(' of ')
         count_status_lbl3 = QLabel(str(len(self.tasks)))
 
-        # Relays        #####################################################################
-        #
-        #
-        #       CONVERT THIS WHOLE THING TO A FOR-LOOP THAT CREATES THESE BASED ON THE PASSED METHOD
-        #       ONCE WE'VE MOVED ALL RELAYS TO A LOOPING AND NUMBERED FORMAT
-        #       THEN GET RELAY NAMES FROM THE METHOD.
-        #
 
+        # 
         self.ws_relay = []
         '''self.relay_statuses = {}'''
-        
-        (run_id, rep_id) = self.tasks[0]
-        run = get_run_from_file_data(self.parent.data, run_id)
-        method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
-        devs = method[g.M_EXT_DEVICES]
-        for dev in devs:
-            self.relays.append(dev)
-            self.ws_relay.append([QLabel(dev+': '),QLabel('OFF')])
-        
+        try:
+            (run_id, rep_id) = self.tasks[0]
+            run = get_run_from_file_data(self.parent.data, run_id)
+            method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
+            devs = method[g.M_EXT_DEVICES]
+            this_device = next((device for device in DEVICES if device['name'] == run[g.R_DEVICE]), None)
+            relay_pins = this_device['gpio']
+            s = '<b>External device pin mapping:</b><br>'
+            for i,dev in enumerate(devs):
+                self.relays.append(dev)
+                self.ws_relay.append([QLabel(dev+': '),QLabel('OFF')])
+                s = s + str(i+1)+'. \''+relay_pins[i]+'\' --> Device: '+dev+'<br>'
+
+            ext_dev_info.setHtml(s)
+        except Exception as e:
+            print(e)
             
         
         '''r0_lbl = QLabel('STIR: ')
