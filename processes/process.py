@@ -255,8 +255,11 @@ def save_method_to_sample(data, params):     # append method to sample file
 def save_modify_method(data, params):        # modify the method in a sample file
     method_id = params[0]
     newMethod = params[1]
+    write_data('a')
     
     method = get_method_from_file_data(data, method_id)
+
+    write_data('b')
 
     if method:
         keys = list(method.keys())
@@ -264,6 +267,7 @@ def save_modify_method(data, params):        # modify the method in a sample fil
             method.pop(key, None)
         for key in newMethod:
             method[key] = newMethod[key]
+    write_data('a')
     return data
 
 def save():    

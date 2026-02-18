@@ -621,7 +621,8 @@ class WindowRunConfig(QMainWindow):
                    g.R_STATUS: g.R_STATUS_PENDING,
                    g.R_TIMESTAMP_REP: '',
                    g.R_NOTES: '',
-                   g.R_DATA: []
+                   g.R_DATA: [],
+                   g.R_BACKGROUND: []
                    }
             reps.append(rep)
         return reps

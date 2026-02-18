@@ -119,9 +119,10 @@ def write_data_to_file(path, data):
         return False
 
 def remove_data_from_layout(d):
-    for run in d[g.S_RUNS]:          #   For each run in data dict
-        for rep in run[g.R_REPLICATES]: #   And for each rep of the run
-            rep.pop(g.R_DATA, None)     #   Remove the raw data
+    for run in d[g.S_RUNS]:                 # For each run in data dict
+        for rep in run[g.R_REPLICATES]:     #  And for each rep of the run
+            rep.pop(g.R_DATA, None)         #   Remove the raw data
+            rep.pop(g.R_BACKGROUND, None)   #   Remove raw background data
     return d
 
 def get_next_id(ids, prefix):
@@ -309,11 +310,16 @@ def get_relay_text(name, i):
         return 'device '+str(i+1)
     return name
 
+def show_warning(title, msg):
+    confirm = warningMessageBox(title, msg)
+    resp = confirm.exec()
+    if resp == QMessageBox.StandardButton.Cancel:
+        return True
+    return False
 
 
 
-
-
+    
 
 
 
@@ -332,8 +338,9 @@ class QHLine(QFrame):
         self.setFrameShadow(QFrame.Shadow.Sunken)
 
 class saveMessageBox(QMessageBox):
-    def __init__(self, parent):                       
+    def __init__(self):                       
         super().__init__()
+        print(self)
         # set text for save message
         self.setWindowTitle(l.s_edit_discard[g.L]) 
         self.setText(l.e_edit_save_dialog[g.L])
@@ -347,7 +354,19 @@ class saveMessageBox(QMessageBox):
         but_canc = self.button(QMessageBox.StandardButton.Cancel)
         but_canc.setText(l.s_edit_cancel[g.L])
 
-    
+class warningMessageBox(QMessageBox):
+    def __init__(self, title, msg):
+        super().__init__()
+        self.setWindowTitle(title) 
+        self.setText(msg)
+        self.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+
+        # customize button language text for multi-language support
+        but_save = self.button(QMessageBox.StandardButton.Ok)
+        but_save.setText("I'll fix this")
+        but_canc = self.button(QMessageBox.StandardButton.Cancel)
+        but_canc.setText("Continue as is")
+
         
     
     

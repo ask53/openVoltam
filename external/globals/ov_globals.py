@@ -78,6 +78,7 @@ R_STD_CONC = "standard_conc_ppb"
 R_TIMESTAMP = "created"
 R_STATUS = 'status'
 R_DATA = 'data'
+R_BACKGROUND = 'background'
 R_TIMESTAMP_REP = 'time-ended'
 R_STATUS_PENDING = "pending"
 R_STATUS_ERROR = "error"

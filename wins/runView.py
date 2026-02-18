@@ -557,7 +557,9 @@ class WindowRunView(QMainWindow):
                 rep[g.R_STATUS] = g.R_STATUS_COMPLETE
             rep[g.R_TIMESTAMP_REP] = self.time_completed
             try:
-                rep[g.R_DATA] = self.raw_data_to_dict()
+                (new_signal, new_background) = self.raw_data_to_dict()
+                rep[g.R_DATA] = new_signal
+                rep[g.R_BACKGROUND] = new_background
             except Exception as e:
                 print(e)
 
@@ -693,7 +695,9 @@ class WindowRunView(QMainWindow):
     def raw_data_to_dict(self):
         # figure out which data to actually keep
         t = []
-        collects = []
+        collects_signal = []
+        collects_background = []
+        
         for step in self.steps:
             if step[g.M_TYPE] != g.M_RELAY_STEP:
                 if not t:
@@ -709,22 +713,31 @@ class WindowRunView(QMainWindow):
                 ############################################################# HERE MODIFY THIS TO INCLUDE SIGNAL AND BACKGROUND ALIGNMENT
                 
                 if step[g.M_DATA_COLLECT] == g.M_DATA_SIGNAL:
-                    collects.append((t0,t1))
+                    collects_signal.append((t0,t1))
+                if step[g.M_DATA_COLLECT] == g.M_DATA_BACKGROUND:
+                    collects_background.append((t0,t1))
             
 
         # only store for saving the data that the user has asked to save
         data = []
+        background = []
         for i, t in enumerate(self.t):
-            for collect in collects:
-                if t >= collect[0] and t <= collect[1]:
+            for collect_signal in collects_signal:
+                if t >= collect_signal[0] and t <= collect_signal[1]:
                     data.append({g.R_DATA_TIME: round(self.t[i], 4),
+                                 g.R_DATA_VOLT: self.v[i],
+                                 g.R_DATA_CURR: self.I[i]})
+                    break
+            for collect_back in collects_background:
+                if t >= collect_back[0] and t <= collect_back[1]:
+                    background.append({g.R_DATA_TIME: round(self.t[i], 4),
                                  g.R_DATA_VOLT: self.v[i],
                                  g.R_DATA_CURR: self.I[i]})
                     break
 
                 #########################################################################################################
                 
-        return data
+        return (data, background)
 
     #########################################
     #                                       #

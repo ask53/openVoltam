@@ -1240,7 +1240,9 @@ class WindowMain(QMainWindow):
             self.process.readyReadStandardOutput.connect(self.handle_save_stdout)
             self.process.readyReadStandardError.connect(self.handle_save_stderr)
             self.process.finished.connect(partial(self.handle_finished_save, onSuccess, onError))
-            self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_SAVE, self.path, saveType, str(params)])
+            #self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_SAVE, self.path, saveType, str(params)])
+            self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_SAVE, self.path, saveType, str(params)])
+
             self.status.showMessage("Saving...")
             self.progress_bar.setVisible(True)
 
@@ -1248,6 +1250,7 @@ class WindowMain(QMainWindow):
         print('normal msg:')
         data = self.process.readAllStandardOutput()
         stdout = bytes(data).decode("utf8")
+        #print(stdout)
         try:
             data = literal_eval(stdout)
             self.data = data

@@ -73,7 +73,7 @@ class RunPlots(QMainWindow):
 
     def set_axis_labels(self):
         self.canvas.axes_v.set_ylabel('Voltage [V]')
-        self.canvas.axes_I.set_ylabel('Current [mA]')
+        self.canvas.axes_I.set_ylabel('Current [uA]')
         self.canvas.axes_I.set_xlabel('Time [s]')
         
     def update_plots(self, t, v, I):

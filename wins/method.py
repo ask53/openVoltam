@@ -1364,23 +1364,52 @@ class WindowMethod(QMainWindow):
         if not self.name.text():                                                                # if there is no method name
             show_alert(self, 'Error!', 'Please name this method.')
             return False
-        elif len(self.name.text()) < 3:                                                         # if method name is too short
+        if len(self.name.text()) < 3:                                                         # if method name is too short
             show_alert(self, 'Error!', 'Method name must contain at least three characters.')
             return False
-        elif self.dt.value() == float(0):                                                       # if there is no dt set
+        if self.dt.value() == float(0):                                                       # if there is no dt set
             show_alert(self, 'Error!', 'Please select a sample frequency greater than 0.')
             return False
-        elif self.current_range.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:                  # if there is no current range selected
+        if self.current_range.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:                  # if there is no current range selected
             show_alert(self, 'Error!', 'Please select a current range.')
             return False
-        elif len(self.steps) == 0:                                                              # if no steps have been added
+        if len(self.steps) == 0:                                                              # if no steps have been added
             show_alert(self, 'Error!', 'Please add at least one step to the method.')
             return False
-        elif "" in self.relays:
+        if "" in self.relays:
             show_alert(self, 'Error!', 'Please entere a device name for all external devices/relays.')
             return False
-      
+        signal_steps = []
+        background_steps = []
+        for step in self.steps:
+            if step[g.M_DATA_COLLECT] == g.M_DATA_SIGNAL:
+                signal_steps.append(step)
+            elif step[g.M_DATA_COLLECT] == g.M_DATA_BACKGROUND:
+                background_steps.append(step)
+        if len(signal_steps) > 1:       # More than 1 signal collection step in method
+            resp = show_warning("Warning: data collection", "Just a heads up, this method has multiple data collection steps.\nAre you sure you want to continue?")   
+            if not resp: return False
+        if len(background_steps) > 1:   # More than 1 background collection step in method
+            resp = show_warning("Warning: data collection", "Just a heads up, this method has multiple background data collection steps.\nAre you sure you want to continue?")   
+            if not resp: return False
+        if len(signal_steps) == 1 and len(background_steps) == 1:
+            sig = signal_steps[0]
+            bac = background_steps[0]
+            if sig[g.M_TYPE] != bac[g.M_TYPE]:      # Signal and background steps are different types
+                resp = show_warning("Warning: data collection", "Just a heads up, the data and background collection steps are of different types.\nAre you sure you want to continue?")   
+                if not resp: return False
+            else:
+                if sig[g.M_TYPE] == g.M_CONSTANT:   # Signal and background steps are same type but values don't match (CONSTANT)
+                    if sig[g.M_CONST_V] != bac[g.M_CONST_V] or sig[g.M_T] != bac[g.M_T]:
+                        resp = show_warning("Warning: data collection", "Just a heads up, the data and background collection steps have differnt values.\nAre you sure you want to continue?")   
+                        if not resp: return False
+                        
+                elif sig[g.M_TYPE] == g.M_RAMP:     # Signal and background steps are same type but values don't match (RAMP)
+                    if sig[g.M_RAMP_V1] != bac[g.M_RAMP_V1] or sig[g.M_RAMP_V2] != bac[g.M_RAMP_V2] or sig[g.M_T] != bac[g.M_T]:
+                        resp = show_warning("Warning: data collection", "Just a heads up, the data and background collection steps have differnt values.\nAre you sure you want to continue?")   
+                        if not resp: return False
         return True
+
 
     def refresh_graph(self):
         lbls = True
@@ -1423,7 +1452,7 @@ class WindowMethod(QMainWindow):
         
     def closeEvent(self, event):
         if not self.saved:
-            confirm = saveMessageBox(self)
+            confirm = saveMessageBox()
             resp = confirm.exec()
             if resp == QMessageBox.StandardButton.Save:
                 event.ignore()

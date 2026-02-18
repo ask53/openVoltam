@@ -320,7 +320,7 @@ class WindowSample(QMainWindow):
             if self.saved:                      # If all modified content (if any) has been saved
                 self.accept_close(event)        # we don't need to ask about saving, so accept the close action
             else:                                                   # if there is unsaved content:                                    
-                confirm = saveMessageBox(self)                      #   init a dialog asking the user if they're sure
+                confirm = saveMessageBox()                          #   init a dialog asking the user if they're sure
                 resp = confirm.exec()                               #   launch the dialog
                 if resp == QMessageBox.StandardButton.Save:         #   if the user selects "Save"
                     event.ignore()                                  #       block the close action
