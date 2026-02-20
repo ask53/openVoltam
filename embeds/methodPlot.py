@@ -41,12 +41,9 @@ class MethodPlot(Canvas):
         
         super().__init__(self.fig)
         
-        #self.steps = []
-        #self.update_plot(self.steps, [])
         self.update_plot([], [])
 
         
-
     def update_plot(self, steps, relays, show_labels=False, show_xticks=True, reps=1):
         self.axes.cla()
         
@@ -57,12 +54,6 @@ class MethodPlot(Canvas):
         t_ticks = [0]
         v_ticks = []
 
-
-        ###################3 SORT THIS WITH NEW RELAY CONFIG ########
-        '''segs = {g.M_STIR:[],
-                g.M_VIBRATE:[],
-                g.M_DATA_COLLECT:[]
-                }'''
         try:
             segs_data = []
             segs_background = []
@@ -72,7 +63,6 @@ class MethodPlot(Canvas):
         except Exception as e:
             print('error in plot #1')
             print(e)
-        ###########################################
 
         try:
             v_ticks_lbl = []
@@ -128,14 +118,6 @@ class MethodPlot(Canvas):
                     
 
 
-        '''seg_data = []
-                seg_background = []
-                seg_relays = {}
-                
-                for key in segs:
-                    if step[key]:
-                        segs[key].append((t0,t1))'''
-        
         try:
             self.axes.plot(t, v, 'black')
             self.axes.set_title('Applied voltage [V] vs. time [s]')
@@ -146,11 +128,7 @@ class MethodPlot(Canvas):
             adj = self.get_indicator_adjustment()
             [ymin, ymax] = self.axes.get_ylim()
             
-            ################## AND HERE ###########################3
-            '''seg_props = {g.M_STIR:{'pos':ymin-adj, 'color':'pink', 'lbl':'stir'},
-                g.M_VIBRATE:{'pos':ymin-2*adj, 'color':'green', 'lbl':'vibrate'},
-                g.M_DATA_COLLECT:{'pos':ymin-4*adj, 'color':'purple', 'lbl':'measure'}}'''
-            
+           
 
             relay_colors = ['magenta','springgreen']
             N_relays = len(relays)
@@ -161,8 +139,7 @@ class MethodPlot(Canvas):
             seg_data_props = {'pos':ymin-(k+3)*adj, 'color':'darkviolet', 'lbl':'data'}
             seg_background_props = {'pos':ymin-(k+4)*adj, 'color':'thistle', 'lbl':'background'}
 
-            #############################################################################################
-            
+         
             v_ticks.append(seg_data_props['pos'])
             v_ticks_lbl.append(seg_data_props['lbl'])
             v_ticks.append(seg_background_props['pos'])

@@ -31,6 +31,7 @@ import time
 
 from devices.supportedDevices import devices as DEVICES
 from embeds.runPlots import RunPlots
+from embeds.voltamOGram import VoltamogramPlot
 
 from PyQt6.QtCore import QProcess, QDateTime
 from PyQt6.QtWidgets import (
@@ -219,6 +220,7 @@ class WindowRunView(QMainWindow):
         #
         ##############################
         self.graphs = RunPlots()
+        self.voltamogram = VoltamogramPlot()
 
         v_left = QVBoxLayout()
         h1 = QHBoxLayout()
@@ -230,6 +232,7 @@ class WindowRunView(QMainWindow):
 
         h1.addLayout(v_left)
         h1.addWidget(self.graphs)
+        h1.addWidget(self.voltamogram)
 
         #Status bar messaging
 
@@ -286,6 +289,8 @@ class WindowRunView(QMainWindow):
         w_perm_status = QWidget()
         w_perm_status.setLayout(h2)
         self.status.addPermanentWidget(w_perm_status)
+
+
         
         w = QWidget()
         w.setLayout(h1)
@@ -539,6 +544,19 @@ class WindowRunView(QMainWindow):
     def toggle_relays_and_repeat(self):
         self.relays_enabled = False
         self.try_again()
+
+    #########################################
+    #                                       #
+    #   Functions for voltam-o-gram         #
+    #                                       #
+    #########################################
+    
+
+    def show_voltamogram(self):
+        return
+    
+    def update_voltamogram(self, rep):
+        return
         
 
     #########################################
@@ -564,6 +582,7 @@ class WindowRunView(QMainWindow):
                 print(e)
 
             write_data_to_file(self.parent.path, data)
+            self.update_voltamogram(rep)
             data = remove_data_from_layout(data)
             self.parent.data = data
             self.parent.update_win()
