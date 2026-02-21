@@ -24,6 +24,7 @@ class RunPlotCanvas(FigureCanvasQTAgg):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes_v = fig.add_subplot(211)
         self.axes_I = fig.add_subplot(212, sharex=self.axes_v)
+        fig.suptitle('Live potentiostat readings')
         super().__init__(fig)
 
 class RunPlots(QMainWindow):
@@ -69,13 +70,11 @@ class RunPlots(QMainWindow):
 
         self.canvas.draw()
 
-        
-
     def set_axis_labels(self):
         self.canvas.axes_v.set_ylabel('Voltage [V]')
         self.canvas.axes_I.set_ylabel('Current [uA]')
         self.canvas.axes_I.set_xlabel('Time [s]')
-        
+
     def update_plots(self, t, v, I):
         
         #for line in list(self.canvas.axes_v.lines):     # remove all existing lines from plot

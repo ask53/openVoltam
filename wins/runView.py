@@ -50,6 +50,7 @@ class WindowRunView(QMainWindow):
     def __init__(self, parent, tasks):
         super().__init__()
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.setWindowTitle("OpenVoltam | Run Viewer")
         
         self.parent = parent
         self.tasks = tasks
