@@ -1107,7 +1107,10 @@ class WindowMain(QMainWindow):
             self.process.finished.connect(self.handle_finished_export)
             self.status.showMessage("Exporting...")
             self.progress_bar.setVisible(True)
-            self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_EXPORT, self.path, destPath, str(reps)])
+            if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
+                self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_EXPORT, self.path, destPath, str(reps)])
+            else:
+                self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_EXPORT, self.path, destPath, str(reps)])            
 
     def handle_export_stdout(self):
         print('normal msg!')
@@ -1199,7 +1202,7 @@ class WindowMain(QMainWindow):
         stdout = bytes(data).decode("utf8")
         try:
             self.data = literal_eval(stdout)
-            print(self.data)
+            #print(self.data)
         except:
             print('ERROR on literal eval of stdout:')
             print(stdout)

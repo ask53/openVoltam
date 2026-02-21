@@ -129,6 +129,17 @@ PROC_TYPE_READ = 'read'
 PROC_TYPE_RUN = 'run'
 PROC_SCRIPT = 'external/process.exe'
 PROC_SCRIPT_PYTHON = 'processes/process.py'
+PROC_RUN_FROM_PYTHON = 'python'
+PROC_RUN_FROM_EXE = 'exe'
+
+### CHANGE THIS TO MODIFY HOW PROGRAM RUNS PROCESSES
+#
+#
+PROC_RUN_FROM = PROC_RUN_FROM_PYTHON
+#PROC_RUN_FROM = PROC_RUN_FROM_EXE
+#
+#
+###############################################
 
 # Asynchronous save
 SAVE_TYPE_SAMPLE = 'sample'

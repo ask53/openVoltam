@@ -223,6 +223,7 @@ class WindowRunView(QMainWindow):
         ##############################
         self.graphs = RunPlots()
         self.voltamogram = VoltamogramPlot()
+        self.set_voltamogram()
 
         v_left = QVBoxLayout()
 
@@ -371,6 +372,33 @@ class WindowRunView(QMainWindow):
         s = s + '<b>Replicate note: </b>'+rep[g.R_NOTES]+'<br>'
         
         self.run_details.setHtml(s)
+
+    def set_voltamogram(self):
+        print('setting the voltam-o-gram!')
+        run_id = self.tasks[0][0]
+        method_id = ''
+        for run in self.parent.data[g.S_RUNS]:
+            if run[g.R_UID_SELF] == run_id:
+                method_id = run[g.R_UID_METHOD]
+                break
+        runs_to_plot = []
+        if method_id:
+            for run in self.parent.data[g.S_RUNS]:
+                if run[g.R_UID_METHOD] == method_id:
+                    runs_to_plot.append(run)
+        ##3
+        ########################## HEREEEEE     ####################################################################
+        # At this point, runs_to_plot has a list of run info WITHOUT signal or background data
+        # Next steps:
+        #   1. Grab the signal and background data for each plot, if available
+        #   2. Pass the whole list to the voltamogram for plotting!
+        #
+        #
+
+        print(runs_to_plot)
+        
+
+        #self.voltamogram.plot_runs(runs_to_plot, subbackground=True, smooth=True, lopass=True, showRaw=False, predictpeak=False)
             
             
 
@@ -660,12 +688,11 @@ class WindowRunView(QMainWindow):
         off at the end of the run. Returns a list of steps where each step either changes
         the state of a relay or does a run on the potentiostat.
         """
-        print('a')
+
         new_method = []
         relay_on = []
         for relay in self.relays:
             relay_on.append(False)
-        print('b')
         
         for step in method[g.M_STEPS]:
             
@@ -685,7 +712,6 @@ class WindowRunView(QMainWindow):
                         g.M_RELAY_STATE: False})
                     relay_on[i] = False
             new_method.append(step)                     # then append the step itself
-        print('c')
         for i, relay in enumerate(self.relays):          # at end, add steps for turning off all relays as needed
             if relay_on[i]:
                 new_method.append({
@@ -694,7 +720,7 @@ class WindowRunView(QMainWindow):
                     g.M_RELAY_INDEX: i,
                     g.M_RELAY_STATE: False})
 
-        print(new_method)
+        #print(new_method)
         return new_method
 
     def relays_in_steps(self, steps):

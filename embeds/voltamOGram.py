@@ -58,6 +58,22 @@ class VoltamogramPlot(QMainWindow):
     def set_axis_labels(self):
         self.canvas.axes.set_xlabel('Voltage [V]')
         self.canvas.axes.set_ylabel('Current [uA]')
+
+    def plot_rep(rep, subbackground=True, smooth=True, lopass=True, showRaw=False, predictpeak=False):
+        ################# THIS IS WHERE WE ACTUALLY DO THE PLOTTING!!!
+        #
+        #
+        #
+        #
+        #
+        #
+        #########################
+        return
+
+    def plot_runs(runs, subbackground=True, smooth=True, lopass=True, showRaw=False, predictpeak=False):
+        for run in runs:
+            for rep in run[g.R_REPLICATES]:
+                plot_rep(rep, subbackground=subbackground, smooth=smooth, lopass=lopass, showRaw=showRaw, predictpeak=predictpeak)
         
             
 
