@@ -23,7 +23,7 @@ class VoltamogramPlot(Canvas):
         width_in = size_mm.width() * g.MM2IN
         height_in = size_mm.height() * g.MM2IN
 
-        self.fig = plt.figure(figsize=(width_in/1.75, height_in))
+        self.fig = plt.figure(figsize=(width_in, height_in))
         self.axes = self.fig.add_subplot(111)
             
         super().__init__(self.fig)

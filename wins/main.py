@@ -1026,6 +1026,7 @@ class WindowMain(QMainWindow):
     def new_win_view_run(self, tasks):
         self.new_win_one_of_type(WindowRunView(self, tasks))
 
+
     def new_win_method_by_id(self, mode, m_id, changable=True):
         self.new_win_one_with_value(WindowMethod(self, mode, method_id=m_id, mode_changable=changable), 'method_id', m_id)
 

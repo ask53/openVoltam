@@ -124,4 +124,11 @@ WindowRunView QWidget#msg_container QWidget#success {
 	border: 5px solid #92ef92; 					/* green success */
 }
 
+WindowRunView QSplitter::handle {
+	background-color: #dddddd;
+	border-right: 2px solid #bbbbbb;
+}
+
+
+
 

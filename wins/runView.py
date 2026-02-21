@@ -42,7 +42,8 @@ from PyQt6.QtWidgets import (
     QStackedLayout,
     QPushButton,
     QTextEdit,
-    QTabWidget
+    QTabWidget,
+    QSplitter
 )
 
 class WindowRunView(QMainWindow):
@@ -223,16 +224,22 @@ class WindowRunView(QMainWindow):
         self.voltamogram = VoltamogramPlot()
 
         v_left = QVBoxLayout()
-        h1 = QHBoxLayout()
+
+
+        h_split = QSplitter()
+        h_split.setChildrenCollapsible(False)
 
         v_left.addWidget(self.msg_box_container)
-        #v_left.addWidget(self.run_details)
         v_left.addWidget(tab_box)
         v_left.addWidget(but_stop_run)
 
-        h1.addLayout(v_left)
-        h1.addWidget(self.graphs)
-        h1.addWidget(self.voltamogram)
+        w_left = QWidget()
+        w_left.setLayout(v_left)
+
+        h_split.addWidget(w_left)
+        h_split.addWidget(self.graphs)
+        h_split.addWidget(self.voltamogram)
+
 
         #Status bar messaging
 
@@ -263,18 +270,6 @@ class WindowRunView(QMainWindow):
         except Exception as e:
             print(e)
             
-        
-        '''r0_lbl = QLabel('STIR: ')
-        r0_status = QLabel('OFF')
-        r1_lbl = QLabel('VIBRATE: ')
-        r1_status = QLabel('OFF')'''
-        
-
-        '''self.relay_statuses = {'stir': r0_status,       # stored to self for access later
-                               'vibrate': r1_status}'''
-
-        ########################################################################################
-
         # Lay out status bar "permanent" widgets
         h2 = QHBoxLayout()
         for relay_lbls in self.ws_relay:     # Add relay stuff
@@ -290,11 +285,7 @@ class WindowRunView(QMainWindow):
         w_perm_status.setLayout(h2)
         self.status.addPermanentWidget(w_perm_status)
 
-
-        
-        w = QWidget()
-        w.setLayout(h1)
-        self.setCentralWidget(w)
+        self.setCentralWidget(h_split)
 
     #########################################
     #                                       #
