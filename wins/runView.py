@@ -222,7 +222,7 @@ class WindowRunView(QMainWindow):
         #
         ##############################
         self.graphs = RunPlots()
-        self.voltamogram = VoltamogramPlot()
+        self.voltamogram = VoltamogramPlot(self.parent)
         self.set_voltamogram()
 
         v_left = QVBoxLayout()
@@ -386,20 +386,13 @@ class WindowRunView(QMainWindow):
             for run in self.parent.data[g.S_RUNS]:
                 if run[g.R_UID_METHOD] == method_id:
                     runs_to_plot.append(run)
-        ##3
-        ########################## HEREEEEE     ####################################################################
-        # At this point, runs_to_plot has a list of run info WITHOUT signal or background data
-        # Next steps:
-        #   1. Grab the signal and background data for each plot, if available
-        #   2. Pass the whole list to the voltamogram for plotting!
-        #
-        #
-
-        print(runs_to_plot)
         
-
-        #self.voltamogram.plot_runs(runs_to_plot, subbackground=True, smooth=True, lopass=True, showRaw=False, predictpeak=False)
-            
+        print(runs_to_plot)
+        try:
+            self.voltamogram.plot_runs(runs_to_plot, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False)
+        except Exception as e:
+            print('eeek here!')
+            print(e)
             
 
     #########################################
