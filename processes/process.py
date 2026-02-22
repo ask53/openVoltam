@@ -70,23 +70,25 @@ def export():
             run = next(filter(lambda x: x[g.R_UID_SELF] == run_id, data[g.S_RUNS]), None)
             rep = next(filter(lambda x: x[g.R_UID_SELF] == rep_id, run[g.R_REPLICATES]), None)
             repData = rep[g.R_DATA]
-            if repData:
-                keys = list(repData[0].keys())
+            repBack = rep[g.R_BACKGROUND]
+
+            samplename=readpath.split('/')[-1]              # get filename from path 
+            groups = samplename.split('.')                  # begin removing the extension (split at all periods)
+            samplename = '.'.join(groups[:len(groups)-1])   # finish removing the extension (rejoin all with periods except for last)
+
+            if repData:                
+                filename = samplename+'_'+run_id+'_'+rep_id+'_SIGNAL'      # add on the run and rep IDs
+                path = writepath+'/'+filename                         # append filename to path
                 
-                samplename=readpath.split('/')[-1]              # get filename from path 
-                groups = samplename.split('.')                  # begin removing the extension (split at all periods)
-                samplename = '.'.join(groups[:len(groups)-1])   #   finish removing the extension (rejoin all with periods except for last)
-                
-                filename = samplename+'_'+run_id+'_'+rep_id     # add on the run and rep IDs
-                path = writepath+'/'+filename                   # append filename to path
+
                 suffix = ''
                 i = 1
-                
-                while exists(path+suffix+'.csv'):               # while the file already exists
+                while exists(path+suffix+'.csv'):          # while the file already exists
                     suffix = '_COPY'+str(i)                     # tack on a suffix
                     i = i+1                                     # and increment the counter until we find a filename that is not taken!
                 path = path+suffix+'.csv'                       # generate that novel filename
-                
+
+                keys = list(repData[0].keys())
                 with open(path, 'w', encoding='UTF8', newline='') as f:
                     writer = DictWriter(f, fieldnames=keys) # Tell the writer we are writing from a dictionary with 'keys' as headers
                     writer.writeheader()                        # Write the header row
@@ -95,6 +97,25 @@ def export():
                 write_data(str(task))
             else:
                 write_error(str(task))
+
+            if repBack:
+                filename = samplename+'_'+run_id+'_'+rep_id+'_BACKGROUND'  # add on the run and rep IDs
+                path = writepath+'/'+filename
+
+                suffix = ''
+                i = 1
+                while exists(path+suffix+'.csv'):          # while the file already exists
+                    suffix = '_COPY'+str(i)                     # tack on a suffix
+                    i = i+1                                     # and increment the counter until we find a filename that is not taken!
+                path = path+suffix+'.csv'                       # generate that novel filename
+
+                keys = list(repBack[0].keys())
+                with open(path, 'w', encoding='UTF8', newline='') as f:
+                    writer = DictWriter(f, fieldnames=keys) # Tell the writer we are writing from a dictionary with 'keys' as headers
+                    writer.writeheader()                        # Write the header row
+                    writer.writerows(repBack)                   # Write  the data'''
+                
+                
         except Exception as e:          # If a specific export task generates an error
             write_error(str(e))
             write_error(str(task))

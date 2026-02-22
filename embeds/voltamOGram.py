@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 import pandas as pd
+from scipy.signal import savgol_filter
 
 from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QWidget
 
@@ -46,6 +47,8 @@ class VoltamogramPlot(QMainWindow):
 
             self.set_axis_labels()
             self.axes = self.canvas.axes
+
+            self.colors = ['deeppink','limegreen','chocolate','mediumturquoise','gold','purple','red','blue']
                 
             layout = QVBoxLayout()          # Add toolbar and canvas to vertical layout
             layout.addWidget(toolbar)
@@ -62,35 +65,80 @@ class VoltamogramPlot(QMainWindow):
         self.canvas.axes.set_xlabel('Voltage [V]')
         self.canvas.axes.set_ylabel('Current [uA]')
 
-    def plot_rep(self, rep, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False):
+    def plot_rep(self, rep, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False, color='black'):
         
         
         if rep[g.R_DATA]:
-            # 1. Convert rep signal and background data to numpy arrays (col0 = voltage, co11 = current)
-            np_data = np.array(pd.DataFrame(rep[g.R_DATA])[[g.R_DATA_VOLT, g.R_DATA_CURR]].values)
-            np_back = np.array(pd.DataFrame(rep[g.R_BACKGROUND])[[g.R_DATA_VOLT, g.R_DATA_CURR]].values)
+            # 1. Convert rep signal and background data to 1D numpy arrays
+            x = np.array(pd.DataFrame(rep[g.R_DATA])[[g.R_DATA_VOLT]].values)
+            x = x.reshape(x.shape[0])
+            y = np.array(pd.DataFrame(rep[g.R_DATA])[[g.R_DATA_CURR]].values)
+            y = y.reshape(y.shape[0])
+            x_back = np.array(pd.DataFrame(rep[g.R_BACKGROUND])[[g.R_DATA_VOLT]].values)
+            x_back = x_back.reshape(x_back.shape[0])
+            y_back = np.array(pd.DataFrame(rep[g.R_BACKGROUND])[[g.R_DATA_CURR]].values)
+            y_back = y_back.reshape(y_back.shape[0])
 
-            # 2. If background is present & subbackground, interpolate it to match voltage of signal
-            ### HERE!!!! ################################3
+            # 2. If background is present & subbackground==True, interpolate background and subtract
+            if x_back.size != 0 and y_back.size != 0 and subbackground:
+                y_back = np.interp(x, x_back, y_back)   # interpolate background to match voltage of signal
+                y = y - y_back                          # subtrack background from signal
+            
+            # 3. If smooth, smooth result
+            y_raw = y.copy()                        # store copy of y as y_raw in case we want to display it to user
+                
+            if smooth:
+                polyorder = 3
+                wl = min(15, len(y))
+                if wl % 2 == 0: wl -= 1
+                if wl <= polyorder: wl = polyorder + 2
+                y = savgol_filter(y, window_length=wl, polyorder=polyorder)
+
+            # 4. If lopass, pass result thru lopass filter
+            if lopass:
+                pass
+                # DO LO-PASS FILTERING HERE ###################
+                #
+                #
+                #
+                ###################################################
+
+            # 5. If predictpeak, guess baseline and peak locations, store as vars in self
             #
             #
             #
             #
-            ##########################################
+            ########################################################################3
 
-            # 3. If background is present & subbackground, subtract background from signal
+            # 6. Show final result
+            if showraw:                                 # first, show raw data if requested
+                self.canvas.axes.plot(x,y_raw,'lightgrey', linewidth=0.5)
 
-            # 4. If smooth, smooth result
+            self.canvas.axes.plot(x,y,color, linewidth=2)          # then show smoothed, filtered data on top.
+            
 
-            # 5. If lopass, pass result thru lopass filter
+            # 7. If showraw, show unfiltered, unsmoothed data (post-subtraction)
 
-            # 6. If predictpeak, guess baseline and peak locations, store as vars in self
+            # 8. If predictpeak, show baseline (with adjustable handles) and peak location
 
-            # 7. Show final result
+            print(x)
+            print(y_raw)
+            print(y)
+            print('--------------')
+                
 
-            # 8. If showraw, show unfiltered, unsmoothed data (post-subtraction)
+            
+            
 
-            # 9. If predictpeak, show baseline (with adjustable handles) and peak location
+            
+
+            
+
+            
+
+            
+
+            
         
         return
 
@@ -132,9 +180,20 @@ class VoltamogramPlot(QMainWindow):
                         if found: break
     
         # 2. Loop thru runs, plotting each rep
-        for run in runs:
+        print('color len',str(len(self.colors)))
+        for i,run in enumerate(runs):
+            modded = i%len(self.colors)
+            print(modded)
+            color = self.colors[modded]
             for rep in run[g.R_REPLICATES]:
-                self.plot_rep(rep, subbackground=subbackground, smooth=smooth, lopass=lopass, showraw=showraw, predictpeak=predictpeak)
+                self.plot_rep(rep, subbackground=subbackground, smooth=smooth, lopass=lopass, showraw=showraw, predictpeak=predictpeak, color=color)
         
+        ############ FOR TESTING ONLY
+        # DELETE THIS AND UNCOMMENT ABOVE SECTION TO ACTUALLY RUN!
+        #
+        #for rep in runs[0][g.R_REPLICATES]:
+        #    self.plot_rep(rep, subbackground=subbackground, smooth=smooth, lopass=lopass, showraw=showraw, predictpeak=predictpeak)
+        #
+        ##########################################
             
 
