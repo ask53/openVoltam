@@ -67,7 +67,6 @@ class VoltamogramPlot(QMainWindow):
 
     def plot_rep(self, rep, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False, color='black'):
         
-        
         if rep[g.R_DATA]:
             # 1. Convert rep signal and background data to 1D numpy arrays then resize
             # 1a. Convert to numpy array
@@ -112,22 +111,19 @@ class VoltamogramPlot(QMainWindow):
             #
             #
             ########################################################################3
-
+            
             # 6. Show final result
             if showraw:                                 # first, show raw data if requested
-                self.canvas.axes.plot(x,y_raw,'lightgrey', linewidth=0.5)
+                self.canvas.axes.plot(x, y_raw, 'lightgrey', linewidth=0.5)
 
-            self.canvas.axes.plot(x,y,color, linewidth=2)          # then show smoothed, filtered data on top.
+            self.canvas.axes.plot(x, y, color, linewidth=2)          # then show smoothed, filtered data on top.
+
+            self.canvas.draw()
             
 
             # 7. If showraw, show unfiltered, unsmoothed data (post-subtraction)
 
             # 8. If predictpeak, show baseline (with adjustable handles) and peak location
-
-            '''print(x)
-            print(y_raw)
-            print(y)'''
-            print('--------------')
                 
 
             
@@ -183,27 +179,16 @@ class VoltamogramPlot(QMainWindow):
                         if found: break
     
         # 2. Loop thru runs, plotting each rep
-        print('color len',str(len(self.colors)))
         for i,run in enumerate(runs):
-            modded = i%len(self.colors)
-            print(modded)
-            color = self.colors[modded]
+            color = self.colors[i%len(self.colors)]
             for rep in run[g.R_REPLICATES]:
                 ##### FOR TESTING ONLY
                 #
                 #subbackground = False
-                showraw=True
+                #showraw=True
                 #
                 ##############################
                 self.plot_rep(rep, subbackground=subbackground, smooth=smooth, lopass=lopass, showraw=showraw, predictpeak=predictpeak, color=color)
-        
-        ############ FOR TESTING ONLY
-        # DELETE THIS AND UNCOMMENT ABOVE SECTION TO ACTUALLY RUN!
-        #
-        #for rep in runs[0][g.R_REPLICATES]:
-        #    self.plot_rep(rep, subbackground=subbackground, smooth=smooth, lopass=lopass, showraw=showraw, predictpeak=predictpeak)
-        #
-        ##########################################
 
     def resize_data(self, file_in, n):
         #  file_in = 1D numpy array of arbitrary length

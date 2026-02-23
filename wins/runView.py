@@ -373,26 +373,6 @@ class WindowRunView(QMainWindow):
         
         self.run_details.setHtml(s)
 
-    def set_voltamogram(self):
-        print('setting the voltam-o-gram!')
-        run_id = self.tasks[0][0]
-        method_id = ''
-        for run in self.parent.data[g.S_RUNS]:
-            if run[g.R_UID_SELF] == run_id:
-                method_id = run[g.R_UID_METHOD]
-                break
-        runs_to_plot = []
-        if method_id:
-            for run in self.parent.data[g.S_RUNS]:
-                if run[g.R_UID_METHOD] == method_id:
-                    runs_to_plot.append(run)
-        
-        print(runs_to_plot)
-        try:
-            self.voltamogram.plot_runs(runs_to_plot, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False)
-        except Exception as e:
-            print('eeek here!')
-            print(e)
             
 
     #########################################
@@ -562,14 +542,32 @@ class WindowRunView(QMainWindow):
     #                                       #
     #   Functions for voltam-o-gram         #
     #                                       #
+    #   1. set_voltamogram                  #
+    #   2. update_voltamogram               #
+    #                                       #
     #########################################
     
+    def set_voltamogram(self):
+        print('setting the voltam-o-gram!')
+        run_id = self.tasks[0][0]
+        method_id = ''
+        for run in self.parent.data[g.S_RUNS]:
+            if run[g.R_UID_SELF] == run_id:
+                method_id = run[g.R_UID_METHOD]
+                break
+        runs_to_plot = []
+        if method_id:
+            for run in self.parent.data[g.S_RUNS]:
+                if run[g.R_UID_METHOD] == method_id:
+                    runs_to_plot.append(run)
+        try:
+            self.voltamogram.plot_runs(runs_to_plot, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False)
+        except Exception as e:
+            print('eeek here!')
+            print(e)
 
-    def show_voltamogram(self):
-        return
-    
     def update_voltamogram(self, rep):
-        return
+        self.voltamogram.plot_rep(rep, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False, color='black')
         
 
     #########################################
