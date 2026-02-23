@@ -103,6 +103,14 @@ R_DATA_TIME = 'time_s'
 R_DATA_VOLT = 'voltage_V'
 R_DATA_CURR = 'current_mA'
 
+# Voltamogram globals
+VOG_RESIZE = 500        # number of points to resize data to for analysis
+VOG_SG_WINDOW_LEN = 25  # Window lenght property for Savitzky-Golay filtering
+VOG_SG_POLYORDER = 3    # Polyorder property for Savitzky-Golay filtering
+VOG_LP_FS = 100         # Butterworth lopass filter signal frequency
+VOG_LP_CUTOFF = 2       # Butterworth lopass filter cutoff frequency
+VOG_LP_ORDER = 5        # Butterworth lopass filter order
+
 # Icon URLs 
 ICON_PLUS = 'external/icons/add.png'
 ICON_UP = 'external/icons/up.png'

@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 import pandas as pd
-from scipy.signal import savgol_filter
+from scipy.signal import savgol_filter, butter, filtfilt
 
 from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QWidget
 
@@ -69,7 +69,8 @@ class VoltamogramPlot(QMainWindow):
         
         
         if rep[g.R_DATA]:
-            # 1. Convert rep signal and background data to 1D numpy arrays
+            # 1. Convert rep signal and background data to 1D numpy arrays then resize
+            # 1a. Convert to numpy array
             x = np.array(pd.DataFrame(rep[g.R_DATA])[[g.R_DATA_VOLT]].values)
             x = x.reshape(x.shape[0])
             y = np.array(pd.DataFrame(rep[g.R_DATA])[[g.R_DATA_CURR]].values)
@@ -78,6 +79,14 @@ class VoltamogramPlot(QMainWindow):
             x_back = x_back.reshape(x_back.shape[0])
             y_back = np.array(pd.DataFrame(rep[g.R_BACKGROUND])[[g.R_DATA_CURR]].values)
             y_back = y_back.reshape(y_back.shape[0])
+            
+            # 1b. Resize
+            x = self.resize_data(x, g.VOG_RESIZE)
+            y = self.resize_data(y, g.VOG_RESIZE)
+
+            if x_back.size != 0 and y_back.size != 0:
+                x_back = self.resize_data(x_back, g.VOG_RESIZE)
+                y_back = self.resize_data(y_back, g.VOG_RESIZE)
 
             # 2. If background is present & subbackground==True, interpolate background and subtract
             if x_back.size != 0 and y_back.size != 0 and subbackground:
@@ -85,23 +94,17 @@ class VoltamogramPlot(QMainWindow):
                 y = y - y_back                          # subtrack background from signal
             
             # 3. If smooth, smooth result
-            y_raw = y.copy()                        # store copy of y as y_raw in case we want to display it to user
-                
+            y_raw = y.copy()                        # store copy of y as y_raw in case we want to display it to user    
+
             if smooth:
-                polyorder = 3
-                wl = min(15, len(y))
-                if wl % 2 == 0: wl -= 1
-                if wl <= polyorder: wl = polyorder + 2
-                y = savgol_filter(y, window_length=wl, polyorder=polyorder)
+                y = savgol_filter(y, window_length=g.VOG_SG_WINDOW_LEN,
+                                  polyorder=g.VOG_SG_POLYORDER, mode='nearest')
 
             # 4. If lopass, pass result thru lopass filter
             if lopass:
-                pass
-                # DO LO-PASS FILTERING HERE ###################
-                #
-                #
-                #
-                ###################################################
+                y = self.butter_lowpass_filter(y, g.VOG_LP_CUTOFF, g.VOG_LP_FS,
+                                               order=g.VOG_LP_ORDER)
+                
 
             # 5. If predictpeak, guess baseline and peak locations, store as vars in self
             #
@@ -121,9 +124,9 @@ class VoltamogramPlot(QMainWindow):
 
             # 8. If predictpeak, show baseline (with adjustable handles) and peak location
 
-            print(x)
+            '''print(x)
             print(y_raw)
-            print(y)
+            print(y)'''
             print('--------------')
                 
 
@@ -186,6 +189,12 @@ class VoltamogramPlot(QMainWindow):
             print(modded)
             color = self.colors[modded]
             for rep in run[g.R_REPLICATES]:
+                ##### FOR TESTING ONLY
+                #
+                #subbackground = False
+                showraw=True
+                #
+                ##############################
                 self.plot_rep(rep, subbackground=subbackground, smooth=smooth, lopass=lopass, showraw=showraw, predictpeak=predictpeak, color=color)
         
         ############ FOR TESTING ONLY
@@ -195,5 +204,46 @@ class VoltamogramPlot(QMainWindow):
         #    self.plot_rep(rep, subbackground=subbackground, smooth=smooth, lopass=lopass, showraw=showraw, predictpeak=predictpeak)
         #
         ##########################################
+
+    def resize_data(self, file_in, n):
+        #  file_in = 1D numpy array of arbitrary length
+        #  file_out = 1D numpy array of length n
+        m = file_in.shape[0]  #length of input file
+        file_out = np.zeros(n)
+
+        file_out[0] = file_in[0]
+        file_out[-1] = file_in[-1]
+          
+        for i in range(1, n-1):
+            out_frac = i/(n-1)
+            #    print ('i, out_frac = ', i, out_frac)
+            in_offset = out_frac*(m-1)
+            index1 = int(in_offset)
+            index2 = index1 + 1
+            #    print ('in_offset, indeces = ', in_offset, index1, index2)
+            f1 = float(file_in[index1])
+            f2 = float(file_in[index2])
+            file_out[i] = f1 + (f2-f1)*(in_offset-index1)
+          
+        return file_out
+
+    def butter_lowpass_filter(self, data, cutoff_freq, fs, order=5):
+        """
+        Applies a Butterworth low-pass filter to the input data.
+
+        Args:
+            data (numpy.array): The input signal.
+            cutoff_freq (float): The cutoff frequency of the filter (in Hz).
+            fs (float): The sampling frequency of the signal (in Hz).
+            order (int): The order of the filter.
+
+        Returns:
+            numpy.array: The filtered signal.
+        """
+        nyquist = 0.5 * fs
+        normal_cutoff = cutoff_freq / nyquist
+        b, a = butter(order, normal_cutoff, btype='low', analog=False)
+        filtered_data = filtfilt(b, a, data) # Use filtfilt for zero phase distortion
+        return filtered_data
             
 
