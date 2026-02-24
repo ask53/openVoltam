@@ -4,6 +4,21 @@ voltamOGram.py
 Shows a voltamogram of passed runs. Gives user the option to
 analyze for baselines and peak location/heigh or not.
 
+There are two ways to add data to the plot:
+
+- plot_reps:
+    This takes in a list of reps (can correspond to any runs, including
+    multiple reps of the same run). Plots all lines corresponding to the
+    same run as the same color/style UNLESS there are only reps from a single
+    run provided, in which case all reps are given distinct colors & styles.
+    If a single rep is passed, raw data is also displayed.
+    The legend that is displayed shows run ID UNLESS there are only reps
+    from a single run provided, in which case it shows run ID and rep ID
+- plot runs
+    This takes in a list of runs. It plots all reps with data for those
+    runs. All reps of the same run are styled (color and linestyle) the
+    same. A legend is displayed that shows the styles for each run.
+
 """
 
 from external.globals import ov_globals as g
@@ -25,14 +40,15 @@ class SubsetToolbar(NavigationToolbar2QT):
     toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in ('Home', 'Pan', 'Zoom')]
 
 class VoltamogramCanvas(FigureCanvasQTAgg):
-    def __init__(self, parent, width=5, height=4, dpi=100):
+    def __init__(self, parent, width=5, height=4, dpi=100, title=False):
         fig = Figure(figsize=(width, height), dpi=dpi)
-        fig.suptitle('Voltam-O-Gram')
+        if title:
+            fig.suptitle(title)
         self.axes = fig.add_subplot(111)
         super().__init__(fig)
 
 class VoltamogramPlot(QMainWindow):
-    def __init__(self, parent):
+    def __init__(self, parent, title=False):
         try:
             super().__init__()
 
@@ -42,13 +58,15 @@ class VoltamogramPlot(QMainWindow):
             width_in = size_mm.width() * g.MM2IN
             height_in = size_mm.height() * g.MM2IN
 
-            self.canvas = VoltamogramCanvas(self, width=width_in, height=height_in, dpi=100)    # Create figure on canvas
+            self.canvas = VoltamogramCanvas(self, width=width_in,                               # Create figure on canvas
+                                            height=height_in, dpi=100, title=title)    
             toolbar = SubsetToolbar(self.canvas, self)                                          # set canvas toolbar
 
             self.set_axis_labels()
             self.axes = self.canvas.axes
 
             self.colors = ['deeppink','limegreen','chocolate','mediumturquoise','gold','purple','red','blue']
+            self.linestyles = ['solid', 'dotted', 'dashed', 'dashdot']
                 
             layout = QVBoxLayout()          # Add toolbar and canvas to vertical layout
             layout.addWidget(toolbar)
@@ -65,7 +83,7 @@ class VoltamogramPlot(QMainWindow):
         self.canvas.axes.set_xlabel('Voltage [V]')
         self.canvas.axes.set_ylabel('Current [uA]')
 
-    def plot_rep(self, rep, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False, color='black'):
+    def plot_rep(self, rep, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False, color='black', linestyle='solid', lbl=''):
         
         if rep[g.R_DATA]:
             # 1. Convert rep signal and background data to 1D numpy arrays then resize
@@ -114,9 +132,9 @@ class VoltamogramPlot(QMainWindow):
             
             # 6. Show final result
             if showraw:                                 # first, show raw data if requested
-                self.canvas.axes.plot(x, y_raw, 'lightgrey', linewidth=0.5)
+                self.canvas.axes.plot(x, y_raw, 'lightgrey', linestyle=linestyle, linewidth=1, label='raw data')
 
-            self.canvas.axes.plot(x, y, color, linewidth=2)          # then show smoothed, filtered data on top.
+            self.canvas.axes.plot(x, y, color, linestyle=linestyle, linewidth=2, label=lbl)          # then show smoothed, filtered data on top.
 
             self.canvas.draw()
             
@@ -143,52 +161,106 @@ class VoltamogramPlot(QMainWindow):
 
     def plot_reps(self, reps, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False):
         # 1. Get data from file for specified reps
-        #
-        #
-        #
+        all_data = get_data_from_file(self.parent.path)     # read file including all raw data
+        
+        reps_to_disp = []
+        runs_to_disp = []
+        for task in reps:
+            (run_id, rep_id) = task
+            if not run_id in runs_to_disp:      # Get list of unique run IDs
+                runs_to_disp.append(run_id)
+            found = False
+            rep = {'run_uid':run_id,
+                   'rep_uid':rep_id}
+            for fullrun in all_data[g.S_RUNS]:
+                if fullrun[g.R_UID_SELF] == run_id:    
+                    for fullrep in fullrun[g.R_REPLICATES]:
+                        if fullrep[g.R_UID_SELF] == rep_id:
+                            found = True
+                            try: 
+                                rep[g.R_DATA] = fullrep[g.R_DATA]
+                            except Exception as e:
+                                print(e)
+                                rep[g.R_DATA] = []
+                            try:
+                                rep[g.R_BACKGROUND] = fullrep[g.R_BACKGROUND]
+                            except Exception as e:
+                                print(e)
+                                rep[g.R_BACKGROUND] = []
+                            break
+                    if found: break
+            reps_to_disp.append(rep)
+            print(reps_to_disp)
+
+        onerun = False
+        if len(runs_to_disp) == 1: onerun=True
+            
+
+           
+
+        
+        
+        
         # 2. Loop thru runs, plotting each rep
-        for rep in reps:
-            self.plot_rep(rep, subbackground=subbackground, smooth=smooth, lopass=lopass, showraw=showraw, predictpeak=predictpeak)
+        run_colors = {}
+        lstyles = {}
+        runs_displayed = []
+        for rep in reps_to_disp:
+            if onerun: indexer = rep['rep_uid']
+            else: indexer = rep['run_uid']
+            
+            if indexer in list(run_colors.keys()):
+                color = run_colors[indexer]
+                lstyle = lstyles[indexer]
+            else:
+                color = self.colors[len(run_colors)%len(self.colors)]
+                lstyle = self.linestyles[len(lstyles)%len(self.linestyles)]
+                run_colors[indexer] = color
+                lstyles[indexer] = lstyle
+            if indexer in runs_displayed:
+                lbl = ''
+            else:
+                if onerun: lbl = rep['run_uid']+', '+rep['rep_uid']
+                else: lbl = rep['run_uid']
+                
+            self.plot_rep(rep, subbackground=subbackground, smooth=smooth,
+                          lopass=lopass, showraw=showraw, predictpeak=predictpeak,
+                          color=color, linestyle=lstyle, lbl=lbl)
+            runs_displayed.append(rep['run_uid'])
+
+        # 3. Add legend
+        self.canvas.axes.legend()
         
         
 
     def plot_runs(self, runs, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False):
         # 1. Get data from file for specified runs
         all_data = get_data_from_file(self.parent.path)     # read file including all raw data
+
+        runs_to_show = []
         for run in runs:
-            for rep in run[g.R_REPLICATES]:
-                run_id = run[g.R_UID_SELF]
-                rep_id = rep[g.R_UID_SELF]
-                found = False
-                for fullrun in all_data[g.S_RUNS]:
-                    if fullrun[g.R_UID_SELF] == run_id:
-                        for fullrep in fullrun[g.R_REPLICATES]:
-                            if fullrep[g.R_UID_SELF] == rep_id:
-                                found = True
-                                try: 
-                                    rep[g.R_DATA] = fullrep[g.R_DATA]
-                                except Exception as e:
-                                    print(e)
-                                    rep[g.R_DATA] = []
-                                try:
-                                    rep[g.R_BACKGROUND] = fullrep[g.R_BACKGROUND]
-                                except Exception as e:
-                                    print(e)
-                                    rep[g.R_BACKGROUND] = []
-                                break
-                        if found: break
+            run_id = run[g.R_UID_SELF]
+            found = False
+            for fullrun in all_data[g.S_RUNS]:
+                if fullrun[g.R_UID_SELF] == run_id:
+                    runs_to_show.append(fullrun)
+                    found = True
+                    break
+                
     
         # 2. Loop thru runs, plotting each rep
-        for i,run in enumerate(runs):
+        for i,run in enumerate(runs_to_show):
             color = self.colors[i%len(self.colors)]
-            for rep in run[g.R_REPLICATES]:
-                ##### FOR TESTING ONLY
-                #
-                #subbackground = False
-                #showraw=True
-                #
-                ##############################
-                self.plot_rep(rep, subbackground=subbackground, smooth=smooth, lopass=lopass, showraw=showraw, predictpeak=predictpeak, color=color)
+            lstyle = self.linestyles[i%len(self.linestyles)]
+            for j,rep in enumerate(run[g.R_REPLICATES]):
+                if j==0: lbl=run[g.R_UID_SELF]+' ('+run[g.R_TYPE]+')'
+                else: lbl = ''
+                self.plot_rep(rep, subbackground=subbackground, smooth=smooth,
+                              lopass=lopass, showraw=showraw, predictpeak=predictpeak,
+                              color=color, linestyle=lstyle, lbl=lbl)
+
+        # 3. Add legend
+        self.canvas.axes.legend()
 
     def resize_data(self, file_in, n):
         #  file_in = 1D numpy array of arbitrary length

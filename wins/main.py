@@ -18,6 +18,8 @@ from wins.sample import WindowSample
 from wins.method import WindowMethod
 from wins.runConfig import WindowRunConfig
 from wins.runView import WindowRunView
+from wins.resultsView import WindowResultsView
+from wins.analyze import WindowAnalyze
 
 # import other necessary python tools
 from os.path import join as joindir
@@ -238,8 +240,9 @@ class WindowMain(QMainWindow):
         self.runAction_viewMethod = self.contextmenu_run.addAction("View method")
         self.runAction_editMethod = self.contextmenu_run.addAction("Edit method name")
         self.contextmenu_run.addSeparator()
-        self.runAction_viewData = self.contextmenu_run.addAction("Graph data from run(s) [DOES NOTHING YET]")
-        self.runAction_exportData = self.contextmenu_run.addAction("Export CSV of run(s)")
+        self.runAction_viewData = self.contextmenu_run.addAction("Graph")
+        self.runAction_analyzeData = self.contextmenu_run.addAction("Analyze")
+        self.runAction_exportData = self.contextmenu_run.addAction("Export")
         self.contextmenu_run.addSeparator()
         self.runAction_delete = self.contextmenu_run.addAction("Delete run(s)")
 
@@ -247,8 +250,9 @@ class WindowMain(QMainWindow):
         self.contextmenu_rep.addSeparator()
         self.repAction_editNote = self.contextmenu_rep.addAction("Edit replicate note")
         self.contextmenu_rep.addSeparator()
-        self.repAction_viewData = self.contextmenu_rep.addAction("Graph replicate(s) data [DOES NOTHING YET]")
-        self.repAction_exportData = self.contextmenu_rep.addAction("Export CSV of rep(s)")
+        self.repAction_viewData = self.contextmenu_rep.addAction("Graph")
+        self.repAction_analyzeData = self.contextmenu_rep.addAction("Analyze")
+        self.repAction_exportData = self.contextmenu_rep.addAction("Export")
         self.contextmenu_rep.addSeparator()
         self.repAction_delete = self.contextmenu_rep.addAction("Delete replicates(s)")
 
@@ -258,11 +262,15 @@ class WindowMain(QMainWindow):
         self.runAction_editConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_EDIT))
         self.runAction_viewMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
         self.runAction_editMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_WITH_MINOR_EDITS))
+        self.runAction_viewData.triggered.connect(self.view_data_selected_reps)
+        self.runAction_analyzeData.triggered.connect(self.anayze_data_selected_reps)
         self.runAction_exportData.triggered.connect(self.export_selected_reps_as_csv)
         self.runAction_delete.triggered.connect(self.delete_runs)
         
         self.runAction_redoRep.triggered.connect(self.redo_run)
         self.repAction_editNote.triggered.connect(self.edit_rep_note)
+        self.repAction_viewData.triggered.connect(self.view_data_selected_reps)
+        self.repAction_analyzeData.triggered.connect(self.anayze_data_selected_reps)
         self.repAction_exportData.triggered.connect(self.export_selected_reps_as_csv)
         self.repAction_delete.triggered.connect(self.delete_reps)
 
@@ -288,6 +296,15 @@ class WindowMain(QMainWindow):
         but_calc = QPushButton('Calculate')
         but_res_sample = QPushButton('Sample results')
         self.buts = [but_view, but_config, but_calc, but_res_sample]
+
+
+
+        ##### FOR TESTING
+        #
+        #
+        but_calc.clicked.connect(partial(self.new_win_results_view, 'hi there, world!'))
+        #
+        ################33
         
         but_view.clicked.connect(self.new_win_sample)
         but_config.clicked.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
@@ -942,6 +959,15 @@ class WindowMain(QMainWindow):
         except Exception as e:
             print(e)
 
+    def view_data_selected_reps(self):
+        reps = self.get_all_selected_reps()
+        self.new_win_results_view(reps)
+
+    def anayze_data_selected_reps(self):
+        reps = self.get_all_selected_reps()
+        self.new_win_analysis(reps)
+        print('analyzing data hereeee')
+
     def export_selected_reps_as_csv(self):
         reps = self.get_all_selected_reps()
         dest = get_path_from_user(self, 'folder')
@@ -1008,8 +1034,11 @@ class WindowMain(QMainWindow):
     #   2. new_win_config_run                   #
     #   3. new_win_view_run                     #
     #   4. new_win_method_by_id                 #
-    #   5. X
-    #   6.
+    #   5. new_win_method_by_path               #
+    #   6. new_win_results_view                 #
+    #   7. new_win_analysis                     #
+    #
+    #
     #
     #   9. new_win_one_of_type                  #
     #   10. new_win_one_with_value              #
@@ -1026,14 +1055,23 @@ class WindowMain(QMainWindow):
     def new_win_view_run(self, tasks):
         self.new_win_one_of_type(WindowRunView(self, tasks))
 
-
     def new_win_method_by_id(self, mode, m_id, changable=True):
         self.new_win_one_with_value(WindowMethod(self, mode, method_id=m_id, mode_changable=changable), 'method_id', m_id)
 
     def new_win_method_by_path(self, mode, path, changable=True):
         self.new_win_one_with_value(WindowMethod(self, mode, path=path, mode_changable=changable), 'path', path)
 
-    def new_win_one_of_type(self, obj):
+    def new_win_results_view(self, tasks):
+        self.new_win_one_with_value(WindowResultsView(self, tasks), 'tasks', tasks)
+
+    def new_win_analysis(self, tasks):
+        try:
+            self.new_win_one_of_type(WindowAnalyze(self, tasks), close_old=True)
+        except Exception as e:
+            print(e)
+        
+
+    def new_win_one_of_type(self, obj, close_old=False):
         """Takes in a new object to create as child window of self.
         Checks whether a window with matching type already exists.
         If it does, activates (bring-to-front) that window and returns it.
@@ -1041,8 +1079,14 @@ class WindowMain(QMainWindow):
         Returns: window object."""
         for win in self.children:       
             if type(win) == type(obj):  # If there is already a child window with matching type
-                win.activateWindow()    # activate it and return it
-                return win
+                if close_old:
+                    a = win.close()
+                    print('window close returned:')
+                    print(a)
+                    print('---')
+                else:
+                    win.activateWindow()    # activate it and return it
+                    return win
         
         self.children.append(obj)       # If there isn't already one, append the new window to the list of children
         self.children[-1].show()        # Show the window
