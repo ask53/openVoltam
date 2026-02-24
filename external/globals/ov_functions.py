@@ -340,10 +340,10 @@ class QHLine(QFrame):
 class saveMessageBox(QMessageBox):
     def __init__(self):                       
         super().__init__()
-        print(self)
+
         # set text for save message
         self.setWindowTitle(l.s_edit_discard[g.L]) 
-        self.setText(l.e_edit_save_dialog[g.L])
+        self.setText('Close without saving?')
         self.setStandardButtons(QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel)
 
         # customize button language text for multi-language support

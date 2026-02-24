@@ -1066,12 +1066,12 @@ class WindowMain(QMainWindow):
 
     def new_win_analysis(self, tasks):
         try:
-            self.new_win_one_of_type(WindowAnalyze(self, tasks), close_old=True)
+            self.new_win_one_of_type(WindowAnalyze(self, tasks))
         except Exception as e:
             print(e)
         
 
-    def new_win_one_of_type(self, obj, close_old=False):
+    def new_win_one_of_type(self, obj):
         """Takes in a new object to create as child window of self.
         Checks whether a window with matching type already exists.
         If it does, activates (bring-to-front) that window and returns it.
@@ -1079,14 +1079,8 @@ class WindowMain(QMainWindow):
         Returns: window object."""
         for win in self.children:       
             if type(win) == type(obj):  # If there is already a child window with matching type
-                if close_old:
-                    a = win.close()
-                    print('window close returned:')
-                    print(a)
-                    print('---')
-                else:
-                    win.activateWindow()    # activate it and return it
-                    return win
+                win.activateWindow()    # activate it and return it
+                return win
         
         self.children.append(obj)       # If there isn't already one, append the new window to the list of children
         self.children[-1].show()        # Show the window
@@ -1363,8 +1357,14 @@ class WindowMain(QMainWindow):
         resp = msg_box.exec()
             
         if resp == QMessageBox.StandardButton.Ok:
+            current_child = False
             while self.children:                # loop through children until children is empty
+                if self.children[0] == current_child:   # if we arrive at a child twice (we failed to close it)
+                    event.ignore()                      # stop the close
+                    return                              # and stop trying to close children
+                current_child = self.children[0]
                 self.children[0].close()        # closing the 0th child window (closing pops it from list)
+                
 
             self.parent.children.remove(self)   # remove reference to this window from parent for memory cleanup
             event.accept()
