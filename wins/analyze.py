@@ -40,7 +40,7 @@ class WindowAnalyze(QMainWindow):
 
     
 
-    def start_save(self):
+    def save_from_close(self, event):
         print('saving!')
         #################################
         #
@@ -49,27 +49,12 @@ class WindowAnalyze(QMainWindow):
         #
         ########################################
         self.saved = True
-        if self.close_on_save:
-            print('about to close!')
-            self.close()
+        if self.close_on_save and self.saved:
+            self.accept_close(event)
+        else:
+            event.ignore()
 
-            ######################################3 HERE HERE HERE HERE HERE HERE HERE HERE HERE
-            #
-            #   FIGURE OUT WHY THIS self.close() doesn't go to the closeEvent
-            #   event handler. Like wtffffffffff
-            #
-            ##
-            #
-            #
-            #
-            #
-            #
-            #
-            #
-            #
-            #################################################################################################################
-
-
+            
 
 
     def update_win(self):
@@ -89,9 +74,8 @@ class WindowAnalyze(QMainWindow):
             confirm = saveMessageBox()
             resp = confirm.exec()
             if resp == QMessageBox.StandardButton.Save:
-                event.ignore()
                 self.close_on_save = True
-                self.start_save()
+                self.save_from_close(event)
             elif resp == QMessageBox.StandardButton.Discard:
                 self.accept_close(event)
             else:
