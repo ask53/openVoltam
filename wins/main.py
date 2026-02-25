@@ -126,9 +126,9 @@ class WindowMain(QMainWindow):
         action_rep_export = QAction('Export as CSV', self)
         action_rep_delete = QAction('Delete', self)
 
-        action_analyze_start = QAction('Analyze', self)
+        action_analyze_peaks = QAction('Analyze', self)
+        action_analyze_calculate = QAction('Calculate', self)
         action_analyze_results = QAction('Results', self)
-        
         
         # connect menu bar labels with slots 
         action_sample_new.triggered.connect(parent.new_sample)                      # this first group of menu functions come from the home window (parent)
@@ -153,7 +153,8 @@ class WindowMain(QMainWindow):
         action_rep_export.triggered.connect(self.export_selected_reps_as_csv)
         action_rep_delete.triggered.connect(self.delete_reps)
 
-        '''action_analyze_start.triggered.connect()
+        action_analyze_peaks.triggered.connect(self.anayze_data_selected_reps)
+        '''action_analyze_calculate.triggered.connect()
         action_analyze_results.triggered.connect()'''
 
         
@@ -205,7 +206,8 @@ class WindowMain(QMainWindow):
         file_menu.addAction(action_rep_delete)
 
         file_menu = menu.addMenu('Analysis')
-        file_menu.addAction(action_analyze_start)
+        file_menu.addAction(action_analyze_peaks)
+        file_menu.addAction(action_analyze_calculate)
         file_menu.addAction(action_analyze_results)
 
         self.actions_run_one_only = [action_run_new_from,
@@ -215,11 +217,13 @@ class WindowMain(QMainWindow):
                                      action_method_run_view,
                                      action_method_run_edit]
         self.actions_run_one_plus = [action_run_export,
-                                     action_run_delete]
+                                     action_run_delete,
+                                     action_analyze_peaks]
         self.actions_rep_one_only = [action_rep_redo,
                                      action_rep_edit]
         self.actions_rep_one_plus = [action_rep_export,
-                                     action_rep_delete]
+                                     action_rep_delete,
+                                     action_analyze_peaks]
         
 
         #####################################
