@@ -16,11 +16,17 @@ The following controls are provided:
 """
 
 from external.globals.ov_functions import *
+from external.globals import ov_globals as g
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QMainWindow,
-    QLabel
+    QLabel,
+    QStackedLayout,
+    QPushButton,
+    QVBoxLayout,
+    QHBoxLayout,
+    QWidget
 )
 
 class WindowAnalyze(QMainWindow):
@@ -32,12 +38,54 @@ class WindowAnalyze(QMainWindow):
         self.tasks = tasks
         self.saved = False
         self.close_on_save = False
+
+        self.setWindowTitle(self.parent.data[g.S_NAME]+' | Analyze')
+
+        self.stack = QStackedLayout()
+
+        for task in self.tasks:
+            lbl = QLabel(str(task))
+            lbl2 = QLabel(str(task))
+            v = QVBoxLayout()
+            v.addWidget(lbl)
+            v.addWidget(lbl2)
+            
+            w = QWidget()
+            w.setLayout(v)
+            self.stack.addWidget(w)
         
-        print(self.tasks)
+        but_prev = QPushButton('Prev')
+        but_skip = QPushButton('Skip')
+        self.but_next = QPushButton()
 
-        tasklbl = QLabel(str(self.tasks))
-        self.setCentralWidget(tasklbl)
+        but_prev.clicked.connect(self.prev_click)
+        self.but_next.clicked.connect(self.next_click)
 
+        h1 = QHBoxLayout()
+        h1.addWidget(but_prev)
+        h1.addStretch()
+        h1.addWidget(but_skip)
+        h1.addStretch()
+        h1.addWidget(self.but_next)
+        
+        v1 = QVBoxLayout()
+        v1.addLayout(self.stack)
+        v1.addStretch()
+        v1.addLayout(h1)
+
+        w = QWidget()
+        w.setLayout(v1)
+        self.setCentralWidget(w)
+
+    def prev_click(self):
+        i = self.stack.currentIndex()
+        if i>0:
+            self.stack.setCurrentIndex(i-1)
+
+    def next_click(self):
+        i = self.stack.currentIndex()
+        if i<len(self.tasks)-1:
+            self.stack.setCurrentIndex(i+1)
     
 
     def save_from_close(self, event):
@@ -69,7 +117,6 @@ class WindowAnalyze(QMainWindow):
     
     def closeEvent(self, event):
         """Event handler for close event."""
-        print('and here we are in the close handler!')
         if not self.saved:
             confirm = saveMessageBox()
             resp = confirm.exec()

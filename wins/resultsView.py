@@ -4,6 +4,7 @@ resultsView.py
 Shows a voltamogram graph of results to the user. Overlaps all
 runs/reps that the user requests on the same axes.
 """
+from external.globals import ov_globals as g
 
 from embeds.voltamOGram import VoltamogramPlot
 
@@ -18,10 +19,9 @@ class WindowResultsView(QMainWindow):
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.parent = parent
         self.tasks = tasks
+        
+        self.setWindowTitle(self.parent.data[g.S_NAME]+' | Results Viewer')
 
-        self.setWindowTitle('OpenVoltam | Results Viewer')
-
-        print('here i am!')
         print(self.tasks)
 
         self.voltamogram = VoltamogramPlot(self.parent)
