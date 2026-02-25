@@ -103,6 +103,15 @@ R_DATA_TIME = 'time_s'
 R_DATA_VOLT = 'voltage_V'
 R_DATA_CURR = 'current_mA'
 
+# Analysis (peak finding)
+A_PEAK_X = 'peak_x'
+A_PEAK_Y = 'peak_y'
+A_PEAK_HEIGHT = 'peak_ht'
+A_BASE_0_X = 'baseline_lower_x'
+A_BASE_0_Y = 'baseline_lower_y'
+A_BASE_1_X = 'baseline_upper_x'
+A_BASE_1_Y = 'baseline_upper_y'
+
 # Voltamogram globals
 VOG_RESIZE = 500        # number of points to resize data to for analysis
 VOG_SG_WINDOW_LEN = 25  # Window lenght property for Savitzky-Golay filtering

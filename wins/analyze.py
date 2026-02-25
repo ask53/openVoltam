@@ -38,8 +38,14 @@ class WindowAnalyze(QMainWindow):
         self.tasks = tasks
         self.saved = False
         self.close_on_save = False
+        self.results = []
 
         self.setWindowTitle(self.parent.data[g.S_NAME]+' | Analyze')
+
+        for task in self.tasks:     # fill results list with an empty dict 
+            self.results.append({})  #   for each task
+
+
 
         self.stack = QStackedLayout()
 
@@ -53,6 +59,26 @@ class WindowAnalyze(QMainWindow):
             w = QWidget()
             w.setLayout(v)
             self.stack.addWidget(w)
+
+
+        
+        self.grid_ws = []
+        for task in tasks:
+            lbl = QLabel(task[0]+', '+task[1]+':')
+            status = QLabel('None')
+            self.grid_ws.append([lbl, status])
+
+        
+        prog_lbl = QLabel('<b>Status</b>')
+        v2 = QVBoxLayout()
+        v2.addWidget(prog_lbl)
+        for w_row in self.grid_ws:
+            v2.addLayout(horizontalize(w_row))
+
+        h2 = QHBoxLayout()
+        h2.addLayout(self.stack)
+        h2.addWidget(QVLine())
+        h2.addLayout(v2)
         
         but_prev = QPushButton('Prev')
         but_skip = QPushButton('Skip')
@@ -69,7 +95,7 @@ class WindowAnalyze(QMainWindow):
         h1.addWidget(self.but_next)
         
         v1 = QVBoxLayout()
-        v1.addLayout(self.stack)
+        v1.addLayout(h2)
         v1.addStretch()
         v1.addLayout(h1)
 
@@ -81,6 +107,11 @@ class WindowAnalyze(QMainWindow):
         i = self.stack.currentIndex()
         if i>0:
             self.stack.setCurrentIndex(i-1)
+
+    def skip_click(self):
+        i = self.stack.currentIndex()
+        if i<len(self.tasks)-1:
+            self.stack.setCurrentIndex(i+1)
 
     def next_click(self):
         i = self.stack.currentIndex()
