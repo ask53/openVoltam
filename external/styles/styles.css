@@ -129,6 +129,23 @@ WindowRunView QSplitter::handle {
 	border-right: 2px solid #bbbbbb;
 }
 
+WindowAnalyze QPushButton#task-pending, WindowAnalyze QPushButton#task-complete {
+	outline: none;
+	padding: 4px 8px;
+	border: none;
+}
+
+WindowAnalyze QPushButton#task-pending:hover, WindowAnalyze QPushButton#task-complete:hover {
+	background-color: #dddddd;	
+}
+
+WindowAnalyze QPushButton#task-pending {
+	background-color: #fcecba;
+}
+
+WindowAnalyze QPushButton#task-complete {
+	background-color: green;
+}
 
 
 

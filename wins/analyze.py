@@ -18,6 +18,8 @@ The following controls are provided:
 from external.globals.ov_functions import *
 from external.globals import ov_globals as g
 
+from functools import partial
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QMainWindow,
@@ -62,36 +64,43 @@ class WindowAnalyze(QMainWindow):
 
 
         
-        self.grid_ws = []
-        for task in tasks:
-            lbl = QLabel(task[0]+', '+task[1]+':')
-            status = QLabel('None')
-            self.grid_ws.append([lbl, status])
+        self.buts = []
+        for i, task in enumerate(tasks):
+            but = QPushButton(task[0]+', '+task[1]+'  |  Pending')
+            but.setObjectName('task-pending')
+            ### USE but.setAttribute() here to add the task index to the button
+            #
+            #       HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE
+            #
+            #
+            #
+            but.clicked.connect(partial(self.go_to_rep, i))
+            #
+            #
+            ##########################################################################
+            self.buts.append(but)
 
         
-        prog_lbl = QLabel('<b>Status</b>')
+        prog_lbl = QLabel('<b>Runs to analyze:</b>')
         v2 = QVBoxLayout()
         v2.addWidget(prog_lbl)
-        for w_row in self.grid_ws:
-            v2.addLayout(horizontalize(w_row))
+        for but in self.buts:
+            v2.addWidget(but)
 
         h2 = QHBoxLayout()
         h2.addLayout(self.stack)
         h2.addWidget(QVLine())
         h2.addLayout(v2)
         
-        but_prev = QPushButton('Prev')
-        but_skip = QPushButton('Skip')
+        self.but_skip = QPushButton('Skip')
         self.but_next = QPushButton()
 
-        but_prev.clicked.connect(self.prev_click)
+        self.but_skip.clicked.connect(self.process_next)
         self.but_next.clicked.connect(self.next_click)
 
         h1 = QHBoxLayout()
-        h1.addWidget(but_prev)
         h1.addStretch()
-        h1.addWidget(but_skip)
-        h1.addStretch()
+        h1.addWidget(self.but_skip)
         h1.addWidget(self.but_next)
         
         v1 = QVBoxLayout()
@@ -103,21 +112,54 @@ class WindowAnalyze(QMainWindow):
         w.setLayout(v1)
         self.setCentralWidget(w)
 
-    def prev_click(self):
-        i = self.stack.currentIndex()
-        if i>0:
-            self.stack.setCurrentIndex(i-1)
-
-    def skip_click(self):
-        i = self.stack.currentIndex()
-        if i<len(self.tasks)-1:
-            self.stack.setCurrentIndex(i+1)
-
-    def next_click(self):
-        i = self.stack.currentIndex()
-        if i<len(self.tasks)-1:
-            self.stack.setCurrentIndex(i+1)
     
+    def next_click(self):
+        # store current here ##############################
+        #
+        print('storing the results!')
+        #
+        #
+        ##############################
+        # Then process the next click
+        self.process_next()
+
+
+
+    def process_next(self):
+        if self.stack.currentIndex() == len(self.tasks)-1:  # if we're on last task already
+            saved = self.save()                             #   try to save
+            if saved:                                       #   if saved,
+                self.close()                                #       close the window! 
+        else:                                               # if we're not on the last task,
+            i = self.stack.currentIndex()                   #   go to the next task
+            self.go_to_rep(i+1)                                          
+
+    def go_to_rep(self, i):
+        # go to rep with index i (ie. self.tasks[i])
+        self.stack.setCurrentIndex(i)
+        self.update_buttons(i)
+        self.refresh_progress(i)
+        # repaint taskbar (update highlights and which have been completed
+
+    def update_buttons(self, i):
+        if i == len(self.tasks)-1:  # if we are on the final task
+            print('updating buttons to FINAL button configs')
+
+        else:                       # if we are on any other task
+            print('regular butts')
+            
+
+        
+    def refresh_progress(self, i):
+        print('refreshing progress pane!')
+        
+        
+        
+
+        
+    def save(self):
+        print('saving then closing!')
+        return True
 
     def save_from_close(self, event):
         print('saving!')
