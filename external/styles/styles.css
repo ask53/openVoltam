@@ -129,22 +129,36 @@ WindowRunView QSplitter::handle {
 	border-right: 2px solid #bbbbbb;
 }
 
-WindowAnalyze QPushButton#task-pending, WindowAnalyze QPushButton#task-complete {
+WindowAnalyze QPushButton#task-pending, 
+WindowAnalyze QPushButton#task-complete, 
+WindowAnalyze QPushButton#task-selected {
 	outline: none;
 	padding: 4px 8px;
-	border: none;
+	min-width: 162px;
+	text-align: left;
+	border-width: 2px;
+	border-style: solid;
 }
 
-WindowAnalyze QPushButton#task-pending:hover, WindowAnalyze QPushButton#task-complete:hover {
+WindowAnalyze QPushButton#task-pending:hover, 
+WindowAnalyze QPushButton#task-complete:hover {
 	background-color: #dddddd;	
+	border-color: #dddddd;
 }
 
 WindowAnalyze QPushButton#task-pending {
 	background-color: #fcecba;
+	border-color: #fcecba;
 }
 
 WindowAnalyze QPushButton#task-complete {
-	background-color: green;
+	background-color: #bdfcba;
+	border-color: #bdfcba;
+}
+
+WindowAnalyze QPushButton#task-selected {
+	background-color: #ecbafc;
+	border-color: purple;
 }
 
 

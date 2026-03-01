@@ -302,5 +302,13 @@ class VoltamogramPlot(QMainWindow):
         b, a = butter(order, normal_cutoff, btype='low', analog=False)
         filtered_data = filtfilt(b, a, data) # Use filtfilt for zero phase distortion
         return filtered_data
-            
+
+    def get_analysis_results(self):
+        return {g.A_PEAK_X: 'x-peak',
+                g.A_PEAK_Y: 'y-peak',
+                g.A_PEAK_HEIGHT: 'peak-height',
+                g.A_BASE_0_X: 'base0-x',
+                g.A_BASE_0_Y: 'base0-y',
+                g.A_BASE_1_X: 'base1-x',
+                g.A_BASE_1_Y: 'base1-y'}
 
