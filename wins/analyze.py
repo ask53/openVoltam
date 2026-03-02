@@ -16,6 +16,8 @@ The following controls are provided:
 from external.globals.ov_functions import *
 from external.globals import ov_globals as g
 
+from embeds.voltamOGram import VoltamogramPlot
+
 from functools import partial
 
 from PyQt6.QtCore import Qt
@@ -57,13 +59,22 @@ class WindowAnalyze(QMainWindow):
 
 
         self.stack = QStackedLayout()
+        self.voltamograms = []
 
         for task in self.tasks:
-            lbl = QLabel(str(task))
-            lbl2 = QLabel(str(task))
+
+            run = get_run_from_file_data(self.parent.data, task[0])
+            rep = get_rep(self.parent.data, task)
+            method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
+
+            title = QLabel('<b>'+task[0]+'  |  '+task[1]+'</b>')
+            vgram = VoltamogramPlot(self.parent)
+            self.voltamograms.append(vgram)
+ 
             v = QVBoxLayout()
-            v.addWidget(lbl)
-            v.addWidget(lbl2)
+            v.addWidget(title)
+            v.addWidget(vgram)
+            v.addStretch()
             
             w = QWidget()
             w.setLayout(v)
@@ -79,29 +90,32 @@ class WindowAnalyze(QMainWindow):
 
         
         prog_lbl = QLabel('<b>Runs to analyze:</b>')
-        v2 = QVBoxLayout()
-        v2.addWidget(prog_lbl)
+        v1 = QVBoxLayout()
+        v1.addWidget(prog_lbl)
         for but in self.buts:
-            v2.addWidget(but)
-
-        h2 = QHBoxLayout()
-        h2.addLayout(v2)
-        h2.addWidget(QVLine())
-        h2.addLayout(self.stack)
+            v1.addWidget(but)
+        v1.addStretch()
         
         self.but_next = QPushButton()
-
         self.but_next.clicked.connect(self.next_click)
 
         h1 = QHBoxLayout()
         h1.addStretch()
         h1.addWidget(self.but_next)
+
+        v2 = QVBoxLayout()
+        v2.addLayout(self.stack)
+        v2.addLayout(h1)
+
         
-        v1 = QVBoxLayout()
-        v1.addLayout(h2)
-        v1.addStretch()
-        v1.addWidget(QHLine())
-        v1.addLayout(h1)
+
+        h2 = QHBoxLayout()
+        h2.addLayout(v1)
+        h2.addWidget(QVLine())
+        h2.addStretch()
+        h2.addLayout(v2)
+        
+
 
         # set form
         starting_index = self.stack.currentIndex()
@@ -109,7 +123,7 @@ class WindowAnalyze(QMainWindow):
         self.refresh_progress(starting_index)
 
         w = QWidget()
-        w.setLayout(v1)
+        w.setLayout(h2)
         self.setCentralWidget(w)
 
         

@@ -25,7 +25,6 @@ import time
 
 #time.sleep(2)
 
-
 # Give this app a unique windows ID (windows only) so icon displays on taskbar
 try:
     from ctypes import windll  # Only exists on Windows.
@@ -34,12 +33,8 @@ try:
 except ImportError:
     pass
 
-
 # Set the display language
 g.L = g.ENG
-
-#
-
 
 g.APP.setWindowIcon(QIcon(joindir(g.BASEDIR,'external/icons/icon.png')))      # set the display icon for the app
 
@@ -50,6 +45,4 @@ window = WindowWelcome()            # create a new welcome window object
 window.show()                       # show the welcome window (when the app is run)
 splash.finish(window)
 sys.exit(g.APP.exec())                        # run the app!
-
-
 
