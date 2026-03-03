@@ -53,6 +53,8 @@ class VoltamogramPlot(QMainWindow):
             super().__init__()
 
             self.parent = parent
+            self.dragging = False
+            self.drag_index = 0
             
             size_mm = g.APP.primaryScreen().physicalSize()
             width_in = size_mm.width() * g.MM2IN
@@ -132,32 +134,85 @@ class VoltamogramPlot(QMainWindow):
             
             # 6. Show final result
             if showraw:                                 # first, show raw data if requested
-                self.canvas.axes.plot(x, y_raw, 'lightgrey', linestyle=linestyle, linewidth=1, label='raw data')
+                self.canvas.axes.plot(x, y_raw, 'lightgrey', linestyle=linestyle,
+                                      linewidth=1, label='raw data')
 
-            self.canvas.axes.plot(x, y, color, linestyle=linestyle, linewidth=2, label=lbl)          # then show smoothed, filtered data on top.
+            # 7. Show smoothed data
+            self.smoothed, = self.canvas.axes.plot(x, y, color, linestyle=linestyle,
+                                  linewidth=2, label=lbl, picker=predictpeak)          # then show smoothed, filtered data on top.
 
+            if predictpeak:
+                ###################################
+                #
+                #   REDO THIS BUT WITH [x0,y0] and [x1,y1] as np.ndarray types
+                #
+                self.x0 = x[1].copy()
+                self.y0 = y[1].copy()
+                self.x1 = x[-2].copy()
+                self.y1 = y[-2].copy()
+                #
+                self.endpoints, = self.canvas.axes.plot([self.x0,self.x1], [self.y0,self.y1], 'o',
+                                                        color='purple', markersize='12', picker=16)
+                #
+                self.baseline, = self.canvas.axes.plot([self.x0,self.x1], [self.y0,self.y1], '-',
+                                                       color='purple')
+                #
+                #
+                #   HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE 
+                #
+                #####################################################
+                
+                self.canvas.callbacks.connect('pick_event', self.on_pick)
+                self.canvas.mpl_connect('button_release_event', self.on_but_release)
+                self.canvas.mpl_connect('motion_notify_event', self.on_mouse_move)
+
+    
+
+
+
+
+
+
+
+                
             self.canvas.draw()
             
 
-            # 7. If showraw, show unfiltered, unsmoothed data (post-subtraction)
-
+            
             # 8. If predictpeak, show baseline (with adjustable handles) and peak location
                 
 
             
-            
+    
 
-            
+    def on_pick(self, event):
+        ind = event.ind
+        print('Artist picked: ')
+        print(event.artist)
+        if event.artist == self.endpoints:
+            self.dragging = True
+            self.drag_index = ind[0]
+        print('Pick between vertices {} and {}'.format(min(ind), max(ind)+1))
+        print(ind)
+        print()
 
-            
+    def on_but_release(self, event):
+        self.dragging = False
 
-            
+    def on_mouse_move(self, event):
+        if self.dragging:
+            print('x: '+str(event.xdata))
+            print('y: '+str(event.ydata))
+            if self.drag_index == 0:
+                print('dragging 0')
+                self.x0 = event.xdata
+                self.y0 = event.ydata
+            elif self.drag_index == 1:
+                print('dragging1')
+                self.x1 = event.xdata
+                self.y1 = event.ydata
+            self.canvas.draw_idle()
 
-            
-
-            
-        
-        return
 
     def plot_reps(self, reps, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False):
         # 1. Get data from file for specified reps
