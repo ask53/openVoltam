@@ -69,21 +69,6 @@ class WindowRunView(QMainWindow):
         self.q = Queue()
         self.status = self.statusBar()
         
-        #### DELETE THIS WHEN POSSIBLE
-        #
-        '''self.rep_current = 0'''
-        #
-        ############
-
-
-        
-        
-        ##### FOR TESTING ####
-        #
-        #self.setWindowTitle(l.r_window_title[g.L]+' | '+self.parent.data[g.S_NAME])
-        #
-        ######################
-        
         # Stacked layout in upper left
         self.msg_box = QStackedLayout()
         self.msg_box_container = QWidget()
@@ -150,10 +135,14 @@ class WindowRunView(QMainWindow):
         # Stacked item 5: All done.
         lbl_done = QLabel("Run complete!")
         lbl_done.setWordWrap(True)
+        but_analyze = QPushButton("Analyze results")
+        but_analyze.clicked.connect(self.analyze)
         but_done = QPushButton("Close")
         but_done.clicked.connect(self.close)
+        
         v1 = QVBoxLayout()
         v1.addWidget(lbl_done)
+        v1.addWidget(but_analyze)
         v1.addWidget(but_done)
         w = QWidget()
         w.setLayout(v1)
@@ -846,7 +835,12 @@ class WindowRunView(QMainWindow):
 
 
 
-
+    def analyze(self):
+        try:
+            self.close()
+            self.parent.new_win_analysis(self.tasks)
+        except Exception as e:
+            print(e)
         
         
                 
