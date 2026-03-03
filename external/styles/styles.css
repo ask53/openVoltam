@@ -161,5 +161,13 @@ WindowAnalyze QPushButton#task-selected {
 	border-color: purple;
 }
 
+WindowAnalyze QWidget#analysis-title-bar {
+	color: white;
+	background-color: purple;
+}
 
+WindowAnalyze QLabel#analysis-title-txt {
+	color: #fefefe;
+	font-size: 12pt;
+}
 

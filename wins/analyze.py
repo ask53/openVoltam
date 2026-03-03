@@ -52,9 +52,7 @@ class WindowAnalyze(QMainWindow):
         #
         #
         #######################################################################3
-        self.results[0] = True
-        self.results[2] = 'hi!'
-        self.results[5] = True
+        
 
 
 
@@ -63,16 +61,26 @@ class WindowAnalyze(QMainWindow):
 
         for task in self.tasks:
 
-            run = get_run_from_file_data(self.parent.data, task[0])
+            '''run = get_run_from_file_data(self.parent.data, task[0])
             rep = get_rep(self.parent.data, task)
-            method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
+            method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])'''
 
             title = QLabel('<b>'+task[0]+'  |  '+task[1]+'</b>')
+            title.setObjectName('analysis-title-txt')
             vgram = VoltamogramPlot(self.parent)
             self.voltamograms.append(vgram)
- 
+
+            h = QHBoxLayout()
+            h.addStretch()
+            h.addWidget(title)
+            h.addStretch()
+            w_top = QWidget()
+            w_top.setLayout(h)
+            w_top.setObjectName('analysis-title-bar')
+            
+            
             v = QVBoxLayout()
-            v.addWidget(title)
+            v.addWidget(w_top)
             v.addWidget(vgram)
             v.addStretch()
             
@@ -114,34 +122,30 @@ class WindowAnalyze(QMainWindow):
         h2.addWidget(QVLine())
         h2.addStretch()
         h2.addLayout(v2)
-        
-
 
         # set form
         starting_index = self.stack.currentIndex()
         self.update_buttons(starting_index)
         self.refresh_progress(starting_index)
+        self.set_graph(starting_index)
 
         w = QWidget()
         w.setLayout(h2)
         self.setCentralWidget(w)
+        applyStyles()
+
+        
 
         
 
     
     def next_click(self):
-        # store current here ##############################
-        #
-        print('storing the results!')
-        #
-        #
-        ##############################
-        # Then process the next click
         self.store_results()
         self.process_next()
 
     def store_results(self):
-        return
+        i = self.stack.currentIndex()
+        self.results[i] = self.voltamograms[i].get_analysis_results()
         
 
 
@@ -156,9 +160,19 @@ class WindowAnalyze(QMainWindow):
             self.go_to_rep(i+1)                                          
 
     def go_to_rep(self, i):
+        try:
+            self.set_graph(i)
+        except Exception as e:
+            print(e)
         self.stack.setCurrentIndex(i)
         self.update_buttons(i)
         self.refresh_progress(i)
+
+    def set_graph(self, i):
+        lines = self.voltamograms[i].get_line_count()
+        if lines == 0:
+            self.voltamograms[i].plot_reps([self.tasks[i]], subbackground=True, smooth=True,
+                                           lopass=True, showraw=True, predictpeak=True)
         
 
     def update_buttons(self, i):

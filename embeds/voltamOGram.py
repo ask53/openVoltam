@@ -229,7 +229,8 @@ class VoltamogramPlot(QMainWindow):
             runs_displayed.append(rep['run_uid'])
 
         # 3. Add legend
-        self.canvas.axes.legend()
+        if not predictpeak:
+            self.canvas.axes.legend()
         
         
 
@@ -302,6 +303,10 @@ class VoltamogramPlot(QMainWindow):
         b, a = butter(order, normal_cutoff, btype='low', analog=False)
         filtered_data = filtfilt(b, a, data) # Use filtfilt for zero phase distortion
         return filtered_data
+
+    def get_line_count(self):
+        return len(self.canvas.axes.get_lines())
+        
 
     def get_analysis_results(self):
         return {g.A_PEAK_X: 'x-peak',
