@@ -103,6 +103,12 @@ class WindowAnalyze(QMainWindow):
         for but in self.buts:
             v1.addWidget(but)
         v1.addStretch()
+
+        helptext = QLabel("Press 'z' on the keyboard to toggle between baseline endpoints.")
+        h0 = QHBoxLayout()
+        h0.addStretch()
+        h0.addWidget(helptext)
+        h0.addStretch()
         
         self.but_next = QPushButton()
         self.but_next.clicked.connect(self.next_click)
@@ -113,6 +119,7 @@ class WindowAnalyze(QMainWindow):
 
         v2 = QVBoxLayout()
         v2.addLayout(self.stack)
+        v2.addLayout(h0)
         v2.addLayout(h1)
 
         
@@ -194,6 +201,17 @@ class WindowAnalyze(QMainWindow):
             if self.results[j]: but.setText(run_id+', '+rep_id+'  |  Complete')
             else: but.setText(run_id+', '+rep_id)       
         applyStyles()
+
+    def keyPressEvent(self, event):
+        print('keypress!')
+        if event.text() in ('z', '.'):
+            print('switching active point!')
+            try:
+                i = self.stack.currentIndex()
+                self.voltamograms[i].toggle_endpoint()
+            except Exception as e:
+                print(e)
+            
         
         
         

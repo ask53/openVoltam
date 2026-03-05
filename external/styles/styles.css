@@ -171,3 +171,7 @@ WindowAnalyze QLabel#analysis-title-txt {
 	font-size: 12pt;
 }
 
+WindowAnalyze VoltamogramPlot {
+	border: 1px solid #808080;
+}
+

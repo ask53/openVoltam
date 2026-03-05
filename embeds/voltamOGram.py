@@ -53,7 +53,8 @@ class VoltamogramPlot(QMainWindow):
             super().__init__()
 
             self.parent = parent
-            self.dragging = False
+            self.dragging_end = False
+            self.dragging_peak = False
             self.drag_index = 0
             
             size_mm = g.APP.primaryScreen().physicalSize()
@@ -139,23 +140,39 @@ class VoltamogramPlot(QMainWindow):
 
             # 7. Show smoothed data
             self.smoothed, = self.canvas.axes.plot(x, y, color, linestyle=linestyle,
-                                  linewidth=2, label=lbl, picker=predictpeak)          # then show smoothed, filtered data on top.
+                                  linewidth=2, label=lbl, picker=2)          # then show smoothed, filtered data on top.
 
             if predictpeak:
+
                 ###################################
                 #
                 #   REDO THIS BUT WITH [x0,y0] and [x1,y1] as np.ndarray types
                 #
-                self.x0 = x[1].copy()
-                self.y0 = y[1].copy()
-                self.x1 = x[-2].copy()
-                self.y1 = y[-2].copy()
+                self.x = x      # store x and y for access from mouseclick/move handlers
+                self.y = y
+                self.base_x = np.array([x[1], x[-2]])
+                self.base_y = np.array([y[1], y[-2]])
+                self.active_endpoint = 0
+                
                 #
-                self.endpoints, = self.canvas.axes.plot([self.x0,self.x1], [self.y0,self.y1], 'o',
-                                                        color='purple', markersize='12', picker=16)
-                #
-                self.baseline, = self.canvas.axes.plot([self.x0,self.x1], [self.y0,self.y1], '-',
-                                                       color='purple')
+                ep0, = self.canvas.axes.plot(self.base_x[0], self.base_y[0], 'o',
+                                             mfc='#80008033',mec='black', mew=2,
+                                             markersize='36', picker=40)
+
+                ep1, = self.canvas.axes.plot(self.base_x[1], self.base_y[1], 'o',
+                                             mfc='#80008033', mec='None', mew=2,
+                                             markersize='36', picker=40)
+                self.endpoints = (ep0,ep1)
+
+                self.baseline, = self.canvas.axes.plot(self.base_x, self.base_y, '-',
+                                                       color='#800080bb')
+
+                tempxy = np.array([0,0])
+                self.peakline, = self.canvas.axes.plot(tempxy, tempxy, '-', color='#00ddff')
+                self.peakpoint, = self.canvas.axes.plot(0, 0, 'o', mfc='#013ea833',
+                                                        mec='None',
+                                                        markersize='18', picker=18)
+                self.guess_peak()
                 #
                 #
                 #   HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE 
@@ -182,36 +199,137 @@ class VoltamogramPlot(QMainWindow):
             # 8. If predictpeak, show baseline (with adjustable handles) and peak location
                 
 
+    def toggle_endpoint(self):
+        if self.active_endpoint == 0: self.active_endpoint = 1
+        else: self.active_endpoint = 0
+        for i,ep in enumerate(self.endpoints):
+            if i == self.active_endpoint: ep.set_mec('black')
+            else: ep.set_mec('None')
+        self.canvas.draw_idle()
             
+        
     
 
     def on_pick(self, event):
         ind = event.ind
         print('Artist picked: ')
         print(event.artist)
-        if event.artist == self.endpoints:
-            self.dragging = True
-            self.drag_index = ind[0]
-        print('Pick between vertices {} and {}'.format(min(ind), max(ind)+1))
-        print(ind)
-        print()
+        if event.artist in self.endpoints:                              # if an endpoint was picked
+            self.dragging_end = True                                        # set dragging flag
+            self.drag_index = self.endpoints.index(event.artist)        # get index of picked endpoint
+        elif event.artist == self.smoothed:                             # if a point on smoothed data curve picked
+            if event.mouseevent.xdata:                                  
+                i = (np.abs(self.x - event.mouseevent.xdata)).argmin()  # get index of picked point
+                self.move_endpoint(self.active_endpoint,
+                                   self.x[i], self.y[i])                # move the active endpoint to picked point
+        elif event.artist == self.peakpoint:
+            self.dragging_peak = True
 
     def on_but_release(self, event):
-        self.dragging = False
+        self.dragging_end = False
+        self.dragging_peak = False
 
     def on_mouse_move(self, event):
-        if self.dragging:
-            print('x: '+str(event.xdata))
-            print('y: '+str(event.ydata))
-            if self.drag_index == 0:
-                print('dragging 0')
-                self.x0 = event.xdata
-                self.y0 = event.ydata
-            elif self.drag_index == 1:
-                print('dragging1')
-                self.x1 = event.xdata
-                self.y1 = event.ydata
-            self.canvas.draw_idle()
+        if self.dragging_end:
+            if event.xdata:
+                i = (np.abs(self.x - event.xdata)).argmin() # get index
+                self.move_endpoint(self.drag_index, self.x[i], self.y[i])
+        elif self.dragging_peak:
+            if event.xdata:
+                print('snapping peak!')
+                i = (np.abs(self.x - event.xdata)).argmin() # get index
+                self.snap_peak(i)
+                
+                
+
+    def move_endpoint(self, i, x, y):
+        # move point with index i to position (x,y)
+        self.base_x[i] = x
+        self.base_y[i] = y
+
+        self.endpoints[i].set_xdata([x])
+        self.baseline.set_xdata(self.base_x)
+        self.endpoints[i].set_ydata([y])
+        self.baseline.set_ydata(self.base_y)
+
+        self.guess_peak()
+
+        self.canvas.draw_idle()
+
+    def guess_peak(self):
+        i_lo = np.argmin(self.base_x)
+        i_hi = 1-i_lo
+
+        x0 = self.base_x[i_lo]
+        y0 = self.base_y[i_lo]
+        x1 = self.base_x[i_hi]
+        y1 = self.base_y[i_hi]
+
+        if x0==x1:          # if the endpoints are on top of one another
+            x_max = x0      # do this to avoid a divide-by-zero error
+            y_max = y0
+            y_max_base = y0
+        
+        else:
+            m = float(y1-y0)/float(x1-x0)   # slope of baseline
+            b = y0-m*x0                     # y intercept of baseline
+
+            x_min_index = np.where(self.x == x0)[0][0]  # get data index of lower bound
+            x_max_index = np.where(self.x == x1)[0][0]  # get data index of upper bound
+
+            i_max = np.argmax(self.y[x_min_index:x_max_index]) + x_min_index    # get index of highest point between bounds
+
+            y_max = self.y[i_max]
+            x_max = self.x[i_max]
+            y_max_base = m * x_max + b
+
+        self.set_peak(x_max, y_max_base, y_max)
+
+    def snap_peak(self, i):
+        """Snaps the peak to nearest local max within a tolerance.
+        If there isn't one, leaves it where the user left it."""
+        tolerance = 3
+
+        i_lo = np.argmin(self.base_x)
+        i_hi = 1-i_lo
+
+        x0 = self.base_x[i_lo]
+        x1 = self.base_x[i_hi]
+
+        if self.x[i] > x0 and self.x[i] < x1:
+            
+            ################################# HERE ########################################## HERE #########################
+            #
+            #
+            #   If there is a local max within the tolerance of the selected x value,
+            #       snap the peak to that local max
+            #   Otherwise, put the peak wherever the user requested
+            #
+            #############################################
+            pass
+        
+            
+        
+
+
+    def set_peak(self, x, y0, y1):
+        
+        self.peakline.set_xdata([x,x])
+        self.peakline.set_ydata([y0,y1])
+        self.peakpoint.set_xdata([x])
+        self.peakpoint.set_ydata([y1])
+        
+        
+
+        
+
+        
+
+        
+
+
+        
+        
 
 
     def plot_reps(self, reps, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False):
