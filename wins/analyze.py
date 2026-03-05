@@ -147,12 +147,14 @@ class WindowAnalyze(QMainWindow):
 
     
     def next_click(self):
+        
         self.store_results()
         self.process_next()
 
     def store_results(self):
         i = self.stack.currentIndex()
         self.results[i] = self.voltamograms[i].get_analysis_results()
+        print(self.results[i])
         
 
 

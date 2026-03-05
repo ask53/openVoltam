@@ -8,12 +8,15 @@ There are two ways to add data to the plot:
 
 - plot_reps:
     This takes in a list of reps (can correspond to any runs, including
-    multiple reps of the same run). Plots all lines corresponding to the
-    same run as the same color/style UNLESS there are only reps from a single
-    run provided, in which case all reps are given distinct colors & styles.
+        multiple reps of the same run). Plots all lines corresponding to the
+        same run as the same color/style UNLESS there are only reps from a single
+        run provided, in which case all reps are given distinct colors & styles.
     If a single rep is passed, raw data is also displayed.
     The legend that is displayed shows run ID UNLESS there are only reps
-    from a single run provided, in which case it shows run ID and rep ID
+        from a single run provided, in which case it shows run ID and rep ID.
+    IF a single rep is passed AND predictpeak==True, then no legend is displayed.
+        instead, baselines and peaklines are displayed and the user can
+        interact with these plot features to get peak height.
 - plot runs
     This takes in a list of runs. It plots all reps with data for those
     runs. All reps of the same run are styled (color and linestyle) the
@@ -49,38 +52,37 @@ class VoltamogramCanvas(FigureCanvasQTAgg):
 
 class VoltamogramPlot(QMainWindow):
     def __init__(self, parent, title=False):
-        try:
-            super().__init__()
 
-            self.parent = parent
-            self.dragging_end = False
-            self.dragging_peak = False
-            self.drag_index = 0
+        super().__init__()
+        
+        self.parent = parent
+        self.dragging_end = False
+        self.dragging_peak = False
+        self.drag_index = 0
             
-            size_mm = g.APP.primaryScreen().physicalSize()
-            width_in = size_mm.width() * g.MM2IN
-            height_in = size_mm.height() * g.MM2IN
+        size_mm = g.APP.primaryScreen().physicalSize()
+        width_in = size_mm.width() * g.MM2IN
+        height_in = size_mm.height() * g.MM2IN
 
-            self.canvas = VoltamogramCanvas(self, width=width_in,                               # Create figure on canvas
+        self.canvas = VoltamogramCanvas(self, width=width_in,                               # Create figure on canvas
                                             height=height_in, dpi=100, title=title)    
-            toolbar = SubsetToolbar(self.canvas, self)                                          # set canvas toolbar
+        toolbar = SubsetToolbar(self.canvas, self)                                          # set canvas toolbar
 
-            self.set_axis_labels()
-            self.axes = self.canvas.axes
+        self.set_axis_labels()
+        self.axes = self.canvas.axes
 
-            self.colors = ['deeppink','limegreen','chocolate','mediumturquoise','gold','purple','red','blue']
-            self.linestyles = ['solid', 'dotted', 'dashed', 'dashdot']
+        self.colors = ['deeppink','limegreen','chocolate','mediumturquoise','gold','purple','red','blue']
+        self.linestyles = ['solid', 'dotted', 'dashed', 'dashdot']
                 
-            layout = QVBoxLayout()          # Add toolbar and canvas to vertical layout
-            layout.addWidget(toolbar)
-            layout.addWidget(self.canvas)
+        layout = QVBoxLayout()          # Add toolbar and canvas to vertical layout
+        layout.addWidget(toolbar)
+        layout.addWidget(self.canvas)
 
-            widget = QWidget()              # Add layout to central widget of QMainWindow and show!
-            widget.setLayout(layout)
-            self.setCentralWidget(widget)
-            self.show()
-        except Exception as e:
-            print(e)
+        widget = QWidget()              # Add layout to central widget of QMainWindow and show!
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
+        self.show()
+
 
     def set_axis_labels(self):
         self.canvas.axes.set_xlabel('Voltage [V]')
@@ -149,6 +151,8 @@ class VoltamogramPlot(QMainWindow):
                 self.base_x = np.array([x[1], x[-2]])
                 self.base_y = np.array([y[1], y[-2]])
                 self.active_endpoint = 0
+                self.peak_x = 0
+                self.peak_y = 0
                 
                 ep0, = self.canvas.axes.plot(self.base_x[0], self.base_y[0], 'o',
                                              mfc='#80008033',mec='black', mew=2,
@@ -161,10 +165,10 @@ class VoltamogramPlot(QMainWindow):
                 self.baseline, = self.canvas.axes.plot(self.base_x, self.base_y, '-',
                                                        color='#800080bb')
 
-                tempxy = np.array([0,0])
+                tempxy = np.array([self.peak_x,self.peak_x])
                 self.peakline, = self.canvas.axes.plot(tempxy, tempxy, '-', color='#00ddff')
-                self.peakpoint, = self.canvas.axes.plot(0, 0, 'o', mfc='#013ea833',
-                                                        mec='None',
+                self.peakpoint, = self.canvas.axes.plot(self.peak_x, self.peak_y, 'o',
+                                                        mfc='#013ea833', mec='None',
                                                         markersize='18', picker=18)
                 self.endpoints = (ep0,ep1)
                 self.guess_peak()
@@ -174,27 +178,27 @@ class VoltamogramPlot(QMainWindow):
                 self.canvas.mpl_connect('motion_notify_event', self.on_mouse_move)
                 
             self.canvas.draw()
-            
 
             
-            
-                
-
-    def toggle_endpoint(self):
-        if self.active_endpoint == 0: self.active_endpoint = 1
-        else: self.active_endpoint = 0
-        for i,ep in enumerate(self.endpoints):
-            if i == self.active_endpoint: ep.set_mec('black')
-            else: ep.set_mec('None')
-        self.canvas.draw_idle()
-            
-        
-    
+    #################################################
+    #                                               #
+    #   Interactivity handlers (and their friends)  #
+    #                                               #
+    #   1. on_pick                                  #
+    #   2. on_but_release                           #
+    #   3. on_mouse_move                            #
+    #   4. move_endpoint                            #
+    #   5. guess_peak                               #
+    #   6. drag_peak                                #
+    #   7. set_peak                                 #
+    #   8. get_baseline_params                      #
+    #                                               #
+    #################################################
 
     def on_pick(self, event):
+        """Handler for when a pick event is registered on plot"""
+        
         ind = event.ind
-        print('Artist picked: ')
-        print(event.artist)
         if event.artist in self.endpoints:                              # if an endpoint was picked
             self.dragging_end = True                                        # set dragging flag
             self.drag_index = self.endpoints.index(event.artist)        # get index of picked endpoint
@@ -207,10 +211,14 @@ class VoltamogramPlot(QMainWindow):
             self.dragging_peak = True
 
     def on_but_release(self, event):
+        """Handler for when a mouse button is released"""
+        
         self.dragging_end = False
         self.dragging_peak = False
 
     def on_mouse_move(self, event):
+        """Handler for every time a mouse-moved event is regisered on plot"""
+        
         if self.dragging_end:
             if event.xdata:
                 i = (np.abs(self.x - event.xdata)).argmin() # get index
@@ -223,7 +231,9 @@ class VoltamogramPlot(QMainWindow):
                 
 
     def move_endpoint(self, i, x, y):
-        # move point with index i to position (x,y)
+        """moves baseline endpoint with index i to position (x,y).
+        Updates peakline position to match adjusted baseline."""
+        
         self.base_x[i] = x
         self.base_y[i] = y
 
@@ -232,11 +242,16 @@ class VoltamogramPlot(QMainWindow):
         self.endpoints[i].set_ydata([y])
         self.baseline.set_ydata(self.base_y)
 
-        self.guess_peak()
+        self.guess_peak()                   
 
         self.canvas.draw_idle()
 
     def guess_peak(self):
+        """Guesses where the peak should be and moves the peakline
+        and the peakpoint to that position.
+        ALGORITHM: picks highest point between the two endpoints
+            of the baseline."""
+        
         (x0, y0, x1, y1, m, b) = self.get_baseline_params()
 
         if x0==x1:          # if the endpoints are on top of one another
@@ -270,10 +285,27 @@ class VoltamogramPlot(QMainWindow):
 
             self.set_peak(x,y_base,y) 
             self.canvas.draw_idle()
+     
 
+    def set_peak(self, x, y0, y1):
+        """Moves the peakline  as a vertical line extending
+        up from (x, y0) to (x, y1) and moves peakpoint accordingly."""
+        
+        self.peak_x = x
+        self.peak_y = y1
+        self.peakline.set_xdata([x,x])
+        self.peakline.set_ydata([y0,y1])
+        self.peakpoint.set_xdata([x])
+        self.peakpoint.set_ydata([y1])
 
     def get_baseline_params(self):
-        """returns (x0, y0, x1, y1, m, b)"""
+        """lower bound of baseline: (x0, y0)
+        upper bound of baseline: (x1, y1)
+        slope of baseline: m
+        y-intercetp of baseline: b
+
+        returns (x0, y0, x1, y1, m, b)"""
+        
         i_lo = np.argmin(self.base_x)
         i_hi = 1-i_lo
 
@@ -287,37 +319,17 @@ class VoltamogramPlot(QMainWindow):
         
         m = float(y1-y0)/float(x1-x0)   # slope of baseline
         b = y0-m*x0                     # y intercept of baseline
-
-        return (x0, y0, x1, y1, m, b)
-        
-        
-            
-            
-            
-        
-            
+        return (x0, y0, x1, y1, m, b)  
         
 
-
-    def set_peak(self, x, y0, y1):
-        
-        self.peakline.set_xdata([x,x])
-        self.peakline.set_ydata([y0,y1])
-        self.peakpoint.set_xdata([x])
-        self.peakpoint.set_ydata([y1])
-        
-        
-
-        
-
-        
-
-        
-
-
-        
-        
-
+    #####################################
+    #                                   #
+    #   Run and rep pre-plot functions  #
+    #                                   #
+    #   1. plot_reps                    #
+    #   2. plot_runs                    #
+    #                                   #
+    #####################################
 
     def plot_reps(self, reps, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False):
         # 1. Get data from file for specified reps
@@ -350,17 +362,16 @@ class VoltamogramPlot(QMainWindow):
                             break
                     if found: break
             reps_to_disp.append(rep)
-            print(reps_to_disp)
+            
+            ### FOR DEBUGGING, UNCOMMENT
+            #
+            #print(reps_to_disp)
+            #
+            #########################
 
         onerun = False
         if len(runs_to_disp) == 1: onerun=True
             
-
-           
-
-        
-        
-        
         # 2. Loop thru runs, plotting each rep
         run_colors = {}
         lstyles = {}
@@ -392,8 +403,6 @@ class VoltamogramPlot(QMainWindow):
         if not predictpeak:
             self.canvas.axes.legend()
         
-        
-
     def plot_runs(self, runs, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False):
         # 1. Get data from file for specified runs
         all_data = get_data_from_file(self.parent.path)     # read file including all raw data
@@ -408,7 +417,6 @@ class VoltamogramPlot(QMainWindow):
                     found = True
                     break
                 
-    
         # 2. Loop thru runs, plotting each rep
         for i,run in enumerate(runs_to_show):
             color = self.colors[i%len(self.colors)]
@@ -422,6 +430,16 @@ class VoltamogramPlot(QMainWindow):
 
         # 3. Add legend
         self.canvas.axes.legend()
+
+
+    #############################################
+    #                                           #
+    #   Helper functions for data processing    #
+    #                                           #
+    #   1. resize_data                          #
+    #   2. butter_lowpass_filter                #
+    #                                           #
+    #############################################
 
     def resize_data(self, file_in, n):
         #  file_in = 1D numpy array of arbitrary length
@@ -464,16 +482,37 @@ class VoltamogramPlot(QMainWindow):
         filtered_data = filtfilt(b, a, data) # Use filtfilt for zero phase distortion
         return filtered_data
 
+
+    #####################################
+    #                                   #
+    #   Fns to be called by external    #
+    #                                   #
+    #   1. get_line_count               #
+    #   2. toggle_endpoint              #
+    #   3. get_analysis_results         #
+    #                                   #
+    #####################################
+
     def get_line_count(self):
         return len(self.canvas.axes.get_lines())
+
+    def toggle_endpoint(self):
+        if self.active_endpoint == 0: self.active_endpoint = 1
+        else: self.active_endpoint = 0
+        for i,ep in enumerate(self.endpoints):
+            if i == self.active_endpoint: ep.set_mec('black')
+            else: ep.set_mec('None')
+        self.canvas.draw_idle()
         
-
     def get_analysis_results(self):
-        return {g.A_PEAK_X: 'x-peak',
-                g.A_PEAK_Y: 'y-peak',
-                g.A_PEAK_HEIGHT: 'peak-height',
-                g.A_BASE_0_X: 'base0-x',
-                g.A_BASE_0_Y: 'base0-y',
-                g.A_BASE_1_X: 'base1-x',
-                g.A_BASE_1_Y: 'base1-y'}
-
+        (x0, y0, x1, y1, m, b) = self.get_baseline_params()
+        y_base = m*self.peak_x+b
+        ht = self.peak_y-y_base
+        
+        return {g.A_PEAK_X: float(self.peak_x),
+                g.A_PEAK_Y: float(self.peak_y),
+                g.A_PEAK_HEIGHT: float(ht),
+                g.A_BASE_0_X: float(x0),
+                g.A_BASE_0_Y: float(y0),
+                g.A_BASE_1_X: float(x1),
+                g.A_BASE_1_Y: float(y1)}
