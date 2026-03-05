@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 import pandas as pd
-from scipy.signal import savgol_filter, butter, filtfilt
+from scipy.signal import savgol_filter, butter, filtfilt, argrelextrema
 
 from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QWidget
 
@@ -142,19 +142,14 @@ class VoltamogramPlot(QMainWindow):
             self.smoothed, = self.canvas.axes.plot(x, y, color, linestyle=linestyle,
                                   linewidth=2, label=lbl, picker=2)          # then show smoothed, filtered data on top.
 
+            # 8. If predictpeak, show baseline (with adjustable handles) and peak location
             if predictpeak:
-
-                ###################################
-                #
-                #   REDO THIS BUT WITH [x0,y0] and [x1,y1] as np.ndarray types
-                #
                 self.x = x      # store x and y for access from mouseclick/move handlers
                 self.y = y
                 self.base_x = np.array([x[1], x[-2]])
                 self.base_y = np.array([y[1], y[-2]])
                 self.active_endpoint = 0
                 
-                #
                 ep0, = self.canvas.axes.plot(self.base_x[0], self.base_y[0], 'o',
                                              mfc='#80008033',mec='black', mew=2,
                                              markersize='36', picker=40)
@@ -162,8 +157,7 @@ class VoltamogramPlot(QMainWindow):
                 ep1, = self.canvas.axes.plot(self.base_x[1], self.base_y[1], 'o',
                                              mfc='#80008033', mec='None', mew=2,
                                              markersize='36', picker=40)
-                self.endpoints = (ep0,ep1)
-
+                
                 self.baseline, = self.canvas.axes.plot(self.base_x, self.base_y, '-',
                                                        color='#800080bb')
 
@@ -172,31 +166,18 @@ class VoltamogramPlot(QMainWindow):
                 self.peakpoint, = self.canvas.axes.plot(0, 0, 'o', mfc='#013ea833',
                                                         mec='None',
                                                         markersize='18', picker=18)
+                self.endpoints = (ep0,ep1)
                 self.guess_peak()
-                #
-                #
-                #   HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE 
-                #
-                #####################################################
                 
                 self.canvas.callbacks.connect('pick_event', self.on_pick)
                 self.canvas.mpl_connect('button_release_event', self.on_but_release)
                 self.canvas.mpl_connect('motion_notify_event', self.on_mouse_move)
-
-    
-
-
-
-
-
-
-
                 
             self.canvas.draw()
             
 
             
-            # 8. If predictpeak, show baseline (with adjustable handles) and peak location
+            
                 
 
     def toggle_endpoint(self):
@@ -236,9 +217,8 @@ class VoltamogramPlot(QMainWindow):
                 self.move_endpoint(self.drag_index, self.x[i], self.y[i])
         elif self.dragging_peak:
             if event.xdata:
-                print('snapping peak!')
                 i = (np.abs(self.x - event.xdata)).argmin() # get index
-                self.snap_peak(i)
+                self.drag_peak(i)
                 
                 
 
@@ -257,26 +237,16 @@ class VoltamogramPlot(QMainWindow):
         self.canvas.draw_idle()
 
     def guess_peak(self):
-        i_lo = np.argmin(self.base_x)
-        i_hi = 1-i_lo
-
-        x0 = self.base_x[i_lo]
-        y0 = self.base_y[i_lo]
-        x1 = self.base_x[i_hi]
-        y1 = self.base_y[i_hi]
+        (x0, y0, x1, y1, m, b) = self.get_baseline_params()
 
         if x0==x1:          # if the endpoints are on top of one another
             x_max = x0      # do this to avoid a divide-by-zero error
             y_max = y0
             y_max_base = y0
-        
         else:
-            m = float(y1-y0)/float(x1-x0)   # slope of baseline
-            b = y0-m*x0                     # y intercept of baseline
-
             x_min_index = np.where(self.x == x0)[0][0]  # get data index of lower bound
             x_max_index = np.where(self.x == x1)[0][0]  # get data index of upper bound
-
+            
             i_max = np.argmax(self.y[x_min_index:x_max_index]) + x_min_index    # get index of highest point between bounds
 
             y_max = self.y[i_max]
@@ -285,28 +255,45 @@ class VoltamogramPlot(QMainWindow):
 
         self.set_peak(x_max, y_max_base, y_max)
 
-    def snap_peak(self, i):
-        """Snaps the peak to nearest local max within a tolerance.
-        If there isn't one, leaves it where the user left it."""
-        tolerance = 3
+    def drag_peak(self, i):
+        """Drags the peak to the selected location, within the bounds
+        of the baseline.
+        
+        ***Possible future expansion***: a feature that
+        auto-snaps the peakline to local maxima, that can be toggled
+        on and off from the settings."""
+        (x0, y0, x1, y1, m, b) = self.get_baseline_params()
+        if self.x[i] > x0 and self.x[i] < x1:
+            x = self.x[i]
+            y_base = m*x+b
+            y = self.y[i]
 
+            self.set_peak(x,y_base,y) 
+            self.canvas.draw_idle()
+
+
+    def get_baseline_params(self):
+        """returns (x0, y0, x1, y1, m, b)"""
         i_lo = np.argmin(self.base_x)
         i_hi = 1-i_lo
 
         x0 = self.base_x[i_lo]
+        y0 = self.base_y[i_lo]
         x1 = self.base_x[i_hi]
+        y1 = self.base_y[i_hi]
 
-        if self.x[i] > x0 and self.x[i] < x1:
+        if x0==x1:                      # avoid divide-by-zero error
+            return (x0, y0, x1, y1, 0, 0)
+        
+        m = float(y1-y0)/float(x1-x0)   # slope of baseline
+        b = y0-m*x0                     # y intercept of baseline
+
+        return (x0, y0, x1, y1, m, b)
+        
+        
             
-            ################################# HERE ########################################## HERE #########################
-            #
-            #
-            #   If there is a local max within the tolerance of the selected x value,
-            #       snap the peak to that local max
-            #   Otherwise, put the peak wherever the user requested
-            #
-            #############################################
-            pass
+            
+            
         
             
         
