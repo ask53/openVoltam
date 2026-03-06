@@ -154,7 +154,7 @@ class WindowAnalyze(QMainWindow):
     def store_results(self):
         i = self.stack.currentIndex()
         self.results[i] = self.voltamograms[i].get_analysis_results()
-        print(self.results[i])
+        print(self.results)
         
 
 
@@ -218,6 +218,7 @@ class WindowAnalyze(QMainWindow):
         
         
     def save(self):
+        
         print('saving then closing!')
         return True
 

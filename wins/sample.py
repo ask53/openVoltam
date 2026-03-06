@@ -208,7 +208,6 @@ class WindowSample(QMainWindow):
             but.setEnabled(enabled)
 
     def start_save_new(self):
-        print('here!')
         self.set_buttons_enabled(False)
         if self.validate():
             initial_name = guess_filename(self.w_name.text())

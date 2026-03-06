@@ -1235,8 +1235,12 @@ class WindowMain(QMainWindow):
             self.process.finished.connect(self.handle_finished_read)
             self.status.showMessage("Loading data...")
             self.progress_bar.setVisible(True)
-            #self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_READ, self.path])
-            self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_READ, self.path])
+            
+            
+            if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
+                self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_READ, self.path])
+            else:
+                self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_READ, self.path])
 
     def handle_read_stdout(self):
         print('load normal msg!')
@@ -1286,11 +1290,15 @@ class WindowMain(QMainWindow):
             self.process.readyReadStandardOutput.connect(self.handle_save_stdout)
             self.process.readyReadStandardError.connect(self.handle_save_stderr)
             self.process.finished.connect(partial(self.handle_finished_save, onSuccess, onError))
-            #self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_SAVE, self.path, saveType, str(params)])
-            self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_SAVE, self.path, saveType, str(params)])
-
             self.status.showMessage("Saving...")
             self.progress_bar.setVisible(True)
+            
+            if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
+                self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_SAVE, self.path, saveType, str(params)])
+            else:
+                self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_SAVE, self.path, saveType, str(params)])
+
+            
 
     def handle_save_stdout(self):
         print('normal msg:')
