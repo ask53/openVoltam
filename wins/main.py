@@ -933,7 +933,7 @@ class WindowMain(QMainWindow):
             if rep[g.R_NOTES] != input_text:
                 rep[g.R_NOTES] = input_text
                 print(rep)
-                self.start_async_save(g.SAVE_TYPE_REP_MOD, [(run_id, rep_id), rep])
+                self.start_async_save(g.SAVE_TYPE_REP_MOD, [[(run_id, rep_id)], [rep]])
 
     def open_run_config_with_uid(self, mode):
         """Finds the first selected run (assumes there is only one run selected!)
@@ -1292,7 +1292,7 @@ class WindowMain(QMainWindow):
             self.process.finished.connect(partial(self.handle_finished_save, onSuccess, onError))
             self.status.showMessage("Saving...")
             self.progress_bar.setVisible(True)
-            
+
             if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
                 self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_SAVE, self.path, saveType, str(params)])
             else:

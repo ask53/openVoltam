@@ -19,6 +19,7 @@ from external.globals import ov_globals as g
 from embeds.voltamOGram import VoltamogramPlot
 
 from functools import partial
+from time import sleep
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -39,7 +40,6 @@ class WindowAnalyze(QMainWindow):
         self.parent = parent
         self.tasks = tasks
         self.saved = False
-        self.close_on_save = False
         self.results = []
 
         self.setWindowTitle(self.parent.data[g.S_NAME]+' | Analyze')
@@ -154,16 +154,10 @@ class WindowAnalyze(QMainWindow):
     def store_results(self):
         i = self.stack.currentIndex()
         self.results[i] = self.voltamograms[i].get_analysis_results()
-        print(self.results)
-        
-
-
 
     def process_next(self):
         if self.stack.currentIndex() == len(self.tasks)-1:  # if we're on last task already
-            saved = self.save()                             #   try to save
-            if saved:                                       #   if saved,
-                self.close()                                #       close the window! 
+            saved = self.save_and_close()                   #   try to save
         else:                                               # if we're not on the last task,
             i = self.stack.currentIndex()                   #   go to the next task
             self.go_to_rep(i+1)                                          
@@ -217,24 +211,35 @@ class WindowAnalyze(QMainWindow):
         
         
         
-    def save(self):
-        
-        print('saving then closing!')
-        return True
+    def save_and_close(self):
+        # 1. slide analyzed data into parent data
+        to_write = []
+        for i, task in enumerate(self.tasks):       # for each rep analyzed
+            rep = get_rep(self.parent.data, task)   # get the data pre-analysis
+            rep[g.R_ANALYSIS] = self.results[i]     # slot in the analysis
+            to_write.append(rep)
+            
 
-    def save_from_close(self, event):
-        print('saving!')
-        #################################
-        #
-        #   DO SAVE HERE
-        #
-        #
-        ########################################
+        # 2. run async save
+        self.status.showMessage("Saving...")
+
+        cb_suc = self.save_success
+        cb_err = self.save_error
+
+        self.parent.start_async_save(g.SAVE_TYPE_REP_MOD, [self.tasks, to_write],
+                                         onSuccess=cb_suc, onError=cb_err)
+            
+
+            
+
+    def save_success(self, event=False):
+        print('got here!')
+        self.status.showMessage("Saved!")
         self.saved = True
-        if self.close_on_save and self.saved:
-            self.accept_close(event)
-        else:
-            event.ignore()
+        self.close()
+
+    def save_error(self, event=False):
+        self.status.showMessage("ERROR: Save could not complete.", g.SB_DURATION)
 
             
 
@@ -255,8 +260,8 @@ class WindowAnalyze(QMainWindow):
             confirm = saveMessageBox()
             resp = confirm.exec()
             if resp == QMessageBox.StandardButton.Save:
-                self.close_on_save = True
-                self.save_from_close(event)
+                event.ignore()
+                self.save_and_close()
             elif resp == QMessageBox.StandardButton.Discard:
                 self.accept_close(event)
             else:

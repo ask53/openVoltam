@@ -106,7 +106,7 @@ def write_data_to_file(path, data):
             options: StringifyOptions = {
                 "indentation": 4,
                 "trailingCommas": False,
-                "output_as_table": is_homogeneous
+                "output_as_table": lambda tabular_data, path: g.R_DATA_TIME in tabular_data[0]
                 }
             tab_json_to_write = stringify(data, options)       #   convert dictionary to json string
             file.write(tab_json_to_write)                                       #   write json string to file

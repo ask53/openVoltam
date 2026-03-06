@@ -234,22 +234,19 @@ def save_delete_rep(data, params):
     return data
 
 def save_modify_rep(data, params):
-    run_id = params[0][0]
-    rep_id = params[0][1]
-    newRep = params[1]
-
-    rep = get_rep(data, (run_id, rep_id))
-
-    if rep:
-        #prevData = rep[g.R_DATA]    # store the previous raw data
-        keys = list(rep.keys())     # get a list of all keys in saved rep
-        keys.remove(g.R_DATA)       #   except for the data key
-        for key in keys:            # remove all keys and values from rep except data
-            rep.pop(key, None)      
-        for key in newRep:          # add new keys and values to rep (does not include raw data)
-            rep[key] = newRep[key]
-        #rep[g.R_DATA] = prevData    # add previous raw data back in
-    return data
+    tasks = params[0]       # a list of tuples, each with the form (runID, repID)
+    newReps = params[1]     # a list of the same length as tasks, with all rep params to save
+    for i, task in enumerate(tasks):
+        rep = get_rep(data, task)
+        if rep:
+            keys = list(rep.keys())     # get a list of all keys in saved rep
+            keys.remove(g.R_DATA)       #   except for the data key
+            keys.remove(g.R_BACKGROUND)
+            for key in keys:            # remove all keys and values from rep except data
+                rep.pop(key, None)      
+            for key in newReps[i]:      # add new keys and values to rep (does not include raw data)
+                rep[key] = newReps[i][key]
+        return data
 
 def save_modify_run(data, params):
     run_id = params[0]
@@ -316,9 +313,6 @@ def save():
         write_data_to_file(path, data)
         data = remove_data_from_layout(data) 
         write_data(str(data))               #   Write the data (with raw data stripped) to data channel
-
-
-
         
     except Exception as e:                  # If process generates an error:
         write_error(str(e))                 #   Write that error to error channel
