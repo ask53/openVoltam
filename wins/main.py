@@ -413,7 +413,7 @@ class WindowMain(QMainWindow):
         self.grid.setVerticalSpacing(0)
         
         # create column headers and add them to the grid layout
-        headers = ['RUN INFO','REPLICATE', 'STATUS', 'LAST ATTEMPTED', 'NOTES', 'PROCESSING']
+        headers = ['RUN INFO','REPLICATE', 'STATUS', 'LAST ATTEMPTED', 'NOTES', 'PEAK HEIGHT']
         w_heads = []
         for header in headers:
             w = self.create_w(header, qss_name='run-col-header')
@@ -434,7 +434,8 @@ class WindowMain(QMainWindow):
                 rep_status = rep[g.R_STATUS]
                 rep_time = rep[g.R_TIMESTAMP_REP]
                 rep_notes = rep[g.R_NOTES]
-                rep_proc = 'PROCESSING ICONS'
+                rep_proc = ''
+                if rep[g.R_ANALYSIS]: rep_proc = f"{rep[g.R_ANALYSIS][g.A_PEAK_HEIGHT]:.3f} uA"
                 rep_strs = [rep_name,rep_status,rep_time,rep_notes,rep_proc]
 
                 is_last = False

@@ -253,6 +253,7 @@ class WindowAnalyze(QMainWindow):
             resp = confirm.exec()
             if resp == QMessageBox.StandardButton.Save:
                 event.ignore()
+                if len(self.tasks) == 1: self.store_results()   # store data for the current one if only one
                 self.save_and_close()
             elif resp == QMessageBox.StandardButton.Discard:
                 self.accept_close(event)
