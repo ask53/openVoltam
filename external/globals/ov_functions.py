@@ -243,6 +243,20 @@ def get_method_from_file_data(data, method_id):
                 return method
     return False
 
+def get_analysis(data, ids):
+    """ Takes in:
+        - data     Dict.  With structure of .ovs data file
+        - ids      Tuple. With structure (run-id, rep-id)
+    Gets the analysis for the rep specificed in ids. If no
+    analysis present, returns False."""
+    rep = get_rep(data, ids)
+    if not rep:
+        return False
+    if not rep[g.R_ANALYSIS]:
+        return False
+    else:
+        return rep[g.R_ANALYSIS]
+
 def get_v_max_abs(step):
 
     """ takes in a step of the method, and returns the maximum amplitude

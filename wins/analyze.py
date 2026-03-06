@@ -44,26 +44,19 @@ class WindowAnalyze(QMainWindow):
 
         self.setWindowTitle(self.parent.data[g.S_NAME]+' | Analyze')
 
-        #################### FILL RESULTS ARRAY HERE
-        #
-        #
-        for task in self.tasks:     # fill results list with an empty dict 
-            self.results.append({})  #   for each task
-        #
-        #
-        #######################################################################3
-        
-
-
+        # Load previous analysis
+        for i, task in enumerate(self.tasks):               # for each task
+            prev_a = get_analysis(self.parent.data, task)
+            if prev_a:                                      # load previous analysis
+                self.results.append(prev_a)                 #   if possible
+            else:                                           # if not, load an empty dict
+                self.results.append({})
 
         self.stack = QStackedLayout()
         self.voltamograms = []
 
+        #Create pane in stack for each task
         for task in self.tasks:
-
-            '''run = get_run_from_file_data(self.parent.data, task[0])
-            rep = get_rep(self.parent.data, task)
-            method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])'''
 
             title = QLabel('<b>'+task[0]+'  |  '+task[1]+'</b>')
             title.setObjectName('analysis-title-txt')
@@ -89,14 +82,14 @@ class WindowAnalyze(QMainWindow):
             self.stack.addWidget(w)
 
 
-        
+        # Create button for each task in progress sidebar
         self.buts = []
         for i, task in enumerate(tasks):
             but = QPushButton()
             but.clicked.connect(partial(self.go_to_rep, i))
             self.buts.append(but)
 
-        
+        # Do rest of flat (not stacked) layout
         prog_lbl = QLabel('<b>Runs to analyze:</b>')
         v1 = QVBoxLayout()
         v1.addWidget(prog_lbl)
@@ -120,9 +113,7 @@ class WindowAnalyze(QMainWindow):
         v2 = QVBoxLayout()
         v2.addLayout(self.stack)
         v2.addLayout(h0)
-        v2.addLayout(h1)
-
-        
+        v2.addLayout(h1)        
 
         h2 = QHBoxLayout()
         h2.addLayout(v1)
@@ -147,7 +138,6 @@ class WindowAnalyze(QMainWindow):
 
     
     def next_click(self):
-        
         self.store_results()
         self.process_next()
 
@@ -176,6 +166,8 @@ class WindowAnalyze(QMainWindow):
         if lines == 0:
             self.voltamograms[i].plot_reps([self.tasks[i]], subbackground=True, smooth=True,
                                            lopass=True, showraw=True, predictpeak=True)
+            if self.results[i]:
+                self.voltamograms[i].set_analysis(self.results[i])
         
 
     def update_buttons(self, i):

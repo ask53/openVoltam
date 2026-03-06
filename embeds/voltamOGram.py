@@ -503,6 +503,24 @@ class VoltamogramPlot(QMainWindow):
             if i == self.active_endpoint: ep.set_mec('black')
             else: ep.set_mec('None')
         self.canvas.draw_idle()
+
+    def set_analysis(self, data):
+        try:
+            x0 = data[g.A_BASE_0_X]
+            y0 = data[g.A_BASE_0_Y]
+            x1 = data[g.A_BASE_1_X]
+            y1 = data[g.A_BASE_1_Y]
+            xp = data[g.A_PEAK_X]
+            yp = data[g.A_PEAK_Y]
+            yp_base = yp - data[g.A_PEAK_HEIGHT]
+
+            self.move_endpoint(0, x0, y0)
+            self.move_endpoint(1, x1, y1)
+            self.set_peak(xp, yp_base, yp)
+            
+        except Exception as e:
+            print(e)
+            return
         
     def get_analysis_results(self):
         (x0, y0, x1, y1, m, b) = self.get_baseline_params()

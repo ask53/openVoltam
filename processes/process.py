@@ -246,7 +246,7 @@ def save_modify_rep(data, params):
                 rep.pop(key, None)      
             for key in newReps[i]:      # add new keys and values to rep (does not include raw data)
                 rep[key] = newReps[i][key]
-        return data
+    return data
 
 def save_modify_run(data, params):
     run_id = params[0]
