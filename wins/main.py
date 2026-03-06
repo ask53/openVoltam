@@ -20,6 +20,7 @@ from wins.runConfig import WindowRunConfig
 from wins.runView import WindowRunView
 from wins.resultsView import WindowResultsView
 from wins.analyze import WindowAnalyze
+from wins.calculate import WindowCalculate
 
 # import other necessary python tools
 from os.path import join as joindir
@@ -306,7 +307,7 @@ class WindowMain(QMainWindow):
         ##### FOR TESTING
         #
         #
-        but_calc.clicked.connect(partial(self.new_win_results_view, 'hi there, world!'))
+        but_calc.clicked.connect(self.new_win_calculator)
         #
         ################33
         
@@ -1042,6 +1043,7 @@ class WindowMain(QMainWindow):
     #   5. new_win_method_by_path               #
     #   6. new_win_results_view                 #
     #   7. new_win_analysis                     #
+    #   8. new_win_calculator                   #
     #
     #
     #
@@ -1074,6 +1076,9 @@ class WindowMain(QMainWindow):
             self.new_win_one_of_type(WindowAnalyze(self, tasks))
         except Exception as e:
             print(e)
+
+    def new_win_calculator(self):
+        self.new_win_one_of_type(WindowCalculate(self))
         
 
     def new_win_one_of_type(self, obj):
