@@ -1319,9 +1319,10 @@ class WindowMethod(QMainWindow):
         self.process.readyReadStandardOutput.connect(self.handle_overwrite_stdout)
         self.process.readyReadStandardError.connect(self.handle_overwrite_stderr)
         self.process.finished.connect(partial(self.handle_finished_overwrite))
-
-        self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_OVERWRITE, self.path, str(toWrite)])
         self.status.showMessage("Saving method...")
+        
+        self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_OVERWRITE, self.path, str(toWrite)])
+        
 
     def handle_overwrite_stdout(self):
         data = self.process.readAllStandardOutput()
