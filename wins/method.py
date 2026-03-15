@@ -1321,7 +1321,11 @@ class WindowMethod(QMainWindow):
         self.process.finished.connect(partial(self.handle_finished_overwrite))
         self.status.showMessage("Saving method...")
         
-        self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_OVERWRITE, self.path, str(toWrite)])
+        if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
+            self.process.start('./bin/python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_OVERWRITE, self.path, str(toWrite)])
+        else:
+            self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_OVERWRITE, self.path, str(toWrite)])
+
         
 
     def handle_overwrite_stdout(self):

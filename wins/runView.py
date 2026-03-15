@@ -338,9 +338,13 @@ class WindowRunView(QMainWindow):
                     self.status.showMessage('Running...')
                     self.count_status.setText(str(self.current_task+1))
 
-                    
-                    #self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_RUN, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled)])
-                    self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_RUN, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled), str(relay_pins)])
+                    if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
+                        self.process.start('./bin/python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_RUN, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled), str(relay_pins)])
+                    else:
+                        self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_RUN, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled)])
+
+
+
         except Exception as e:
             print('you are here!')
             print(e)
@@ -376,6 +380,7 @@ class WindowRunView(QMainWindow):
         stdout = bytes(data).decode("utf8")
         
         [prefixes, msgs] = self.unpack_msgs(stdout)
+        print(stdout)
         for i, prefix in enumerate(prefixes):
             if prefix == g.R_DATA_PREFIX:
                 self.q.put(msgs[i])
