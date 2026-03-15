@@ -451,7 +451,7 @@ def device_is_connected(port):
         if resp:                            # If we're still connected, great! 
             return resp
     for port in serial.tools.list_ports.comports(): # If not: try to connect: loop thru all serial ports with connections
-        if 'USB Serial Device' in port.description: # if the device name contains "USB Serial Device"
+        if 'USB Serial Device' in port.description or 'ItsyBitsy' in port.description: # if the device name contains "USB Serial Device" or "ItsyBitsy M4"
             resp = connect_to_device(port.device)
             if resp:                                # Try to connect to it, if so, great!
                 return resp 
