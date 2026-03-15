@@ -339,7 +339,7 @@ class WindowRunView(QMainWindow):
                     self.count_status.setText(str(self.current_task+1))
 
                     if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
-                        self.process.start('./bin/python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_RUN, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled), str(relay_pins)])
+                        self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_RUN, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled), str(relay_pins)])
                     else:
                         self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_RUN, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled)])
 
