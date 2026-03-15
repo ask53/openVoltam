@@ -8,7 +8,12 @@ species of interest in the original sample.
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QMainWindow
+    QMainWindow,
+    QWidget,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QHBoxLayout
 )
 
 class WindowCalculate(QMainWindow):
@@ -17,9 +22,62 @@ class WindowCalculate(QMainWindow):
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.parent = parent
         self.status = self.statusBar()
-
-        # Setup widgets, layout, and (if necessary) mode here
+        self.lay = 'right'
         
+
+        self.set_layout()
+    
+        # Setup widgets, layout, and (if necessary) mode here
+
+    def get_right_layout(self):
+        l = QLabel('right label\nright label\nright label')
+        v = QVBoxLayout()
+        v.addWidget(l)
+        v.addStretch()
+        return v   
+
+    def get_left_layout(self):
+        l = QLabel('left LBL')
+        v = QVBoxLayout()
+        v.addStretch()
+        v.addWidget(l)
+        return v
+
+    def get_full_layout(self):
+        right = self.get_right_layout()
+        b = QPushButton('click me to toggle!')
+        b.clicked.connect(self.toggle)
+        if self.lay == 'right':
+            v = QVBoxLayout()
+            v.addLayout(right)
+            v.addWidget(b)
+        else:
+            left = self.get_left_layout()
+            h = QHBoxLayout()
+            h.addLayout(left)
+            h.addLayout(right)
+            v = QVBoxLayout()
+            v.addLayout(h)
+            v.addWidget(b)
+        return v
+
+    def set_layout(self):
+        l = self.get_full_layout()
+        w = QWidget()
+        w.setLayout(l)
+        self.setCentralWidget(w)
+
+    def toggle(self):
+        if self.lay == 'right': self.lay = 'left'
+        else: self.lay = 'right'
+        self.set_layout()
+
+
+
+
+
+
+            
         
     def update_win(self):
         """Designed to be called when parent's data has been reloaded.

@@ -1078,7 +1078,10 @@ class WindowMain(QMainWindow):
             print(e)
 
     def new_win_calculator(self):
-        self.new_win_one_of_type(WindowCalculate(self))
+        try:
+            self.new_win_one_of_type(WindowCalculate(self))
+        except Exception as e:
+            print(e)
         
 
     def new_win_one_of_type(self, obj):
