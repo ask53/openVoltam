@@ -5,61 +5,222 @@ A window that allows the user to use analyzed data, collected with
 the potentiostat, to back-calculate the concentration of the
 species of interest in the original sample.
 """
+from external.globals import ov_globals as g
+from external.globals.ov_functions import *
+
+from functools import partial
+
 
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QMainWindow,
     QWidget,
     QLabel,
+    QComboBox,
+    QTextEdit,
     QPushButton,
+    QListWidget,
     QVBoxLayout,
-    QHBoxLayout
+    QHBoxLayout,
+    QStackedLayout
 )
 
 class WindowCalculate(QMainWindow):
-    def __init__(self, parent):  
+    def __init__(self, parent, mode, calc_id=None):  
         super().__init__()                          # if path, load sample deets, else load empty edit window for new sample
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.parent = parent
-        self.status = self.statusBar()
-        self.lay = 'right'
+        self.mode = mode
+        self.calc_id = calc_id
+        self.method = None
+        self.points = [[],[],[]]
         
-
+        self.status = self.statusBar()
+        
         self.set_layout()
     
         # Setup widgets, layout, and (if necessary) mode here
 
     def get_right_layout(self):
-        l = QLabel('right label\nright label\nright label')
+        l = QListWidget()
+        b_new = QPushButton()
+        b_edit = QPushButton()
+        b_dup = QPushButton()
+        b_del = QPushButton()
+
+        b_new.setIcon(QIcon(g.ICON_PLUS))
+        b_edit.setIcon(QIcon(g.ICON_EDIT))
+        b_dup.setIcon(QIcon(g.ICON_DUP))
+        b_del.setIcon(QIcon(g.ICON_TRASH))
+
+        b_new.clicked.connect(self.toggle)
+        
+        h = QHBoxLayout()
+        for b in (b_new, b_edit, b_dup, b_del):
+            h.addWidget(b)
+        
         v = QVBoxLayout()
         v.addWidget(l)
-        v.addStretch()
+        v.addLayout(h)
+        #v.addStretch()
         return v   
 
     def get_left_layout(self):
-        l = QLabel('left LBL')
-        v = QVBoxLayout()
-        v.addStretch()
-        v.addWidget(l)
-        return v
+        # far left column
+        type_lbl = QLabel("Calculation type")
+        self.type = QComboBox()
+        #################################3
+        #
+        #   FILL COMBOBOX HERE
+        #
+        #
+        #
+        ###################################################3
+
+        notes_lbl = QLabel("Notes")
+        self.notes = QTextEdit()
+
+        s = QStackedLayout()
+        w1 = QPushButton('Show results')
+        w1.clicked.connect(partial(s.setCurrentIndex, 1))
+        self.results = QTextEdit()
+        self.results.setEnabled(False)
+        s.addWidget(w1)
+        s.addWidget(self.results)
+
+        v0 = QVBoxLayout()
+        v0.addWidget(type_lbl)
+        v0.addWidget(self.type)
+        v0.addWidget(notes_lbl)
+        v0.addWidget(self.notes)
+        v0.addStretch()
+        v0.addLayout(s)
+
+        # center column
+        self.graph = QTextEdit() ################## PLACEHOLDER HERE FOR NOW TILL SOMEONE GETS AROUND TO MAKING THE GRAPH :P
+
+        
+        h1 = QHBoxLayout()                            # row of selectors
+        try:
+            l0 = self.get_sample_selector_layout()
+        except Exception as e:
+            print(e)
+        h1.addLayout(l0)
+        for i, point in enumerate(self.points):
+            if i>0:
+                l = self.get_stdadd_selector_layout(i)
+                h1.addLayout(l)
+            
+        but_add_point = QPushButton('+')
+        h1.addWidget(but_add_point)
+
+        v1 = QVBoxLayout()
+        v1.addWidget(self.graph)
+        v1.addLayout(h1)
+
+        h2 = QHBoxLayout()
+        h2.addLayout(v0)
+        h2.addWidget(QVLine())
+        h2.addLayout(v1)
+
+        but_save = QPushButton('save')
+
+        v2 = QVBoxLayout()
+        v2.addLayout(h2)
+        v2.addWidget(but_save)
+
+        return v2
+
+    def get_sample_selector_layout(self):
+        t = QLabel('Sample')
+        t.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        s = QStackedLayout()
+        w1 = QPushButton('Select sample')
+        w1.clicked.connect(partial(s.setCurrentIndex, g.C_STACK_INDEX_RUNS))
+
+        l2 = QListWidget()
+        b2 = QPushButton('Accept')
+        b2.clicked.connect(partial(s.setCurrentIndex, g.C_STACK_INDEX_REPS))
+        v2 = QVBoxLayout()
+        v2.addWidget(l2)
+        v2.addWidget(b2)
+        w2 = QWidget()
+        w2.setLayout(v2)
+
+        l3 = QListWidget()
+        b3a = QPushButton('Graph')
+        b3b = QPushButton('Change runs')
+        b3b.clicked.connect(partial(s.setCurrentIndex, g.C_STACK_INDEX_RUNS))
+        h3 = QHBoxLayout()
+        h3.addWidget(b3a)
+        h3.addWidget(b3b)
+        v3 = QVBoxLayout()
+        v3.addWidget(t)
+        v3.addWidget(l3)
+        v3.addLayout(h3)
+        w3 = QWidget()
+        w3.setLayout(v3)
+
+        s.addWidget(w1)
+        s.addWidget(w2)
+        s.addWidget(w3)
+
+        return s
+
+    def get_stdadd_selector_layout(self, i):
+        t = QLabel('Standard addition '+str(i))
+        t.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        s = QStackedLayout()
+        w1 = QPushButton('Select standard addition '+str(i))
+        w1.clicked.connect(partial(s.setCurrentIndex, g.C_STACK_INDEX_RUNS))
+
+        l2 = QListWidget()
+        b2 = QPushButton('Accept')
+        b2.clicked.connect(partial(s.setCurrentIndex, g.C_STACK_INDEX_REPS))
+        v2 = QVBoxLayout()
+        v2.addWidget(l2)
+        v2.addWidget(b2)
+        w2 = QWidget()
+        w2.setLayout(v2)
+
+        l3 = QListWidget()
+        b3a = QPushButton('Graph')
+        b3b = QPushButton('Change runs')
+        b3b.clicked.connect(partial(s.setCurrentIndex,g.C_STACK_INDEX_RUNS))
+        h3 = QHBoxLayout()
+        h3.addWidget(b3a)
+        h3.addWidget(b3b)
+        v3 = QVBoxLayout()
+        v3.addWidget(t)
+        v3.addWidget(l3)
+        v3.addLayout(h3)
+        w3 = QWidget()
+        w3.setLayout(v3)
+
+        w4 = QWidget()
+        w5 = QLabel("No compatible runs available")
+
+        for w in (w1,w2,w3,w4,w5):
+            s.addWidget(w)
+
+        s.setCurrentIndex(g.C_STACK_INDEX_BLANK)
+
+        return s
+        
 
     def get_full_layout(self):
         right = self.get_right_layout()
-        b = QPushButton('click me to toggle!')
-        b.clicked.connect(self.toggle)
-        if self.lay == 'right':
-            v = QVBoxLayout()
-            v.addLayout(right)
-            v.addWidget(b)
+        if self.mode == g.WIN_MODE_RIGHT:
+            lay = right
         else:
             left = self.get_left_layout()
-            h = QHBoxLayout()
-            h.addLayout(left)
-            h.addLayout(right)
-            v = QVBoxLayout()
-            v.addLayout(h)
-            v.addWidget(b)
-        return v
+            lay = QHBoxLayout()
+            lay.addLayout(left)
+            lay.addWidget(QVLine())
+            lay.addWidget(QVLine())
+            lay.addLayout(right)
+        return lay
 
     def set_layout(self):
         l = self.get_full_layout()
@@ -68,8 +229,8 @@ class WindowCalculate(QMainWindow):
         self.setCentralWidget(w)
 
     def toggle(self):
-        if self.lay == 'right': self.lay = 'left'
-        else: self.lay = 'right'
+        if self.mode == g.WIN_MODE_RIGHT: self.mode = g.WIN_MODE_NEW
+        else: self.mode = g.WIN_MODE_RIGHT
         self.set_layout()
 
 

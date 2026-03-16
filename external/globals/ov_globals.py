@@ -15,6 +15,7 @@ WIN_MODE_NEW = 'new'
 WIN_MODE_VIEW_ONLY = 'view'
 WIN_MODE_EDIT = 'edit'
 WIN_MODE_VIEW_WITH_MINOR_EDITS = 'view-with-edits'
+WIN_MODE_RIGHT = 'right'
 
 # Keys for sample (S) dictionary
 S_NAME = "sample_name"
@@ -112,6 +113,13 @@ A_BASE_0_X = 'baseline_lower_x'
 A_BASE_0_Y = 'baseline_lower_y'
 A_BASE_1_X = 'baseline_upper_x'
 A_BASE_1_Y = 'baseline_upper_y'
+
+# Calculation window globals
+C_STACK_INDEX_BUTTON = 0
+C_STACK_INDEX_RUNS = 1
+C_STACK_INDEX_REPS = 2
+C_STACK_INDEX_BLANK = 3
+C_STACK_INDEX_ERROR = 4
 
 # Voltamogram globals
 VOG_RESIZE = 500        # number of points to resize data to for analysis

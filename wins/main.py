@@ -1079,7 +1079,7 @@ class WindowMain(QMainWindow):
 
     def new_win_calculator(self):
         try:
-            self.new_win_one_of_type(WindowCalculate(self))
+            self.new_win_one_of_type(WindowCalculate(self, g.WIN_MODE_RIGHT))
         except Exception as e:
             print(e)
         
