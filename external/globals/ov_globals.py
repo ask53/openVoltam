@@ -120,6 +120,7 @@ C_STACK_INDEX_RUNS = 1
 C_STACK_INDEX_REPS = 2
 C_STACK_INDEX_BLANK = 3
 C_STACK_INDEX_ERROR = 4
+C_TYPES = ['peakbase', 'peakzero', 'slopel', 'sloper', 'slopemean']
 
 # Voltamogram globals
 VOG_RESIZE = 500        # number of points to resize data to for analysis

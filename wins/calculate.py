@@ -21,9 +21,11 @@ from PyQt6.QtWidgets import (
     QTextEdit,
     QPushButton,
     QListWidget,
+    QListWidgetItem,
     QVBoxLayout,
     QHBoxLayout,
-    QStackedLayout
+    QStackedLayout,
+    QAbstractItemView
 )
 
 class WindowCalculate(QMainWindow):
@@ -35,6 +37,8 @@ class WindowCalculate(QMainWindow):
         self.calc_id = calc_id
         self.method = None
         self.points = [[],[],[]]
+        self.saved = True
+        self.updating_runs = False
         
         self.status = self.statusBar()
         
@@ -70,6 +74,9 @@ class WindowCalculate(QMainWindow):
         # far left column
         type_lbl = QLabel("Calculation type")
         self.type = QComboBox()
+        calc_types = ('Peak height / baseline', 'Peak height', 'Left slope', 'Right slope', 'Mean slope')
+        for i, calc_type in enumerate(calc_types):
+            self.type.addItem(calc_type, userData=g.C_TYPES[i])
         #################################3
         #
         #   FILL COMBOBOX HERE
@@ -125,6 +132,7 @@ class WindowCalculate(QMainWindow):
         h2.addLayout(v1)
 
         but_save = QPushButton('save')
+        but_save.clicked.connect(self.save)
 
         v2 = QVBoxLayout()
         v2.addLayout(h2)
@@ -137,9 +145,11 @@ class WindowCalculate(QMainWindow):
         t.setAlignment(Qt.AlignmentFlag.AlignCenter)
         s = QStackedLayout()
         w1 = QPushButton('Select sample')
-        w1.clicked.connect(partial(s.setCurrentIndex, g.C_STACK_INDEX_RUNS))
-
+        
         l2 = QListWidget()
+        l2.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
+        l2.setAlternatingRowColors(True)
+        l2.itemSelectionChanged.connect(partial(self.update_run_list, l2))
         b2 = QPushButton('Accept')
         b2.clicked.connect(partial(s.setCurrentIndex, g.C_STACK_INDEX_REPS))
         v2 = QVBoxLayout()
@@ -161,6 +171,9 @@ class WindowCalculate(QMainWindow):
         v3.addLayout(h3)
         w3 = QWidget()
         w3.setLayout(v3)
+
+        # Actions
+        w1.clicked.connect(partial(self.load_sample_runs, l2, s))
 
         s.addWidget(w1)
         s.addWidget(w2)
@@ -198,8 +211,10 @@ class WindowCalculate(QMainWindow):
         w3 = QWidget()
         w3.setLayout(v3)
 
-        w4 = QWidget()
-        w5 = QLabel("No compatible runs available")
+        w4 = QLabel('Standard addition '+str(i))
+        w4.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        w5 = QLabel("No compatible standard additions")
 
         for w in (w1,w2,w3,w4,w5):
             s.addWidget(w)
@@ -218,7 +233,6 @@ class WindowCalculate(QMainWindow):
             lay = QHBoxLayout()
             lay.addLayout(left)
             lay.addWidget(QVLine())
-            lay.addWidget(QVLine())
             lay.addLayout(right)
         return lay
 
@@ -234,9 +248,70 @@ class WindowCalculate(QMainWindow):
         self.set_layout()
 
 
+    def load_sample_runs(self, run_list, stack=None):
+        # Get "sample" runs
+        try:
+            # If any elements in run list, remove them all
+            self.updating_runs = True
+            all_items = [run_list.item(x) for x in range(run_list.count())]
+            for i,item in reversed(list(enumerate(all_items))):
+                run_list.takeItem(i)
+            
+            # Add back in all runs with type == sample
+            for run in self.parent.data[g.S_RUNS]:          
+                if run[g.R_TYPE] == g.R_TYPE_SAMPLE:
+                    method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
+                    lbl = run[g.R_UID_SELF] + ' (' + str(len(run[g.R_REPLICATES])) + ' reps)'
+                    lbl = lbl + '\n'+method[g.M_NAME]
+                    item = QListWidgetItem(lbl)
+                    item.setData(Qt.ItemDataRole.UserRole, run)
+                    run_list.addItem(item)
+
+            self.updating_runs = False
+                
+        except Exception as e:
+            print(e)
+        
+        if stack:
+            stack.setCurrentIndex(g.C_STACK_INDEX_RUNS)
+
+    def update_run_list(self, run_list):
+        if self.updating_runs:
+            return
+        print('SELECTION')
+        print()
+        items = run_list.selectedItems()
+        if items:
+            self.method = items[0].data(Qt.ItemDataRole.UserRole)[g.R_UID_METHOD]
+            print(self.method)
+            all_items = [run_list.item(x) for x in range(run_list.count())]
+            self.updating_runs = True
+            for i,item in reversed(list(enumerate(all_items))):
+                if item.data(Qt.ItemDataRole.UserRole)[g.R_UID_METHOD] != self.method:
+                    run_list.takeItem(i)
+            self.updating_runs = False
+        else:
+            self.method = None
+            self.load_sample_runs(run_list)
+
+        items = run_list.selectedItems()
+        print(len(items))
+            
+
+        
+        
+
+        
+            
 
 
 
+
+    def save(self):
+        ############ USE THIS TO CHECK STUFF UNTIL ACTUALLY IMPLEMENTING SAVE METHOD
+        print(self.type.currentText())
+        print(self.type.currentData())
+        print()
 
             
         
