@@ -144,7 +144,7 @@ class WindowCalculate(QMainWindow):
         
         tree = QTreeWidget()
         tree.setColumnCount(2)
-        tree.setHeaderLabels(('Run', 'Method')) 
+        tree.setHeaderLabels(('Run', 'Method', 'Note')) 
         tree.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
         tree.setAlternatingRowColors(True)
         tree.itemSelectionChanged.connect(partial(self.update_run_list, tree))
@@ -222,65 +222,100 @@ class WindowCalculate(QMainWindow):
         self.set_layout()
 
 
-    def load_sample_runs(self, run_list, stack=None):
+    def load_sample_runs(self, run_list):
         # Get "sample" runs
         try:
             # If any elements in run list, remove them all
             self.updating_runs = True
-            top_lvl_items = [run_list.topLevelItem(x) for x in range(run_list.topLevelItemCount())]
-            for i,item in reversed(list(enumerate(top_lvl_items))):
+            all_items = [run_list.topLevelItem(x) for x in range(run_list.topLevelItemCount())]
+            for i,item in reversed(list(enumerate(all_items))):
                 run_list.takeTopLevelItem(i)
             
             # Add back in all runs with type == sample
             for run in self.parent.data[g.S_RUNS]:          
                 if run[g.R_TYPE] == g.R_TYPE_SAMPLE:
                     method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
-                    name_lbl = run[g.R_UID_SELF] + ' (' + str(len(run[g.R_REPLICATES])) + ' reps)'
+                    name_lbl = run[g.R_UID_SELF] + ' (' + str(len(run[g.R_REPLICATES])) + ')'
                     method_lbl = method[g.M_NAME]
+                    note_lbl = run[g.R_NOTES]
                     runitem = QTreeWidgetItem(run_list)
                     runitem.setText(0, name_lbl)
                     runitem.setText(1, method_lbl)
+                    runitem.setText(2, note_lbl)
                     runitem.setData(0, Qt.ItemDataRole.UserRole, run)
 
-                    for rep in run[g.R_REPLICATES]:
-                        repitem = QTreeWidgetItem(run_list)
-                        repitem.setText(0, '--- '+rep[g.R_UID_SELF])
-                        runitem.addChild(repitem)
-                    
-                    
-                    #run_list.addTopLevelItem(item)
+                    '''for rep in run[g.R_REPLICATES]:
+                        repitem = QTreeWidgetItem(runitem)
+                        repitem.setText(0, rep[g.R_UID_SELF])
+                        repitem.setText(2, rep[g.R_NOTES])'''
 
             self.updating_runs = False
-            run_list.collapseAll()
+            
                 
         except Exception as e:
             print(e)
 
         
     def update_run_list(self, run_list):
-        print('updating!')
-        return
         if self.updating_runs:
             return
-        print('SELECTION')
-        print()
-        items = run_list.selectedItems()
-        if items:
-            self.method = items[0].data(Qt.ItemDataRole.UserRole)[g.R_UID_METHOD]
-            print(self.method)
-            all_items = [run_list.item(x) for x in range(run_list.count())]
-            self.updating_runs = True
-            for i,item in reversed(list(enumerate(all_items))):
-                if item.data(Qt.ItemDataRole.UserRole)[g.R_UID_METHOD] != self.method:
-                    run_list.takeItem(i)
-            self.updating_runs = False
-        else:
-            self.method = None
-            self.load_sample_runs(run_list)
 
-        items = run_list.selectedItems()
-        print(len(items))
-            
+        selected_items = run_list.selectedItems()
+        selected_runs = [item for item in selected_items if g.R_RUN_UID_PREFIX
+                         in item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]]
+
+
+
+        try:
+            if selected_runs:
+                # grab method of first selected run (in case multiple selected simultaneously
+                self.method = selected_runs[0].data(0, Qt.ItemDataRole.UserRole)[g.R_UID_METHOD]
+
+                # loop backwards thru runs. If run doesn't match selected method, take it from list
+                all_items = [run_list.topLevelItem(x) for x in range(run_list.topLevelItemCount())]
+                self.updating_runs = True
+                for i,item in reversed(list(enumerate(all_items))):
+                    if item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_METHOD] != self.method:
+                        run_list.takeTopLevelItem(i)
+                
+
+                # for each selected run, show all reps and select them, for deselected runs, remove children
+                all_items = [run_list.topLevelItem(x) for x in range(run_list.topLevelItemCount())]
+                for item in all_items:
+                    if item.isSelected() and item.childCount() == 0:        # If item is newly selected, show all children and select!
+                        for rep in item.data(0, Qt.ItemDataRole.UserRole)[g.R_REPLICATES]:
+                            subitem = QTreeWidgetItem(item)
+                            subitem.setData(0, Qt.ItemDataRole.UserRole, rep)
+                            subitem.setText(0, rep[g.R_UID_SELF])
+                            subitem.setText(2, rep[g.R_NOTES])
+                            subitem.setSelected(True)
+                        item.setExpanded(True)
+                    if not item.isSelected() and (item.childCount() != 0):  # If item is no longer selected, hide all children!
+                        item.takeChildren()
+                    if item.isSelected() and item.childCount() != 0:         # If item is selected and already has children, check
+                        selected_children = False                           #   whether they should be hidden
+                        for i in range(0,item.childCount()):
+                            if item.child(i).isSelected():
+                                selected_children=True
+                                break
+                        if not selected_children:       # If all children have been deselected by user
+                            item.takeChildren()         # Remove them all from the layout
+                            item.setSelected(False)     # And deselect the run itself
+                        
+
+                self.updating_runs = False
+
+                
+            else:                           # If there are no runs selected, reload all runs!
+                self.method = None
+                self.load_sample_runs(run_list)
+
+            items = run_list.selectedItems()
+            print(len(items))
+        except Exception as e:
+            print('error is HERE!')
+            print(e)
+
 
         
         
