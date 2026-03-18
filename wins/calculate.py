@@ -139,8 +139,6 @@ class WindowCalculate(QMainWindow):
     def get_sample_selector_layout(self):
         title = QLabel('Sample')
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        '''s = QStackedLayout()
-        w1 = QPushButton('Select sample')'''
         
         tree = QTreeWidget()
         tree.setColumnCount(2)
@@ -148,10 +146,16 @@ class WindowCalculate(QMainWindow):
         tree.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
         tree.setAlternatingRowColors(True)
         tree.itemSelectionChanged.connect(partial(self.update_run_list, tree))
+
         self.load_sample_runs(tree)
+
+        b = QPushButton('Graph')
+        b.clicked.connect(partial(self.graph_from_tree, tree))
+        
         v = QVBoxLayout()
         v.addWidget(title)
         v.addWidget(tree)
+        v.addWidget(b)
        
         return v
     
@@ -235,7 +239,10 @@ class WindowCalculate(QMainWindow):
             for run in self.parent.data[g.S_RUNS]:          
                 if run[g.R_TYPE] == g.R_TYPE_SAMPLE:
                     method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
-                    name_lbl = run[g.R_UID_SELF] + ' (' + str(len(run[g.R_REPLICATES])) + ')'
+                    analyzed = 0
+                    for rep in run[g.R_REPLICATES]:
+                        if rep[g.R_ANALYSIS]: analyzed = analyzed+1
+                    name_lbl = run[g.R_UID_SELF] + ' (' + str(analyzed) + '/'+str(len(run[g.R_REPLICATES]))+')'
                     method_lbl = method[g.M_NAME]
                     note_lbl = run[g.R_NOTES]
                     runitem = QTreeWidgetItem(run_list)
@@ -243,11 +250,10 @@ class WindowCalculate(QMainWindow):
                     runitem.setText(1, method_lbl)
                     runitem.setText(2, note_lbl)
                     runitem.setData(0, Qt.ItemDataRole.UserRole, run)
-
-                    '''for rep in run[g.R_REPLICATES]:
-                        repitem = QTreeWidgetItem(runitem)
-                        repitem.setText(0, rep[g.R_UID_SELF])
-                        repitem.setText(2, rep[g.R_NOTES])'''
+                    if analyzed == 0:
+                        runitem.setDisabled(True)
+                        for col in range(0, run_list.columnCount()):
+                            runitem.setToolTip(col, "Please analyze to proceed")        
 
             self.updating_runs = False
             
@@ -259,14 +265,10 @@ class WindowCalculate(QMainWindow):
     def update_run_list(self, run_list):
         if self.updating_runs:
             return
-
-        selected_items = run_list.selectedItems()
-        selected_runs = [item for item in selected_items if g.R_RUN_UID_PREFIX
-                         in item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]]
-
-
-
         try:
+            selected_runs = self.get_selected_runs(run_list)
+
+
             if selected_runs:
                 # grab method of first selected run (in case multiple selected simultaneously
                 self.method = selected_runs[0].data(0, Qt.ItemDataRole.UserRole)[g.R_UID_METHOD]
@@ -288,11 +290,15 @@ class WindowCalculate(QMainWindow):
                             subitem.setData(0, Qt.ItemDataRole.UserRole, rep)
                             subitem.setText(0, rep[g.R_UID_SELF])
                             subitem.setText(2, rep[g.R_NOTES])
-                            subitem.setSelected(True)
+                            if not rep[g.R_ANALYSIS]:
+                                subitem.setDisabled(True)
+                                for col in range(0, run_list.columnCount()):
+                                    subitem.setToolTip(col, "Please analyze to proceed")
+                            else: subitem.setSelected(True)
                         item.setExpanded(True)
-                    if not item.isSelected() and (item.childCount() != 0):  # If item is no longer selected, hide all children!
+                    elif not item.isSelected() and (item.childCount() != 0):  # If item is no longer selected, hide all children!
                         item.takeChildren()
-                    if item.isSelected() and item.childCount() != 0:         # If item is selected and already has children, check
+                    elif item.isSelected() and item.childCount() != 0:         # If item is selected and already has children, check
                         selected_children = False                           #   whether they should be hidden
                         for i in range(0,item.childCount()):
                             if item.child(i).isSelected():
@@ -306,7 +312,8 @@ class WindowCalculate(QMainWindow):
                 self.updating_runs = False
 
                 
-            else:                           # If there are no runs selected, reload all runs!
+            selected_runs = self.get_selected_runs(run_list)
+            if not selected_runs:
                 self.method = None
                 self.load_sample_runs(run_list)
 
@@ -315,6 +322,35 @@ class WindowCalculate(QMainWindow):
         except Exception as e:
             print('error is HERE!')
             print(e)
+
+    def get_all(self, tree):
+        return
+
+    def get_selected(self, tree):
+        return tree.selectedItems()
+
+    def get_selected_runs(self, tree):
+        selected_items = self.get_selected(tree)
+        selected_runs = [item for item in selected_items if g.R_RUN_UID_PREFIX
+                         in item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]]
+        return selected_runs
+
+
+    def get_selected_reps(self, tree):
+        selected_items = self.get_selected(tree)
+        selected_reps = [item for item in selected_items if g.R_REPLICATE_UID_PREFIX
+                         in item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]]
+        return selected_reps
+
+    def graph_from_tree(self, tree):
+        reps = self.get_selected_reps(tree)
+        tasks = []
+        for rep in reps:
+            run_id = rep.parent().data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
+            rep_id = rep.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
+            tasks.append((run_id, rep_id))
+        if tasks:
+            self.parent.new_win_results_view(tasks)
 
 
         
