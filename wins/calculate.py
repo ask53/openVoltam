@@ -1,3 +1,4 @@
+
 """
 calculate.py
 
@@ -21,7 +22,9 @@ from PyQt6.QtWidgets import (
     QTextEdit,
     QPushButton,
     QListWidget,
-    QListWidgetItem,
+    QListWidgetItem,    
+    QTreeWidget,
+    QTreeWidgetItem,
     QVBoxLayout,
     QHBoxLayout,
     QStackedLayout,
@@ -77,13 +80,6 @@ class WindowCalculate(QMainWindow):
         calc_types = ('Peak height / baseline', 'Peak height', 'Left slope', 'Right slope', 'Mean slope')
         for i, calc_type in enumerate(calc_types):
             self.type.addItem(calc_type, userData=g.C_TYPES[i])
-        #################################3
-        #
-        #   FILL COMBOBOX HERE
-        #
-        #
-        #
-        ###################################################3
 
         notes_lbl = QLabel("Notes")
         self.notes = QTextEdit()
@@ -141,46 +137,24 @@ class WindowCalculate(QMainWindow):
         return v2
 
     def get_sample_selector_layout(self):
-        t = QLabel('Sample')
-        t.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        s = QStackedLayout()
-        w1 = QPushButton('Select sample')
+        title = QLabel('Sample')
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        '''s = QStackedLayout()
+        w1 = QPushButton('Select sample')'''
         
-        l2 = QListWidget()
-        l2.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
-        l2.setAlternatingRowColors(True)
-        l2.itemSelectionChanged.connect(partial(self.update_run_list, l2))
-        b2 = QPushButton('Accept')
-        b2.clicked.connect(partial(s.setCurrentIndex, g.C_STACK_INDEX_REPS))
-        v2 = QVBoxLayout()
-        v2.addWidget(l2)
-        v2.addWidget(b2)
-        w2 = QWidget()
-        w2.setLayout(v2)
-
-        l3 = QListWidget()
-        b3a = QPushButton('Graph')
-        b3b = QPushButton('Change runs')
-        b3b.clicked.connect(partial(s.setCurrentIndex, g.C_STACK_INDEX_RUNS))
-        h3 = QHBoxLayout()
-        h3.addWidget(b3a)
-        h3.addWidget(b3b)
-        v3 = QVBoxLayout()
-        v3.addWidget(t)
-        v3.addWidget(l3)
-        v3.addLayout(h3)
-        w3 = QWidget()
-        w3.setLayout(v3)
-
-        # Actions
-        w1.clicked.connect(partial(self.load_sample_runs, l2, s))
-
-        s.addWidget(w1)
-        s.addWidget(w2)
-        s.addWidget(w3)
-
-        return s
-
+        tree = QTreeWidget()
+        tree.setColumnCount(2)
+        tree.setHeaderLabels(('Run', 'Method')) 
+        tree.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
+        tree.setAlternatingRowColors(True)
+        tree.itemSelectionChanged.connect(partial(self.update_run_list, tree))
+        self.load_sample_runs(tree)
+        v = QVBoxLayout()
+        v.addWidget(title)
+        v.addWidget(tree)
+       
+        return v
+    
     def get_stdadd_selector_layout(self, i):
         t = QLabel('Standard addition '+str(i))
         t.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -253,29 +227,39 @@ class WindowCalculate(QMainWindow):
         try:
             # If any elements in run list, remove them all
             self.updating_runs = True
-            all_items = [run_list.item(x) for x in range(run_list.count())]
-            for i,item in reversed(list(enumerate(all_items))):
-                run_list.takeItem(i)
+            top_lvl_items = [run_list.topLevelItem(x) for x in range(run_list.topLevelItemCount())]
+            for i,item in reversed(list(enumerate(top_lvl_items))):
+                run_list.takeTopLevelItem(i)
             
             # Add back in all runs with type == sample
             for run in self.parent.data[g.S_RUNS]:          
                 if run[g.R_TYPE] == g.R_TYPE_SAMPLE:
                     method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
-                    lbl = run[g.R_UID_SELF] + ' (' + str(len(run[g.R_REPLICATES])) + ' reps)'
-                    lbl = lbl + '\n'+method[g.M_NAME]
-                    item = QListWidgetItem(lbl)
-                    item.setData(Qt.ItemDataRole.UserRole, run)
-                    run_list.addItem(item)
+                    name_lbl = run[g.R_UID_SELF] + ' (' + str(len(run[g.R_REPLICATES])) + ' reps)'
+                    method_lbl = method[g.M_NAME]
+                    runitem = QTreeWidgetItem(run_list)
+                    runitem.setText(0, name_lbl)
+                    runitem.setText(1, method_lbl)
+                    runitem.setData(0, Qt.ItemDataRole.UserRole, run)
+
+                    for rep in run[g.R_REPLICATES]:
+                        repitem = QTreeWidgetItem(run_list)
+                        repitem.setText(0, '--- '+rep[g.R_UID_SELF])
+                        runitem.addChild(repitem)
+                    
+                    
+                    #run_list.addTopLevelItem(item)
 
             self.updating_runs = False
+            run_list.collapseAll()
                 
         except Exception as e:
             print(e)
-        
-        if stack:
-            stack.setCurrentIndex(g.C_STACK_INDEX_RUNS)
 
+        
     def update_run_list(self, run_list):
+        print('updating!')
+        return
         if self.updating_runs:
             return
         print('SELECTION')
