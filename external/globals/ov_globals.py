@@ -115,11 +115,9 @@ A_BASE_1_X = 'baseline_upper_x'
 A_BASE_1_Y = 'baseline_upper_y'
 
 # Calculation window globals
-C_STACK_INDEX_BUTTON = 0
-C_STACK_INDEX_RUNS = 1
-C_STACK_INDEX_REPS = 2
-C_STACK_INDEX_BLANK = 3
-C_STACK_INDEX_ERROR = 4
+C_STACK_INDEX_BASE = 0
+C_STACK_INDEX_SELECTOR = 1
+C_STACK_INDEX_ERROR = 2
 C_TYPES = ['peakbase', 'peakzero', 'slopel', 'sloper', 'slopemean']
 
 # Voltamogram globals

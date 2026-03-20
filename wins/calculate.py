@@ -40,8 +40,15 @@ class WindowCalculate(QMainWindow):
         self.calc_id = calc_id
         self.method = None
         self.points = [[],[],[]]
+        self.stdadd_selectors = []
         self.saved = True
         self.updating_runs = False
+
+        self.border_width_active = '5px'
+        self.border_width_passive = '1px'
+        self.border_color_good = 'green'
+        self.border_color_todo = 'orange'
+        self.border_color_error = 'red'
         
         self.status = self.statusBar()
         
@@ -136,17 +143,34 @@ class WindowCalculate(QMainWindow):
 
         return v2
 
+    def get_run_tree_widget(self, with_method=False):
+        tree = QTreeWidget()
+        if with_method:
+            tree.setColumnCount(2)
+            tree.setHeaderLabels(('Run', 'Method', 'Note'))
+        else:
+            tree.setColumnCount(1)
+            tree.setHeaderLabels(('Run','Note'))
+        tree.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
+        tree.setAlternatingRowColors(True)
+        self.set_widget_border(tree, self.border_width_active, self.border_color_todo)
+        return tree
+
+    def set_widget_border(self, w, width, color):
+        """Takes in a widget, and a border width and color, as strings.
+        width must contain units, eg. "5px" is okay but 5 or "5" is not.
+        color can be any format accepted by QSS"""
+        w_type = w.__class__.__name__   
+        w.setStyleSheet(w_type+"{border: "+width+" solid "+color+";}")
+        
+
     def get_sample_selector_layout(self):
         title = QLabel('Sample')
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        tree = QTreeWidget()
-        tree.setColumnCount(2)
-        tree.setHeaderLabels(('Run', 'Method', 'Note')) 
-        tree.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
-        tree.setAlternatingRowColors(True)
-        tree.itemSelectionChanged.connect(partial(self.update_run_list, tree))
 
+        tree = self.get_run_tree_widget(with_method = True)
+        tree.itemSelectionChanged.connect(partial(self.update_sample_runs, tree, 0))
+        
         self.load_sample_runs(tree)
 
         b = QPushButton('Graph')
@@ -160,44 +184,55 @@ class WindowCalculate(QMainWindow):
         return v
     
     def get_stdadd_selector_layout(self, i):
-        t = QLabel('Standard addition '+str(i))
-        t.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        s = QStackedLayout()
-        w1 = QPushButton('Select standard addition '+str(i))
-        w1.clicked.connect(partial(s.setCurrentIndex, g.C_STACK_INDEX_RUNS))
+        title_str = 'Standard addition '+str(i)
+        t1 = QLabel(title_str)
+        t2 = QLabel(title_str)
+        t3 = QLabel(title_str)
+        t1.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        t2.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        t3.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        l2 = QListWidget()
-        b2 = QPushButton('Accept')
-        b2.clicked.connect(partial(s.setCurrentIndex, g.C_STACK_INDEX_REPS))
+        if i == 1: msg = "Please select at lesat one <b>sample</b> run  <-----"
+        else: msg = "Please select at least one run for <b>standard addition "+str(i-1)+'</b>   \n\n<-----'
+        
+        s = QStackedLayout()
+        box1 = QTextEdit(msg)
+        box1.setEnabled(False)
+        self.set_widget_border(box1, self.border_width_passive, self.border_color_todo)
+        v1 = QVBoxLayout()
+        v1.addWidget(t1)
+        v1.addWidget(box1)
+        v1.addStretch()
+        w1 = QWidget()
+        w1.setLayout(v1)
+
+        tree = self.get_run_tree_widget(with_method = False)
+        #tree.itemSelectionChanged.connect(partial(self.update_run_list, tree))
+        b2 = QPushButton('Graph')
         v2 = QVBoxLayout()
-        v2.addWidget(l2)
+        v2.addWidget(t2)
+        v2.addWidget(tree)
         v2.addWidget(b2)
         w2 = QWidget()
         w2.setLayout(v2)
 
-        l3 = QListWidget()
-        b3a = QPushButton('Graph')
-        b3b = QPushButton('Change runs')
-        b3b.clicked.connect(partial(s.setCurrentIndex,g.C_STACK_INDEX_RUNS))
-        h3 = QHBoxLayout()
-        h3.addWidget(b3a)
-        h3.addWidget(b3b)
+        box3 = QTextEdit('There are no available standard additions with the selected method')
+        box3.setEnabled(False)
+        self.set_widget_border(box3, self.border_width_passive, self.border_color_error)
         v3 = QVBoxLayout()
-        v3.addWidget(t)
-        v3.addWidget(l3)
-        v3.addLayout(h3)
+        v3.addWidget(t3)
+        v3.addWidget(box3)
+        v3.addStretch()
         w3 = QWidget()
         w3.setLayout(v3)
-
-        w4 = QLabel('Standard addition '+str(i))
-        w4.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        w5 = QLabel("No compatible standard additions")
-
-        for w in (w1,w2,w3,w4,w5):
+        for w in (w1,w2,w3):
             s.addWidget(w)
 
-        s.setCurrentIndex(g.C_STACK_INDEX_BLANK)
+        self.stdadd_selectors.append({'tree': tree,
+                                      'layout': s})
+
+        s.setCurrentIndex(g.C_STACK_INDEX_BASE)
 
         return s
         
@@ -231,38 +266,43 @@ class WindowCalculate(QMainWindow):
         try:
             # If any elements in run list, remove them all
             self.updating_runs = True
-            all_items = [run_list.topLevelItem(x) for x in range(run_list.topLevelItemCount())]
-            for i,item in reversed(list(enumerate(all_items))):
-                run_list.takeTopLevelItem(i)
-            
+            self.remove_all(run_list)
+                    
             # Add back in all runs with type == sample
             for run in self.parent.data[g.S_RUNS]:          
                 if run[g.R_TYPE] == g.R_TYPE_SAMPLE:
                     method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
-                    analyzed = 0
-                    for rep in run[g.R_REPLICATES]:
-                        if rep[g.R_ANALYSIS]: analyzed = analyzed+1
-                    name_lbl = run[g.R_UID_SELF] + ' (' + str(analyzed) + '/'+str(len(run[g.R_REPLICATES]))+')'
-                    method_lbl = method[g.M_NAME]
-                    note_lbl = run[g.R_NOTES]
-                    runitem = QTreeWidgetItem(run_list)
-                    runitem.setText(0, name_lbl)
-                    runitem.setText(1, method_lbl)
-                    runitem.setText(2, note_lbl)
-                    runitem.setData(0, Qt.ItemDataRole.UserRole, run)
-                    if analyzed == 0:
-                        runitem.setDisabled(True)
-                        for col in range(0, run_list.columnCount()):
-                            runitem.setToolTip(col, "Please analyze to proceed")        
-
-            self.updating_runs = False
-            
+                    self.add_run_to_tree(run_list, run, method=method)
+    
+            self.updating_runs = False  
                 
         except Exception as e:
             print(e)
 
+    def load_stdadd_runs(self, i):
         
-    def update_run_list(self, run_list):
+        try:
+            # If any elements in run list, remove them all
+            tree = self.stdadd_selectors[i]['tree']
+            self.updating_runs = True
+            self.remove_all(tree)
+
+            # Add back in all runs with type == stdadd and method matching self.method
+            for run in self.parent.data[g.S_RUNS]:
+                if run[g.R_TYPE] == g.R_TYPE_STDADD and run[g.R_UID_METHOD] == self.method:
+                    self.add_run_to_tree(tree, run)
+            self.updating_runs = False
+        except Exception as e:
+            print(e)
+                    
+
+            
+
+            
+        
+
+        
+    def update_sample_runs(self, run_list, selector_index):
         if self.updating_runs:
             return
         try:
@@ -295,6 +335,7 @@ class WindowCalculate(QMainWindow):
                                 for col in range(0, run_list.columnCount()):
                                     subitem.setToolTip(col, "Please analyze to proceed")
                             else: subitem.setSelected(True)
+                            self.set_widget_border(run_list, self.border_width_passive, self.border_color_good)
                         item.setExpanded(True)
                     elif not item.isSelected() and (item.childCount() != 0):  # If item is no longer selected, hide all children!
                         item.takeChildren()
@@ -311,17 +352,53 @@ class WindowCalculate(QMainWindow):
 
                 self.updating_runs = False
 
-                
+            # Check if any runs are selected anymore.                 
             selected_runs = self.get_selected_runs(run_list)
-            if not selected_runs:
-                self.method = None
-                self.load_sample_runs(run_list)
+            if not selected_runs:                   # if not
+                self.method = None                  # reset method
+                self.load_sample_runs(run_list)     # reset sample pane
+                self.set_widget_border(run_list, self.border_width_active, self.border_color_todo)
 
-            items = run_list.selectedItems()
-            print(len(items))
+            # Update next pane based on status of this pane
+            
+            self.points[selector_index] = self.get_tasks_from_tree(run_list)
+            self.update_other_selectors(selector_index)
         except Exception as e:
             print('error is HERE!')
             print(e)
+
+    def update_stdadd_runs(self, i):
+        return
+
+    def update_other_selectors(self, i):
+        if not self.points[0]:
+            for selector in self.stdadd_selectors:
+                selector['layout'].setCurrentIndex(g.C_STACK_INDEX_BASE)
+        else:
+            
+            # Get j, the index of the first selector w no selected points
+            empty = False
+            for j,point in enumerate(self.points):
+                if point:                           
+                    empty = True
+                    break
+            if empty:                   # if there is a selector w no selected points
+                # show selector[j]
+                self.stdadd_selectors[j]['layout'].setCurrentIndex(g.C_STACK_INDEX_SELECTOR)
+
+                # hide all selectors[k] for k>j
+                for k, selector in enumerate(self.stdadd_selectors):
+                    if k>j: selector['layout'].setCurrentIndex(g.C_STACK_INDEX_BASE)
+
+                # for all stdadds w index between 0 and j
+                #   erase tree
+                #   add all stdadd runs to tree that are either in points[j+1] or not in points at all.
+                self.load_stdadd_runs(j)
+                self.update_stdadd_runs(j)
+
+                
+                
+        
 
     def get_all(self, tree):
         return
@@ -342,15 +419,46 @@ class WindowCalculate(QMainWindow):
                          in item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]]
         return selected_reps
 
-    def graph_from_tree(self, tree):
+    def get_tasks_from_tree(self, tree):
         reps = self.get_selected_reps(tree)
         tasks = []
         for rep in reps:
             run_id = rep.parent().data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
             rep_id = rep.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
             tasks.append((run_id, rep_id))
+        return tasks
+        
+
+    def graph_from_tree(self, tree):
+        tasks = self.get_tasks_from_tree(tree)
         if tasks:
             self.parent.new_win_results_view(tasks)
+
+    def remove_all(self, tree):
+        all_items = [tree.topLevelItem(x) for x in range(tree.topLevelItemCount())]
+        for i,item in reversed(list(enumerate(all_items))):
+            tree.takeTopLevelItem(i)
+
+    def add_run_to_tree(self, tree, run, method=False):
+        analyzed = 0
+        for rep in run[g.R_REPLICATES]:
+            if rep[g.R_ANALYSIS]:
+                analyzed = analyzed+1
+        name_lbl = run[g.R_UID_SELF] + ' (' + str(analyzed) + '/'+str(len(run[g.R_REPLICATES]))+')'
+        note_lbl = run[g.R_NOTES]
+        runitem = QTreeWidgetItem(tree)
+        runitem.setText(0, name_lbl)
+        if method:
+            method_lbl = method[g.M_NAME]
+            runitem.setText(1, method_lbl)
+            runitem.setText(2, note_lbl)
+        else:
+            runitem.setText(1, note_lbl)
+        runitem.setData(0, Qt.ItemDataRole.UserRole, run)
+        if analyzed == 0:
+            runitem.setDisabled(True)
+            for col in range(0, tree.columnCount()):
+                runitem.setToolTip(col, "Please analyze to proceed")
 
 
         
