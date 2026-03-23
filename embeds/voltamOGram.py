@@ -30,7 +30,6 @@ from external.globals.ov_functions import *
 
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT, FigureCanvasQTAgg
 from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
 
 import numpy as np
 import pandas as pd

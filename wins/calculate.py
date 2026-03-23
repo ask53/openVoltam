@@ -9,8 +9,9 @@ species of interest in the original sample.
 from external.globals import ov_globals as g
 from external.globals.ov_functions import *
 
-from functools import partial
+from embeds.stdAddFitter import StdAddFitterPlot
 
+from functools import partial
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
@@ -51,9 +52,8 @@ class WindowCalculate(QMainWindow):
         self.border_color_error = 'red'
         
         self.status = self.statusBar()
-        
+
         self.set_layout()
-    
         # Setup widgets, layout, and (if necessary) mode here
 
     def get_right_layout(self):
@@ -84,10 +84,11 @@ class WindowCalculate(QMainWindow):
         # far left column
         type_lbl = QLabel("Calculation type")
         self.type = QComboBox()
+        self.type.setPlaceholderText('Select')
         calc_types = ('Peak height / baseline', 'Peak height', 'Left slope', 'Right slope', 'Mean slope')
         for i, calc_type in enumerate(calc_types):
             self.type.addItem(calc_type, userData=g.C_TYPES[i])
-
+        self.type.currentIndexChanged.connect(self.type_changed)
         notes_lbl = QLabel("Notes")
         self.notes = QTextEdit()
 
@@ -108,7 +109,7 @@ class WindowCalculate(QMainWindow):
         v0.addLayout(s)
 
         # center column
-        self.graph = QTextEdit() ################## PLACEHOLDER HERE FOR NOW TILL SOMEONE GETS AROUND TO MAKING THE GRAPH :P
+        self.graph = StdAddFitterPlot(self, 'Best-fit calculator') ################## PLACEHOLDER HERE FOR NOW TILL SOMEONE GETS AROUND TO MAKING THE GRAPH :P
 
         
         h1 = QHBoxLayout()                            # row of selectors
@@ -280,6 +281,7 @@ class WindowCalculate(QMainWindow):
             if run[g.R_TYPE] == g.R_TYPE_SAMPLE:
                 method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
                 self.add_run_to_tree(run_list, run, method=method)
+        
 
     def load_stdadd_runs(self, i):
         
@@ -334,8 +336,9 @@ class WindowCalculate(QMainWindow):
                 self.load_sample_runs(run_list)
                 self.set_widget_border(run_list, self.border_width_active, self.border_color_todo)
 
-            # Update next pane based on status of this pane 
+            # Update next pane based on status of this pane
             self.points[selector_index] = self.get_tasks_from_tree(run_list)
+            self.graph.update_points(self.points)
             self.update_selectors()
             
             self.updating_runs = False
@@ -382,32 +385,7 @@ class WindowCalculate(QMainWindow):
                             if item.isHidden():                                                 # If run is hidden here
                                 if not run_id in used_runs:                                     #   check if it can be redisplayed. If not used elsewhere,
                                     item.setHidden(False)                                       #   unhide it!
-                        
-
-
-                ############## HERE THIS ISNT WORKINGGGGG
-                #
-                #
-                #
-
-                # loop thru all other stdadd selectors, removing runs if already selected
-            '''for j in range(1, len(self.points)):
-                    other = self.stdadd_selectors[j-1]
-                    if other['layout'].currentIndex() == g.C_STACK_INDEX_SELECTOR and j != i:
-                        
-                        all_items = [other['tree'].topLevelItem(x) for x in range(other['tree'].topLevelItemCount())]
-                        for k,item in reversed(list(enumerate(all_items))):
-                            if item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF] in used_runs:
-                                print('j: '+str(j))
-                                print(item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF])
-                                tree.takeTopLevelItem(k)'''
-
-                #
-                #
-                #
-                ######################################################################################################################
-            
-            
+                    
             self.updating_runs = False              # ok, good job!
 
         except Exception as e:
@@ -482,13 +460,6 @@ class WindowCalculate(QMainWindow):
         self.updating_runs = False
         print(self.points)
 
-                
-                
-        
-
-    def get_all(self, tree):
-        return
-
     def get_selected(self, tree):
         return tree.selectedItems()
 
@@ -518,7 +489,8 @@ class WindowCalculate(QMainWindow):
         for rep in reps:
             run_id = rep.parent().data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
             rep_id = rep.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
-            tasks.append((run_id, rep_id))
+            analyses = rep.data(0, Qt.ItemDataRole.UserRole)[g.R_ANALYSIS]
+            tasks.append((run_id, rep_id, analyses))
         return tasks
         
 
@@ -552,9 +524,12 @@ class WindowCalculate(QMainWindow):
             runitem.setDisabled(True)
             for col in range(0, tree.columnCount()):
                 runitem.setToolTip(col, "Please analyze to proceed")
-
-
         
+
+
+    def type_changed(self):
+        calc_type = self.type.currentData()
+        self.graph.update_type(calc_type)
         
 
         

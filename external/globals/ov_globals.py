@@ -118,7 +118,12 @@ A_BASE_1_Y = 'baseline_upper_y'
 C_STACK_INDEX_BASE = 0
 C_STACK_INDEX_SELECTOR = 1
 C_STACK_INDEX_ERROR = 2
-C_TYPES = ['peakbase', 'peakzero', 'slopel', 'sloper', 'slopemean']
+C_TYPE_PEAKBASE = 'peakbase'
+C_TYPE_PEAKZERO = 'peakzero'
+C_TYPE_SLOPE_L = 'slopel'
+C_TYPE_SLOPE_R = 'sloper'
+C_TYPE_SLOPE_AVG = 'slopemean'
+C_TYPES = [C_TYPE_PEAKBASE, C_TYPE_PEAKZERO, C_TYPE_SLOPE_L, C_TYPE_SLOPE_R, C_TYPE_SLOPE_AVG]
 
 # Voltamogram globals
 VOG_RESIZE = 500        # number of points to resize data to for analysis
