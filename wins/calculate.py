@@ -170,8 +170,10 @@ class WindowCalculate(QMainWindow):
 
         tree = self.get_run_tree_widget(with_method = True)
         tree.itemSelectionChanged.connect(partial(self.update_sample_runs, tree, 0))
-        
+
+        self.updating_runs = True
         self.load_sample_runs(tree)
+        self.updating_runs = False
 
         b = QPushButton('Graph')
         b.clicked.connect(partial(self.graph_from_tree, tree))
@@ -180,8 +182,13 @@ class WindowCalculate(QMainWindow):
         v.addWidget(title)
         v.addWidget(tree)
         v.addWidget(b)
+        w = QWidget()
+        w.setLayout(v)
+
+        s = QStackedLayout()
+        s.addWidget(w)
        
-        return v
+        return s
     
     def get_stdadd_selector_layout(self, i):
         title_str = 'Standard addition '+str(i)
@@ -207,8 +214,9 @@ class WindowCalculate(QMainWindow):
         w1.setLayout(v1)
 
         tree = self.get_run_tree_widget(with_method = False)
-        #tree.itemSelectionChanged.connect(partial(self.update_run_list, tree))
+        tree.itemSelectionChanged.connect(partial(self.update_stdadd_runs, i-1))
         b2 = QPushButton('Graph')
+        b2.clicked.connect(partial(self.graph_from_tree, tree))
         v2 = QVBoxLayout()
         v2.addWidget(t2)
         v2.addWidget(tree)
@@ -263,48 +271,34 @@ class WindowCalculate(QMainWindow):
 
     def load_sample_runs(self, run_list):
         # Get "sample" runs
-        try:
-            # If any elements in run list, remove them all
-            self.updating_runs = True
-            self.remove_all(run_list)
+        
+        # If any elements in run list, remove them all
+        self.remove_all(run_list)
                     
-            # Add back in all runs with type == sample
-            for run in self.parent.data[g.S_RUNS]:          
-                if run[g.R_TYPE] == g.R_TYPE_SAMPLE:
-                    method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
-                    self.add_run_to_tree(run_list, run, method=method)
-    
-            self.updating_runs = False  
-                
-        except Exception as e:
-            print(e)
+        # Add back in all runs with type == sample
+        for run in self.parent.data[g.S_RUNS]:          
+            if run[g.R_TYPE] == g.R_TYPE_SAMPLE:
+                method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
+                self.add_run_to_tree(run_list, run, method=method)
 
     def load_stdadd_runs(self, i):
         
-        try:
-            # If any elements in run list, remove them all
-            tree = self.stdadd_selectors[i]['tree']
-            self.updating_runs = True
-            self.remove_all(tree)
+        # If any elements in run list, remove them all
+        tree = self.stdadd_selectors[i]['tree']
+        self.remove_all(tree)        
 
-            # Add back in all runs with type == stdadd and method matching self.method
-            for run in self.parent.data[g.S_RUNS]:
-                if run[g.R_TYPE] == g.R_TYPE_STDADD and run[g.R_UID_METHOD] == self.method:
+        # Add back in all runs with type == stdadd and method matching self.method
+        for run in self.parent.data[g.S_RUNS]:
+            if run[g.R_TYPE] == g.R_TYPE_STDADD:
+                if run[g.R_UID_METHOD] == self.method:
                     self.add_run_to_tree(tree, run)
-            self.updating_runs = False
-        except Exception as e:
-            print(e)
-                    
-
-            
-
-            
-        
+    
 
         
     def update_sample_runs(self, run_list, selector_index):
         if self.updating_runs:
             return
+        self.updating_runs = True
         try:
             selected_runs = self.get_selected_runs(run_list)
 
@@ -315,86 +309,157 @@ class WindowCalculate(QMainWindow):
 
                 # loop backwards thru runs. If run doesn't match selected method, take it from list
                 all_items = [run_list.topLevelItem(x) for x in range(run_list.topLevelItemCount())]
-                self.updating_runs = True
                 for i,item in reversed(list(enumerate(all_items))):
                     if item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_METHOD] != self.method:
                         run_list.takeTopLevelItem(i)
                 
-
                 # for each selected run, show all reps and select them, for deselected runs, remove children
-                all_items = [run_list.topLevelItem(x) for x in range(run_list.topLevelItemCount())]
-                for item in all_items:
-                    if item.isSelected() and item.childCount() == 0:        # If item is newly selected, show all children and select!
-                        for rep in item.data(0, Qt.ItemDataRole.UserRole)[g.R_REPLICATES]:
-                            subitem = QTreeWidgetItem(item)
-                            subitem.setData(0, Qt.ItemDataRole.UserRole, rep)
-                            subitem.setText(0, rep[g.R_UID_SELF])
-                            subitem.setText(2, rep[g.R_NOTES])
-                            if not rep[g.R_ANALYSIS]:
-                                subitem.setDisabled(True)
-                                for col in range(0, run_list.columnCount()):
-                                    subitem.setToolTip(col, "Please analyze to proceed")
-                            else: subitem.setSelected(True)
-                            self.set_widget_border(run_list, self.border_width_passive, self.border_color_good)
-                        item.setExpanded(True)
-                    elif not item.isSelected() and (item.childCount() != 0):  # If item is no longer selected, hide all children!
-                        item.takeChildren()
-                    elif item.isSelected() and item.childCount() != 0:         # If item is selected and already has children, check
-                        selected_children = False                           #   whether they should be hidden
-                        for i in range(0,item.childCount()):
-                            if item.child(i).isSelected():
-                                selected_children=True
-                                break
-                        if not selected_children:       # If all children have been deselected by user
-                            item.takeChildren()         # Remove them all from the layout
-                            item.setSelected(False)     # And deselect the run itself
-                        
-
-                self.updating_runs = False
-
+                self.show_reps_from_runs(run_list)
+                
             # Check if any runs are selected anymore.                 
             selected_runs = self.get_selected_runs(run_list)
             if not selected_runs:                   # if not
                 self.method = None                  # reset method
-                self.load_sample_runs(run_list)     # reset sample pane
+                self.load_sample_runs(run_list)
                 self.set_widget_border(run_list, self.border_width_active, self.border_color_todo)
 
-            # Update next pane based on status of this pane
-            
+            # Update next pane based on status of this pane 
             self.points[selector_index] = self.get_tasks_from_tree(run_list)
-            self.update_other_selectors(selector_index)
+            self.update_selectors()
+            
+            self.updating_runs = False
         except Exception as e:
             print('error is HERE!')
             print(e)
 
     def update_stdadd_runs(self, i):
-        return
+        print('updating runs is: '+str(self.updating_runs))
+        try:
+            if self.updating_runs: return               # to avoid recursion
+            self.updating_runs = True                   # stops recursive calls during this fn
+            tree = self.stdadd_selectors[i]['tree']
+            selected_runs = self.get_selected_runs(tree)
+            if selected_runs:
+                               # if we're about to do some auto-updating, avoid recursion
+                self.show_reps_from_runs(tree)
+                
 
-    def update_other_selectors(self, i):
-        if not self.points[0]:
-            for selector in self.stdadd_selectors:
-                selector['layout'].setCurrentIndex(g.C_STACK_INDEX_BASE)
-        else:
+            # Check if any runs are selected anymore.                 
+            selected_runs = self.get_selected_runs(tree)
+            if not selected_runs:               # if not
+                print('here!')
+                self.load_stdadd_runs(i)        # reset sample pane
+                self.set_widget_border(tree, self.border_width_active, self.border_color_todo)
+            self.points[i+1] = self.get_tasks_from_tree(tree)   # points[0] is the sample, so points[1] is the 0th stdadd, hence the i+1
+            print(self.points)
+
             
-            # Get j, the index of the first selector w no selected points
+            # remove all selected stdadd runs from all other selectors 
+            for i in range(1,len(self.points)):
+                # get run IDs for all used std add runs on this point
+                used_runs = []
+                for point in self.points[i]:
+                    used_runs.append(point[0])
+                used_runs = list(set(used_runs))
+                print('used_runs')
+                print(used_runs)
+
+                ############## HERE THIS ISNT WORKINGGGGG
+                #
+                #
+                #
+
+                # loop thru all other stdadd selectors, removing runs if already selected
+                for j in range(1, len(self.points)):
+                    other = self.stdadd_selectors[j-1]
+                    if other['layout'].currentIndex() == g.C_STACK_INDEX_SELECTOR and j != i:
+                        
+                        all_items = [other['tree'].topLevelItem(x) for x in range(other['tree'].topLevelItemCount())]
+                        for k,item in reversed(list(enumerate(all_items))):
+                            if item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF] in used_runs:
+                                print('j: '+str(j))
+                                print(item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF])
+                                tree.takeTopLevelItem(k)
+
+                #
+                #
+                #
+                ######################################################################################################################
+            
+            self.update_selectors()
+            self.updating_runs = False              # ok, good job!
+
+        except Exception as e:
+            print('im really the ERROR:')
+            print(e)
+        
+
+
+    def show_reps_from_runs(self, tree):
+        all_items = [tree.topLevelItem(x) for x in range(tree.topLevelItemCount())]
+        for item in all_items:
+            if item.isSelected() and item.childCount() == 0:        # If item is newly selected, show all children and select!
+                for rep in item.data(0, Qt.ItemDataRole.UserRole)[g.R_REPLICATES]:
+                    subitem = QTreeWidgetItem(item)
+                    subitem.setData(0, Qt.ItemDataRole.UserRole, rep)
+                    subitem.setText(0, rep[g.R_UID_SELF])
+                    subitem.setText(2, rep[g.R_NOTES])
+                    if not rep[g.R_ANALYSIS]:
+                        subitem.setDisabled(True)
+                        for col in range(0, tree.columnCount()):
+                            subitem.setToolTip(col, "Please analyze to proceed")
+                    else: subitem.setSelected(True)
+                    self.set_widget_border(tree, self.border_width_active, self.border_color_good)
+                item.setExpanded(True)
+            elif not item.isSelected() and (item.childCount() != 0):  # If item is no longer selected, hide all children!
+                item.takeChildren()
+            elif item.isSelected() and item.childCount() != 0:         # If item is selected and already has children, check
+                selected_children = False                           #   whether they should be hidden
+                for i in range(0,item.childCount()):
+                    if item.child(i).isSelected():
+                        selected_children=True
+                        break
+                if not selected_children:       # If all children have been deselected by user
+                    item.takeChildren()         # Remove them all from the layout
+                    item.setSelected(False)     # And deselect the run itself
+        
+        
+
+    def update_selectors(self):
+        self.updating_runs = True
+        if not self.points[0]:
+            for i, selector in enumerate(self.stdadd_selectors):
+                selector['layout'].setCurrentIndex(g.C_STACK_INDEX_BASE)
+                self.points[i+1] = []
+        else:    
+            # Get i, the index of the first selector w no selected points
             empty = False
-            for j,point in enumerate(self.points):
-                if point:                           
+            for i,point in enumerate(self.points):
+                if not point:                           
                     empty = True
                     break
             if empty:                   # if there is a selector w no selected points
-                # show selector[j]
-                self.stdadd_selectors[j]['layout'].setCurrentIndex(g.C_STACK_INDEX_SELECTOR)
+                # show selector[i]
+                i = i-1                 # adjust index to index from 0.
 
-                # hide all selectors[k] for k>j
-                for k, selector in enumerate(self.stdadd_selectors):
-                    if k>j: selector['layout'].setCurrentIndex(g.C_STACK_INDEX_BASE)
+                # wipe points for all selectors with index >i
+                for j in range(i+1,len(self.points)):
+                    self.points[j] = []
+
+                # show the ith selector
+                self.stdadd_selectors[i]['layout'].setCurrentIndex(g.C_STACK_INDEX_SELECTOR)
+
+                # hide all selectors[j] for j>i
+                for j, selector in enumerate(self.stdadd_selectors):
+                    if j>i: selector['layout'].setCurrentIndex(g.C_STACK_INDEX_BASE)
 
                 # for all stdadds w index between 0 and j
                 #   erase tree
                 #   add all stdadd runs to tree that are either in points[j+1] or not in points at all.
-                self.load_stdadd_runs(j)
-                self.update_stdadd_runs(j)
+                self.load_stdadd_runs(i)
+                self.update_stdadd_runs(i)
+        self.updating_runs = False
+        print(self.points)
 
                 
                 
