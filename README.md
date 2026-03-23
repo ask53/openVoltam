@@ -9,3 +9,7 @@ To run the most up to date version of OpenVoltam follow these steps:
 1. Download the zip file.
 2. Unzip it
 3. Once unzipped, run OpenVoltam.exe from inside the resulting folder.
+
+## Notes for contributors
+This project uses a version of IO Rodeo's potentiostat library that is not yet available on PyPi. (See local link in requirements.txt file). 
+The potentiostat library is only necessary for actually sending instructions to and receiving data from a device, not for running the rest of the GUI, you are welcome to install the version on PyPi (through pip) and roll with that. If you do want to install the same version of the potentiostat library that this project currently using to actually work with a rodeostat device, you can clone the IO Rodeo repository [https://github.com/iorodeo/potentiostat] to a local machine, switch from 'master' to 'develop' branch, and install locally (cd into .../potentiostat/software/python/potentiostat then use 'pip install .' if working with pip).
