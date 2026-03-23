@@ -122,8 +122,8 @@ class WindowCalculate(QMainWindow):
                 l = self.get_stdadd_selector_layout(i)
                 h1.addLayout(l)
             
-        but_add_point = QPushButton('+')
-        h1.addWidget(but_add_point)
+        '''but_add_point = QPushButton('+')
+        h1.addWidget(but_add_point)'''
 
         v1 = QVBoxLayout()
         v1.addWidget(self.graph)
@@ -226,7 +226,7 @@ class WindowCalculate(QMainWindow):
 
         box3 = QTextEdit('There are no available standard additions with the selected method')
         box3.setEnabled(False)
-        self.set_widget_border(box3, self.border_width_passive, self.border_color_error)
+        self.set_widget_border(box3, self.border_width_active, self.border_color_error)
         v3 = QVBoxLayout()
         v3.addWidget(t3)
         v3.addWidget(box3)
@@ -288,10 +288,21 @@ class WindowCalculate(QMainWindow):
         self.remove_all(tree)        
 
         # Add back in all runs with type == stdadd and method matching self.method
-        for run in self.parent.data[g.S_RUNS]:
-            if run[g.R_TYPE] == g.R_TYPE_STDADD:
-                if run[g.R_UID_METHOD] == self.method:
-                    self.add_run_to_tree(tree, run)
+        
+
+        selected_runs = self.get_all_selected_runs()
+                
+        runs_added = 0                                          
+        for run in self.parent.data[g.S_RUNS]:                  # Add run to this stdadd selector IF:   
+            if run[g.R_TYPE] == g.R_TYPE_STDADD:                #   - It is a standard addition type run
+                if run[g.R_UID_METHOD] == self.method:          #   - It's method matches the selected sample method
+                    if not run[g.R_UID_SELF] in selected_runs:  #   - It's not selected in any other standard addition selector
+                        self.add_run_to_tree(tree, run)
+                        runs_added = runs_added + 1
+
+        if runs_added == 0:
+            self.stdadd_selectors[i]['layout'].setCurrentIndex(g.C_STACK_INDEX_ERROR)
+            
     
 
         
@@ -353,16 +364,26 @@ class WindowCalculate(QMainWindow):
             self.points[i+1] = self.get_tasks_from_tree(tree)   # points[0] is the sample, so points[1] is the 0th stdadd, hence the i+1
             print(self.points)
 
+            self.update_selectors()
+
             
-            # remove all selected stdadd runs from all other selectors 
-            for i in range(1,len(self.points)):
-                # get run IDs for all used std add runs on this point
-                used_runs = []
-                for point in self.points[i]:
-                    used_runs.append(point[0])
-                used_runs = list(set(used_runs))
-                print('used_runs')
-                print(used_runs)
+            # hide all selected stdadd runs from all other selectors 
+            used_runs = self.get_all_selected_runs()
+            print('printing trees!')
+            for selector in self.stdadd_selectors:
+                if selector['layout'].currentIndex() == g.C_STACK_INDEX_SELECTOR:               # If selector is showing
+                    tree = selector['tree']
+                    all_items = [tree.topLevelItem(x) for x in range(tree.topLevelItemCount())]
+                    for item in all_items:                                                      # Loop thru all runs in selector (hidden and not)
+                        if not item.isSelected():                                               # If run is selected, leave it alone
+                            run_id = item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]       
+                            if run_id in used_runs:                                             # If run is selected elsewhere
+                                item.setHidden(True)                                            #   hide it
+                            if item.isHidden():                                                 # If run is hidden here
+                                if not run_id in used_runs:                                     #   check if it can be redisplayed. If not used elsewhere,
+                                    item.setHidden(False)                                       #   unhide it!
+                        
+
 
                 ############## HERE THIS ISNT WORKINGGGGG
                 #
@@ -370,7 +391,7 @@ class WindowCalculate(QMainWindow):
                 #
 
                 # loop thru all other stdadd selectors, removing runs if already selected
-                for j in range(1, len(self.points)):
+            '''for j in range(1, len(self.points)):
                     other = self.stdadd_selectors[j-1]
                     if other['layout'].currentIndex() == g.C_STACK_INDEX_SELECTOR and j != i:
                         
@@ -379,14 +400,14 @@ class WindowCalculate(QMainWindow):
                             if item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF] in used_runs:
                                 print('j: '+str(j))
                                 print(item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF])
-                                tree.takeTopLevelItem(k)
+                                tree.takeTopLevelItem(k)'''
 
                 #
                 #
                 #
                 ######################################################################################################################
             
-            self.update_selectors()
+            
             self.updating_runs = False              # ok, good job!
 
         except Exception as e:
@@ -476,6 +497,13 @@ class WindowCalculate(QMainWindow):
         selected_runs = [item for item in selected_items if g.R_RUN_UID_PREFIX
                          in item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]]
         return selected_runs
+
+    def get_all_selected_runs(self):
+        selected_runs = []
+        for selector in self.points:
+            for point in selector:
+                selected_runs.append(point[0])
+        return list(set(selected_runs))
 
 
     def get_selected_reps(self, tree):
