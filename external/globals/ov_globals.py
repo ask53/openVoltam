@@ -125,6 +125,21 @@ C_TYPE_SLOPE_R = 'sloper'
 C_TYPE_SLOPE_AVG = 'slopemean'
 C_TYPES = [C_TYPE_PEAKBASE, C_TYPE_PEAKZERO, C_TYPE_SLOPE_L, C_TYPE_SLOPE_R, C_TYPE_SLOPE_AVG]
 
+# Calculation results
+C_EQN = 'reg-equation'
+C_SLOPE = 'slope'
+C_INT = 'intercept'
+C_CONC_SAMPLE = 'total-sample-conc'
+C_CONC_ORIGINAL = 'original-conc'
+C_R2 = 'reg-r-squared'
+C_STDERR = 'reg-std-error'
+C_UID_PREFIX = 'calc-'
+C_TYPE = 'type'
+C_POINTS = 'points'
+C_NOTE = 'note'
+C_REP_ID = 'rep-id'
+C_RUN_ID = 'run-id'
+
 # Voltamogram globals
 VOG_RESIZE = 500        # number of points to resize data to for analysis
 VOG_SG_WINDOW_LEN = 25  # Window lenght property for Savitzky-Golay filtering
@@ -180,6 +195,7 @@ SAVE_TYPE_REP_WITH_DATA = 'rep-w-data'
 SAVE_TYPE_RUN_MOD = 'run-mod'
 SAVE_TYPE_METHOD_TO_SAMPLE = 'method-to-sample'
 SAVE_TYPE_METHOD_MOD = 'method-mod'
+SAVE_TYPE_CALC_NEW = 'new-calc'
 
 # Input 
 RC_REPS_MIN = 1

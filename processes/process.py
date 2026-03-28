@@ -148,7 +148,7 @@ def export():
 #       - rep no data   params = [(runID,repID), dict of rep params]        Modifies existing rep parameters but maintains raw data
 #       - rep w data    params = [(runID,repID), dict of rep params]        Replaces existing rep parameters (including raw data)
 #       - run modified  params = [runID, dict of run params]                Modifies existing run parameters but maintains replicates
-#   
+#       - new calc      params = [dict of calc params]                      Saves a new calculation  
 #   For each type of save, when the save completes, it sends a writes the data dictionary (not including raw data)
 #   back as data. 
 
@@ -273,11 +273,8 @@ def save_method_to_sample(data, params):     # append method to sample file
 def save_modify_method(data, params):        # modify the method in a sample file
     method_id = params[0]
     newMethod = params[1]
-    write_data('a')
     
     method = get_method_from_file_data(data, method_id)
-
-    write_data('b')
 
     if method:
         keys = list(method.keys())
@@ -285,8 +282,13 @@ def save_modify_method(data, params):        # modify the method in a sample fil
             method.pop(key, None)
         for key in newMethod:
             method[key] = newMethod[key]
-    write_data('a')
     return data
+
+def save_new_calc(data, params):   
+    newCalc = params[0]
+    data[g.S_PROCESSED].append(newCalc)
+    return data
+
 
 def save():    
     try:
@@ -309,7 +311,9 @@ def save():
             data=save_method_to_sample(data, params)
         elif saveType == g.SAVE_TYPE_METHOD_MOD:
             data=save_modify_method(data, params)
-
+        elif saveType == g.SAVE_TYPE_CALC_NEW:
+            data=save_new_calc(data, params)
+        
         write_data_to_file(path, data)
         data = remove_data_from_layout(data) 
         write_data(str(data))               #   Write the data (with raw data stripped) to data channel

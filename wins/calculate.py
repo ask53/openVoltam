@@ -92,13 +92,13 @@ class WindowCalculate(QMainWindow):
         notes_lbl = QLabel("Notes")
         self.notes = QTextEdit()
 
-        s = QStackedLayout()
+        self.results_stack = QStackedLayout()
         w1 = QPushButton('Show results')
-        w1.clicked.connect(partial(s.setCurrentIndex, 1))
+        w1.clicked.connect(self.get_and_show_results)
         self.results = QTextEdit()
-        self.results.setEnabled(False)
-        s.addWidget(w1)
-        s.addWidget(self.results)
+        self.results.setReadOnly(True)
+        self.results_stack.addWidget(w1)
+        self.results_stack.addWidget(self.results)
 
         v0 = QVBoxLayout()
         v0.addWidget(type_lbl)
@@ -106,7 +106,7 @@ class WindowCalculate(QMainWindow):
         v0.addWidget(notes_lbl)
         v0.addWidget(self.notes)
         v0.addStretch()
-        v0.addLayout(s)
+        v0.addLayout(self.results_stack)
 
         # center column
         self.graph = StdAddFitterPlot(self, 'Best-fit calculator') ################## PLACEHOLDER HERE FOR NOW TILL SOMEONE GETS AROUND TO MAKING THE GRAPH :P
@@ -337,7 +337,8 @@ class WindowCalculate(QMainWindow):
                 self.set_widget_border(run_list, self.border_width_active, self.border_color_todo)
 
             # Update next pane based on status of this pane
-            self.points[selector_index] = self.get_tasks_from_tree(run_list)
+            self.update_points(selector_index, run_list)
+            
             self.graph.update_points(self.points)
             self.update_selectors()
             
@@ -347,7 +348,6 @@ class WindowCalculate(QMainWindow):
             print(e)
 
     def update_stdadd_runs(self, i):
-        print('updating runs is: '+str(self.updating_runs))
         try:
             if self.updating_runs: return               # to avoid recursion
             self.updating_runs = True                   # stops recursive calls during this fn
@@ -361,18 +361,18 @@ class WindowCalculate(QMainWindow):
             # Check if any runs are selected anymore.                 
             selected_runs = self.get_selected_runs(tree)
             if not selected_runs:               # if not
-                print('here!')
                 self.load_stdadd_runs(i)        # reset sample pane
                 self.set_widget_border(tree, self.border_width_active, self.border_color_todo)
-            self.points[i+1] = self.get_tasks_from_tree(tree)   # points[0] is the sample, so points[1] is the 0th stdadd, hence the i+1
-            print(self.points)
 
+            self.update_points(i+1, tree)
+            
+            self.graph.update_points(self.points)
             self.update_selectors()
 
             
             # hide all selected stdadd runs from all other selectors 
             used_runs = self.get_all_selected_runs()
-            print('printing trees!')
+            
             for selector in self.stdadd_selectors:
                 if selector['layout'].currentIndex() == g.C_STACK_INDEX_SELECTOR:               # If selector is showing
                     tree = selector['tree']
@@ -392,7 +392,17 @@ class WindowCalculate(QMainWindow):
             print('im really the ERROR:')
             print(e)
         
-
+    def update_points(self, i, tree):
+        self.saved = False
+        self.results_stack.setCurrentIndex(0)
+        self.points[i] = self.get_tasks_from_tree(tree, include_data=True)
+        erase = False
+        for i,point in enumerate(self.points):
+            if not erase:           # find first point with no entries
+                if not point:   
+                    erase = True
+            else:                   # erase data in all higher points
+                self.points[i] = []
 
     def show_reps_from_runs(self, tree):
         all_items = [tree.topLevelItem(x) for x in range(tree.topLevelItemCount())]
@@ -458,7 +468,6 @@ class WindowCalculate(QMainWindow):
                 self.load_stdadd_runs(i)
                 self.update_stdadd_runs(i)
         self.updating_runs = False
-        print(self.points)
 
     def get_selected(self, tree):
         return tree.selectedItems()
@@ -483,14 +492,18 @@ class WindowCalculate(QMainWindow):
                          in item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]]
         return selected_reps
 
-    def get_tasks_from_tree(self, tree):
+    def get_tasks_from_tree(self, tree, include_data=False):
         reps = self.get_selected_reps(tree)
         tasks = []
         for rep in reps:
-            run_id = rep.parent().data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
-            rep_id = rep.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
-            analyses = rep.data(0, Qt.ItemDataRole.UserRole)[g.R_ANALYSIS]
-            tasks.append((run_id, rep_id, analyses))
+            run_data = rep.parent().data(0, Qt.ItemDataRole.UserRole)
+            rep_data = rep.data(0, Qt.ItemDataRole.UserRole)
+            run_id = run_data[g.R_UID_SELF]
+            rep_id = rep_data[g.R_UID_SELF]
+            if include_data:
+                tasks.append((run_id, rep_id, run_data))
+            else:
+                tasks.append((run_id, rep_id))
         return tasks
         
 
@@ -524,13 +537,27 @@ class WindowCalculate(QMainWindow):
             runitem.setDisabled(True)
             for col in range(0, tree.columnCount()):
                 runitem.setToolTip(col, "Please analyze to proceed")
-        
-
 
     def type_changed(self):
+        self.saved = False
+        self.results_stack.setCurrentIndex(0)
         calc_type = self.type.currentData()
         self.graph.update_type(calc_type)
-        
+
+    def get_and_show_results(self):
+        r = self.graph.get_results()
+        if not r[g.C_EQN]:
+            txt = 'None'
+        else:
+            txt = '<b>Sample concentration</b>: '+str(round(float(r[g.C_CONC_ORIGINAL]), 9))+' mg/L<br><br>'
+            txt = txt + 'R^2: '+str(round(float(r[g.C_R2]), 4))+'<br>'
+            txt = txt + 'Standard error: '+str(round(float(r[g.C_STDERR]), 4))
+        self.results.setText(txt)
+        self.results_stack.setCurrentIndex(1)
+        if not r[g.C_EQN]:
+            return None
+        else:
+            return r
 
         
             
@@ -539,10 +566,25 @@ class WindowCalculate(QMainWindow):
 
 
     def save(self):
-        ############ USE THIS TO CHECK STUFF UNTIL ACTUALLY IMPLEMENTING SAVE METHOD
-        print(self.type.currentText())
-        print(self.type.currentData())
-        print()
+        r = self.get_and_show_results()
+        
+        if r:                               # make sure there are some results
+
+            ids = get_ids(self.parent.data, g.S_PROCESSED)
+            calc_id = get_next_id(ids, g.C_UID_PREFIX)
+            r[g.R_UID_SELF] = calc_id
+            r[g.C_NOTE] = self.notes.toPlainText()
+            
+            self.parent.start_async_save(g.SAVE_TYPE_CALC_NEW, [r], onSuccess=self.save_success, onError=self.save_error)
+            
+        else:                               # if no results, show alert
+            show_alert(self, "Alert!", "Please complete the analysis and try again.")
+
+    def save_success(self):
+       self.saved = True
+
+    def save_error(self):
+        print('error!')
 
             
         
