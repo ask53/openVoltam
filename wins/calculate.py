@@ -39,11 +39,8 @@ class WindowCalculate(QMainWindow):
         self.parent = parent
         self.mode = mode
         self.calc_id = calc_id
-        self.method = None
-        self.points = [[],[],[]]
-        self.stdadd_selectors = []
-        self.saved = True
-        self.updating_runs = False
+
+        self.reset_globals()
 
         self.border_width_active = '5px'
         self.border_width_passive = '1px'
@@ -54,10 +51,20 @@ class WindowCalculate(QMainWindow):
         self.status = self.statusBar()
 
         self.set_layout()
-        # Setup widgets, layout, and (if necessary) mode here
+        
+    def reset_globals(self):
+        self.method = None
+        self.points = [[],[],[]]
+        self.stdadd_selectors = []
+        self.saved = True
+        self.updating_runs = False
 
     def get_right_layout(self):
-        l = QListWidget()
+        self.calc_list = QListWidget()
+        self.calc_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.calc_list.setAlternatingRowColors(True)
+        self.calc_list.setSpacing(2)
+        self.calc_list.itemSelectionChanged.connect(self.update_right_buttons)
         b_new = QPushButton()
         b_edit = QPushButton()
         b_dup = QPushButton()
@@ -69,16 +76,68 @@ class WindowCalculate(QMainWindow):
         b_del.setIcon(QIcon(g.ICON_TRASH))
 
         b_new.clicked.connect(self.toggle)
+
+        self.right_buttons_one_only = [b_edit]
+        self.right_buttons_one_plus = [b_dup, b_del]
         
         h = QHBoxLayout()
         for b in (b_new, b_edit, b_dup, b_del):
             h.addWidget(b)
         
         v = QVBoxLayout()
-        v.addWidget(l)
+        v.addWidget(self.calc_list)
         v.addLayout(h)
         #v.addStretch()
-        return v   
+
+        self.update_calc_list()
+        return v
+
+    def update_calc_list(self):
+        for calc in self.parent.data[g.S_PROCESSED]:
+            print(calc[g.C_POINTS])
+            print()
+            
+
+            # get unique runs in calc
+            runs = []
+            for point in calc[g.C_POINTS]:
+                for rep in point:
+                    run_id = rep[g.C_RUN_ID]
+                    if not run_id in runs:
+                        runs.append(run_id)
+                        
+            # Set text for the list label
+            runtxt = ''
+            for run in runs:
+                runtxt = runtxt + str(run) + ' | '
+            runtxt = runtxt[0:-3]                   # remove the pipe from the last entry
+            txt = calc[g.R_UID_SELF] + ' ('+calc[g.C_TYPE] +')\n'
+            txt = txt + runtxt + '\n'
+            txt = txt + 'Result: '+str(round(calc[g.C_CONC_ORIGINAL],8))+' +/- STD_DEV mg/L'
+            
+            # Create the list element and attach it to the list
+            calcitem = QListWidgetItem(self.calc_list)
+            calcitem.setText(txt)
+            calcitem.setData(Qt.ItemDataRole.UserRole, calc)
+
+    def update_right_buttons(self):
+        return
+        ################################################## hERE
+        #
+        #   HERE HERE HERE HERE HEREHERE
+        #
+        #
+        ###########################################################################################################################
+        '''print(self.calc_list.selectedItems())
+        n = len(self.calc_list.selectedItems())
+        if n == 0:
+            enable = 
+            freeze''' 
+        
+        
+        '''self.right_buttons_one_only = (b_edit)
+        self.right_buttons_one_plus = (b_dup, b_del)'''
+            
 
     def get_left_layout(self):
         # far left column
@@ -200,7 +259,7 @@ class WindowCalculate(QMainWindow):
         t2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         t3.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        if i == 1: msg = "Please select at lesat one <b>sample</b> run  <-----"
+        if i == 1: msg = "Please select at least one <b>sample</b> run  <-----"
         else: msg = "Please select at least one run for <b>standard addition "+str(i-1)+'</b>   \n\n<-----'
         
         s = QStackedLayout()
@@ -259,12 +318,14 @@ class WindowCalculate(QMainWindow):
         return lay
 
     def set_layout(self):
+        self.reset_globals()
         l = self.get_full_layout()
         w = QWidget()
         w.setLayout(l)
         self.setCentralWidget(w)
 
     def toggle(self):
+        
         if self.mode == g.WIN_MODE_RIGHT: self.mode = g.WIN_MODE_NEW
         else: self.mode = g.WIN_MODE_RIGHT
         self.set_layout()
@@ -567,24 +628,17 @@ class WindowCalculate(QMainWindow):
 
     def save(self):
         r = self.get_and_show_results()
-        
         if r:                               # make sure there are some results
-
             ids = get_ids(self.parent.data, g.S_PROCESSED)
             calc_id = get_next_id(ids, g.C_UID_PREFIX)
             r[g.R_UID_SELF] = calc_id
             r[g.C_NOTE] = self.notes.toPlainText()
-            
-            self.parent.start_async_save(g.SAVE_TYPE_CALC_NEW, [r], onSuccess=self.save_success, onError=self.save_error)
-            
+            self.parent.start_async_save(g.SAVE_TYPE_CALC_NEW, [r], onSuccess=self.save_success)           
         else:                               # if no results, show alert
             show_alert(self, "Alert!", "Please complete the analysis and try again.")
 
     def save_success(self):
        self.saved = True
-
-    def save_error(self):
-        print('error!')
 
             
         

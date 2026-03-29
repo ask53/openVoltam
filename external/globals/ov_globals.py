@@ -139,6 +139,8 @@ C_POINTS = 'points'
 C_NOTE = 'note'
 C_REP_ID = 'rep-id'
 C_RUN_ID = 'run-id'
+C_X = 'x'
+C_Y = 'y'
 
 # Voltamogram globals
 VOG_RESIZE = 500        # number of points to resize data to for analysis
