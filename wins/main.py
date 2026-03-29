@@ -299,21 +299,14 @@ class WindowMain(QMainWindow):
         but_view = QPushButton('info')
         but_config = QPushButton('NEW RUN')
         but_calc = QPushButton('Calculate')
-        but_res_sample = QPushButton('Sample results')
-        self.buts = [but_view, but_config, but_calc, but_res_sample]
-
-
-
-        ##### FOR TESTING
-        #
-        #
-        but_calc.clicked.connect(self.new_win_calculator)
-        #
-        ################33
+        but_res_sample = QPushButton('Results')
+        self.buts = [but_view, but_config, but_calc, but_res_sample]        
         
         but_view.clicked.connect(self.new_win_sample)
         but_config.clicked.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
-            
+        but_calc.clicked.connect(partial(self.new_win_calculator, g.WIN_MODE_NEW))
+        but_res_sample.clicked.connect(partial(self.new_win_calculator, g.WIN_MODE_RIGHT))
+ 
         vl1 = QVLine()
         vl2 = QVLine()
         vl3 = QVLine()
@@ -1077,9 +1070,9 @@ class WindowMain(QMainWindow):
         except Exception as e:
             print(e)
 
-    def new_win_calculator(self):
+    def new_win_calculator(self, mode):
         try:
-            self.new_win_one_of_type(WindowCalculate(self, g.WIN_MODE_NEW))
+            self.new_win_one_of_type(WindowCalculate(self, mode))
         except Exception as e:
             print(e)
         
