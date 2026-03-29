@@ -87,7 +87,8 @@ class WindowCalculate(QMainWindow):
         b_del.setIcon(QIcon(g.ICON_TRASH))
 
         b_new.clicked.connect(self.toggle)
-
+        
+        b_dup.clicked.connect(self.duplicate)
         b_del.clicked.connect(self.delete)
 
         self.right_buttons_one_only = [b_edit]
@@ -126,6 +127,8 @@ class WindowCalculate(QMainWindow):
             txt = calc[g.R_UID_SELF] + ' ('+calc[g.C_TYPE] +')\n'
             txt = txt + runtxt + '\n'
             txt = txt + 'Result: '+str(round(calc[g.C_CONC_ORIGINAL],8))+' +/- STD_DEV mg/L'
+            if calc[g.C_NOTE]:
+                txt = txt + '\nNote: '+str(calc[g.C_NOTE])
             
             # Create the list element and attach it to the list
             calcitem = QListWidgetItem(self.calc_list)
@@ -347,22 +350,46 @@ class WindowCalculate(QMainWindow):
         else: self.mode = g.WIN_MODE_RIGHT
         self.set_layout()
 
-    def delete(self):
+    def duplicate(self):
+        """Duplicates all selected calculations"""
+        items = self.calc_list.selectedItems()
+        data = []
+        
+        for item in items:
+            datum = item.data(Qt.ItemDataRole.UserRole)
+            data.append(datum)
+            
+        ids = get_ids(self.parent.data, g.S_PROCESSED)
+        for datum in data:  
+            note = datum[g.C_NOTE]                          # Add [COPY OF calc-id] to new calc's note
+            lbl = '[COPY OF '+str(datum[g.R_UID_SELF])+']'
+            if note: datum[g.C_NOTE] =  lbl+' '+note
+            else: datum[g.C_NOTE] = lbl
+            calc_id = get_next_id(ids, g.C_UID_PREFIX)      # Get the next calc-id UID
+            datum[g.R_UID_SELF] = calc_id
+            ids.append(calc_id)                             # to get next UID for next looop
 
+        self.progress_bar.setVisible(True)
+        self.parent.start_async_save(g.SAVE_TYPE_CALC_NEW, [data], onSuccess=self.async_success, onError=self.async_error)
+
+        
+    def delete(self):
+        """Deletes selected calcs"""
         items = self.calc_list.selectedItems()
         tasks = []
         for item in items:
             data = item.data(Qt.ItemDataRole.UserRole)
             tasks.append(data[g.R_UID_SELF])
 
-        if self.mode==g.WIN_MODE_EDIT and self.calc_id in tasks:
+        if self.mode==g.WIN_MODE_EDIT and self.calc_id in tasks:    # Do not delete if currently edited calc is selected
             show_alert(self, "Alert!", "Cannot delete the calculation that is currently being edited ("+str(self.calc_id)+").\nPlease make a different selection and try again.")
             return
             
-        if self.confirm_delete():
+        if self.confirm_delete():                                   # Confirm delete w user
             self.progress_bar.setVisible(True)
-            self.parent.start_async_save(g.SAVE_TYPE_CALC_DELETE, [tasks], onSuccess=self.delete_success, onError=self.async_error)
+            self.parent.start_async_save(g.SAVE_TYPE_CALC_DELETE, [tasks], onSuccess=self.async_success, onError=self.async_error)
 
+        
     def confirm_delete(self):
         title = 'Confirm delete'
         text = 'This will permanently delete all selected calculations.\n\nIf you are sure you want to delete, type DELETE below.'
@@ -372,7 +399,7 @@ class WindowCalculate(QMainWindow):
                 return True
         return False
 
-    def delete_success(self):
+    def async_success(self):
         self.progress_bar.setVisible(False)
         self.status.showMessage("Complete", g.SB_DURATION)
         
@@ -682,7 +709,7 @@ class WindowCalculate(QMainWindow):
             r[g.C_NOTE] = self.notes.toPlainText()
 
             self.progress_bar.setVisible(True)
-            self.parent.start_async_save(g.SAVE_TYPE_CALC_NEW, [r], onSuccess=self.save_success, onError=self.async_error)           
+            self.parent.start_async_save(g.SAVE_TYPE_CALC_NEW, [[r]], onSuccess=self.save_success, onError=self.async_error)   #r gets double bracketed, because it goes to a fn that accepts a list of calcs        
         else:                               # if no results, show alert
             show_alert(self, "Alert!", "Please complete the analysis and try again.")
 

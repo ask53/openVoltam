@@ -285,8 +285,9 @@ def save_modify_method(data, params):        # modify the method in a sample fil
     return data
 
 def save_new_calc(data, params):   
-    newCalc = params[0]
-    data[g.S_PROCESSED].append(newCalc)
+    newCalcs = params[0]
+    for newCalc in newCalcs:
+        data[g.S_PROCESSED].append(newCalc)
     return data
 
 def save_delete_calc(data, params):
