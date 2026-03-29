@@ -289,6 +289,21 @@ def save_new_calc(data, params):
     data[g.S_PROCESSED].append(newCalc)
     return data
 
+def save_delete_calc(data, params):
+    tasks = params[0]
+    while tasks:
+        calc_id = tasks[0]
+        found = False
+        index = None
+        for i, calc in enumerate(data[g.S_PROCESSED]):
+            if calc[g.R_UID_SELF] == calc_id:
+                found = True
+                index = i
+                break
+        if found:
+            data[g.S_PROCESSED].pop(index)
+        tasks.pop(0)
+    return data
 
 def save():    
     try:
@@ -313,6 +328,8 @@ def save():
             data=save_modify_method(data, params)
         elif saveType == g.SAVE_TYPE_CALC_NEW:
             data=save_new_calc(data, params)
+        elif saveType == g.SAVE_TYPE_CALC_DELETE:
+            data=save_delete_calc(data, params)
         
         write_data_to_file(path, data)
         data = remove_data_from_layout(data) 

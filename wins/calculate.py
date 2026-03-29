@@ -29,7 +29,9 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QStackedLayout,
-    QAbstractItemView
+    QAbstractItemView,
+    QProgressBar,
+    QInputDialog
 )
 
 class WindowCalculate(QMainWindow):
@@ -42,14 +44,23 @@ class WindowCalculate(QMainWindow):
 
         self.reset_globals()
 
+        # Selector border widths and colors
         self.border_width_active = '5px'
         self.border_width_passive = '1px'
         self.border_color_good = 'green'
         self.border_color_todo = 'orange'
         self.border_color_error = 'red'
-        
-        self.status = self.statusBar()
 
+        # Status Bar and Progress Bar
+        self.status = self.statusBar()
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setMinimum(0)
+        self.progress_bar.setMaximum(0)
+        self.progress_bar.setMaximumWidth(g.SB_PROGRESS_BAR_WIDTH)  # Set a fixed width
+        self.progress_bar.setVisible(False)     # Hide it initially
+        self.status.addPermanentWidget(self.progress_bar)
+
+        # Set the layout programatically
         self.set_layout()
         
     def reset_globals(self):
@@ -77,6 +88,8 @@ class WindowCalculate(QMainWindow):
 
         b_new.clicked.connect(self.toggle)
 
+        b_del.clicked.connect(self.delete)
+
         self.right_buttons_one_only = [b_edit]
         self.right_buttons_one_plus = [b_dup, b_del]
         
@@ -90,14 +103,13 @@ class WindowCalculate(QMainWindow):
         #v.addStretch()
 
         self.update_calc_list()
+        self.update_right_buttons()
         return v
 
     def update_calc_list(self):
+        self.calc_list.clear()
         for calc in self.parent.data[g.S_PROCESSED]:
-            print(calc[g.C_POINTS])
-            print()
             
-
             # get unique runs in calc
             runs = []
             for point in calc[g.C_POINTS]:
@@ -121,23 +133,21 @@ class WindowCalculate(QMainWindow):
             calcitem.setData(Qt.ItemDataRole.UserRole, calc)
 
     def update_right_buttons(self):
-        return
-        ################################################## hERE
-        #
-        #   HERE HERE HERE HERE HEREHERE
-        #
-        #
-        ###########################################################################################################################
-        '''print(self.calc_list.selectedItems())
         n = len(self.calc_list.selectedItems())
         if n == 0:
-            enable = 
-            freeze''' 
-        
-        
-        '''self.right_buttons_one_only = (b_edit)
-        self.right_buttons_one_plus = (b_dup, b_del)'''
+            enable = []
+            freeze = self.right_buttons_one_only + self.right_buttons_one_plus
+        elif n == 1:
+            enable = self.right_buttons_one_only + self.right_buttons_one_plus
+            freeze = []
+        else:
+            enable = self.right_buttons_one_plus
+            freeze = self.right_buttons_one_only
             
+        for but in enable:
+            but.setEnabled(True)
+        for but in freeze:
+            but.setEnabled(False)
 
     def get_left_layout(self):
         # far left column
@@ -168,7 +178,7 @@ class WindowCalculate(QMainWindow):
         v0.addLayout(self.results_stack)
 
         # center column
-        self.graph = StdAddFitterPlot(self, 'Best-fit calculator') ################## PLACEHOLDER HERE FOR NOW TILL SOMEONE GETS AROUND TO MAKING THE GRAPH :P
+        self.graph = StdAddFitterPlot(self, 'Best-fit calculator') 
 
         
         h1 = QHBoxLayout()                            # row of selectors
@@ -325,11 +335,48 @@ class WindowCalculate(QMainWindow):
         self.setCentralWidget(w)
 
     def toggle(self):
-        
+        """Toggles the display between right-pane only and adding a new calculation.
+        If there is an unsaved calculation in the left pane, prompts the user about
+        saving unsaved work before toggling"""
+        ##################################################################################################
+        #
+        #   PROMPT USER ABOUT SAVING IF THERE IS UNSAVED WORK
+        #
+        ###########################################################################################################################################
         if self.mode == g.WIN_MODE_RIGHT: self.mode = g.WIN_MODE_NEW
         else: self.mode = g.WIN_MODE_RIGHT
         self.set_layout()
 
+    def delete(self):
+
+        items = self.calc_list.selectedItems()
+        tasks = []
+        for item in items:
+            data = item.data(Qt.ItemDataRole.UserRole)
+            tasks.append(data[g.R_UID_SELF])
+
+        if self.mode==g.WIN_MODE_EDIT and self.calc_id in tasks:
+            show_alert(self, "Alert!", "Cannot delete the calculation that is currently being edited ("+str(self.calc_id)+").\nPlease make a different selection and try again.")
+            return
+            
+        if self.confirm_delete():
+            self.progress_bar.setVisible(True)
+            self.parent.start_async_save(g.SAVE_TYPE_CALC_DELETE, [tasks], onSuccess=self.delete_success, onError=self.async_error)
+
+    def confirm_delete(self):
+        title = 'Confirm delete'
+        text = 'This will permanently delete all selected calculations.\n\nIf you are sure you want to delete, type DELETE below.'
+        text, ok = QInputDialog.getText(self, title, text)
+        if ok:
+            if text == 'DELETE':
+                return True
+        return False
+
+    def delete_success(self):
+        self.progress_bar.setVisible(False)
+        self.status.showMessage("Complete", g.SB_DURATION)
+        
+        
 
     def load_sample_runs(self, run_list):
         # Get "sample" runs
@@ -633,18 +680,25 @@ class WindowCalculate(QMainWindow):
             calc_id = get_next_id(ids, g.C_UID_PREFIX)
             r[g.R_UID_SELF] = calc_id
             r[g.C_NOTE] = self.notes.toPlainText()
-            self.parent.start_async_save(g.SAVE_TYPE_CALC_NEW, [r], onSuccess=self.save_success)           
+
+            self.progress_bar.setVisible(True)
+            self.parent.start_async_save(g.SAVE_TYPE_CALC_NEW, [r], onSuccess=self.save_success, onError=self.async_error)           
         else:                               # if no results, show alert
             show_alert(self, "Alert!", "Please complete the analysis and try again.")
 
     def save_success(self):
-       self.saved = True
+        self.saved = True
+        self.progress_bar.setVisible(False)
+        self.status.showMessage("Complete", g.SB_DURATION)
 
-            
+    def async_error(self):
+        self.progress_bar.setVisible(False)
+        self.status.showMessage("ERROR, operation did not complete", g.SB_DURATION_ERROR)
         
     def update_win(self):
         """Designed to be called when parent's data has been reloaded.
         Updates this window with new data as needed"""
+        self.update_calc_list()
         return
 
     def showEvent(self, event):
