@@ -175,7 +175,12 @@ WindowAnalyze VoltamogramPlot {
 	border: 1px solid #808080;
 }
 
-WindowCalculate QListWidget::item:selected{
+WindowCalculate QListWidget::item:selected {
 	background-color: #fcecba;
 	color: black;
 }
+
+WindowCalculate QLabel#left-title {
+	font-size: 16pt;
+}
+	

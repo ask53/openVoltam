@@ -35,12 +35,13 @@ from PyQt6.QtWidgets import (
 )
 
 class WindowCalculate(QMainWindow):
-    def __init__(self, parent, mode, calc_id=None):  
+    def __init__(self, parent, mode, calc_id=None, suggestion=None):  
         super().__init__()                          # if path, load sample deets, else load empty edit window for new sample
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.parent = parent
         self.mode = mode
         self.calc_id = calc_id
+        self.suggestion = suggestion
 
         self.reset_globals()
 
@@ -71,11 +72,15 @@ class WindowCalculate(QMainWindow):
         self.updating_runs = False
 
     def get_right_layout(self):
+        title = QLabel("<b>Results</b>")
+        title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        
         self.calc_list = QListWidget()
         self.calc_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.calc_list.setAlternatingRowColors(True)
         self.calc_list.setSpacing(2)
         self.calc_list.itemSelectionChanged.connect(self.update_right_buttons)
+        self.calc_list.itemDoubleClicked.connect(self.view_calc)
         b_new = QPushButton()
         b_edit = QPushButton()
         b_dup = QPushButton()
@@ -86,22 +91,32 @@ class WindowCalculate(QMainWindow):
         b_dup.setIcon(QIcon(g.ICON_DUP))
         b_del.setIcon(QIcon(g.ICON_TRASH))
 
-        b_new.clicked.connect(self.toggle)
-        
+        b_new.clicked.connect(self.open_new)
+        b_edit.clicked.connect(self.edit_from_right)
         b_dup.clicked.connect(self.duplicate)
         b_del.clicked.connect(self.delete)
 
+        b_new.setToolTip('New')
+        b_edit.setToolTip('Edit')
+        b_dup.setToolTip('Duplicate')
+        b_del.setToolTip('Delete')
+
         self.right_buttons_one_only = [b_edit]
         self.right_buttons_one_plus = [b_dup, b_del]
+
+        lbl = QLabel("<i>double-click a <b>result</b> to view calculation details.</i>")
+        lbl.setWordWrap(True)
+        lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         
-        h = QHBoxLayout()
+        h2 = QHBoxLayout()
         for b in (b_new, b_edit, b_dup, b_del):
-            h.addWidget(b)
+            h2.addWidget(b)
         
         v = QVBoxLayout()
+        v.addWidget(title)
         v.addWidget(self.calc_list)
-        v.addLayout(h)
-        #v.addStretch()
+        v.addLayout(h2)
+        v.addWidget(lbl)
 
         self.update_calc_list()
         self.update_right_buttons()
@@ -134,6 +149,49 @@ class WindowCalculate(QMainWindow):
             calcitem = QListWidgetItem(self.calc_list)
             calcitem.setText(txt)
             calcitem.setData(Qt.ItemDataRole.UserRole, calc)
+
+    def view_calc(self, item):
+        #############################################################################
+        # 1. Check if unsaved work
+        #   - if so, prompt user whether they want to save
+        #################################################################################################################################
+        self.calc_id = item.data(Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
+        self.mode = g.WIN_MODE_VIEW_ONLY
+        self.suggestion = None
+        self.set_layout()
+        
+
+    def edit_calc(self, calc_id):
+        #############################################################################
+        # 1. Check if unsaved work
+        #   - if so, prompt user whether they want to save
+        #################################################################################################################################
+        self.calc_id = calc_id
+        self.mode = g.WIN_MODE_EDIT
+        self.suggestion = None
+        self.set_layout()
+
+    def edit_from_right(self):
+        item = self.calc_list.currentItem()
+        calc_id = item.data(Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
+        self.edit_calc(calc_id)
+
+    def close_left(self):
+        #############################################################################
+        # 1. Check if unsaved work
+        #   - if so, prompt user whether they want to save
+        #################################################################################################################################
+        self.calc_id = None
+        self.mode = g.WIN_MODE_RIGHT
+        self.suggestion = None
+        self.set_layout()
+
+    def open_new(self):
+        self.calc_id = None
+        self.mode = g.WIN_MODE_NEW
+        self.suggestion = None
+        self.set_layout()
+        
 
     def update_right_buttons(self):
         n = len(self.calc_list.selectedItems())
@@ -181,7 +239,27 @@ class WindowCalculate(QMainWindow):
         v0.addLayout(self.results_stack)
 
         # center column
-        self.graph = StdAddFitterPlot(self, 'Best-fit calculator') 
+        txt = 'New calculation'
+        if self.mode == g.WIN_MODE_EDIT: txt = "Edit: "+self.calc_id
+        elif self.mode == g.WIN_MODE_VIEW_ONLY: txt = "View: "+self.calc_id
+        title = QLabel(txt)
+        title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        title.setObjectName('left-title')
+            
+        but_close = QPushButton()
+        but_close.setIcon(QIcon(g.ICON_X))
+        but_close.clicked.connect(self.close_left)
+
+        
+        h0 = QHBoxLayout()
+        h0.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        h0.addStretch()
+        h0.addWidget(title)
+        h0.addStretch()
+        h0.addWidget(but_close)
+
+        
+        self.graph = StdAddFitterPlot(self)#, 'Best-fit calculator') 
 
         
         h1 = QHBoxLayout()                            # row of selectors
@@ -199,6 +277,7 @@ class WindowCalculate(QMainWindow):
         h1.addWidget(but_add_point)'''
 
         v1 = QVBoxLayout()
+        v1.addLayout(h0)
         v1.addWidget(self.graph)
         v1.addLayout(h1)
 
@@ -208,11 +287,16 @@ class WindowCalculate(QMainWindow):
         h2.addLayout(v1)
 
         but_save = QPushButton('save')
+        but_edit = QPushButton('edit')
+        
         but_save.clicked.connect(self.save)
+        but_edit.clicked.connect(partial(self.edit_calc, self.calc_id))
 
         v2 = QVBoxLayout()
         v2.addLayout(h2)
-        v2.addWidget(but_save)
+
+        if self.mode == g.WIN_MODE_VIEW_ONLY: v2.addWidget(but_edit)
+        else: v2.addWidget(but_save)
 
         return v2
 
@@ -331,24 +415,40 @@ class WindowCalculate(QMainWindow):
         return lay
 
     def set_layout(self):
-        self.reset_globals()
-        l = self.get_full_layout()
+        self.reset_globals()            # Reset the globals
+        l = self.get_full_layout()      # Get the layout
         w = QWidget()
         w.setLayout(l)
-        self.setCentralWidget(w)
+        self.setCentralWidget(w)        # Set it! 
 
-    def toggle(self):
-        """Toggles the display between right-pane only and adding a new calculation.
-        If there is an unsaved calculation in the left pane, prompts the user about
-        saving unsaved work before toggling"""
-        ##################################################################################################
-        #
-        #   PROMPT USER ABOUT SAVING IF THERE IS UNSAVED WORK
-        #
-        ###########################################################################################################################################
-        if self.mode == g.WIN_MODE_RIGHT: self.mode = g.WIN_MODE_NEW
-        else: self.mode = g.WIN_MODE_RIGHT
-        self.set_layout()
+        # Set the window title
+        txt = 'Results'
+        if self.mode == g.WIN_MODE_NEW: txt = 'New calculation'
+        elif self.mode == g.WIN_MODE_EDIT: txt = 'Edit calculation'
+        elif self.mode == g.WIN_MODE_VIEW_ONLY: txt = 'View calculation'
+        self.setWindowTitle(self.parent.data[g.S_NAME]+' | '+txt)
+
+        # Adjust window size and position now that its been reset
+        if self.mode == g.WIN_MODE_RIGHT:   # if going to Right pane only, shrink and place window
+            self.showNormal()               # un-maximize
+            screen = g.APP.primaryScreen().availableGeometry()  # resize to smaller column
+            self.resize(self.centralWidget().layout().sizeHint().width(), screen.height()-100)
+            x = screen.width() - self.geometry().width() - 20       # get desired x position of upper left
+            y = screen.height() - self.geometry().height() - 70     # get desired y position of upper left
+            self.move(x,y)
+        else:
+            self.showMaximized()
+
+        # Fill in the actual values to the form
+        self.set_values()
+
+    def set_values(self):
+        if not self.mode in (g.WIN_MODE_EDIT, g.WIN_MODE_VIEW_ONLY):
+            return
+        
+            
+        print('setting values!')
+        print('calc id is: '+str(self.calc_id))
 
     def duplicate(self):
         """Duplicates all selected calculations"""
@@ -717,6 +817,8 @@ class WindowCalculate(QMainWindow):
         self.saved = True
         self.progress_bar.setVisible(False)
         self.status.showMessage("Complete", g.SB_DURATION)
+        item = self.calc_list.item(self.calc_list.count()-1)    # get last calc on calc list
+        self.view_calc(item)                                    # show in read-only mode
 
     def async_error(self):
         self.progress_bar.setVisible(False)
