@@ -42,6 +42,7 @@ class WindowCalculate(QMainWindow):
         self.mode = mode
         self.calc_id = calc_id
         self.suggestion = suggestion
+        self.mode_prev = None
 
         self.reset_globals()
 
@@ -156,6 +157,7 @@ class WindowCalculate(QMainWindow):
         #   - if so, prompt user whether they want to save
         #################################################################################################################################
         self.calc_id = item.data(Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
+        self.mode_prev = self.mode
         self.mode = g.WIN_MODE_VIEW_ONLY
         self.suggestion = None
         self.set_layout()
@@ -167,6 +169,7 @@ class WindowCalculate(QMainWindow):
         #   - if so, prompt user whether they want to save
         #################################################################################################################################
         self.calc_id = calc_id
+        self.mode_prev = self.mode
         self.mode = g.WIN_MODE_EDIT
         self.suggestion = None
         self.set_layout()
@@ -182,12 +185,14 @@ class WindowCalculate(QMainWindow):
         #   - if so, prompt user whether they want to save
         #################################################################################################################################
         self.calc_id = None
+        self.mode_prev = self.mode
         self.mode = g.WIN_MODE_RIGHT
         self.suggestion = None
         self.set_layout()
 
     def open_new(self):
         self.calc_id = None
+        self.mode_prev = self.mode
         self.mode = g.WIN_MODE_NEW
         self.suggestion = None
         self.set_layout()
@@ -240,8 +245,7 @@ class WindowCalculate(QMainWindow):
 
         # center column
         txt = 'New calculation'
-        if self.mode == g.WIN_MODE_EDIT: txt = "Edit: "+self.calc_id
-        elif self.mode == g.WIN_MODE_VIEW_ONLY: txt = "View: "+self.calc_id
+        if self.mode in (g.WIN_MODE_EDIT, g.WIN_MODE_VIEW_ONLY): txt = self.calc_id
         title = QLabel(txt)
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         title.setObjectName('left-title')
@@ -325,19 +329,19 @@ class WindowCalculate(QMainWindow):
         title = QLabel('Sample')
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        tree = self.get_run_tree_widget(with_method = True)
-        tree.itemSelectionChanged.connect(partial(self.update_sample_runs, tree, 0))
+        self.sample_tree = self.get_run_tree_widget(with_method = True)
+        self.sample_tree.itemSelectionChanged.connect(partial(self.update_sample_runs, self.sample_tree, 0))
 
         self.updating_runs = True
-        self.load_sample_runs(tree)
+        self.load_sample_runs(self.sample_tree)
         self.updating_runs = False
 
         b = QPushButton('Graph')
-        b.clicked.connect(partial(self.graph_from_tree, tree))
+        b.clicked.connect(partial(self.graph_from_tree, self.sample_tree))
         
         v = QVBoxLayout()
         v.addWidget(title)
-        v.addWidget(tree)
+        v.addWidget(self.sample_tree)
         v.addWidget(b)
         w = QWidget()
         w.setLayout(v)
@@ -436,7 +440,7 @@ class WindowCalculate(QMainWindow):
             x = screen.width() - self.geometry().width() - 20       # get desired x position of upper left
             y = screen.height() - self.geometry().height() - 70     # get desired y position of upper left
             self.move(x,y)
-        else:
+        elif not self.mode_prev or self.mode_prev == g.WIN_MODE_RIGHT:
             self.showMaximized()
 
         # Fill in the actual values to the form
@@ -689,6 +693,7 @@ class WindowCalculate(QMainWindow):
                 # wipe points for all selectors with index >i
                 for j in range(i+1,len(self.points)):
                     self.points[j] = []
+                    self.set_widget_border(self.stdadd_selectors[j-1]['tree'], self.border_width_active, self.border_color_todo)
 
                 # show the ith selector
                 self.stdadd_selectors[i]['layout'].setCurrentIndex(g.C_STACK_INDEX_SELECTOR)
