@@ -46,13 +46,6 @@ class WindowCalculate(QMainWindow):
 
         self.reset_globals()
 
-        # Selector border widths and colors
-        self.border_width_active = '5px'
-        self.border_width_passive = '1px'
-        self.border_color_good = 'green'
-        self.border_color_todo = 'orange'
-        self.border_color_error = 'red'
-
         # Status Bar and Progress Bar
         self.status = self.statusBar()
         self.progress_bar = QProgressBar()
@@ -75,6 +68,17 @@ class WindowCalculate(QMainWindow):
         self.to_preset = False
         if self.mode in (g.WIN_MODE_EDIT, g.WIN_MODE_VIEW_ONLY) and self.calc_id:
             self.to_preset = True
+
+        # Selector border widths and colors
+        self.border_width_active = '5px'
+        self.border_width_passive = '1px'
+        self.border_color_good = 'green'
+        self.border_color_todo = 'orange'
+        self.border_color_error = 'red'
+        if self.mode == g.WIN_MODE_VIEW_ONLY:
+            self.border_color_good = 'grey'
+            self.border_color_todo = 'grey'
+            self.border_color_error = 'grey'
 
     def get_right_layout(self):
         title = QLabel("<b>Results</b>")
@@ -220,6 +224,24 @@ class WindowCalculate(QMainWindow):
             but.setEnabled(False)
 
     def get_left_layout(self):
+        # header bar
+        txt = 'New calculation'
+        if self.mode in (g.WIN_MODE_EDIT, g.WIN_MODE_VIEW_ONLY): txt = self.calc_id
+        title = QLabel(txt)
+        title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        title.setObjectName('left-title')
+            
+        but_close = QPushButton()
+        but_close.setIcon(QIcon(g.ICON_X))
+        but_close.clicked.connect(self.close_left)
+        
+        h0 = QHBoxLayout()
+        h0.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        h0.addStretch()
+        h0.addWidget(title)
+        h0.addStretch()
+        h0.addWidget(but_close)
+        
         # far left column
         type_lbl = QLabel("Calculation type")
         self.type = QComboBox()
@@ -247,26 +269,7 @@ class WindowCalculate(QMainWindow):
         v0.addStretch()
         v0.addLayout(self.results_stack)
 
-        # center column
-        txt = 'New calculation'
-        if self.mode in (g.WIN_MODE_EDIT, g.WIN_MODE_VIEW_ONLY): txt = self.calc_id
-        title = QLabel(txt)
-        title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        title.setObjectName('left-title')
-            
-        but_close = QPushButton()
-        but_close.setIcon(QIcon(g.ICON_X))
-        but_close.clicked.connect(self.close_left)
-
-        
-        h0 = QHBoxLayout()
-        h0.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        h0.addStretch()
-        h0.addWidget(title)
-        h0.addStretch()
-        h0.addWidget(but_close)
-
-        
+        # center column        
         self.graph = StdAddFitterPlot(self)#, 'Best-fit calculator') 
 
         
@@ -285,7 +288,6 @@ class WindowCalculate(QMainWindow):
         h1.addWidget(but_add_point)'''
 
         v1 = QVBoxLayout()
-        v1.addLayout(h0)
         v1.addWidget(self.graph)
         v1.addLayout(h1)
 
@@ -301,11 +303,28 @@ class WindowCalculate(QMainWindow):
         but_edit.clicked.connect(partial(self.edit_calc, self.calc_id))
 
         v2 = QVBoxLayout()
+        v2.addLayout(h0)
+        v2.addWidget(QHLine())
         v2.addLayout(h2)
 
         if self.mode == g.WIN_MODE_VIEW_ONLY: v2.addWidget(but_edit)
         else: v2.addWidget(but_save)
 
+        if self.mode == g.WIN_MODE_VIEW_ONLY:                       # if view only, make a bunch of elements view_only
+            self.type.setEnabled(False)
+            self.notes.setEnabled(False)
+            self.graph.set_view_only()
+
+            #############################################3 BUG TO FIX
+            #
+            #       THESE LINES PREVENT SCROLLING DURING VIEW_ONLY
+            #
+            self.sample_tree.setEnabled(False)
+            for selector in self.stdadd_selectors:
+                selector['tree'].setEnabled(False)
+            #
+            #
+            #####################################################################################################################
         return v2
 
     def get_run_tree_widget(self, with_method=False):
@@ -468,12 +487,10 @@ class WindowCalculate(QMainWindow):
         ##################################################3
         #
         #   HERE: Set values in left pane!
+        #   SET READ ONLY VaLUES for mode==VIEW_ONLY
         #
         ####################################################################################################################
-        
-            
-        print('setting values!')
-        print('calc id is: '+str(self.calc_id))
+
 
     def duplicate(self):
         """Duplicates all selected calculations"""
@@ -544,8 +561,6 @@ class WindowCalculate(QMainWindow):
 
     def preset_runs(self):
         if self.to_preset:      # preset from calc with id calc_id
-            print('presetting from previous calculation')
-            
             calc = self.get_calc_from_id(self.calc_id)                  # get calc data
             points = calc[g.C_POINTS]
             for i, point in enumerate(points):
@@ -563,6 +578,12 @@ class WindowCalculate(QMainWindow):
 
         elif self.suggestion:
             print('presetting from suggestion')
+            #############################################
+            #
+            #       HERE SET UP PRESETTING FROM SUGGESTION!
+            #
+            #
+            ################################################################################################
             
 
     def get_calc_from_id(self, calc_id):
@@ -620,10 +641,8 @@ class WindowCalculate(QMainWindow):
             return
         self.updating_runs = True
         try:
-            print('a')
             selected_runs = self.get_selected_runs(run_list)
-            print('b')
-
+            
             if selected_runs:
                 # grab method of first selected run (in case multiple selected simultaneously
                 self.method = selected_runs[0].data(0, Qt.ItemDataRole.UserRole)[g.R_UID_METHOD]
@@ -637,21 +656,16 @@ class WindowCalculate(QMainWindow):
                 # for each selected run, show all reps and select them, for deselected runs, remove children
                 self.show_reps_from_runs(run_list, 0)
                 
-            print('c')    
             # Check if any runs are selected anymore.                 
             selected_runs = self.get_selected_runs(run_list)
             if not selected_runs:                   # if not
                 self.method = None                  # reset method
                 self.load_sample_runs(run_list)
                 self.set_widget_border(run_list, self.border_width_active, self.border_color_todo)
-            print('d')
             # Update next pane based on status of this pane
             self.update_points(selector_index, run_list)
-            print('d1')
             self.graph.update_points(self.points)
-            print('d2')
             self.update_selectors()
-            print('e')
             self.updating_runs = False
         except Exception as e:
             print('error is HERE!')
@@ -763,50 +777,36 @@ class WindowCalculate(QMainWindow):
         
 
     def update_selectors(self):
-        print('1')
         self.updating_runs = True
         if not self.points[0]:
-            print('1a')
             for i, selector in enumerate(self.stdadd_selectors):
                 selector['layout'].setCurrentIndex(g.C_STACK_INDEX_BASE)
                 self.points[i+1] = []
         else:
-            print('1b')
             # Get i, the index of the first selector w no selected points
             empty = False
             for i,point in enumerate(self.points):
                 if not point:                           
                     empty = True
                     break
-            print('--1')
             if empty:                   # if there is a selector w no selected points
                 # show selector[i]
                 i = i-1                 # adjust index to index from 0.
-                print('--1a')
                 # wipe points for all selectors with index >i
-                print('i is: '+str(i))
                 for j in range(i+1,len(self.points)):
-                    print('--1aLOOPa')
                     self.points[j] = []
-                    print('--1aLOOPb')
-                    
                     self.set_widget_border(self.stdadd_selectors[j-1]['tree'], self.border_width_active, self.border_color_todo)
-                    print('--1aLOOPa')
-                print('--1b')
+
                 # show the ith selector
                 self.stdadd_selectors[i]['layout'].setCurrentIndex(g.C_STACK_INDEX_SELECTOR)
-                print('--1c')
                 # hide all selectors[j] for j>i
                 for j, selector in enumerate(self.stdadd_selectors):
                     if j>i: selector['layout'].setCurrentIndex(g.C_STACK_INDEX_BASE)
-                print('--1d')
                 # for all stdadds w index between 0 and j
                 #   erase tree
                 #   add all stdadd runs to tree that are either in points[j+1] or not in points at all.
                 self.load_stdadd_runs(i)
-                print('--1e')
                 self.update_stdadd_runs(i)
-            print('--2')
         self.updating_runs = False
 
     def get_selected(self, tree):
