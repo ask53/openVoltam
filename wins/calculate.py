@@ -72,6 +72,10 @@ class WindowCalculate(QMainWindow):
         self.saved = True
         self.updating_runs = False
 
+        self.to_preset = False
+        if self.mode in (g.WIN_MODE_EDIT, g.WIN_MODE_VIEW_ONLY) and self.calc_id:
+            self.to_preset = True
+
     def get_right_layout(self):
         title = QLabel("<b>Results</b>")
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -444,11 +448,28 @@ class WindowCalculate(QMainWindow):
             self.showMaximized()
 
         # Fill in the actual values to the form
-        self.set_values()
+        try:
+            self.preset_runs()
+            self.set_values()
+            self.to_preset = False      # Once we have finished presetting, we are no longer presetting
+            self.suggesting = None      # Once we have finished suggesting, we are no longer suggesting
+        except Exception as e:
+            print(e)
 
     def set_values(self):
         if not self.mode in (g.WIN_MODE_EDIT, g.WIN_MODE_VIEW_ONLY):
             return
+        calc = self.get_calc_from_id(self.calc_id)                  # get calc data
+        type_index = g.C_TYPES.index(calc[g.C_TYPE])
+        txt = calc[g.C_NOTE]
+        self.type.setCurrentIndex(type_index)
+        self.notes.setPlainText(txt)
+        
+        ##################################################3
+        #
+        #   HERE: Set values in left pane!
+        #
+        ####################################################################################################################
         
             
         print('setting values!')
@@ -520,7 +541,54 @@ class WindowCalculate(QMainWindow):
             if run[g.R_TYPE] == g.R_TYPE_SAMPLE:
                 method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
                 self.add_run_to_tree(run_list, run, method=method)
+
+    def preset_runs(self):
+        if self.to_preset:      # preset from calc with id calc_id
+            print('presetting from previous calculation')
+            
+            calc = self.get_calc_from_id(self.calc_id)                  # get calc data
+            points = calc[g.C_POINTS]
+            for i, point in enumerate(points):
+                if i==0: tree = self.sample_tree
+                else: tree = self.stdadd_selectors[i-1]['tree']
+
+                run_ids = self.get_runs_from_point(point)                   # get sample run ids
+                for run_id in run_ids:                                      # for each run id
+                    for j in range(0, tree.topLevelItemCount()):            # loop thru all items in tree
+                        item = tree.topLevelItem(j)
+                        item_run_id = item.data(0,Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
+                        if item_run_id == run_id:                           # if the item run_id matches the sample run_id
+                            item.setSelected(True)                          # select it! 
+                            break                                           # and break, because selecting it will modify the tree we're looping thru
+
+        elif self.suggestion:
+            print('presetting from suggestion')
+            
+
+    def get_calc_from_id(self, calc_id):
+        for calc in self.parent.data[g.S_PROCESSED]:
+            if calc[g.R_UID_SELF] == calc_id:
+                return calc
+        return None
+
+    def get_runs_from_point(self, point):
+        """Takes an a list, point, of dicts and returns a list of the unique run ids"""
+        runs = []
+        for rep in point:
+            run_id = rep[g.C_RUN_ID]
+            if not run_id in runs:
+                runs.append(run_id)
+        return runs
         
+    def get_tasks_from_point(self, point):
+        """Takes ins a list, point, of dicts and returns of list of tuples of the form:
+        [(runID1, repID), (runID, repID), ... , (runID, repID)]"""
+        tasks = []
+        for rep in point:
+            run_id = rep[g.C_RUN_ID]
+            rep_id = rep[g.C_REP_ID]
+            tasks.append((run_id, rep_id))
+        return tasks
 
     def load_stdadd_runs(self, i):
         
@@ -552,8 +620,9 @@ class WindowCalculate(QMainWindow):
             return
         self.updating_runs = True
         try:
+            print('a')
             selected_runs = self.get_selected_runs(run_list)
-
+            print('b')
 
             if selected_runs:
                 # grab method of first selected run (in case multiple selected simultaneously
@@ -566,21 +635,23 @@ class WindowCalculate(QMainWindow):
                         run_list.takeTopLevelItem(i)
                 
                 # for each selected run, show all reps and select them, for deselected runs, remove children
-                self.show_reps_from_runs(run_list)
+                self.show_reps_from_runs(run_list, 0)
                 
+            print('c')    
             # Check if any runs are selected anymore.                 
             selected_runs = self.get_selected_runs(run_list)
             if not selected_runs:                   # if not
                 self.method = None                  # reset method
                 self.load_sample_runs(run_list)
                 self.set_widget_border(run_list, self.border_width_active, self.border_color_todo)
-
+            print('d')
             # Update next pane based on status of this pane
             self.update_points(selector_index, run_list)
-            
+            print('d1')
             self.graph.update_points(self.points)
+            print('d2')
             self.update_selectors()
-            
+            print('e')
             self.updating_runs = False
         except Exception as e:
             print('error is HERE!')
@@ -594,7 +665,7 @@ class WindowCalculate(QMainWindow):
             selected_runs = self.get_selected_runs(tree)
             if selected_runs:
                                # if we're about to do some auto-updating, avoid recursion
-                self.show_reps_from_runs(tree)
+                self.show_reps_from_runs(tree, i+1)
                 
 
             # Check if any runs are selected anymore.                 
@@ -643,7 +714,7 @@ class WindowCalculate(QMainWindow):
             else:                   # erase data in all higher points
                 self.points[i] = []
 
-    def show_reps_from_runs(self, tree):
+    def show_reps_from_runs(self, tree, point_index):
         all_items = [tree.topLevelItem(x) for x in range(tree.topLevelItemCount())]
         for item in all_items:
             if item.isSelected() and item.childCount() == 0:        # If item is newly selected, show all children and select!
@@ -670,43 +741,72 @@ class WindowCalculate(QMainWindow):
                 if not selected_children:       # If all children have been deselected by user
                     item.takeChildren()         # Remove them all from the layout
                     item.setSelected(False)     # And deselect the run itself
-        
+                    
+        # if we're supposed to be preselecting certain runs (either preset or suggestion)
+        if self.to_preset:
+            calc = self.get_calc_from_id(self.calc_id)                                      # get data for calc that we're presetting
+            tasks = self.get_tasks_from_point(calc[g.C_POINTS][point_index])                # get list of tasks of format [(runID, repID),...]
+            for item in tree.selectedItems():                                               #   that *should* be the only ones selected
+                if not item.childCount():                                                   # loop thru all child items on tree
+                    run_id = item.parent().data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]  #   get run and rep IDs of element
+                    rep_id = item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
+                    if not (run_id, rep_id) in tasks:                                       #   if the selected rep shouldn't be selected
+                        item.setSelected(False)                                             #       deselect it!
+            
+        elif self.suggestion:
+            pass
+            ################################3
+            #
+            #   DO THISSSS
+            #
+            ###############################################################3
         
 
     def update_selectors(self):
+        print('1')
         self.updating_runs = True
         if not self.points[0]:
+            print('1a')
             for i, selector in enumerate(self.stdadd_selectors):
                 selector['layout'].setCurrentIndex(g.C_STACK_INDEX_BASE)
                 self.points[i+1] = []
-        else:    
+        else:
+            print('1b')
             # Get i, the index of the first selector w no selected points
             empty = False
             for i,point in enumerate(self.points):
                 if not point:                           
                     empty = True
                     break
+            print('--1')
             if empty:                   # if there is a selector w no selected points
                 # show selector[i]
                 i = i-1                 # adjust index to index from 0.
-
+                print('--1a')
                 # wipe points for all selectors with index >i
+                print('i is: '+str(i))
                 for j in range(i+1,len(self.points)):
+                    print('--1aLOOPa')
                     self.points[j] = []
+                    print('--1aLOOPb')
+                    
                     self.set_widget_border(self.stdadd_selectors[j-1]['tree'], self.border_width_active, self.border_color_todo)
-
+                    print('--1aLOOPa')
+                print('--1b')
                 # show the ith selector
                 self.stdadd_selectors[i]['layout'].setCurrentIndex(g.C_STACK_INDEX_SELECTOR)
-
+                print('--1c')
                 # hide all selectors[j] for j>i
                 for j, selector in enumerate(self.stdadd_selectors):
                     if j>i: selector['layout'].setCurrentIndex(g.C_STACK_INDEX_BASE)
-
+                print('--1d')
                 # for all stdadds w index between 0 and j
                 #   erase tree
                 #   add all stdadd runs to tree that are either in points[j+1] or not in points at all.
                 self.load_stdadd_runs(i)
+                print('--1e')
                 self.update_stdadd_runs(i)
+            print('--2')
         self.updating_runs = False
 
     def get_selected(self, tree):

@@ -1065,18 +1065,18 @@ class WindowMain(QMainWindow):
         self.new_win_one_with_value(WindowResultsView(self, tasks), 'tasks', tasks)
 
     def new_win_analysis(self, tasks):
-        try:
-            self.new_win_one_of_type(WindowAnalyze(self, tasks))
-        except Exception as e:
-            print(e)
-
-    def new_win_calculator(self, mode):
-        try:
-            self.new_win_one_of_type(WindowCalculate(self, mode))
-        except Exception as e:
-            print(e)
+        self.new_win_one_of_type(WindowAnalyze(self, tasks))
         
-
+    def new_win_calculator(self, mode):
+        tasks = None
+        if mode == g.WIN_MODE_NEW:                  # if we want a new calculation
+            tasks = self.get_all_selected_reps()    #   grab all selected reps and try
+            if not tasks: tasks = None              #   to start the calc with them
+        try:
+            self.new_win_one_of_type(WindowCalculate(self, mode, suggestion=tasks))
+        except Exception as e:
+            print(e)
+            
     def new_win_one_of_type(self, obj):
         """Takes in a new object to create as child window of self.
         Checks whether a window with matching type already exists.
