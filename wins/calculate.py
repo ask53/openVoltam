@@ -169,6 +169,7 @@ class WindowCalculate(QMainWindow):
     #   1. view_calc                #
     #   2. edit_from_right          #
     #   3. go_to_mode               #
+    #   4. continue_action          #
     #                               #
     #################################
 
@@ -188,26 +189,43 @@ class WindowCalculate(QMainWindow):
         lost if mode is changed (and promps user to save, discard, or cancel if work
         will be lost, then changes the mode."""
 
-        # Check if there is any unsaved work
-        if not self.saved:
-            print('alert!')
-            resp = saveMessageBox().exec()
-            if resp == QMessageBox.StandardButton.Save:         # if the user selects save
-                self.on_save_mode = mode_new                    # tell saver what to do
-                self.on_save_calc = calc_id                     # after save
-                self.save()                                     # and start the save!
-                return
-            elif resp == QMessageBox.StandardButton.Discard:    # if the user selects discard
-                pass                                            # fall through to changing mode
-            else:                                               # if the user selects cancel
-                return                                          # do nothing! 
-
+        if not self.continue_action(mode_new, calc_id):
+            return
+        
         # Change the mode    
         self.calc_id = calc_id
         self.mode_prev = self.mode
         self.mode = mode_new
         self.suggestion = None
         self.set_layout()
+
+    def continue_action(self, mode_new, calc_id):
+        """Takes in the new mode that the user wants to go to and the id of the calc that
+        they want to go to, if applicable.
+
+        ALGORITHM
+        It checks whether there is any unsaved progress.
+        If so, asks the user whether to save, discard or cancel. If the user selecs "Save",
+        the next mode and calc are stored, a save is begun and False is returned (because
+        the action will occur once the async save is complete). If the user selects "Discard",
+        True is returned, to indicate that whatever mode change was selected should continue.
+        If the user selected "Cancel" False is returned.
+        If there is no unsaved progress, returns True so that the user-selected change can
+        continue as requested."""
+        
+        if not self.saved:
+            resp = saveMessageBox().exec()
+            if resp == QMessageBox.StandardButton.Save:         # if the user selects save
+                self.on_save_mode = mode_new                    # tell saver what to do
+                self.on_save_calc = calc_id                     # after save
+                self.save()                                     # and start the save!
+                return False
+            elif resp == QMessageBox.StandardButton.Discard:    # if the user selects discard
+                return True                                     # fall through to changing mode
+            else:                                               # if the user selects cancel
+                return False                                    # do nothing!
+        return True
+        
         
 
     def update_right_buttons(self):
@@ -960,17 +978,6 @@ class WindowCalculate(QMainWindow):
             else:
                 self.go_to_mode(self.on_save_mode, self.on_save_calc)
 
-        '''
-        if self.mode == g.WIN_MODE_NEW:
-            item = self.calc_list.item(self.calc_list.count()-1)    # get last calc on calc list
-        else:
-            for i in range(0, self.calc_list.count()):
-                item = self.calc_list.item(i)
-                if item.data(Qt.ItemDataRole.UserRole)[g.R_UID_SELF] == self.calc_id:
-                    break
-        self.view_calc(item)                                    # show in read-only mode
-        '''
-
     def async_error(self):
         self.progress_bar.setVisible(False)
         self.status.showMessage("ERROR, operation did not complete", g.SB_DURATION_ERROR)
@@ -993,7 +1000,10 @@ class WindowCalculate(QMainWindow):
         Event handler for close event."""
         # add close/save logic here
         try:
-            self.accept_close(event)
+            if not self.continue_action(g.WIN_MODE_CLOSED, None):
+                event.ignore()
+            else:
+                self.accept_close(event)
         except Exception as e:
             print(e)
                 
