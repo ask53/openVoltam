@@ -16,6 +16,7 @@ WIN_MODE_VIEW_ONLY = 'view'
 WIN_MODE_EDIT = 'edit'
 WIN_MODE_VIEW_WITH_MINOR_EDITS = 'view-with-edits'
 WIN_MODE_RIGHT = 'right'
+WIN_MODE_CLOSED = 'close'
 
 # Keys for sample (S) dictionary
 S_NAME = "sample_name"

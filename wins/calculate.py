@@ -65,6 +65,8 @@ class WindowCalculate(QMainWindow):
         self.stdadd_selectors = []
         self.saved = True
         self.updating_runs = False
+        self.on_save_mode = None
+        self.on_save_calc = None
 
         self.to_preset = False
         if self.mode in (g.WIN_MODE_EDIT, g.WIN_MODE_VIEW_ONLY) and self.calc_id:
@@ -185,21 +187,27 @@ class WindowCalculate(QMainWindow):
         modes but not for NEW or RIGHT modes. Checks to make sure no data will be
         lost if mode is changed (and promps user to save, discard, or cancel if work
         will be lost, then changes the mode."""
+
+        # Check if there is any unsaved work
         if not self.saved:
             print('alert!')
-        else:
-            print('all saved')
-        #############################################################################
-        # 1. Check if unsaved work
-        #   - if so, prompt user whether they want to save
-        #################################################################################################################################
+            resp = saveMessageBox().exec()
+            if resp == QMessageBox.StandardButton.Save:         # if the user selects save
+                self.on_save_mode = mode_new                    # tell saver what to do
+                self.on_save_calc = calc_id                     # after save
+                self.save()                                     # and start the save!
+                return
+            elif resp == QMessageBox.StandardButton.Discard:    # if the user selects discard
+                pass                                            # fall through to changing mode
+            else:                                               # if the user selects cancel
+                return                                          # do nothing! 
 
+        # Change the mode    
         self.calc_id = calc_id
         self.mode_prev = self.mode
         self.mode = mode_new
         self.suggestion = None
         self.set_layout()
-        
         
 
     def update_right_buttons(self):
@@ -248,6 +256,7 @@ class WindowCalculate(QMainWindow):
         self.type.currentIndexChanged.connect(self.type_changed)
         notes_lbl = QLabel("Notes")
         self.notes = QTextEdit()
+        self.notes.textChanged.connect(self.something_has_been_updated)
 
         but_graph = QPushButton('Graph selected')
         but_graph.clicked.connect(self.graph_selected)
@@ -474,6 +483,7 @@ class WindowCalculate(QMainWindow):
             self.set_values()
             self.to_preset = False      # Once we have finished presetting, we are no longer presetting
             self.suggesting = None      # Once we have finished suggesting, we are no longer suggesting
+            self.saved = True           # Right when we have finished presetting and suggesting, we have nothing to save
         except Exception as e:
             print(e)
 
@@ -719,7 +729,7 @@ class WindowCalculate(QMainWindow):
             print(e)
         
     def update_points(self, i, tree):
-        self.saved = False
+        self.something_has_been_updated()
         self.results_stack.setCurrentIndex(0)
         self.points[i] = self.get_tasks_from_tree(tree, include_data=True)
         erase = False
@@ -883,10 +893,13 @@ class WindowCalculate(QMainWindow):
                 runitem.setToolTip(col, "Please analyze to proceed")
 
     def type_changed(self):
-        self.saved = False
+        self.something_has_been_updated()
         self.results_stack.setCurrentIndex(0)
         calc_type = self.type.currentData()
         self.graph.update_type(calc_type)
+
+    def something_has_been_updated(self):
+        self.saved = False
 
     def get_and_show_results(self):
         r = self.graph.get_results()
@@ -916,12 +929,16 @@ class WindowCalculate(QMainWindow):
                 r[g.R_UID_SELF] = self.calc_id
             else:
                 ids = get_ids(self.parent.data, g.S_PROCESSED)
-                calc_id = get_next_id(ids, g.C_UID_PREFIX)
-                r[g.R_UID_SELF] = calc_id
+                self.calc_id = get_next_id(ids, g.C_UID_PREFIX)
+                r[g.R_UID_SELF] = self.calc_id
                 
             r[g.C_NOTE] = self.notes.toPlainText()
 
             self.progress_bar.setVisible(True)
+            if not self.on_save_mode:
+                self.on_save_mode = g.WIN_MODE_EDIT
+                self.on_save_calc = self.calc_id
+            
             if self.mode == g.WIN_MODE_NEW:
                 self.parent.start_async_save(g.SAVE_TYPE_CALC_NEW, [[r]], onSuccess=self.save_success, onError=self.async_error)   #r gets double bracketed, because it goes to a fn that accepts a list of calcs        
             elif self.mode == g.WIN_MODE_EDIT and self.calc_id:
@@ -929,12 +946,21 @@ class WindowCalculate(QMainWindow):
                 
                 
         else:                               # if no results, show alert
+            self.on_save_mode = None
+            self.on_save_calc = None
             show_alert(self, "Alert!", "Please complete the analysis and try again.")
 
     def save_success(self):
         self.saved = True
         self.progress_bar.setVisible(False)
-        self.status.showMessage("Complete", g.SB_DURATION)
+        self.status.showMessage("Saved.", g.SB_DURATION)
+        if self.on_save_mode:
+            if self.on_save_mode == g.WIN_MODE_CLOSED:
+                self.close()
+            else:
+                self.go_to_mode(self.on_save_mode, self.on_save_calc)
+
+        '''
         if self.mode == g.WIN_MODE_NEW:
             item = self.calc_list.item(self.calc_list.count()-1)    # get last calc on calc list
         else:
@@ -943,6 +969,7 @@ class WindowCalculate(QMainWindow):
                 if item.data(Qt.ItemDataRole.UserRole)[g.R_UID_SELF] == self.calc_id:
                     break
         self.view_calc(item)                                    # show in read-only mode
+        '''
 
     def async_error(self):
         self.progress_bar.setVisible(False)
