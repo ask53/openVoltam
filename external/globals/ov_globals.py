@@ -198,6 +198,7 @@ SAVE_TYPE_RUN_MOD = 'run-mod'
 SAVE_TYPE_METHOD_TO_SAMPLE = 'method-to-sample'
 SAVE_TYPE_METHOD_MOD = 'method-mod'
 SAVE_TYPE_CALC_NEW = 'new-calc'
+SAVE_TYPE_CALC_EDIT = 'edit-calc'
 SAVE_TYPE_CALC_DELETE = 'calc-del'
 
 # Input 

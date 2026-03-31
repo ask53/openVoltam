@@ -31,7 +31,8 @@ from PyQt6.QtWidgets import (
     QStackedLayout,
     QAbstractItemView,
     QProgressBar,
-    QInputDialog
+    QInputDialog,
+    QSplitter
 )
 
 class WindowCalculate(QMainWindow):
@@ -253,6 +254,9 @@ class WindowCalculate(QMainWindow):
         notes_lbl = QLabel("Notes")
         self.notes = QTextEdit()
 
+        but_graph = QPushButton('Graph selected')
+        but_graph.clicked.connect(self.graph_selected)
+
         self.results_stack = QStackedLayout()
         w1 = QPushButton('Show results')
         w1.clicked.connect(self.get_and_show_results)
@@ -266,6 +270,7 @@ class WindowCalculate(QMainWindow):
         v0.addWidget(self.type)
         v0.addWidget(notes_lbl)
         v0.addWidget(self.notes)
+        v0.addWidget(but_graph)
         v0.addStretch()
         v0.addLayout(self.results_stack)
 
@@ -283,18 +288,27 @@ class WindowCalculate(QMainWindow):
             if i>0:
                 l = self.get_stdadd_selector_layout(i)
                 h1.addLayout(l)
-            
+
+        w2 = QWidget()
+        w2.setLayout(h1)
+
         '''but_add_point = QPushButton('+')
         h1.addWidget(but_add_point)'''
 
-        v1 = QVBoxLayout()
-        v1.addWidget(self.graph)
-        v1.addLayout(h1)
+        #v1 = QVBoxLayout()
+        #v1.addWidget(self.graph)
+        #v1.addLayout(h1)
+        qs = QSplitter()
+        qs.setChildrenCollapsible(False)
+        qs.setOrientation(Qt.Orientation.Vertical)
+        qs.addWidget(self.graph)
+        qs.addWidget(w2)
 
         h2 = QHBoxLayout()
         h2.addLayout(v0)
         h2.addWidget(QVLine())
-        h2.addLayout(v1)
+        #h2.addLayout(v1)
+        h2.addWidget(qs)
 
         but_save = QPushButton('save')
         but_edit = QPushButton('edit')
@@ -359,13 +373,9 @@ class WindowCalculate(QMainWindow):
         self.load_sample_runs(self.sample_tree)
         self.updating_runs = False
 
-        b = QPushButton('Graph')
-        b.clicked.connect(partial(self.graph_from_tree, self.sample_tree))
-        
         v = QVBoxLayout()
         v.addWidget(title)
         v.addWidget(self.sample_tree)
-        v.addWidget(b)
         w = QWidget()
         w.setLayout(v)
 
@@ -399,12 +409,9 @@ class WindowCalculate(QMainWindow):
 
         tree = self.get_run_tree_widget(with_method = False)
         tree.itemSelectionChanged.connect(partial(self.update_stdadd_runs, i-1))
-        b2 = QPushButton('Graph')
-        b2.clicked.connect(partial(self.graph_from_tree, tree))
         v2 = QVBoxLayout()
         v2.addWidget(t2)
         v2.addWidget(tree)
-        v2.addWidget(b2)
         w2 = QWidget()
         w2.setLayout(v2)
 
@@ -845,10 +852,12 @@ class WindowCalculate(QMainWindow):
             else:
                 tasks.append((run_id, rep_id))
         return tasks
-        
 
-    def graph_from_tree(self, tree):
-        tasks = self.get_tasks_from_tree(tree)
+
+    def graph_selected(self):
+        tasks = self.get_tasks_from_tree(self.sample_tree)
+        for selector in self.stdadd_selectors:
+            tasks = tasks + self.get_tasks_from_tree(selector['tree'])
         if tasks:
             self.parent.new_win_results_view(tasks)
 
@@ -908,13 +917,22 @@ class WindowCalculate(QMainWindow):
     def save(self):
         r = self.get_and_show_results()
         if r:                               # make sure there are some results
-            ids = get_ids(self.parent.data, g.S_PROCESSED)
-            calc_id = get_next_id(ids, g.C_UID_PREFIX)
-            r[g.R_UID_SELF] = calc_id
+            if self.calc_id:
+                r[g.R_UID_SELF] = self.calc_id
+            else:
+                ids = get_ids(self.parent.data, g.S_PROCESSED)
+                calc_id = get_next_id(ids, g.C_UID_PREFIX)
+                r[g.R_UID_SELF] = calc_id
+                
             r[g.C_NOTE] = self.notes.toPlainText()
 
             self.progress_bar.setVisible(True)
-            self.parent.start_async_save(g.SAVE_TYPE_CALC_NEW, [[r]], onSuccess=self.save_success, onError=self.async_error)   #r gets double bracketed, because it goes to a fn that accepts a list of calcs        
+            if self.mode == g.WIN_MODE_NEW:
+                self.parent.start_async_save(g.SAVE_TYPE_CALC_NEW, [[r]], onSuccess=self.save_success, onError=self.async_error)   #r gets double bracketed, because it goes to a fn that accepts a list of calcs        
+            elif self.mode == g.WIN_MODE_EDIT and self.calc_id:
+                self.parent.start_async_save(g.SAVE_TYPE_CALC_EDIT, [self.calc_id, r], onSuccess=self.save_success, onError=self.async_error)
+                
+                
         else:                               # if no results, show alert
             show_alert(self, "Alert!", "Please complete the analysis and try again.")
 
@@ -922,7 +940,13 @@ class WindowCalculate(QMainWindow):
         self.saved = True
         self.progress_bar.setVisible(False)
         self.status.showMessage("Complete", g.SB_DURATION)
-        item = self.calc_list.item(self.calc_list.count()-1)    # get last calc on calc list
+        if self.mode == g.WIN_MODE_NEW:
+            item = self.calc_list.item(self.calc_list.count()-1)    # get last calc on calc list
+        else:
+            for i in range(0, self.calc_list.count()):
+                item = self.calc_list.item(i)
+                if item.data(Qt.ItemDataRole.UserRole)[g.R_UID_SELF] == self.calc_id:
+                    break
         self.view_calc(item)                                    # show in read-only mode
 
     def async_error(self):

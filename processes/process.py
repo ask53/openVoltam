@@ -290,6 +290,19 @@ def save_new_calc(data, params):
         data[g.S_PROCESSED].append(newCalc)
     return data
 
+def save_old_calc(data, params):
+    calc_id = params[0]
+    newCalc = params[1]
+    for calc in data[g.S_PROCESSED]:
+        if calc[g.R_UID_SELF] == calc_id:
+            keys = list(calc.keys())
+            for key in keys:
+                calc.pop(key, None)
+            for key in newCalc:
+                calc[key] = newCalc[key]
+            break
+    return data
+
 def save_delete_calc(data, params):
     tasks = params[0]
     while tasks:
@@ -329,6 +342,8 @@ def save():
             data=save_modify_method(data, params)
         elif saveType == g.SAVE_TYPE_CALC_NEW:
             data=save_new_calc(data, params)
+        elif saveType == g.SAVE_TYPE_CALC_EDIT:
+            data=save_old_calc(data, params)
         elif saveType == g.SAVE_TYPE_CALC_DELETE:
             data=save_delete_calc(data, params)
         
