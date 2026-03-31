@@ -101,7 +101,7 @@ class WindowCalculate(QMainWindow):
         b_dup.setIcon(QIcon(g.ICON_DUP))
         b_del.setIcon(QIcon(g.ICON_TRASH))
 
-        b_new.clicked.connect(self.open_new)
+        b_new.clicked.connect(partial(self.go_to_mode, g.WIN_MODE_NEW))
         b_edit.clicked.connect(self.edit_from_right)
         b_dup.clicked.connect(self.duplicate)
         b_del.clicked.connect(self.delete)
@@ -160,51 +160,46 @@ class WindowCalculate(QMainWindow):
             calcitem.setText(txt)
             calcitem.setData(Qt.ItemDataRole.UserRole, calc)
 
-    def view_calc(self, item):
-        #############################################################################
-        # 1. Check if unsaved work
-        #   - if so, prompt user whether they want to save
-        #################################################################################################################################
-        self.calc_id = item.data(Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
-        self.mode_prev = self.mode
-        self.mode = g.WIN_MODE_VIEW_ONLY
-        self.suggestion = None
-        self.set_layout()
-        
+    #################################
+    #                               #
+    #   MODE CHANGING FUNCTIONS     #
+    #                               #
+    #   1. view_calc                #
+    #   2. edit_from_right          #
+    #   3. go_to_mode               #
+    #                               #
+    #################################
 
-    def edit_calc(self, calc_id):
-        #############################################################################
-        # 1. Check if unsaved work
-        #   - if so, prompt user whether they want to save
-        #################################################################################################################################
-        self.calc_id = calc_id
-        self.mode_prev = self.mode
-        self.mode = g.WIN_MODE_EDIT
-        self.suggestion = None
-        self.set_layout()
+    def view_calc(self, item):
+        calc_id = item.data(Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
+        self.go_to_mode(g.WIN_MODE_VIEW_ONLY, calc_id)
 
     def edit_from_right(self):
         item = self.calc_list.currentItem()
         calc_id = item.data(Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
-        self.edit_calc(calc_id)
+        self.go_to_mode(g.WIN_MODE_EDIT, calc_id)
 
-    def close_left(self):
+    def go_to_mode(self, mode_new, calc_id=None):
+        """General function for changing to a different window mode. Takes in a
+        new mode and an option Id of a calculation (required to go to VIEW or EDIT
+        modes but not for NEW or RIGHT modes. Checks to make sure no data will be
+        lost if mode is changed (and promps user to save, discard, or cancel if work
+        will be lost, then changes the mode."""
+        if not self.saved:
+            print('alert!')
+        else:
+            print('all saved')
         #############################################################################
         # 1. Check if unsaved work
         #   - if so, prompt user whether they want to save
         #################################################################################################################################
-        self.calc_id = None
-        self.mode_prev = self.mode
-        self.mode = g.WIN_MODE_RIGHT
-        self.suggestion = None
-        self.set_layout()
 
-    def open_new(self):
-        self.calc_id = None
+        self.calc_id = calc_id
         self.mode_prev = self.mode
-        self.mode = g.WIN_MODE_NEW
+        self.mode = mode_new
         self.suggestion = None
         self.set_layout()
+        
         
 
     def update_right_buttons(self):
@@ -234,7 +229,7 @@ class WindowCalculate(QMainWindow):
             
         but_close = QPushButton()
         but_close.setIcon(QIcon(g.ICON_X))
-        but_close.clicked.connect(self.close_left)
+        but_close.clicked.connect(partial(self.go_to_mode, g.WIN_MODE_RIGHT))
         
         h0 = QHBoxLayout()
         h0.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -314,7 +309,7 @@ class WindowCalculate(QMainWindow):
         but_edit = QPushButton('edit')
         
         but_save.clicked.connect(self.save)
-        but_edit.clicked.connect(partial(self.edit_calc, self.calc_id))
+        but_edit.clicked.connect(partial(self.go_to_mode, g.WIN_MODE_EDIT, self.calc_id))
 
         v2 = QVBoxLayout()
         v2.addLayout(h0)
