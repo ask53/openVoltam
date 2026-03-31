@@ -155,15 +155,8 @@ class WindowMain(QMainWindow):
         action_rep_delete.triggered.connect(self.delete_reps)
 
         action_analyze_peaks.triggered.connect(self.anayze_data_selected_reps)
-        '''action_analyze_calculate.triggered.connect()
-        action_analyze_results.triggered.connect()'''
-
-        
-
-        
-
-        
-
+        action_analyze_calculate.triggered.connect(partial(self.new_win_calculator, g.WIN_MODE_NEW))
+        action_analyze_results.triggered.connect(partial(self.new_win_calculator, g.WIN_MODE_RIGHT))
         
         
 
