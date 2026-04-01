@@ -606,16 +606,26 @@ class WindowCalculate(QMainWindow):
                             item.setSelected(True)                          # select it! 
                             break                                           # and break, because selecting it will modify the tree we're looping thru
 
-        elif self.suggestion:
-            print('presetting from suggestion')
-            #############################################
-            #
-            #       HERE SET UP PRESETTING FROM SUGGESTION!
-            #
-            #
-            ################################################################################################
-            
-
+        elif self.suggestion:                                               # if the user has selected some runs/reps to seed the calculation
+            for i, point in enumerate(self.points):                         # loop thru all points
+                if i==0: tree = self.sample_tree                            
+                else: tree = self.stdadd_selectors[i-1]['tree']
+                runs = []
+                any_added = False
+                for (run_id, rep_id) in self.suggestion:                    # loop thru all the suggested reps
+                    if any_added and not i in (0, len(self.points)-1):      #   if points have already been added for this selector (all selectors but sample and last std_add)
+                        break
+                    if not run_id in runs:                                  #   if we haven't yet checked this run
+                        runs.append(run_id)                                 #       append to runs to indicate we're checking it now
+                        for j in range(0, tree.topLevelItemCount()):        #       loop thru all items in tree
+                            item = tree.topLevelItem(j)                     
+                            item_run_id = item.data(0,Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
+                            if item_run_id == run_id:                       #       if the run on the tree matches the suggested run
+                                any_added = True                            #       we've selected one!
+                                item.setSelected(True)                      #       select it
+                                break                                       #       and break because selecting it will modify the tree we're looping thru
+                            
+                        
     def get_calc_from_id(self, calc_id):
         for calc in self.parent.data[g.S_PROCESSED]:
             if calc[g.R_UID_SELF] == calc_id:
@@ -787,9 +797,16 @@ class WindowCalculate(QMainWindow):
                     item.setSelected(False)     # And deselect the run itself
                     
         # if we're supposed to be preselecting certain runs (either preset or suggestion)
+        preset_flag = False
         if self.to_preset:
             calc = self.get_calc_from_id(self.calc_id)                                      # get data for calc that we're presetting
             tasks = self.get_tasks_from_point(calc[g.C_POINTS][point_index])                # get list of tasks of format [(runID, repID),...]
+            preset_flag = True
+        elif self.suggestion:
+            tasks = self.suggestion
+            preset_flag = True
+
+        if preset_flag:
             for item in tree.selectedItems():                                               #   that *should* be the only ones selected
                 if not item.childCount():                                                   # loop thru all child items on tree
                     run_id = item.parent().data(0, Qt.ItemDataRole.UserRole)[g.R_UID_SELF]  #   get run and rep IDs of element
@@ -797,14 +814,8 @@ class WindowCalculate(QMainWindow):
                     if not (run_id, rep_id) in tasks:                                       #   if the selected rep shouldn't be selected
                         item.setSelected(False)                                             #       deselect it!
             
-        elif self.suggestion:
-            pass
-            ################################3
-            #
-            #   DO THISSSS
-            #
-            ###############################################################3
-        
+
+                    
 
     def update_selectors(self):
         self.updating_runs = True
