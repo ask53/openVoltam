@@ -67,7 +67,7 @@ class WindowCalculate(QMainWindow):
         self.updating_runs = False
         self.on_save_mode = None
         self.on_save_calc = None
-
+        
         self.to_preset = False
         if self.mode in (g.WIN_MODE_EDIT, g.WIN_MODE_VIEW_ONLY) and self.calc_id:
             self.to_preset = True
@@ -426,15 +426,18 @@ class WindowCalculate(QMainWindow):
         w2 = QWidget()
         w2.setLayout(v2)
     
-        s = QStackedLayout()
-        s.addWidget(QWidget()) # Placeholder widget          
-        s.addWidget(w1)
-        s.addWidget(w2)
+        self.sample_stack = QStackedLayout()
+        self.sample_stack.addWidget(QWidget()) # Placeholder widget          
+        self.sample_stack.addWidget(w1)
+        self.sample_stack.addWidget(w2)
 
-        if self.mode == g.WIN_MODE_VIEW_ONLY: s.setCurrentIndex(g.C_STACK_VIEW_TEXT)
-        else: s.setCurrentIndex(g.C_STACK_INDEX_SELECTOR)
+        
+        if self.mode == g.WIN_MODE_VIEW_ONLY:
+            self.sample_stack.setCurrentIndex(g.C_STACK_VIEW_TEXT)
+        else:
+            self.sample_stack.setCurrentIndex(g.C_STACK_INDEX_SELECTOR)
        
-        return s
+        return self.sample_stack
     
     def get_stdadd_selector_layout(self, i):
         title_str = 'Standard addition '+str(i)
@@ -516,6 +519,7 @@ class WindowCalculate(QMainWindow):
 
     def set_layout(self):
         self.reset_globals()            # Reset the globals
+
         l = self.get_full_layout()      # Get the layout
         w = QWidget()
         w.setLayout(l)
@@ -543,6 +547,7 @@ class WindowCalculate(QMainWindow):
         try:
             self.preset_runs()
             self.set_values()
+            self.set_selector_indices()
             self.to_preset = False      # Once we have finished presetting, we are no longer presetting
             self.suggesting = None      # Once we have finished suggesting, we are no longer suggesting
             self.saved = True           # Right when we have finished presetting and suggesting, we have nothing to save
@@ -559,6 +564,16 @@ class WindowCalculate(QMainWindow):
         self.notes.setPlainText(txt)
         if self.mode == g.WIN_MODE_VIEW_ONLY:
             self.set_view_only_points(calc)
+            if calc[g.C_ARCHIVED]:
+                self.graph.update_archived(calc)
+        
+
+    def set_selector_indices(self):
+        if self.mode == g.WIN_MODE_VIEW_ONLY:
+            for i in range(0, len(self.points)):
+                if i==0: stack = self.sample_stack
+                else: stack = self.stdadd_selectors[i-1]['layout']
+                stack.setCurrentIndex(g.C_STACK_VIEW_TEXT)
 
     def set_view_only_points(self, calc): 
         for i, pt in enumerate(calc[g.C_POINTS]):
@@ -580,22 +595,8 @@ class WindowCalculate(QMainWindow):
             to_write = ''
             for line in lines:
                 to_write = to_write + line
-            txt.setPlainText(to_write)
-                        
+            txt.setPlainText(to_write)    
                     
-                
-                
-                
-            
-        
-        ##################################################3
-        #
-        #   HERE: Set values in left pane!
-        #   SET READ ONLY VaLUES for mode==VIEW_ONLY
-        #
-        ####################################################################################################################
-    
-
     def duplicate(self):
         """Duplicates all selected calculations"""
         items = self.calc_list.selectedItems()
@@ -754,8 +755,6 @@ class WindowCalculate(QMainWindow):
     def update_sample_runs(self, run_list, selector_index):
         if self.updating_runs:
             return
-        if self.mode == g.WIN_MODE_VIEW_ONLY:
-            return
         self.updating_runs = True
         try:
             selected_runs = self.get_selected_runs(run_list)
@@ -791,7 +790,6 @@ class WindowCalculate(QMainWindow):
     def update_stdadd_runs(self, i):
         try:
             if self.updating_runs: return               # to avoid recursion
-            if self.mode == g.WIN_MODE_VIEW_ONLY: return
             self.updating_runs = True                   # stops recursive calls during this fn
             tree = self.stdadd_selectors[i]['tree']
             selected_runs = self.get_selected_runs(tree)
