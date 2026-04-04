@@ -134,6 +134,7 @@ C_CONC_SAMPLE = 'total-sample-conc'
 C_CONC_ORIGINAL = 'original-conc'
 C_R2 = 'reg-r-squared'
 C_STDERR = 'reg-std-error'
+C_ARCHIVED = 'archived'
 C_UID_PREFIX = 'calc-'
 C_TYPE = 'type'
 C_POINTS = 'points'
@@ -201,6 +202,7 @@ SAVE_TYPE_METHOD_MOD = 'method-mod'
 SAVE_TYPE_CALC_NEW = 'new-calc'
 SAVE_TYPE_CALC_EDIT = 'edit-calc'
 SAVE_TYPE_CALC_DELETE = 'calc-del'
+SAVE_TYPE_CALCS_ARCHIVE = 'calcs-archive'
 
 # Input 
 RC_REPS_MIN = 1

@@ -319,6 +319,14 @@ def save_delete_calc(data, params):
         tasks.pop(0)
     return data
 
+def save_change_calcs_archive(data, params):
+    archive_status = params[0]
+    calcs = params[1]
+    for calc in data[g.S_PROCESSED]:
+        if calc[g.R_UID_SELF] in calcs:
+            calc[g.C_ARCHIVED] = archive_status
+    return data
+
 def save():    
     try:
         path = sys.argv[2]                  # get path of file to read from
@@ -346,6 +354,8 @@ def save():
             data=save_old_calc(data, params)
         elif saveType == g.SAVE_TYPE_CALC_DELETE:
             data=save_delete_calc(data, params)
+        elif saveType == g.SAVE_TYPE_CALCS_ARCHIVE:
+            data=save_change_calcs_archive(data,params)
         
         write_data_to_file(path, data)
         data = remove_data_from_layout(data) 

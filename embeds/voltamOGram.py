@@ -360,7 +360,8 @@ class VoltamogramPlot(QMainWindow):
                                 rep[g.R_BACKGROUND] = []
                             break
                     if found: break
-            reps_to_disp.append(rep)
+            if rep[g.R_DATA] or rep[g.R_BACKGROUND]:    
+                reps_to_disp.append(rep)
             
             ### FOR DEBUGGING, UNCOMMENT
             #
@@ -399,8 +400,9 @@ class VoltamogramPlot(QMainWindow):
             runs_displayed.append(rep['run_uid'])
 
         # 3. Add legend
-        if not predictpeak:
-            self.canvas.axes.legend()
+        if reps_to_disp:
+            if not predictpeak:
+                self.canvas.axes.legend()
         
     def plot_runs(self, runs, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False):
         # 1. Get data from file for specified runs
@@ -417,18 +419,24 @@ class VoltamogramPlot(QMainWindow):
                     break
                 
         # 2. Loop thru runs, plotting each rep
+        any_display = False
         for i,run in enumerate(runs_to_show):
             color = self.colors[i%len(self.colors)]
             lstyle = self.linestyles[i%len(self.linestyles)]
+            run_displayed = False
             for j,rep in enumerate(run[g.R_REPLICATES]):
-                if j==0: lbl=run[g.R_UID_SELF]+' ('+run[g.R_TYPE]+')'
-                else: lbl = ''
-                self.plot_rep(rep, subbackground=subbackground, smooth=smooth,
-                              lopass=lopass, showraw=showraw, predictpeak=predictpeak,
-                              color=color, linestyle=lstyle, lbl=lbl)
+                if rep[g.R_DATA] or rep[g.R_BACKGROUND]:
+                    if not run_displayed: lbl=run[g.R_UID_SELF]+' ('+run[g.R_TYPE]+')'
+                    else: lbl = ''
+                    run_displayed = True
+                    any_display = True
+                    self.plot_rep(rep, subbackground=subbackground, smooth=smooth,
+                                  lopass=lopass, showraw=showraw, predictpeak=predictpeak,
+                                  color=color, linestyle=lstyle, lbl=lbl)
 
         # 3. Add legend
-        self.canvas.axes.legend()
+        if any_display:
+            self.canvas.axes.legend()
 
 
     #############################################

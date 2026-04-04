@@ -231,6 +231,14 @@ def get_rep(data, ids):
                 return rep
     return False
 
+def get_all_reps_from_run_id(data, run_id):
+    run = get_run_from_file_data(data, run_id)
+    replist = []
+    for rep in run[g.R_REPLICATES]:
+        replist.append((run_id, rep[g.R_UID_SELF]))
+    return replist
+        
+
 def get_method_from_file_data(data, method_id):
 
     """ takes in a full sample dataset dictionary, data, and the uid of the method
@@ -331,6 +339,57 @@ def show_warning(title, msg):
         return True
     return False
 
+def check_calc_conflict(data, reps_to_change):
+    """ Takes in data (current data of sample) and list of reps_to_change in the form
+    [(run-x1, rep-y1), (run-x2, rep-y2), ... , (run-xn, rep-xn)]. IF any of the reps that
+    are being changed are also present in any calculations, it asks the user what they
+    would like to do about it.
+    
+    Returns:
+        (continue, List of calculation in conflict)
+    Where
+        continue == True if either there are no calculations in conflict OR the user
+            wants to archive the conflicting calculations and
+        continue == False if the user selects to "cancel" the operation that would have
+            produced the conflict.
+        List of calculations in conflict is a list of all calcs with conflicts in the form:
+            [calc-id1, calc-id2, ... , calc-idn]"""
+    
+    # Make list of calcs that use the reps in reps_to_change
+    calcs_in_conflict = []
+    for calc in data[g.S_PROCESSED]:
+        calc_found = False
+        for point in calc[g.C_POINTS]:
+            for rep in point:
+                rep_as_tuple = (rep[g.C_RUN_ID], rep[g.C_REP_ID])
+                if rep_as_tuple in reps_to_change:
+                    calc_id = calc[g.R_UID_SELF]
+                    if not calc_id in calcs_in_conflict:
+                        calcs_in_conflict.append(calc_id)
+                        calc_found = True
+                        break
+            if calc_found: break                    
+    print(calcs_in_conflict)            
+    
+    # If no conflict, return true and move on with your life
+    if not calcs_in_conflict:
+        return True, []
+
+    # If there IS a conflict, ask the user about it
+    title = 'Archive check'
+    body = 'This action modifies replicates that are used in calculations.\nTo continue with this action requires archiving the following calculations:'
+    for calc in calcs_in_conflict:
+        body = body + '\n   - ' + str(calc)
+    body = body + '\nWould you like to continue?'
+    resp = confirmMessageBox(title, body).exec()
+
+    # If user says 'cancel'
+    if resp == QMessageBox.StandardButton.Cancel:
+        return False, []
+
+    # If user says 'archive and continue' 
+    return True, calcs_in_conflict
+
 
 
     
@@ -368,6 +427,19 @@ class saveMessageBox(QMessageBox):
         but_canc = self.button(QMessageBox.StandardButton.Cancel)
         but_canc.setText(l.s_edit_cancel[g.L])
 
+class confirmMessageBox(QMessageBox):
+    def __init__(self, title, body):
+        super().__init__()
+
+        #set text
+        self.setWindowTitle(title)
+        self.setText(body)
+        self.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+
+        but_ok = self.button(QMessageBox.StandardButton.Ok)
+        but_ok.setText('Continue and archive calculations')
+        but_canc = self.button(QMessageBox.StandardButton.Cancel)
+        but_canc.setText(l.s_edit_cancel[g.L])
 class warningMessageBox(QMessageBox):
     def __init__(self, title, msg):
         super().__init__()

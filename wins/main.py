@@ -27,6 +27,7 @@ from os.path import join as joindir
 from os.path import exists
 from functools import partial
 from ast import literal_eval
+from time import sleep
 
 # import PyQt6/PySide6 stuff
 from PyQt6.QtTest import QTest
@@ -985,10 +986,18 @@ class WindowMain(QMainWindow):
             self.new_win_view_run(reps)
 
     def delete_runs(self):
+        runs = self.get_all_selected_runs()                     # Get selected runs (ignore selected reps that aren't part of selected runs)
+        reps = self.get_all_reps_in_runs(runs)                  # Get all reps of selected runs
+        
+        continue_action, calcs_to_archive = check_calc_conflict(self.data, reps)
+        if not continue_action:
+            return
         if self.confirm_delete():
-            runs = self.get_all_selected_runs()                     # Get selected runs (ignore selected reps that aren't part of selected runs)
-            reps = self.get_all_reps_in_runs(runs)                  # Get all reps of selected runs
-            self.start_async_save(g.SAVE_TYPE_REP_DELETE, [reps])
+            callback = partial(self.start_async_save, g.SAVE_TYPE_CALCS_ARCHIVE, [True, calcs_to_archive])
+            self.start_async_save(g.SAVE_TYPE_REP_DELETE, [reps], onSuccess=callback)
+
+
+        
 
     def delete_reps(self):
         if self.confirm_delete():
@@ -1290,6 +1299,7 @@ class WindowMain(QMainWindow):
 
     def start_async_save(self, saveType, params, onSuccess=False, onError=False):
         if not self.process:
+
             self.process = QProcess()
             self.process.readyReadStandardOutput.connect(self.handle_save_stdout)
             self.process.readyReadStandardError.connect(self.handle_save_stderr)
