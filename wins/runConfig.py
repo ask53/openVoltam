@@ -396,6 +396,7 @@ class WindowRunConfig(QMainWindow):
     #########################################
         
     def run_button_clicked(self):
+        print('clicked!')
         if self.parent.process:                 # If parent is running a process (save or load or whatever)
             return                              #   ignore this button click
         form_is_valid = self.validate_form()    # Validate form
@@ -545,9 +546,17 @@ class WindowRunConfig(QMainWindow):
             return                                  #   and otherwise do nothing
         form_is_valid = self.validate_form()        # If there are changes to save, validate form
         if form_is_valid:                           # If form is valid:
-            new_data = self.get_config_data_dict()  #   get data dict without reps and save
-            self.status.showMessage('Saving run configuration...')
-            self.parent.start_async_save(g.SAVE_TYPE_RUN_MOD, [self.run_id, new_data], onSuccess=self.after_save_changes_success, onError=self.after_save_changes_error)
+            # Check if this will mess with any calculations
+            reps = get_all_reps_from_run_id(self.parent.data, self.run_id)              
+            continue_action, calcs_to_archive = check_calc_conflict(self.parent.data, reps)
+            if not continue_action:
+                return
+
+            # If the user wants to continue
+            new_data = self.get_config_data_dict()  #   get data dict without reps 
+            calc_callback = partial(self.parent.start_async_save, g.SAVE_TYPE_CALCS_ARCHIVE, [True, calcs_to_archive], self.after_save_changes_success)     # get callback to update calc archive status
+            self.status.showMessage('Saving run configuration...')                                                                                          #   callback calls run config after save routine on completion
+            self.parent.start_async_save(g.SAVE_TYPE_RUN_MOD, [self.run_id, new_data], onSuccess=calc_callback, onError=self.after_save_changes_error)      # run save with callback
 
     def after_save_changes_success(self):
         self.status.showMessage('All changes saved.', g.SB_DURATION)
