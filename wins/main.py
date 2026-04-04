@@ -958,8 +958,17 @@ class WindowMain(QMainWindow):
 
     def anayze_data_selected_reps(self):
         reps = self.get_all_selected_reps()
-        self.new_win_analysis(reps)
-        print('analyzing data hereeee')
+
+        # Check which reps actually have data
+        all_data = get_data_from_file(self.path)
+        for i, rep in reversed(list(enumerate(reps))):
+            full_rep = get_rep(all_data, rep)
+            if not full_rep[g.R_DATA]:
+                reps.pop(i)
+        if not reps:                        # If none of the selected reps have data, alert the user
+            show_alert(self, "Alert", "None of the selected runs have data, please collect some data and try again.")
+        else:                               # IF at least one has data, analyze that data!
+            self.new_win_analysis(reps)
 
     def export_selected_reps_as_csv(self):
         reps = self.get_all_selected_reps()

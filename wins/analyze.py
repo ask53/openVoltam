@@ -204,24 +204,26 @@ class WindowAnalyze(QMainWindow):
         
         
     def save_and_close(self):
+        # 0. Check if this messes up any existing calculations
+        continue_action, calcs_to_archive = check_calc_conflict(self.parent.data, self.tasks)
+        if not continue_action:
+            return
+        
         # 1. slide analyzed data into parent data
         to_write = []
         for i, task in enumerate(self.tasks):       # for each rep analyzed
             rep = get_rep(self.parent.data, task)   # get the data pre-analysis
             rep[g.R_ANALYSIS] = self.results[i]     # slot in the analysis
-            to_write.append(rep)
-            
+            to_write.append(rep)   
 
         # 2. run async save
         self.status.showMessage("Saving...")
 
-        cb_suc = self.save_success
-        cb_err = self.save_error
+        cb_suc = self.save_success          # callback on success of final async save
+        cb_err = self.save_error            # callback on error of any async save
 
-        self.parent.start_async_save(g.SAVE_TYPE_REP_MOD, [self.tasks, to_write],
-                                         onSuccess=cb_suc, onError=cb_err)
-            
-
+        cb_calc = partial(self.parent.start_async_save, g.SAVE_TYPE_CALCS_ARCHIVE, [True, calcs_to_archive], cb_suc, cb_err)     # Callback to archive calcs after analysis is saved
+        self.parent.start_async_save(g.SAVE_TYPE_REP_MOD, [self.tasks, to_write], onSuccess=cb_calc, onError=cb_err)
             
 
     def save_success(self, event=False):
@@ -267,10 +269,9 @@ class WindowAnalyze(QMainWindow):
         """Take in a close event. Removes the reference to itself in the parent's
         self.children list (so reference can be cleared from memory) and accepts
         the passed event."""
-
         self.parent.setEnabled(True)
         self.parent.set_enabled_children(True)
         self.parent.children.remove(self)
         closeEvent.accept()
-    
+        
 

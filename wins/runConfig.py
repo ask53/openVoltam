@@ -553,10 +553,13 @@ class WindowRunConfig(QMainWindow):
                 return
 
             # If the user wants to continue
-            new_data = self.get_config_data_dict()  #   get data dict without reps 
-            calc_callback = partial(self.parent.start_async_save, g.SAVE_TYPE_CALCS_ARCHIVE, [True, calcs_to_archive], self.after_save_changes_success)     # get callback to update calc archive status
+            new_data = self.get_config_data_dict()  #   get data dict without reps
+
+            cb_suc = self.after_save_changes_success
+            cb_err = self.after_save_changes_error
+            cb_calc = partial(self.parent.start_async_save, g.SAVE_TYPE_CALCS_ARCHIVE, [True, calcs_to_archive], cb_suc, cb_err)     # get callback to update calc archive status
             self.status.showMessage('Saving run configuration...')                                                                                          #   callback calls run config after save routine on completion
-            self.parent.start_async_save(g.SAVE_TYPE_RUN_MOD, [self.run_id, new_data], onSuccess=calc_callback, onError=self.after_save_changes_error)      # run save with callback
+            self.parent.start_async_save(g.SAVE_TYPE_RUN_MOD, [self.run_id, new_data], onSuccess=cb_calc, onError=cb_err)      # run save with callback
 
     def after_save_changes_success(self):
         self.status.showMessage('All changes saved.', g.SB_DURATION)

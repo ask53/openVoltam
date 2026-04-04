@@ -118,7 +118,8 @@ A_BASE_1_Y = 'baseline_upper_y'
 # Calculation window globals
 C_STACK_INDEX_BASE = 0
 C_STACK_INDEX_SELECTOR = 1
-C_STACK_INDEX_ERROR = 2
+C_STACK_VIEW_TEXT = 2
+C_STACK_INDEX_ERROR = 3
 C_TYPE_PEAKBASE = 'peakbase'
 C_TYPE_PEAKZERO = 'peakzero'
 C_TYPE_SLOPE_L = 'slopel'

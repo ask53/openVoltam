@@ -93,6 +93,7 @@ class WindowCalculate(QMainWindow):
         self.calc_list.setSpacing(2)
         self.calc_list.itemSelectionChanged.connect(self.update_right_buttons)
         self.calc_list.itemDoubleClicked.connect(self.view_calc)
+        
         b_new = QPushButton()
         b_edit = QPushButton()
         b_dup = QPushButton()
@@ -152,6 +153,7 @@ class WindowCalculate(QMainWindow):
                 runtxt = runtxt + str(run) + ' | '
             runtxt = runtxt[0:-3]                   # remove the pipe from the last entry
             txt = calc[g.R_UID_SELF] + ' ('+calc[g.C_TYPE] +')\n'
+            if calc[g.C_ARCHIVED]: txt = '[ARCHIVED] '+txt
             txt = txt + runtxt + '\n'
             txt = txt + 'Result: '+str(round(calc[g.C_CONC_ORIGINAL],8))+' +/- STD_DEV mg/L'
             if calc[g.C_NOTE]:
@@ -180,6 +182,10 @@ class WindowCalculate(QMainWindow):
     def edit_from_right(self):
         item = self.calc_list.currentItem()
         calc_id = item.data(Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
+        calc = self.get_calc_from_id(calc_id)
+        if calc[g.C_ARCHIVED]:
+            show_alert(self, 'Alert!', 'Archived calculations cannot be edited. To modify this calculation, duplicate it then edit the resulting copy.')
+            return
         self.go_to_mode(g.WIN_MODE_EDIT, calc_id)
 
     def go_to_mode(self, mode_new, calc_id=None):
@@ -248,7 +254,11 @@ class WindowCalculate(QMainWindow):
     def get_left_layout(self):
         # header bar
         txt = 'New calculation'
-        if self.mode in (g.WIN_MODE_EDIT, g.WIN_MODE_VIEW_ONLY): txt = self.calc_id
+        if self.mode in (g.WIN_MODE_EDIT, g.WIN_MODE_VIEW_ONLY):
+            txt = self.calc_id
+            calc = self.get_calc_from_id(self.calc_id)
+            if calc[g.C_ARCHIVED]:
+                txt = '[ARCHIVED] '+txt
         title = QLabel(txt)
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         title.setObjectName('left-title')
@@ -317,9 +327,6 @@ class WindowCalculate(QMainWindow):
         '''but_add_point = QPushButton('+')
         h1.addWidget(but_add_point)'''
 
-        #v1 = QVBoxLayout()
-        #v1.addWidget(self.graph)
-        #v1.addLayout(h1)
         qs = QSplitter()
         qs.setChildrenCollapsible(False)
         qs.setOrientation(Qt.Orientation.Vertical)
@@ -329,11 +336,11 @@ class WindowCalculate(QMainWindow):
         h2 = QHBoxLayout()
         h2.addLayout(v0)
         h2.addWidget(QVLine())
-        #h2.addLayout(v1)
         h2.addWidget(qs)
 
         but_save = QPushButton('save')
         but_edit = QPushButton('edit')
+        archived_txt = QLabel('Archived calculations cannot be edited. To modify this calculation, duplicate it then edit the resulting copy.')
         
         but_save.clicked.connect(self.save)
         but_edit.clicked.connect(partial(self.go_to_mode, g.WIN_MODE_EDIT, self.calc_id))
@@ -343,8 +350,14 @@ class WindowCalculate(QMainWindow):
         v2.addWidget(QHLine())
         v2.addLayout(h2)
 
-        if self.mode == g.WIN_MODE_VIEW_ONLY: v2.addWidget(but_edit)
-        else: v2.addWidget(but_save)
+        if self.mode == g.WIN_MODE_VIEW_ONLY:
+            calc = self.get_calc_from_id(self.calc_id)
+            if calc[g.C_ARCHIVED]:
+                v2.addWidget(archived_txt)
+            else:
+                v2.addWidget(but_edit)
+        else:
+            v2.addWidget(but_save)
 
         if self.mode == g.WIN_MODE_VIEW_ONLY:                       # if view only, make a bunch of elements view_only
             self.type.setEnabled(False)
@@ -385,8 +398,11 @@ class WindowCalculate(QMainWindow):
         
 
     def get_sample_selector_layout(self):
-        title = QLabel('Sample')
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title_str = 'Sample'
+        t1 = QLabel(title_str)
+        t2 = QLabel(title_str)
+        t1.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        t2.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.sample_tree = self.get_run_tree_widget(with_method = True)
         self.sample_tree.itemSelectionChanged.connect(partial(self.update_sample_runs, self.sample_tree, 0))
@@ -395,14 +411,28 @@ class WindowCalculate(QMainWindow):
         self.load_sample_runs(self.sample_tree)
         self.updating_runs = False
 
-        v = QVBoxLayout()
-        v.addWidget(title)
-        v.addWidget(self.sample_tree)
-        w = QWidget()
-        w.setLayout(v)
+        v1 = QVBoxLayout()
+        v1.addWidget(t1)
+        v1.addWidget(self.sample_tree)
+        w1 = QWidget()
+        w1.setLayout(v1)
 
+        self.sample_txt = QTextEdit()
+        self.sample_txt.setEnabled(False)
+
+        v2 = QVBoxLayout()
+        v2.addWidget(t2)
+        v2.addWidget(self.sample_txt)
+        w2 = QWidget()
+        w2.setLayout(v2)
+    
         s = QStackedLayout()
-        s.addWidget(w)
+        s.addWidget(QWidget()) # Placeholder widget          
+        s.addWidget(w1)
+        s.addWidget(w2)
+
+        if self.mode == g.WIN_MODE_VIEW_ONLY: s.setCurrentIndex(g.C_STACK_VIEW_TEXT)
+        else: s.setCurrentIndex(g.C_STACK_INDEX_SELECTOR)
        
         return s
     
@@ -411,9 +441,11 @@ class WindowCalculate(QMainWindow):
         t1 = QLabel(title_str)
         t2 = QLabel(title_str)
         t3 = QLabel(title_str)
+        t4 = QLabel(title_str)
         t1.setAlignment(Qt.AlignmentFlag.AlignCenter)
         t2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         t3.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        t4.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         if i == 1: msg = "Please select at least one <b>sample</b> run  <-----"
         else: msg = "Please select at least one run for <b>standard addition "+str(i-1)+'</b>   \n\n<-----'
@@ -437,23 +469,35 @@ class WindowCalculate(QMainWindow):
         w2 = QWidget()
         w2.setLayout(v2)
 
-        box3 = QTextEdit('There are no available standard additions with the selected method')
-        box3.setEnabled(False)
-        self.set_widget_border(box3, self.border_width_active, self.border_color_error)
+        txt3 = QTextEdit()
+        txt3.setEnabled(False)
         v3 = QVBoxLayout()
         v3.addWidget(t3)
-        v3.addWidget(box3)
-        v3.addStretch()
+        v3.addWidget(txt3)
         w3 = QWidget()
         w3.setLayout(v3)
+
+        box4 = QTextEdit('There are no available standard additions with the selected method')
+        box4.setEnabled(False)
+        self.set_widget_border(box4, self.border_width_active, self.border_color_error)
+        v4 = QVBoxLayout()
+        v4.addWidget(t4)
+        v4.addWidget(box4)
+        v4.addStretch()
+        w4 = QWidget()
+        w4.setLayout(v4)
         
-        for w in (w1,w2,w3):
+        for w in (w1,w2,w3,w3):
             s.addWidget(w)
 
         self.stdadd_selectors.append({'tree': tree,
-                                      'layout': s})
+                                      'layout': s,
+                                      'txt': txt3})
 
         s.setCurrentIndex(g.C_STACK_INDEX_BASE)
+        if self.mode == g.WIN_MODE_VIEW_ONLY:
+            print('view only!')
+            s.setCurrentIndex(g.C_STACK_VIEW_TEXT)
 
         return s
         
@@ -513,6 +557,36 @@ class WindowCalculate(QMainWindow):
         txt = calc[g.C_NOTE]
         self.type.setCurrentIndex(type_index)
         self.notes.setPlainText(txt)
+        if self.mode == g.WIN_MODE_VIEW_ONLY:
+            self.set_view_only_points(calc)
+
+    def set_view_only_points(self, calc): 
+        for i, pt in enumerate(calc[g.C_POINTS]):
+            
+            if i==0: txt = self.sample_txt
+            else: txt = self.stdadd_selectors[i-1]['txt']
+            lines = []
+            runs = []
+            for j,row in enumerate(pt):
+                run_id = row[g.C_RUN_ID]
+                rep_id = row[g.C_REP_ID]
+                if run_id not in runs:
+                    if lines:
+                        lines[-1] = lines[-1][0:-2] + ')\n'
+                    lines.append(run_id+' (')
+                    runs.append(run_id)
+                lines[-1] = lines[-1] + rep_id + ', '
+            lines[-1] = lines[-1][0:-2] + ')\n'
+            to_write = ''
+            for line in lines:
+                to_write = to_write + line
+            txt.setPlainText(to_write)
+                        
+                    
+                
+                
+                
+            
         
         ##################################################3
         #
@@ -520,7 +594,7 @@ class WindowCalculate(QMainWindow):
         #   SET READ ONLY VaLUES for mode==VIEW_ONLY
         #
         ####################################################################################################################
-
+    
 
     def duplicate(self):
         """Duplicates all selected calculations"""
@@ -537,6 +611,7 @@ class WindowCalculate(QMainWindow):
             lbl = '[COPY OF '+str(datum[g.R_UID_SELF])+']'
             if note: datum[g.C_NOTE] =  lbl+' '+note
             else: datum[g.C_NOTE] = lbl
+            datum[g.C_ARCHIVED] = False                     # Whether or not original was archived, new one will not be, even if incomplete.
             calc_id = get_next_id(ids, g.C_UID_PREFIX)      # Get the next calc-id UID
             datum[g.R_UID_SELF] = calc_id
             ids.append(calc_id)                             # to get next UID for next looop
@@ -679,6 +754,8 @@ class WindowCalculate(QMainWindow):
     def update_sample_runs(self, run_list, selector_index):
         if self.updating_runs:
             return
+        if self.mode == g.WIN_MODE_VIEW_ONLY:
+            return
         self.updating_runs = True
         try:
             selected_runs = self.get_selected_runs(run_list)
@@ -714,6 +791,7 @@ class WindowCalculate(QMainWindow):
     def update_stdadd_runs(self, i):
         try:
             if self.updating_runs: return               # to avoid recursion
+            if self.mode == g.WIN_MODE_VIEW_ONLY: return
             self.updating_runs = True                   # stops recursive calls during this fn
             tree = self.stdadd_selectors[i]['tree']
             selected_runs = self.get_selected_runs(tree)
