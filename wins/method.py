@@ -1391,6 +1391,9 @@ class WindowMethod(QMainWindow):
                 signal_steps.append(step)
             elif step[g.M_DATA_COLLECT] == g.M_DATA_BACKGROUND:
                 background_steps.append(step)
+        if len(signal_steps) == 0:       # More than 1 signal collection step in method
+            resp = show_warning("Warning: data collection", "Just a heads up, this method will not collect any data.\nAre you sure you want to continue?")   
+            if not resp: return False
         if len(signal_steps) > 1:       # More than 1 signal collection step in method
             resp = show_warning("Warning: data collection", "Just a heads up, this method has multiple data collection steps.\nAre you sure you want to continue?")   
             if not resp: return False
