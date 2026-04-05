@@ -1012,6 +1012,7 @@ class WindowCalculate(QMainWindow):
             txt = 'None'
         else:
             txt = '<b>Sample concentration</b>: '+str(round(float(r[g.C_CONC_ORIGINAL]), 9))+' mg/L<br><br>'
+            txt = txt + 'Model: y = '+str(r[g.C_SLOPE])+' * x + '+str(r[g.C_INT])+'<br><br>'
             txt = txt + 'R^2: '+str(round(float(r[g.C_R2]), 4))+'<br>'
             txt = txt + 'Standard error: '+str(round(float(r[g.C_STDERR]), 4))
         self.results.setText(txt)
