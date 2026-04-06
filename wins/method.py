@@ -1252,12 +1252,11 @@ class WindowMethod(QMainWindow):
         #
         #
         #####################################
-        '''if self.step_name.text() == '':    # make sure there is a name selected
-            show_alert(self, 'Error!', 'Please name your step')
-            return False'''
+
         if self.step_type.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:    # make sure there is a type selected
             show_alert(self, 'Error!', 'Please select a type of run')
             return False
+        
         step_type = g.M_TYPES[self.step_type.currentIndex()]
         if self.ts[step_type].value() == 0: # make sure there is a duration
             if step_type != g.M_RAMP:       # don't flag this error if type is ramp because instead we ask for scan rate 
@@ -1270,7 +1269,7 @@ class WindowMethod(QMainWindow):
             if v1 == v2:
                 show_alert(self, 'Error!', 'The endpoints of this ramp have the same value, if this is what you want, please consider a constant volutage. Otherwise...typo?')
                 return False
-            if self.ramp_scan_rate == 0:
+            if self.ramp_scan_rate.value() == 0:
                 show_alert(self, 'Error!', 'Please set a scan rate greater than 0.')
                 return False
             
