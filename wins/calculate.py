@@ -57,6 +57,7 @@ class WindowCalculate(QMainWindow):
         self.status.addPermanentWidget(self.progress_bar)
 
         # Set the layout programatically
+        self.adjust_suggestion()
         self.set_layout()
         
     def reset_globals(self):
@@ -520,6 +521,43 @@ class WindowCalculate(QMainWindow):
             lay.addLayout(right)
         return lay
 
+    def adjust_suggestion(self):
+        """Considers the suggested reps that were passed to the calculator. Follows this algorithm:
+        1. If empty, returns
+        2. If there is at least one sample rep, returns
+        3. If there are standard addition reps, goes to first one and grabs first sample run
+            from data, including all reps, appends to suggestion."""
+        print('here we are adjusting the suggestion!')
+        if not self.suggestion:
+            return
+        samples = []
+        stdadds = []
+        for suggestion in self.suggestion:
+            run_id = suggestion[0]
+            run = get_run_from_file_data(self.parent.data, run_id)
+            if run[g.R_TYPE] == g.R_TYPE_SAMPLE: samples.append(run)
+            elif run[g.R_TYPE] == g.R_TYPE_STDADD: stdadds.append(run)
+
+        if samples:
+            return
+
+        if stdadds:
+            replist = []
+            for stdadd in stdadds:
+                sample_found = False
+                method = stdadd[g.R_UID_METHOD]
+                for run in self.parent.data[g.S_RUNS]:
+                    if run[g.R_UID_METHOD] == method:
+                        replist = get_all_reps_from_run_id(self.parent.data, run[g.R_UID_SELF])
+                        sample_found = True
+                        break
+                if sample_found: break
+            for rep in replist:
+                self.suggestion.append(rep)
+            print(self.suggestion)
+                
+                        
+
     def set_layout(self):
         self.reset_globals()            # Reset the globals
 
@@ -552,9 +590,11 @@ class WindowCalculate(QMainWindow):
             self.set_values()
             self.set_selector_indices()
             self.to_preset = False      # Once we have finished presetting, we are no longer presetting
-            self.suggesting = None      # Once we have finished suggesting, we are no longer suggesting
+            self.suggestion = None      # Once we have finished suggesting, we are no longer suggesting
             self.saved = True           # Right when we have finished presetting and suggesting, we have nothing to save
+            #self.updating_runs = False  # And we are no longer updating runs
         except Exception as e:
+            print('here i am being an error!')
             print(e)
 
     def set_values(self):
@@ -795,8 +835,13 @@ class WindowCalculate(QMainWindow):
 
     def update_stdadd_runs(self, i):
         try:
+            print('current, self.updating_runs is: '+str(self.updating_runs))
             if self.updating_runs: return               # to avoid recursion
             self.updating_runs = True                   # stops recursive calls during this fn
+            print('here we are in the single update!')
+            print('self.suggestion is:')
+            print(self.suggestion)
+            print()
             tree = self.stdadd_selectors[i]['tree']
             selected_runs = self.get_selected_runs(tree)
             if selected_runs:

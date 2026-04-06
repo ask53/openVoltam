@@ -174,6 +174,7 @@ ICON_RELAY = ['external/icons/relay1.png',
 ICON_BACKGROUND = 'external/icons/measure_background.png'
 ICON_MEASURE = 'external/icons/measure.png'
 ICON_REFRESH = 'external/icons/refresh.png'
+ICON_CHECK = 'external/icons/check.png'
 
 # Asynchronous process types
 PROC_TYPE_SAVE = 'save'

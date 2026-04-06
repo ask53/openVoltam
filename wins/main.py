@@ -32,7 +32,7 @@ from time import sleep
 # import PyQt6/PySide6 stuff
 from PyQt6.QtTest import QTest
 from PyQt6.QtGui import QAction, QFont, QIcon
-from PyQt6.QtCore import QDate, Qt, QProcess
+from PyQt6.QtCore import QDate, Qt, QProcess, QSize
 from PyQt6.QtWidgets import (
     QMainWindow,
     QPushButton,
@@ -401,7 +401,7 @@ class WindowMain(QMainWindow):
         self.grid.setVerticalSpacing(0)
         
         # create column headers and add them to the grid layout
-        headers = ['RUN INFO','REPLICATE', 'STATUS', 'LAST ATTEMPTED', 'NOTES', 'PEAK HEIGHT']
+        headers = ['RUN INFO','REPLICATE', 'STATUS', 'LAST ATTEMPTED', 'NOTES', 'ANALYZED']
         w_heads = []
         for header in headers:
             w = self.create_w(header, qss_name='run-col-header')
@@ -423,8 +423,9 @@ class WindowMain(QMainWindow):
                 rep_time = rep[g.R_TIMESTAMP_REP]
                 rep_notes = rep[g.R_NOTES]
                 rep_proc = ''
-                if rep[g.R_ANALYSIS]: rep_proc = f"{rep[g.R_ANALYSIS][g.A_PEAK_HEIGHT]:.3f} uA"
-                rep_strs = [rep_name,rep_status,rep_time,rep_notes,rep_proc]
+                if rep[g.R_ANALYSIS]: rep_proc = g.ICON_CHECK
+                rep_strs = (rep_name,rep_status,rep_time,rep_notes,rep_proc)
+                icons = (False, False, False, False, True)
 
                 is_last = False
                 if j == len(run[g.R_REPLICATES])-1: is_last=True                # figure out if current rep is last of run
@@ -436,8 +437,8 @@ class WindowMain(QMainWindow):
                 
                 rep_id = rep[g.R_UID_SELF]
                 ws_rep = []
-                for s in rep_strs:
-                    w = self.create_w(html_escape(s), qss_name, self.rep_clicked, run_id, rep_id)
+                for k,s in enumerate(rep_strs):
+                    w = self.create_w(html_escape(s), qss_name, self.rep_clicked, run_id, rep_id, is_icon=icons[k])
                     ws_rep.append(w)   
                 row = self.add_row_to_main(ws_rep, row, h_offset=1)
                 self.layout[run_id]['reps'].append(rep_id)
@@ -478,7 +479,7 @@ class WindowMain(QMainWindow):
         Pls don't delete even tho is looks oh so deleteable!"""
         return
 
-    def create_w(self, s, qss_name, onclick_fn=do_nothing, run_id=False, rep_id=False, word_wrap=True):
+    def create_w(self, s, qss_name, onclick_fn=do_nothing, run_id=False, rep_id=False, word_wrap=True, is_icon=False):
         """
         Returns a QLabel widget according the following arguments:
             s:          String: contains the text of the label
@@ -494,6 +495,8 @@ class WindowMain(QMainWindow):
             ov-qss-name (contains qss_name for resetting styles)
         """
         w = QLabel(s)
+        if is_icon:
+            w.setPixmap(QIcon(s).pixmap(QSize(20,20)))
         w.setTextFormat(Qt.TextFormat.RichText)
         w.setWordWrap(word_wrap)
         w.setObjectName(qss_name)
