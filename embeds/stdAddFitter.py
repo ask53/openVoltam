@@ -46,6 +46,7 @@ class StdAddFitterPlot(QMainWindow):
         self.c_pre_dilution = None
         self.points_simple = None
         self.archived = False
+        self.reg_type = None
 
         self.color_avg = 'deeppink'
         self.color_rep = '#800080'
@@ -95,6 +96,10 @@ class StdAddFitterPlot(QMainWindow):
     def update_type(self, calc_type):
         self.type = calc_type
         self.set_axis_labels()
+        self.update_points(self.points)
+
+    def update_reg_type(self, reg_type):
+        self.reg_type = reg_type
         self.update_points(self.points)
 
     def update_points(self, points):
@@ -184,8 +189,8 @@ class StdAddFitterPlot(QMainWindow):
             x_avg = np.append(x_avg, x)
             y_avg = np.append(y_avg, y_sum/len(point))
         
-        self.plot_regression_line(x_avg, m, b)
-        self.label_regression_line(x_avg, y_avg, m, b, r_sq)
+        self.plot_regression_line(x_avg, m, b, self.color_avg)
+        self.label_regression_line(x_avg, y_avg, m, b, r_sq, self.color_avg)
 
         
         
@@ -239,13 +244,19 @@ class StdAddFitterPlot(QMainWindow):
         self.avgpts, = self.canvas.axes.plot(x_avg, y_avg, 'D', color=self.color_avg)   # Add averages as diamont points in pink
         
         if x_avg.size >= 3:                                                         # If there are enough points to do a linear regression
-            m, b, r_value, p_value, std_err = linregress(x_avg, y_avg)              # calculate least squares linear regression parameters
+            print('current reg type is: '+str(self.reg_type))
+            if self.reg_type == g.C_REG_TYPE_PTS:                        # if all points have same # of samples
+                m, b, r_value, p_value, std_err = linregress(x, y)              #   calculate least squares linear regression parameters based on all points
+                color = self.color_rep
+            elif self.reg_type == g.C_REG_TYPE_AVG:                                                               # if some points have more data than others, to avoid skew:
+                m, b, r_value, p_value, std_err = linregress(x_avg, y_avg)      #   calculate least squares linear regression parameters based on means only
+                color = self.color_avg
 
             #Add regression model to plot
-            self.plot_regression_line(x_avg, m, b)
+            y_reg = self.plot_regression_line(x_avg, m, b, color)
 
             # Set up regression label
-            self.label_regression_line(x_avg, y_avg, m, b, r_value*r_value)
+            self.label_regression_line(x_avg, y_reg, m, b, r_value*r_value, color)
         
             # Store calculated values on the self variable
             if m==0:
@@ -261,24 +272,35 @@ class StdAddFitterPlot(QMainWindow):
                    
         self.canvas.draw()
 
-    def plot_regression_line(self, x_avg, m, b):
+    '''def same_number_of_reps_at_all_points(self):
+        print('here!')
+        lens = []
+        for point in self.points:
+            if not len(point) in lens:
+                lens.append(len(point))
+        if len(lens) == 1:
+            return True
+        return False'''
+
+    def plot_regression_line(self, x_avg, m, b, color):
         y_reg = np.zeros(0)
         for x in np.nditer(x_avg, order='C'):                                   # Use regression to calculate y values for all displayed x
             y_reg = np.append(y_reg, m * x + b)
-        self.reg, = self.canvas.axes.plot(x_avg, y_reg, '-', color=self.color_avg)  # Add regression to plot
+        self.reg, = self.canvas.axes.plot(x_avg, y_reg, '-', color=color)  # Add regression to plot
+        return y_reg
         
-    def label_regression_line(self, x_avg, y_avg, m, b, r_squared):
+    def label_regression_line(self, x, y, m, b, r_squared, color):
         (y0,y1) = self.canvas.axes.get_ylim()
         (x0,x1) = self.canvas.axes.get_xlim()
         yrange = y1-y0
         xrange = x1-x0
-        textstart_x = float(x_avg[0]) + 0.025*xrange
+        textstart_x = float(x[0]) + 0.025*xrange
         textstart_y = m*textstart_x + b + 0.02*yrange
-        angle_rad = np.arctan((float(y_avg[-1]) - float(y_avg[0])) / (float(x_avg[-1]) - float(x_avg[0])))
+        angle_rad = np.arctan((float(y[-1]) - float(y[0])) / (float(x[-1]) - float(x[0])))
         angle_deg = 180 * angle_rad / np.pi
         lbl = 'R^2: '+str(round(r_squared, 4))
         self.canvas.axes.text(textstart_x, textstart_y, lbl, fontsize=11,
-                                  rotation=angle_deg, rotation_mode='anchor', color=self.color_avg,
+                                  rotation=angle_deg, rotation_mode='anchor', color=color,
                                   transform_rotates_text=True)
 
     def get_results(self):
@@ -290,6 +312,7 @@ class StdAddFitterPlot(QMainWindow):
                g.C_R2: self.r2,
                g.C_STDERR: self.stderr,
                g.C_TYPE: self.type,
+               g.C_REG_TYPE: self.reg_type,
                g.C_POINTS: self.points_simple,
                g.C_ARCHIVED: self.archived}
 

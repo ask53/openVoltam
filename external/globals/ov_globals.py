@@ -125,7 +125,10 @@ C_TYPE_PEAKZERO = 'peakzero'
 C_TYPE_SLOPE_L = 'slopel'
 C_TYPE_SLOPE_R = 'sloper'
 C_TYPE_SLOPE_AVG = 'slopemean'
-C_TYPES = [C_TYPE_PEAKBASE, C_TYPE_PEAKZERO, C_TYPE_SLOPE_L, C_TYPE_SLOPE_R, C_TYPE_SLOPE_AVG]
+C_TYPES = (C_TYPE_PEAKBASE, C_TYPE_PEAKZERO, C_TYPE_SLOPE_L, C_TYPE_SLOPE_R, C_TYPE_SLOPE_AVG)
+C_REG_TYPE_PTS = 'points'
+C_REG_TYPE_AVG = 'averages'
+C_REG_TYPES = (C_REG_TYPE_PTS, C_REG_TYPE_AVG)
 
 # Calculation results
 C_EQN = 'reg-equation'
@@ -138,6 +141,7 @@ C_STDERR = 'reg-std-error'
 C_ARCHIVED = 'archived'
 C_UID_PREFIX = 'calc-'
 C_TYPE = 'type'
+C_REG_TYPE = 'regression-based-on'
 C_POINTS = 'points'
 C_NOTE = 'note'
 C_REP_ID = 'rep-id'

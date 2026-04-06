@@ -152,7 +152,7 @@ class WindowCalculate(QMainWindow):
             for run in runs:
                 runtxt = runtxt + str(run) + ' | '
             runtxt = runtxt[0:-3]                   # remove the pipe from the last entry
-            txt = calc[g.R_UID_SELF] + ' ('+calc[g.C_TYPE] +')\n'
+            txt = calc[g.R_UID_SELF] + ' ('+calc[g.C_TYPE] +', '+calc[g.C_REG_TYPE]+')\n'
             if calc[g.C_ARCHIVED]: txt = '[ARCHIVED] '+txt
             txt = txt + runtxt + '\n'
             txt = txt + 'Result: '+str(round(calc[g.C_CONC_ORIGINAL],8))+' +/- STD_DEV mg/L'
@@ -282,6 +282,14 @@ class WindowCalculate(QMainWindow):
         for i, calc_type in enumerate(calc_types):
             self.type.addItem(calc_type, userData=g.C_TYPES[i])
         self.type.currentIndexChanged.connect(self.type_changed)
+
+        reg_type_lbl = QLabel("Fit regression to")
+        self.reg_type = QComboBox()
+        reg_types = ('All points', 'Means')
+        for i, reg_type in enumerate(reg_types):
+            self.reg_type.addItem(reg_type, userData=g.C_REG_TYPES[i])
+        self.reg_type.currentIndexChanged.connect(self.reg_type_changed)
+        
         notes_lbl = QLabel("Notes")
         self.notes = QTextEdit()
         self.notes.textChanged.connect(self.something_has_been_updated)
@@ -300,10 +308,12 @@ class WindowCalculate(QMainWindow):
         v0 = QVBoxLayout()
         v0.addWidget(type_lbl)
         v0.addWidget(self.type)
+        v0.addWidget(reg_type_lbl)
+        v0.addWidget(self.reg_type)
         v0.addWidget(notes_lbl)
         v0.addWidget(self.notes)
-        v0.addWidget(but_graph)
         v0.addStretch()
+        v0.addWidget(but_graph)
         v0.addLayout(self.results_stack)
 
         # center column        
@@ -361,19 +371,12 @@ class WindowCalculate(QMainWindow):
 
         if self.mode == g.WIN_MODE_VIEW_ONLY:                       # if view only, make a bunch of elements view_only
             self.type.setEnabled(False)
+            self.reg_type.setEnabled(False)
             self.notes.setEnabled(False)
             self.graph.set_view_only()
 
-            #############################################3 BUG TO FIX
-            #
-            #       THESE LINES PREVENT SCROLLING DURING VIEW_ONLY
-            #
-            self.sample_tree.setEnabled(False)
-            for selector in self.stdadd_selectors:
-                selector['tree'].setEnabled(False)
-            #
-            #
-            #####################################################################################################################
+        self.update_reg_type_on_graph()     # make sure graph has correct starting regression type 
+            
         return v2
 
     def get_run_tree_widget(self, with_method=False):
@@ -559,13 +562,16 @@ class WindowCalculate(QMainWindow):
             return
         calc = self.get_calc_from_id(self.calc_id)                  # get calc data
         type_index = g.C_TYPES.index(calc[g.C_TYPE])
+        reg_type_index = g.C_REG_TYPES.index(calc[g.C_REG_TYPE])
         txt = calc[g.C_NOTE]
         self.type.setCurrentIndex(type_index)
+        self.reg_type.setCurrentIndex(reg_type_index)
         self.notes.setPlainText(txt)
         if self.mode == g.WIN_MODE_VIEW_ONLY:
             self.set_view_only_points(calc)
             if calc[g.C_ARCHIVED]:
                 self.graph.update_archived(calc)
+                
         
 
     def set_selector_indices(self):
@@ -1003,6 +1009,17 @@ class WindowCalculate(QMainWindow):
         calc_type = self.type.currentData()
         self.graph.update_type(calc_type)
 
+    def reg_type_changed(self):
+        self.something_has_been_updated()
+        self.results_stack.setCurrentIndex(0)
+        self.update_reg_type_on_graph()
+
+    def update_reg_type_on_graph(self):
+        reg_type = self.reg_type.currentData()
+        self.graph.update_reg_type(reg_type)
+        
+        
+
     def something_has_been_updated(self):
         self.saved = False
 
@@ -1029,6 +1046,9 @@ class WindowCalculate(QMainWindow):
 
 
     def save(self):
+        if self.saved:
+            self.status.showMessage("Saved.", g.SB_DURATION)
+            return
         r = self.get_and_show_results()
         if r:                               # make sure there are some results
             if self.calc_id:
@@ -1044,6 +1064,9 @@ class WindowCalculate(QMainWindow):
             if not self.on_save_mode:
                 self.on_save_mode = g.WIN_MODE_EDIT
                 self.on_save_calc = self.calc_id
+            print("this is what we're gonna save!")
+            print(r)
+            print()
             
             if self.mode == g.WIN_MODE_NEW:
                 self.parent.start_async_save(g.SAVE_TYPE_CALC_NEW, [[r]], onSuccess=self.save_success, onError=self.async_error)   #r gets double bracketed, because it goes to a fn that accepts a list of calcs        
