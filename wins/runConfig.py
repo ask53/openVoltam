@@ -332,48 +332,13 @@ class WindowRunConfig(QMainWindow):
 
     def view_method(self):
         if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
-            try:
-                if self.method.currentData()['type'] == g.M_FROM_SAMPLE:    # if method is from an existing run in sample file
-                    method_id = self.method.currentData()['method'][g.M_UID_SELF]
-                    self.parent.new_win_method_by_id(g.WIN_MODE_VIEW_ONLY, method_id, False)
-                else:                                                       # if method is from a separatemethod file
-                    path = self.method.currentData()['path']
-                    self.parent.new_win_method_by_path(g.WIN_MODE_VIEW_ONLY, path, False)
-            except Exception as e:
-                print(e)
+            if self.method.currentData()['type'] == g.M_FROM_SAMPLE:    # if method is from an existing run in sample file
+                method_id = self.method.currentData()['method'][g.M_UID_SELF]
+                self.parent.new_win_method_by_id(g.WIN_MODE_VIEW_ONLY, method_id, False)
+            else:                                                       # if method is from a separatemethod file
+                path = self.method.currentData()['path']
+                self.parent.new_win_method_by_path(g.WIN_MODE_VIEW_ONLY, path, False)
                 
-            #self.parent.parent.open_config(data=self.method.currentData(), editable=False)
-
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    ######################3 HERE ######################################################
-
 
     #########################################
     #                                       #
@@ -396,7 +361,6 @@ class WindowRunConfig(QMainWindow):
     #########################################
         
     def run_button_clicked(self):
-        print('clicked!')
         if self.parent.process:                 # If parent is running a process (save or load or whatever)
             return                              #   ignore this button click
         form_is_valid = self.validate_form()    # Validate form
@@ -450,36 +414,30 @@ class WindowRunConfig(QMainWindow):
         return True
 
     def method_and_device_compatible(self):
+        """This function validates whether the selected method (self.method) and the
+        selected device (self.device) are compatible. If not, shows an alert and
+        returns False. Otherwise, returns True"""
+
+        method = self.method.currentData()['method']
+        device = self.device.currentData()
 
         # Check whether selected device has enough general purpose input output pins for this method
-        if len(self.device.currentData()['gpio']) < len(self.method.currentData()['method'][g.M_EXT_DEVICES]):
+        if len(device['gpio']) < len(method[g.M_EXT_DEVICES]):
             show_alert(self, l.alert_header[g.L], 'This device does not have enough input/output pins to control all the external devices in that method.\nPlease try either another device or another method.')
             return False
-        
-        ###############################################
-        #
-        # THIS IS WHERE WE VALIDATE WHETHER THE DEVICE IS COMPATIBLE WITH THE METHOD
-        #
-        #       BUILD THIS!!
-        #       Check:
-        #           - Max V
-        #           - Current range?
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #####################################################
+
+        # Check whether the device is compatible with the method's current range
+        if not method[g.M_CURRENT_RANGE] in device['Ires']:
+            show_alert(self, l.alert_header[g.L], 'The selected device is not compatible with the current range of the selected method.')
+            return False
+
+        # Check whether the device can handle voltages as large as those called for in the method
+        vmin, vmax = get_method_v_extremes(method[g.M_STEPS])
+        vmax_abs = max((abs(vmin), abs(vmax)))
+        if vmax_abs > device['maxV']:
+            show_alert(self, l.alert_header[g.L], 'The max voltages in the method are too large for the selected device.')
+            return False
+
         return True
         
 

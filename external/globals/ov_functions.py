@@ -304,7 +304,7 @@ def get_method_v_extremes(steps):
                 v_min = lo
             if hi > v_max:
                 v_max = hi
-    return [v_min, v_max]
+    return (v_min, v_max)
 
 def get_method_measurement_bounds(steps):
     signal_bounds = []
