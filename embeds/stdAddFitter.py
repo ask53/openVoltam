@@ -272,16 +272,6 @@ class StdAddFitterPlot(QMainWindow):
                    
         self.canvas.draw()
 
-    '''def same_number_of_reps_at_all_points(self):
-        print('here!')
-        lens = []
-        for point in self.points:
-            if not len(point) in lens:
-                lens.append(len(point))
-        if len(lens) == 1:
-            return True
-        return False'''
-
     def plot_regression_line(self, x_avg, m, b, color):
         y_reg = np.zeros(0)
         for x in np.nditer(x_avg, order='C'):                                   # Use regression to calculate y values for all displayed x
