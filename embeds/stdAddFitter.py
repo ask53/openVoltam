@@ -6,7 +6,7 @@ as well as R^2 value of fit.
 
 
 """
-from external.globals import ov_globals as g
+from global_scripts import ov_globals as g
 
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT, FigureCanvasQTAgg
 from matplotlib.figure import Figure

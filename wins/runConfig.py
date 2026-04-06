@@ -8,9 +8,9 @@ profile. This window allows the user the select the sweep profile and
 set a bunch of other parameters as well.
 """
 
-from external.globals import ov_globals as g
-from external.globals import ov_lang as l
-from external.globals.ov_functions import *
+from global_scripts import ov_globals as g
+from global_scripts import ov_lang as l
+from global_scripts.ov_functions import *
 
 from embeds.methodPlot import MethodPlot
 from devices.supportedDevices import devices

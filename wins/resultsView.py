@@ -4,7 +4,7 @@ resultsView.py
 Shows a voltamogram graph of results to the user. Overlaps all
 runs/reps that the user requests on the same axes.
 """
-from external.globals import ov_globals as g
+from global_scripts import ov_globals as g
 
 from embeds.voltamOGram import VoltamogramPlot
 

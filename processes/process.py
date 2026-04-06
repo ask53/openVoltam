@@ -8,8 +8,8 @@ from os.path import exists
 
 sys.path.append(getcwd()) # current working directory must be appended to path for custom ("ov_") imports
 
-from external.globals import ov_globals as g
-from external.globals.ov_functions import (get_data_from_file,
+from global_scripts import ov_globals as g
+from global_scripts.ov_functions import (get_data_from_file,
                                            write_data_to_file,
                                            remove_data_from_layout,
                                            get_method_from_file_data,

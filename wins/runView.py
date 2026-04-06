@@ -20,9 +20,9 @@ the following algorithm:
 """
 import sys
 
-from external.globals import ov_globals as g
-from external.globals import ov_lang as l
-from external.globals.ov_functions import *
+from global_scripts import ov_globals as g
+from global_scripts import ov_lang as l
+from global_scripts.ov_functions import *
 
 from ast import literal_eval
 import threading

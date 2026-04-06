@@ -1,0 +1,458 @@
+# ov_functions.py
+#		
+
+from tabularjson import parse, stringify, StringifyOptions, is_homogeneous
+from re import sub
+
+from json import dumps
+
+from global_scripts import ov_globals as g
+from global_scripts import ov_lang as l
+
+from PyQt6.QtCore import Qt 
+from PyQt6.QtWidgets import (
+    QHBoxLayout,
+    QLabel,
+    QMessageBox,
+    QScrollArea,
+    QFrame,
+    QFileDialog
+)
+
+def encodeCustomName(custom_name):
+    return g.CUSTOM_NAME_FLAG+custom_name
+
+def isCustomName(s):
+    return s.startswith(g.CUSTOM_NAME_FLAG)
+
+def decodeCustomName(encoded_name):
+    return encoded_name.replace(g.CUSTOM_NAME_FLAG, '', 1)
+
+def custText(arr):
+    return arr[g.L]
+
+def horizontalize(widgetlist, stretch=False):
+    """
+    takes in a list of widgets and adds them all sequentially to a horizontal layout. Returns the layout
+    """
+    layout = QHBoxLayout()
+    for widget in widgetlist:
+        layout.addWidget(widget)
+    if stretch:
+        layout.addStretch()
+    return layout
+
+def makeLabelsSelectable(w):
+    els = w.findChildren(QLabel)
+    for el in els:
+        el.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse | Qt.TextInteractionFlag.TextSelectableByKeyboard)
+    return w
+
+def setWsEnabled(ws, enabled=True):
+    for w in ws:
+        w.setEnabled(enabled)
+
+def applyStyles():
+    g.APP.setStyleSheet(g.STYLES)
+
+def show_alert(obj, title, msg):
+    dlg = QMessageBox(obj)
+    dlg.setWindowTitle(title)
+    dlg.setText(msg)
+    dlg.exec()
+
+def guess_filename(name):
+    """Takes in a name and returns a best guess at the filename
+    by stripping all characters other than letters, numbers,
+    em-dashes, and underscores and by replacing all blankspace
+    with dashes"""
+    guess = sub('[^A-Za-z0-9 ]', '', name)  # remove all characters other than a-z, numbers, and spaces
+    guess = ' '.join(guess.split())         # convert all sequential blankspace to a single space
+    guess = guess.replace(' ', '-')         # replace all spaces with em-dashes
+    return guess
+
+def get_path_from_user(win, pathtype):
+    """Takes in a parent window and type of path
+    Returns a path if one is selected, otherwise returns an empty string"""
+    try:
+        path = ''
+        if pathtype=='sample':
+            path = QFileDialog.getOpenFileName(win, 'Open sample', '', g.SAMPLE_FILE_TYPES)[0]
+        elif pathtype=='method':
+            path = QFileDialog.getOpenFileName(win, 'Open method', '', g.METHOD_FILE_TYPES)[0]
+        elif pathtype=='folder':
+            path = QFileDialog.getExistingDirectory(win, "Select a folder")
+            
+        return path
+    except Exception as e:
+        print(e)
+        
+    
+
+def get_data_from_file(path):
+    try:
+        with open(path, 'r') as file:
+            content = file.read()
+            data = parse(content)
+        return data
+    except Exception as e:
+        print(e)
+        return False
+
+def write_data_to_file(path, data):
+    try:
+        with open(path, 'w') as file:                            
+            
+            options: StringifyOptions = {
+                "indentation": 4,
+                "trailingCommas": False,
+                "output_as_table": lambda tabular_data, path: g.R_DATA_TIME in tabular_data[0] or g.C_RUN_ID in tabular_data[0]
+                }
+            tab_json_to_write = stringify(data, options)       #   convert dictionary to json string
+            file.write(tab_json_to_write)                                       #   write json string to file
+            #json_to_write = dumps(data, indent=4)
+            #file.write(json_to_write)
+            file.close()                                                    #   close the file (to avoid taking up too much memory)
+        return True
+    except Exception as e:
+        print(e)
+        return False
+
+def remove_data_from_layout(d):
+    for run in d[g.S_RUNS]:                 # For each run in data dict
+        for rep in run[g.R_REPLICATES]:     #  And for each rep of the run
+            rep.pop(g.R_DATA, None)         #   Remove the raw data
+            rep.pop(g.R_BACKGROUND, None)   #   Remove raw background data
+    return d
+
+def get_next_id(ids, prefix):
+        """ Takes in a list of ids, loops through them to find the
+        most recent one. Returns the id of the next one, which should be
+        one greater than the current. Assumes IDs are of the format:
+             [PREFIX]-n
+        For example, if the [PREFIX] was 'fulano' the first few would be:
+        fulano-1, fulano-2, fulano-3, etc.
+        """
+        max_id = -1
+        for ID in ids:
+            num = int(ID.replace(prefix,''))
+            if num > max_id:
+                max_id = num
+        return prefix+str(max_id+1)
+
+def get_ids(data, key):
+    '''assumes that data is a dictionary with many key value pairs. Assumes
+    that key is a key whose value is a list. Returns the unique IDs of
+    every object in the list.'''
+    ids = []
+    for obj in data[key]:
+        ids.append(obj[g.R_UID_SELF])
+    return ids
+    
+
+def methods_match(m1, m2):
+    ''' Takes in two method dicts, m1 and m2
+    checks whether they match. If so, returns True,
+    if not, returns False'''
+    
+    keys_to_ignore = [g.M_UID_SELF]   # List all keys to ignore
+    for key in m1:                      # Loop thru all keys in m1
+        if key not in keys_to_ignore:   # If key is not on ignore list
+            if key not in m2:           # if the key from m1 is not in m2
+                return False            #   We don't have a match...
+            elif m1[key] != m2[key]:    # if the key exists but the values don't match
+                return False            #   Still no match...
+    return True                         # If we get all the way thru, its a match! 
+
+def get_row_ws(w_parent, i):
+    """Accepts:
+    - w_parent: a widget that contains a grid layout
+    - i: the row, indexed from 0, of interest
+    Loops through the w_parent and returns a list of all
+    child widgets in row i.
+    """
+    try:
+        row_ws = []
+        ws = w_parent.findChildren(QLabel)
+        for w in ws:
+            if w.property('row') == i:
+                row_ws.append(w)
+        return row_ws
+    except Exception as e:
+        print(e)
+
+#### IS THIS NECESSARY??? #####################################################
+#
+#
+#
+def scroll_area_resized(outer, inner, event):
+    print('---')
+    print('HERE!')
+    QScrollArea.resizeEvent(outer, event)   # Because this fn intercepts the resizeEvent, call the actual resizeEvent
+                                            # (this checks whether to add/remove scroll bars, etc.
+                                            # Then adjust the inner widget to fit well within the scroll area:
+    outer_width = outer.width()             #   get width of the scroll area
+    v_bar_width = 0 
+    v_bar = outer.verticalScrollBar()       #   get the vertical scrollbar widget
+    if v_bar.isVisible():                   #   if its visible
+        v_bar_width = v_bar.width()         #   account for its width
+    inner.setFixedWidth(outer_width-g.PADDING-v_bar_width)
+    print(outer_width)
+    print(inner.width())
+#
+#
+###########################################################3
+
+def get_run_from_file_data(data, run_id):
+    
+    """ takes in a full dataset dictionary, data, and the uid of the run
+    we are seeking, run_id. Loops through all run elements in the data
+    looking for one with a matching uid. If found, returns the dictionary
+    of that run. Otherwise, returns False."""
+    
+    for run in data[g.S_RUNS]:          
+        if run[g.R_UID_SELF] == run_id: 
+            return run
+    return False
+
+def get_rep(data, ids):
+    """ Takes in:
+        - data     Dict.  With structure of .ovs data file
+        - ids      Tuple. With structure (run-id, rep-id)
+    Gets the run with ID that matches run-id from the data.
+    If it finds one, finds the rep whose ID matches rep-id.
+    If found, returns the rep dictionary. If not, returns False."""
+    runid = ids[0]
+    repid = ids[1]
+    run = get_run_from_file_data(data, runid)
+    if run:
+        for rep in run[g.R_REPLICATES]:
+            if rep[g.R_UID_SELF] == repid:
+                return rep
+    return False
+
+def get_all_reps_from_run_id(data, run_id):
+    run = get_run_from_file_data(data, run_id)
+    replist = []
+    for rep in run[g.R_REPLICATES]:
+        replist.append((run_id, rep[g.R_UID_SELF]))
+    return replist
+        
+
+def get_method_from_file_data(data, method_id):
+
+    """ takes in a full sample dataset dictionary, data, and the uid of the method
+    we are seeking, method_id. Loops through all method elements in the data
+    looking for one with a matching uid. If found, returns the dictionary
+    of that method. Otherwise, returns False."""
+    if method_id:
+        for method in data[g.S_METHODS]:
+            if method[g.M_UID_SELF] == method_id:
+                return method
+    return False
+
+def get_analysis(data, ids):
+    """ Takes in:
+        - data     Dict.  With structure of .ovs data file
+        - ids      Tuple. With structure (run-id, rep-id)
+    Gets the analysis for the rep specificed in ids. If no
+    analysis present, returns False."""
+    rep = get_rep(data, ids)
+    if not rep:
+        return False
+    if not rep[g.R_ANALYSIS]:
+        return False
+    else:
+        return rep[g.R_ANALYSIS]
+
+def get_v_max_abs(step):
+
+    """ takes in a step of the method, and returns the maximum amplitude
+    of volutage (always positive) during that step. """
+
+    if step[g.M_TYPE] == g.M_CONSTANT:
+        return abs(step[g.M_CONST_V])
+
+    elif step[g.M_TYPE] == g.M_RAMP:
+        v0 = abs(step[g.M_RAMP_V1])
+        v1 = abs(step[g.M_RAMP_V2])
+        return max(v0, v1)
+
+def get_method_duration(steps):
+    t = 0
+    for step in steps:
+        t = t + step[g.M_T]
+    return t
+        
+def get_method_v_extremes(steps):
+    v_min = 0
+    v_max = 0
+    for step in steps:
+        if step[g.M_TYPE] == g.M_CONSTANT:
+            if step[g.M_CONST_V] < v_min:
+                v_min = step[g.M_CONST_V]
+            elif step[g.M_CONST_V] > v_max:
+                v_max = step[g.M_CONST_V]
+        elif step[g.M_TYPE] == g.M_RAMP:
+            if step[g.M_RAMP_V1] > step[g.M_RAMP_V2]:
+                hi = step[g.M_RAMP_V1]
+                lo = step[g.M_RAMP_V2]
+            else:
+                hi = step[g.M_RAMP_V2]
+                lo = step[g.M_RAMP_V1]
+            if lo < v_min:
+                v_min = lo
+            if hi > v_max:
+                v_max = hi
+    return (v_min, v_max)
+
+def get_method_measurement_bounds(steps):
+    signal_bounds = []
+    background_bounds = []
+    t_tot = 0
+    for step in steps:
+        t_step = step[g.M_T]
+        if step[g.M_DATA_COLLECT] == g.M_DATA_SIGNAL:
+            signal_bounds.append((t_tot, t_tot+t_step))
+        elif step[g.M_DATA_COLLECT] == g.M_DATA_BACKGROUND:
+            background_bounds.append((t_tot, t_tot+t_step))
+        t_tot = t_tot+t_step
+    return (signal_bounds, background_bounds)
+
+def html_escape(s):
+    s = s.replace("&", "&amp;")
+    s = s.replace("<", "&lt;")
+    s = s.replace(">", "&gt;")
+    s = s.replace('"', "&quot;")
+    s = s.replace("'", "&#39;")
+    return s
+
+def get_relay_text(name, i):
+    if name == "":
+        return 'device '+str(i+1)
+    return name
+
+def show_warning(title, msg):
+    confirm = warningMessageBox(title, msg)
+    resp = confirm.exec()
+    if resp == QMessageBox.StandardButton.Cancel:
+        return True
+    return False
+
+def check_calc_conflict(data, reps_to_change):
+    """ Takes in data (current data of sample) and list of reps_to_change in the form
+    [(run-x1, rep-y1), (run-x2, rep-y2), ... , (run-xn, rep-xn)]. IF any of the reps that
+    are being changed are also present in any calculations, it asks the user what they
+    would like to do about it.
+    
+    Returns:
+        (continue, List of calculation in conflict)
+    Where
+        continue == True if either there are no calculations in conflict OR the user
+            wants to archive the conflicting calculations and
+        continue == False if the user selects to "cancel" the operation that would have
+            produced the conflict.
+        List of calculations in conflict is a list of all calcs with conflicts in the form:
+            [calc-id1, calc-id2, ... , calc-idn]"""
+    
+    # Make list of calcs that use the reps in reps_to_change
+    calcs_in_conflict = []
+    for calc in data[g.S_PROCESSED]:
+        calc_found = False
+        for point in calc[g.C_POINTS]:
+            for rep in point:
+                rep_as_tuple = (rep[g.C_RUN_ID], rep[g.C_REP_ID])
+                if rep_as_tuple in reps_to_change:
+                    calc_id = calc[g.R_UID_SELF]
+                    if not calc_id in calcs_in_conflict:
+                        calcs_in_conflict.append(calc_id)
+                        calc_found = True
+                        break
+            if calc_found: break                    
+    print(calcs_in_conflict)            
+    
+    # If no conflict, return true and move on with your life
+    if not calcs_in_conflict:
+        return True, []
+
+    # If there IS a conflict, ask the user about it
+    title = 'Archive check'
+    body = 'This action modifies replicates that are used in calculations.\nTo continue with this action requires archiving the following calculations:'
+    for calc in calcs_in_conflict:
+        body = body + '\n   - ' + str(calc)
+    body = body + '\nWould you like to continue?'
+    resp = confirmMessageBox(title, body).exec()
+
+    # If user says 'cancel'
+    if resp == QMessageBox.StandardButton.Cancel:
+        return False, []
+
+    # If user says 'archive and continue' 
+    return True, calcs_in_conflict
+
+
+
+    
+
+
+
+# Classes!
+
+class QVLine(QFrame):
+    def __init__(self):
+        super(QVLine, self).__init__()
+        self.setFrameShape(QFrame.Shape.VLine)
+        self.setFrameShadow(QFrame.Shadow.Sunken)
+
+class QHLine(QFrame):
+    def __init__(self):
+        super(QHLine, self).__init__()
+        self.setFrameShape(QFrame.Shape.HLine)
+        self.setFrameShadow(QFrame.Shadow.Sunken)
+
+class saveMessageBox(QMessageBox):
+    def __init__(self):                       
+        super().__init__()
+
+        # set text for save message
+        self.setWindowTitle(l.s_edit_discard[g.L]) 
+        self.setText('Close without saving?')
+        self.setStandardButtons(QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel)
+
+        # customize button language text for multi-language support
+        but_save = self.button(QMessageBox.StandardButton.Save)
+        but_save.setText(l.s_edit_save[g.L])
+        but_disc = self.button(QMessageBox.StandardButton.Discard)
+        but_disc.setText(l.s_edit_close_wo_save[g.L])
+        but_canc = self.button(QMessageBox.StandardButton.Cancel)
+        but_canc.setText(l.s_edit_cancel[g.L])
+
+class confirmMessageBox(QMessageBox):
+    def __init__(self, title, body):
+        super().__init__()
+
+        #set text
+        self.setWindowTitle(title)
+        self.setText(body)
+        self.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+
+        but_ok = self.button(QMessageBox.StandardButton.Ok)
+        but_ok.setText('Continue and archive calculations')
+        but_canc = self.button(QMessageBox.StandardButton.Cancel)
+        but_canc.setText(l.s_edit_cancel[g.L])
+class warningMessageBox(QMessageBox):
+    def __init__(self, title, msg):
+        super().__init__()
+        self.setWindowTitle(title) 
+        self.setText(msg)
+        self.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+
+        # customize button language text for multi-language support
+        but_save = self.button(QMessageBox.StandardButton.Ok)
+        but_save.setText("I'll fix this")
+        but_canc = self.button(QMessageBox.StandardButton.Cancel)
+        but_canc.setText("Continue as is")
+
+        
+    
+    

@@ -11,9 +11,9 @@ local directory.
 All files are in .json format. 
 """
 
-from external.globals import ov_globals as g
-from external.globals import ov_lang as l
-from external.globals.ov_functions import *
+from global_scripts import ov_globals as g
+from global_scripts import ov_lang as l
+from global_scripts.ov_functions import *
 
 from functools import partial
 

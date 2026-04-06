@@ -24,9 +24,9 @@ There are two ways to add data to the plot:
 
 """
 
-from external.globals import ov_globals as g
-from external.globals import ov_lang as l
-from external.globals.ov_functions import *
+from global_scripts import ov_globals as g
+from global_scripts import ov_lang as l
+from global_scripts.ov_functions import *
 
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT, FigureCanvasQTAgg
 from matplotlib.figure import Figure

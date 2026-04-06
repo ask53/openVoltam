@@ -1,0 +1,262 @@
+#ov_globals.py
+
+CURRENT_RANGES = ('1uA', '10uA', '100uA', '1000uA', '10000uA')
+
+# PyQt globals
+QT_NOTHING_SELECTED_INDEX = -1
+
+# Status bar
+SB_DURATION = 6000  # duration of status bar messages in [ms]
+SB_DURATION_ERROR = 10000  # duration of status bar messages in [ms]
+SB_PROGRESS_BAR_WIDTH = 200
+
+# Window modes
+WIN_MODE_NEW = 'new'
+WIN_MODE_VIEW_ONLY = 'view'
+WIN_MODE_EDIT = 'edit'
+WIN_MODE_VIEW_WITH_MINOR_EDITS = 'view-with-edits'
+WIN_MODE_RIGHT = 'right'
+WIN_MODE_CLOSED = 'close'
+
+# Keys for sample (S) dictionary
+S_NAME = "sample_name"
+S_DATE_ENTERED = "date_first_saved"
+S_DATE_COLLECTED = "date_sample_collected"
+S_LOC_COLLECTED = "location_collected"
+S_CONTACT = "contact_info"
+S_COLLECTED_BY = "collected_by"
+S_NOTES = "sample_comments"
+S_METHODS = "methods"
+S_RUNS = "runs"
+S_PROCESSED = "calculations"
+
+S_EDITABLES = (S_NAME, S_DATE_COLLECTED, S_LOC_COLLECTED, S_CONTACT, S_COLLECTED_BY, S_NOTES)
+S_BLANK_ARRAYS = (S_METHODS, S_RUNS, S_PROCESSED)
+
+# Keys for method (M) dictionary
+M_UID_SELF = 'uid'
+M_UID_PREFIX = 'method-'
+M_NAME = 'name'
+M_SAMPLE_FREQ = 'sample-frequency-hz'
+M_CURRENT_RANGE = 'current-range'
+M_EXT_DEVICES = 'ext_devices'
+M_STEPS = 'steps'
+M_STEP_NAME = 'name'
+M_DATA_COLLECT = 'data-collect'
+M_DATA_NONE = 'no'
+M_DATA_SIGNAL = 'signal'
+M_DATA_BACKGROUND = 'background'
+M_RELAYS_ON = 'relays-on'
+M_TYPE = 'type'
+M_CONSTANT = 'constant'
+M_RAMP = 'ramp'
+M_TYPES = [M_CONSTANT, M_RAMP]   # This dicates the order they appear in the menu          
+M_T = 'duration'
+M_CONST_V = 'V'
+M_RAMP_V1 = 'V1'
+M_RAMP_V2 = 'V2'
+M_SCAN_RATE = 'scan-rate'
+M_RELAY_STEP = 'relay'
+M_RELAY_NAME = 'relay-name'
+M_RELAY_INDEX = 'relay-index'
+M_RELAY_STATE = 'relay-state'
+M_FROM_SAMPLE = 'from-sample'
+M_FROM_FILE = 'from-file'
+
+# Keys for run (R) dictionary
+R_UID_SELF = 'uid'
+R_UID_METHOD = 'method'
+R_DEVICE = 'device'
+R_TYPE = 'run_type'
+R_NOTES = 'notes'
+R_REPLICATES = 'replicates'
+R_TYPE_BLANK = "blank"
+R_TYPE_SAMPLE = "sample"
+R_TYPE_STDADD = "standard_addition"
+R_SAMPLE_VOL = "sample_vol_mL"
+R_TOTAL_VOL = "total_vol_mL"
+R_STD_ADDED_VOL = "standard_vol_mL"
+R_STD_CONC = "standard_conc_ppb"
+R_TIMESTAMP = "created"
+R_STATUS = 'status'
+R_DATA = 'data'
+R_BACKGROUND = 'background'
+R_ANALYSIS = 'analysis'
+R_TIMESTAMP_REP = 'time-ended'
+R_STATUS_PENDING = "pending"
+R_STATUS_ERROR = "error"
+R_STATUS_COMPLETE = "completed"
+R_RUN_UID_PREFIX = "run-"
+R_REPLICATE_UID_PREFIX = "rep-"
+R_TYPES = [R_TYPE_BLANK, R_TYPE_SAMPLE, R_TYPE_STDADD]
+
+# Run window
+R_PLOT_REFRESH_TIME = 0.1   # refreshes graph every x seconds
+R_POST_RUN_WAIT_TIME = 0.5  # time after run to wait for last data [s]
+R_STATUS_PREFIX = 'STA'
+R_DATA_PREFIX = 'DAT'
+R_PORT_PREFIX = 'POR'
+R_RELAY_PREFIX = 'REL'
+R_ERROR_NO_CONNECT = 'Could not find a potentiostat.'
+R_ERROR_VMAX_TOO_HIGH = 'Vmax of the method exceeds capacity of device.'
+R_ERROR_DURING_RUN = '2'
+R_ERROR_SET_RELAY = 'Error while setting the potentiostat relay state.'
+R_FINISHED_MSG = 'FIN'
+R_DATA_TIME = 'time_s'
+R_DATA_VOLT = 'voltage_V'
+R_DATA_CURR = 'current_mA'
+
+# Analysis (peak finding)
+A_PEAK_X = 'peak_x'
+A_PEAK_Y = 'peak_y'
+A_PEAK_HEIGHT = 'peak_ht'
+A_BASE_0_X = 'baseline_lower_x'
+A_BASE_0_Y = 'baseline_lower_y'
+A_BASE_1_X = 'baseline_upper_x'
+A_BASE_1_Y = 'baseline_upper_y'
+
+# Calculation window globals
+C_STACK_INDEX_BASE = 0
+C_STACK_INDEX_SELECTOR = 1
+C_STACK_VIEW_TEXT = 2
+C_STACK_INDEX_ERROR = 3
+C_TYPE_PEAKBASE = 'peakbase'
+C_TYPE_PEAKZERO = 'peakzero'
+C_TYPE_SLOPE_L = 'slopel'
+C_TYPE_SLOPE_R = 'sloper'
+C_TYPE_SLOPE_AVG = 'slopemean'
+C_TYPES = (C_TYPE_PEAKBASE, C_TYPE_PEAKZERO, C_TYPE_SLOPE_L, C_TYPE_SLOPE_R, C_TYPE_SLOPE_AVG)
+C_REG_TYPE_PTS = 'points'
+C_REG_TYPE_AVG = 'averages'
+C_REG_TYPES = (C_REG_TYPE_PTS, C_REG_TYPE_AVG)
+
+# Calculation results
+C_EQN = 'reg-equation'
+C_SLOPE = 'slope'
+C_INT = 'intercept'
+C_CONC_SAMPLE = 'total-sample-conc'
+C_CONC_ORIGINAL = 'original-conc'
+C_R2 = 'reg-r-squared'
+C_STDERR = 'reg-std-error'
+C_ARCHIVED = 'archived'
+C_UID_PREFIX = 'calc-'
+C_TYPE = 'type'
+C_REG_TYPE = 'regression-based-on'
+C_POINTS = 'points'
+C_NOTE = 'note'
+C_REP_ID = 'rep-id'
+C_RUN_ID = 'run-id'
+C_X = 'x'
+C_Y = 'y'
+
+# Voltamogram globals
+VOG_RESIZE = 500        # number of points to resize data to for analysis
+VOG_SG_WINDOW_LEN = 25  # Window lenght property for Savitzky-Golay filtering
+VOG_SG_POLYORDER = 3    # Polyorder property for Savitzky-Golay filtering
+VOG_LP_FS = 100         # Butterworth lopass filter signal frequency
+VOG_LP_CUTOFF = 2       # Butterworth lopass filter cutoff frequency
+VOG_LP_ORDER = 5        # Butterworth lopass filter order
+
+# Icon URLs 
+ICON_PLUS = 'external/icons/add.png'
+ICON_UP = 'external/icons/up.png'
+ICON_DOWN = 'external/icons/down.png'
+ICON_EDIT = 'external/icons/edit.png'
+ICON_DUP = 'external/icons/duplicate.png'
+ICON_TRASH = 'external/icons/trash.png'
+ICON_X = 'external/icons/x.png'
+ICON_RELAY = ['external/icons/relay1.png',
+              'external/icons/relay2.png',
+              'external/icons/relay3.png',
+              'external/icons/relay4.png',
+              'external/icons/relay5.png',
+              'external/icons/relay6.png']
+ICON_BACKGROUND = 'external/icons/measure_background.png'
+ICON_MEASURE = 'external/icons/measure.png'
+ICON_REFRESH = 'external/icons/refresh.png'
+ICON_CHECK = 'external/icons/check.png'
+
+# Asynchronous process types
+PROC_TYPE_SAVE = 'save'
+PROC_TYPE_OVERWRITE = 'overwrite'
+PROC_TYPE_EXPORT = 'export'
+PROC_TYPE_READ = 'read'
+PROC_TYPE_RUN = 'run'
+PROC_SCRIPT = 'external/process.exe'
+PROC_SCRIPT_PYTHON = 'processes/process.py'
+PROC_RUN_FROM_PYTHON = 'python'
+PROC_RUN_FROM_EXE = 'exe'
+
+### CHANGE THIS TO MODIFY HOW PROGRAM RUNS PROCESSES
+#
+#
+PROC_RUN_FROM = PROC_RUN_FROM_PYTHON
+#PROC_RUN_FROM = PROC_RUN_FROM_EXE
+#
+#
+###############################################
+
+# Asynchronous save
+SAVE_TYPE_SAMPLE = 'sample'
+SAVE_TYPE_RUN_NEW = 'new-run'
+SAVE_TYPE_REP_DELETE = 'rep-del'
+SAVE_TYPE_REP_MOD = 'rep-no-data'
+SAVE_TYPE_REP_WITH_DATA = 'rep-w-data'
+SAVE_TYPE_RUN_MOD = 'run-mod'
+SAVE_TYPE_METHOD_TO_SAMPLE = 'method-to-sample'
+SAVE_TYPE_METHOD_MOD = 'method-mod'
+SAVE_TYPE_CALC_NEW = 'new-calc'
+SAVE_TYPE_CALC_EDIT = 'edit-calc'
+SAVE_TYPE_CALC_DELETE = 'calc-del'
+SAVE_TYPE_CALCS_ARCHIVE = 'calcs-archive'
+
+# Input 
+RC_REPS_MIN = 1
+RC_REPS_MAX = 99
+M_V_MIN = -99.99
+M_T_MAX = 9999
+M_SCAN_RATE_MAX = 99.99
+M_SAMPLE_FREQ_MIN = 0.01
+M_SAMPLE_FREQ_MAX = 1000         # 86,400,000 miliseconds in a day
+M_RELAY_MAX = 6
+
+# Language globals 
+ENG = 0
+ESP = 1
+
+HEADER_DIVIDER = ' | '
+CUSTOM_NAME_FLAG = 'ov_'
+
+DATE_DISPLAY_FORMAT = 'dd-MMM-yyyy'
+DATE_STORAGE_FORMAT = 'yyyy-MM-dd'
+DATETIME_STORAGE_FORMAT = DATE_STORAGE_FORMAT+' hh:mmap'
+SAMPLE_NAME_MIN_LENGTH = 3
+
+# Widget name mgmt (for targeting with QSS)
+RUNS_EVEN_ROW_NAME = 'run-cell-even'
+RUNS_ODD_ROW_NAME = 'run-cell-odd'
+RUNS_ROW_SELECTED_SUFFIX = '-selected'
+RUNS_BUT_ONE_NAME = 'run-but-single'
+RUNS_BUT_ANY_NAME = 'run-but-any'
+STEP_EVEN_ROW_NAME = 'step-cell-even'
+STEP_ODD_ROW_NAME = 'step-cell-odd'
+
+# Realtime styling
+PADDING = 4
+
+#File system navigation
+SAMPLE_EXT = '.ovs'
+METHOD_EXT = '.ovm'
+SAMPLE_FILE_TYPES = 'OV Sample (*'+SAMPLE_EXT+')'
+METHOD_FILE_TYPES = 'OV Method (*'+METHOD_EXT+')'
+
+# Unit conversions
+MM2IN = 1. / 25.4   # milimeters to inches
+S2MS = 1000         # seconds to miliseconds
+
+# Globals changed by program
+L = ENG  				# default lang, changed by program
+BASEDIR = ''			# stores base directory for application executable file
+HOME = False			# will hold the object of the homescreen at any given time
+STYLES = False                  # will hold all the QSS for updating
+APP = False                     # will hold the app object

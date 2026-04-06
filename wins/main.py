@@ -9,9 +9,9 @@ The user can configure new runs, initiate runs, collect data, analyze data,
 export data, view all past runs and analysis, and perhaps run calculations
 """
 # import global vars, language pack, and functions
-from external.globals import ov_globals as g
-from external.globals import ov_lang as l
-from external.globals.ov_functions import *
+from global_scripts import ov_globals as g
+from global_scripts import ov_lang as l
+from global_scripts.ov_functions import *
 
 # import necessary windows
 from wins.sample import WindowSample

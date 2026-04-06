@@ -13,8 +13,8 @@ The following controls are provided:
     - Progress pane: clickable links to jump to any task
 """
 
-from external.globals.ov_functions import *
-from external.globals import ov_globals as g
+from global_scripts.ov_functions import *
+from global_scripts import ov_globals as g
 
 from embeds.voltamOGram import VoltamogramPlot
 

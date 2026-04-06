@@ -6,8 +6,8 @@ A window that allows the user to use analyzed data, collected with
 the potentiostat, to back-calculate the concentration of the
 species of interest in the original sample.
 """
-from external.globals import ov_globals as g
-from external.globals.ov_functions import *
+from global_scripts import ov_globals as g
+from global_scripts.ov_functions import *
 
 from embeds.stdAddFitter import StdAddFitterPlot
 
@@ -503,7 +503,6 @@ class WindowCalculate(QMainWindow):
 
         s.setCurrentIndex(g.C_STACK_INDEX_BASE)
         if self.mode == g.WIN_MODE_VIEW_ONLY:
-            print('view only!')
             s.setCurrentIndex(g.C_STACK_VIEW_TEXT)
 
         return s
@@ -527,7 +526,6 @@ class WindowCalculate(QMainWindow):
         2. If there is at least one sample rep, returns
         3. If there are standard addition reps, goes to first one and grabs first sample run
             from data, including all reps, appends to suggestion."""
-        print('here we are adjusting the suggestion!')
         if not self.suggestion:
             return
         samples = []
@@ -553,9 +551,7 @@ class WindowCalculate(QMainWindow):
                         break
                 if sample_found: break
             for rep in replist:
-                self.suggestion.append(rep)
-            print(self.suggestion)
-                
+                self.suggestion.append(rep)    
                         
 
     def set_layout(self):
@@ -835,13 +831,8 @@ class WindowCalculate(QMainWindow):
 
     def update_stdadd_runs(self, i):
         try:
-            print('current, self.updating_runs is: '+str(self.updating_runs))
             if self.updating_runs: return               # to avoid recursion
             self.updating_runs = True                   # stops recursive calls during this fn
-            print('here we are in the single update!')
-            print('self.suggestion is:')
-            print(self.suggestion)
-            print()
             tree = self.stdadd_selectors[i]['tree']
             selected_runs = self.get_selected_runs(tree)
             if selected_runs:
@@ -1109,9 +1100,6 @@ class WindowCalculate(QMainWindow):
             if not self.on_save_mode:
                 self.on_save_mode = g.WIN_MODE_EDIT
                 self.on_save_calc = self.calc_id
-            print("this is what we're gonna save!")
-            print(r)
-            print()
             
             if self.mode == g.WIN_MODE_NEW:
                 self.parent.start_async_save(g.SAVE_TYPE_CALC_NEW, [[r]], onSuccess=self.save_success, onError=self.async_error)   #r gets double bracketed, because it goes to a fn that accepts a list of calcs        
