@@ -11,7 +11,8 @@ from global_scripts import ov_globals as g
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT, FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import numpy as np
-from scipy.stats import linregress
+from scipy.stats import linregress, t
+from math import sqrt
 
 from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QWidget
 
@@ -47,6 +48,7 @@ class StdAddFitterPlot(QMainWindow):
         self.points_simple = None
         self.archived = False
         self.reg_type = None
+        self.intervals = None
 
         self.color_avg = 'deeppink'
         self.color_rep = '#800080'
@@ -170,6 +172,7 @@ class StdAddFitterPlot(QMainWindow):
         self.calc_id = calc[g.R_UID_SELF]
         self.type = calc[g.C_TYPE]
         self.points_simple = calc[g.C_POINTS]
+        self.intervals = (calc[g.C_CI_95], calc[g.C_CI_99])
 
         x_all = np.zeros(0)     # init arrays to hold data
         y_all = np.zeros(0)
@@ -244,20 +247,21 @@ class StdAddFitterPlot(QMainWindow):
         self.avgpts, = self.canvas.axes.plot(x_avg, y_avg, 'D', color=self.color_avg)   # Add averages as diamont points in pink
         
         if x_avg.size >= 3:                                                         # If there are enough points to do a linear regression
-            print('current reg type is: '+str(self.reg_type))
-            if self.reg_type == g.C_REG_TYPE_PTS:                        # if all points have same # of samples
-                m, b, r_value, p_value, std_err = linregress(x, y)              #   calculate least squares linear regression parameters based on all points
+            if self.reg_type == g.C_REG_TYPE_PTS:               # if all points have same # of samples
+                x_reg, y_reg = (x,y)
                 color = self.color_rep
-            elif self.reg_type == g.C_REG_TYPE_AVG:                                                               # if some points have more data than others, to avoid skew:
-                m, b, r_value, p_value, std_err = linregress(x_avg, y_avg)      #   calculate least squares linear regression parameters based on means only
+            elif self.reg_type == g.C_REG_TYPE_AVG:             # if some points have more data than others, to avoid skew:
+                x_reg, y_reg = (x_avg, y_avg)      
                 color = self.color_avg
+                
+            m, b, r_value, p_value, std_err = linregress(x_reg, y_reg)  # Calculate the regression!
 
-            #Add regression model to plot
-            y_reg = self.plot_regression_line(x_avg, m, b, color)
-
-            # Set up regression label
+            y_reg = self.plot_regression_line(x_avg, m, b, color)       #Add regression model to plot
+                                                                        # Set up regression label
             self.label_regression_line(x_avg, y_reg, m, b, r_value*r_value, color)
-        
+            
+            intervals = self.get_confidence_intervals(x_reg, y_reg, m, b)
+            
             # Store calculated values on the self variable
             if m==0:
                 self.eqn = None
@@ -269,6 +273,7 @@ class StdAddFitterPlot(QMainWindow):
                 self.r2 = float(r_value*r_value)
                 self.stderr = float(std_err)
                 self.c_pre_dilution = float(self.c_sample * v_tot / v_sam)
+                self.intervals = intervals
                    
         self.canvas.draw()
 
@@ -293,6 +298,44 @@ class StdAddFitterPlot(QMainWindow):
                                   rotation=angle_deg, rotation_mode='anchor', color=color,
                                   transform_rotates_text=True)
 
+    def get_confidence_intervals(self, x_array, y_array, m, b):
+        """Returns the 95% and 99% confidence interval +/- ranges for the x intercept
+        of the regression line y = m * x + b, taking in the following arguments:
+            - x_array   a numpy array of the x data to which the regression was fitted
+            - y_array   a numpy array of the y data to which the regression was fitted
+            - m   slope of the fit
+            - b   y-intercept of the fit
+        Returns: (95% value, 99% value)"""
+
+        # get the standard deviation of y as a function of x (s_y)
+        # s_y = sqrt(sum of squares of the regression / degrees of freedom) = sqrt(ssr/df)
+        n = x_array.size
+        ssr = 0
+        for i,y in enumerate(y_array):
+            y_reg = m * x_array[i] + b
+            ssr = ssr + (y-y_reg)*(y-y_reg)
+        df = n - 2
+        s_y = sqrt(ssr / df)
+
+        # get mean values for x and y and sum of squares in x
+        y_bar = np.mean(y_array)
+        x_bar = np.mean(x_array)
+
+        ssx = 0
+        for x in x_array:
+            ssx = ssx + (x-x_bar)*(x-x_bar)
+
+        s_x = (s_y / abs(m)) * sqrt( (1/n) + (y_bar*y_bar / (m*m*ssx)) )
+
+        # get student's t-value for various confidence levels
+        t_95 = t.ppf(1-0.025, df)
+        t_99 = t.ppf(1-0.005, df)
+
+        ci_95 = float(t_95*s_x)
+        ci_99 = float(t_99*s_x)
+
+        return (ci_95, ci_99)
+
     def get_results(self):
         res = {g.C_EQN: self.eqn,
                g.C_SLOPE: self.slope,
@@ -304,6 +347,8 @@ class StdAddFitterPlot(QMainWindow):
                g.C_TYPE: self.type,
                g.C_REG_TYPE: self.reg_type,
                g.C_POINTS: self.points_simple,
+               g.C_CI_95: self.intervals[0],
+               g.C_CI_99: self.intervals[1],
                g.C_ARCHIVED: self.archived}
 
         print(self.points_simple)

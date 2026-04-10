@@ -129,6 +129,8 @@ C_TYPES = (C_TYPE_PEAKBASE, C_TYPE_PEAKZERO, C_TYPE_SLOPE_L, C_TYPE_SLOPE_R, C_T
 C_REG_TYPE_PTS = 'points'
 C_REG_TYPE_AVG = 'averages'
 C_REG_TYPES = (C_REG_TYPE_PTS, C_REG_TYPE_AVG)
+C_CI_95 = 'margin-of-error-95'
+C_CI_99 = 'margin-of-error-99'
 
 # Calculation results
 C_EQN = 'reg-equation'

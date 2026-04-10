@@ -118,7 +118,7 @@ class WindowCalculate(QMainWindow):
         self.right_buttons_one_only = [b_edit]
         self.right_buttons_one_plus = [b_dup, b_del]
 
-        lbl = QLabel("<i>double-click a <b>result</b> to view calculation details.</i>")
+        lbl = QLabel("<i>double-click a <b>result</b> to view.</i>")
         lbl.setWordWrap(True)
         lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         
@@ -156,7 +156,7 @@ class WindowCalculate(QMainWindow):
             txt = calc[g.R_UID_SELF] + ' ('+calc[g.C_TYPE] +', '+calc[g.C_REG_TYPE]+')\n'
             if calc[g.C_ARCHIVED]: txt = '[ARCHIVED] '+txt
             txt = txt + runtxt + '\n'
-            txt = txt + 'Result: '+str(round(calc[g.C_CONC_ORIGINAL],8))+' +/- STD_DEV mg/L'
+            txt = txt + 'Result: '+str(round(calc[g.C_CONC_ORIGINAL],8))+' +/- '+str(round(float(calc[g.C_CI_95]), 6))+' mg/L'
             if calc[g.C_NOTE]:
                 txt = txt + '\nNote: '+str(calc[g.C_NOTE])
             
@@ -1064,7 +1064,7 @@ class WindowCalculate(QMainWindow):
         if not r[g.C_EQN]:
             txt = 'None'
         else:
-            txt = '<b>Sample concentration</b>: '+str(round(float(r[g.C_CONC_ORIGINAL]), 9))+' mg/L<br><br>'
+            txt = '<b>Sample concentration</b> (w/ 95% confidence interval): '+str(round(float(r[g.C_CONC_ORIGINAL]), 9))+' +/- '+str(round(float(r[g.C_CI_95]), 6))+' mg/L<br><br>'
             txt = txt + 'Model: y = '+str(r[g.C_SLOPE])+' * x + '+str(r[g.C_INT])+'<br><br>'
             txt = txt + 'R^2: '+str(round(float(r[g.C_R2]), 4))+'<br>'
             txt = txt + 'Standard error: '+str(round(float(r[g.C_STDERR]), 4))
