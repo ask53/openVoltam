@@ -494,7 +494,7 @@ class WindowCalculate(QMainWindow):
         w4 = QWidget()
         w4.setLayout(v4)
         
-        for w in (w1,w2,w3,w3):
+        for w in (w1,w2,w3,w4):
             s.addWidget(w)
 
         self.stdadd_selectors.append({'tree': tree,
@@ -770,7 +770,6 @@ class WindowCalculate(QMainWindow):
         return tasks
 
     def load_stdadd_runs(self, i):
-        
         # If any elements in run list, remove them all
         tree = self.stdadd_selectors[i]['tree']
         self.remove_all(tree)        
@@ -779,7 +778,7 @@ class WindowCalculate(QMainWindow):
         
 
         selected_runs = self.get_all_selected_runs()
-                
+        
         runs_added = 0                                          
         for run in self.parent.data[g.S_RUNS]:                  # Add run to this stdadd selector IF:   
             if run[g.R_TYPE] == g.R_TYPE_STDADD:                #   - It is a standard addition type run
@@ -937,10 +936,14 @@ class WindowCalculate(QMainWindow):
 
     def update_selectors(self):
         self.updating_runs = True
+
+        # If no selection at all, reset all selectors to their initial configuration
         if not self.points[0]:
             for i, selector in enumerate(self.stdadd_selectors):
                 selector['layout'].setCurrentIndex(g.C_STACK_INDEX_BASE)
                 self.points[i+1] = []
+                
+        # If there is at least something selected
         else:
             # Get i, the index of the first selector w no selected points
             empty = False
