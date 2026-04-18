@@ -170,7 +170,7 @@ class WindowMethod(QMainWindow):
         self.but_new_save = QPushButton('Save')
         self.but_edit_save = QPushButton('Save')
         self.but_edit_save_as = QPushButton('Save as')
-        self.but_view_only = QPushButton('Edit name')
+        self.but_view_only = QPushButton('Edit')
         self.but_edit_name_only = QPushButton('Save')
 
         self.but_new_save.clicked.connect(self.start_save)
@@ -192,13 +192,115 @@ class WindowMethod(QMainWindow):
         g1 = QGroupBox('Method parameters')
         g1.setLayout(v1)
 
+        #####################################
+        #                                   #
+        #   ANALYSIS TAB                    #
+        #                                   #
+        #####################################
+
+        peak_min_lbl = QLabel("Min")
+        peak_max_lbl = QLabel("Max")
+        self.peak_min = QDoubleSpinBox()
+        self.peak_max = QDoubleSpinBox()
+        self.peak_min.setMinimum(-999)
+        self.peak_max.setMinimum(-999)
+        self.peak_min.valueChanged.connect(self.changed_value)
+        self.peak_max.valueChanged.connect(self.changed_value)
+        peak_min_unit_lbl = QLabel("V")
+        peak_max_unit_lbl = QLabel("V")
+
+        g_peak_lay = QVBoxLayout()
+        g_peak_lay.addLayout(horizontalize([peak_min_lbl, self.peak_min, peak_min_unit_lbl], True))
+        g_peak_lay.addLayout(horizontalize([peak_max_lbl, self.peak_max, peak_max_unit_lbl], True))
+        g_peak = QGroupBox("Expected peak location")
+        g_peak.setLayout(g_peak_lay)
+
+        sg_window_lbl = QLabel("Window length")
+        sg_order_lbl = QLabel("Order of polynomial fit")
+        self.sg_window = QSpinBox()
+        self.sg_order = QSpinBox()
+        self.g_sg = QGroupBox("Use Savitzky-Golay smoothing")
+        self.sg_window.valueChanged.connect(self.changed_value)
+        self.sg_order.valueChanged.connect(self.changed_value)
+        self.g_sg.toggled.connect(self.changed_value)
+        g_sg_lay = QVBoxLayout()
+        g_sg_lay.addLayout(horizontalize([sg_window_lbl, self.sg_window], True))
+        g_sg_lay.addLayout(horizontalize([sg_order_lbl, self.sg_order], True))
+        self.g_sg.setCheckable(True)
+        self.g_sg.setLayout(g_sg_lay)
+
+        lp_order_lbl = QLabel("Order")
+        lp_freq_lbl = QLabel("Critical frequency")
+        self.lp_order = QSpinBox()
+        self.lp_freq = QDoubleSpinBox()
+        self.g_lp = QGroupBox("Use Low-pass Butterworth smoothing")
+        self.g_lp.toggled.connect(self.changed_value)
+        self.lp_order.valueChanged.connect(self.changed_value)
+        self.lp_freq.valueChanged.connect(self.changed_value)
+        g_lp_lay = QVBoxLayout()
+        g_lp_lay.addLayout(horizontalize([lp_order_lbl, self.lp_order], True))
+        g_lp_lay.addLayout(horizontalize([lp_freq_lbl, self.lp_freq], True))
+        self.g_lp.setCheckable(True)
+        self.g_lp.setLayout(g_lp_lay)
+
+        vA = QVBoxLayout()
+        
+        vA.addWidget(g_peak)
+        vA.addWidget(self.g_sg)
+        vA.addWidget(self.g_lp)
+        vA.addStretch()
+
+        wAnalysis = QWidget()
+        wAnalysis.setLayout(vA)
+
+        #####################################
+        #                                   #
+        #   CALCULATION TAB                 #
+        #                                   #
+        #####################################
+
+        unit_lbl = QLabel("Unit")
+        self.unit = QComboBox()
+        for i, u in enumerate(g.M_UNITS):
+            self.unit.addItem(u, g.M_UNITS_DATA[i])
+        self.unit.currentIndexChanged.connect(self.changed_value)
+
+        ci_lbl = QLabel("Confidence level")
+        self.ci = QComboBox()
+        for i, c in enumerate(g.M_CONFS):
+            self.ci.addItem(c, g.M_CONFS_DATA[i])
+        self.ci.currentIndexChanged.connect(self.changed_value)
+
+        vC = QVBoxLayout()
+        vC.addLayout(horizontalize([unit_lbl, self.unit], True))
+        vC.addLayout(horizontalize([ci_lbl, self.ci], True))
+        vC.addStretch()
+
+        wCalc = QWidget()
+        wCalc.setLayout(vC)
+
+        #############################
+        #                           #
+        #   SET VISIBILITY          #
+        #                           #
+        #############################
+
         self.ws_for_new = [self.dt, self.current_range]
-        self.ws_for_viewish = [self.name]
+        self.ws_for_viewish = [self.name, self.peak_min, self.peak_max,
+                               self.g_sg, self.sg_window, self.sg_order,
+                               self.g_lp, self.lp_order, self.lp_freq,
+                               self.unit, self.ci]
 
        
 
         if self.mode == g.WIN_MODE_NEW or self.mode == g.WIN_MODE_EDIT:     # if this window can actually edit the method steps
 
+            #################################
+            #                               #
+            #   LAY OUT STEP EDITOR         #
+            #                               #
+            #################################
+            
             # Step-specific inputs
             step_name_lbl = QLabel('Step name')
             self.step_name = QLineEdit()
@@ -330,167 +432,50 @@ class WindowMethod(QMainWindow):
             self.buts_inactive_while_editing = [self.but_add, but_up, but_down, but_dup, but_del]
             self.buts_inactive_while_adding = [self.but_edit]
 
-            # Create vertical layout of the steps chart above the buttons
-            v3 = QVBoxLayout()
-            v3.addWidget(self.profile_chart)
-            v3.addLayout(horizontalize([but_up, but_down]))
-            v3.addLayout(horizontalize([self.but_add, self.but_edit, but_dup, but_del]))
+            vleft = QVBoxLayout()
+            vleft.addLayout(horizontalize([g1, gRelay]))
+            vleft.addWidget(QHLine())
+            vleft.addStretch()
+            vleft.addWidget(self.g_step)
+            vleft.addWidget(self.profile_chart)
+            vleft.addLayout(horizontalize([but_up, but_down]))
+            vleft.addLayout(horizontalize([self.but_add, self.but_edit, but_dup, but_del]))
 
-            # Create horizontal layout of new-step pane and steps chart/buttons
-            vbot = QVBoxLayout()
-            vbot.addWidget(self.g_step)
-            vbot.addLayout(v3)
+        else:                                               # if neither NEW nor EDIT modes 
+            vleft = QVBoxLayout()
+            vleft.addLayout(horizontalize([g1, gRelay]))
+            vleft.addWidget(QHLine())
+            vleft.addStretch()
+            vleft.addWidget(self.profile_chart)
 
 
-            #####################################
-            #                                   #
-            #   ANALYSIS TAB                    #
-            #                                   #
-            #####################################
+        #####################################
+        #                                   #
+        #       LAY EVERYTHING OUT          #               
+        #                                   #
+        #####################################
 
-            peak_min_lbl = QLabel("Min")
-            peak_max_lbl = QLabel("Max")
-            self.peak_min = QDoubleSpinBox()
-            self.peak_max = QDoubleSpinBox()
-            self.peak_min.setMinimum(-999)
-            self.peak_max.setMinimum(-999)
-            self.peak_min.valueChanged.connect(self.changed_value)
-            self.peak_max.valueChanged.connect(self.changed_value)
-            peak_min_unit_lbl = QLabel("V")
-            peak_max_unit_lbl = QLabel("V")
+        vright = QVBoxLayout()
+        vright.addWidget(self.graph)
+        vright.addWidget(self.hide_plot_lbls)
+        
+        hConfig = QHBoxLayout()
+        hConfig.addLayout(vleft)
+        hConfig.addLayout(vright)
+        wConfig = QWidget()
+        wConfig.setLayout(hConfig)
+        
+        tab_layout = QTabWidget()
+        tab_layout.setTabPosition(QTabWidget.TabPosition.North)
+        tab_layout.addTab(wConfig, 'Configuration')
+        tab_layout.addTab(wAnalysis, 'Analysis')
+        tab_layout.addTab(wCalc, 'Calculation')
 
-            g_peak_lay = QVBoxLayout()
-            g_peak_lay.addLayout(horizontalize([peak_min_lbl, self.peak_min, peak_min_unit_lbl], True))
-            g_peak_lay.addLayout(horizontalize([peak_max_lbl, self.peak_max, peak_max_unit_lbl], True))
-            g_peak = QGroupBox("Expected peak location")
-            g_peak.setLayout(g_peak_lay)
-
-            sg_window_lbl = QLabel("Window length")
-            sg_order_lbl = QLabel("Order of polynomial fit")
-            self.sg_window = QSpinBox()
-            self.sg_order = QSpinBox()
-            self.g_sg = QGroupBox("Use Savitzky-Golay smoothing")
-            self.sg_window.valueChanged.connect(self.changed_value)
-            self.sg_order.valueChanged.connect(self.changed_value)
-            self.g_sg.toggled.connect(self.changed_value)
-            g_sg_lay = QVBoxLayout()
-            g_sg_lay.addLayout(horizontalize([sg_window_lbl, self.sg_window], True))
-            g_sg_lay.addLayout(horizontalize([sg_order_lbl, self.sg_order], True))
-            self.g_sg.setCheckable(True)
-            self.g_sg.setLayout(g_sg_lay)
-
-            lp_order_lbl = QLabel("Order")
-            lp_freq_lbl = QLabel("Critical frequency")
-            self.lp_order = QSpinBox()
-            self.lp_freq = QDoubleSpinBox()
-            self.g_lp = QGroupBox("Use Low-pass Butterworth smoothing")
-            self.g_lp.toggled.connect(self.changed_value)
-            self.lp_order.valueChanged.connect(self.changed_value)
-            self.lp_freq.valueChanged.connect(self.changed_value)
-            g_lp_lay = QVBoxLayout()
-            g_lp_lay.addLayout(horizontalize([lp_order_lbl, self.lp_order], True))
-            g_lp_lay.addLayout(horizontalize([lp_freq_lbl, self.lp_freq], True))
-            self.g_lp.setCheckable(True)
-            self.g_lp.setLayout(g_lp_lay)
-
-            vA = QVBoxLayout()
-            
-            vA.addWidget(g_peak)
-            vA.addWidget(self.g_sg)
-            vA.addWidget(self.g_lp)
-            vA.addStretch()
-
-            wAnalysis = QWidget()
-            wAnalysis.setLayout(vA)
-
-            #####################################
-            #                                   #
-            #   CALCULATION TAB                 #
-            #                                   #
-            #####################################
-
-            unit_lbl = QLabel("Unit")
-            self.unit = QComboBox()
-            for i, u in enumerate(g.M_UNITS):
-                self.unit.addItem(u, g.M_UNITS_DATA[i])
-            self.unit.currentIndexChanged.connect(self.changed_value)
-
-            ci_lbl = QLabel("Confidence level")
-            self.ci = QComboBox()
-            for i, c in enumerate(g.M_CONFS):
-                self.ci.addItem(c, g.M_CONFS_DATA[i])
-            self.ci.currentIndexChanged.connect(self.changed_value)
-
-            vC = QVBoxLayout()
-            vC.addLayout(horizontalize([unit_lbl, self.unit], True))
-            vC.addLayout(horizontalize([ci_lbl, self.ci], True))
-            vC.addStretch()
-
-            wCalc = QWidget()
-            wCalc.setLayout(vC)
-
-            
-            #####################################
-            #                                   #
-            #       LAY EVERYTHING OUT          #               
-            #                                   #
-            #####################################
-            
-            h1 = QHBoxLayout()
-            h1.addWidget(g1)
-            h1.addWidget(gRelay)
-
-            v4 = QVBoxLayout()
-            v4.addLayout(h1)
-            v4.addWidget(QHLine())
-            v4.addStretch()
-            v4.addLayout(vbot)
-
-            v5 = QVBoxLayout()
-            v5.addWidget(graph_area)
-            v5.addWidget(self.hide_plot_lbls)
-                
-            h2 = QHBoxLayout()
-            h2.addLayout(v4)
-            h2.addLayout(v5)
-            wConfig = QWidget()
-            wConfig.setLayout(h2)
-
-            t2 = QTabWidget()
-            t2.setTabPosition(QTabWidget.TabPosition.North)
-            t2.addTab(wConfig, 'Configuration')
-            t2.addTab(wAnalysis, 'Analysis')
-            t2.addTab(wCalc, 'Calculation')
-
-            v6 = QVBoxLayout()
-            v6.addWidget(self.name)
-            v6.addWidget(t2)
-
-            w = QWidget()
-            w.setLayout(v6)
-
-        else:
-            v1 = QVBoxLayout()
-            h1 = QHBoxLayout()
-            v2 = QVBoxLayout()
-            h2 = QHBoxLayout()
-            h3 = QHBoxLayout()
-
-            h3.addWidget(g1)
-            h3.addWidget(gRelay)
-
-            h2.addStretch()
-            h2.addWidget(self.hide_plot_lbls)
-            v2.addLayout(h3)
-            v2.addWidget(self.profile_chart)
-            v2.addLayout(h2)
-            h1.addLayout(v2)
-            h1.addWidget(self.graph)
-            v1.addWidget(self.name)
-            v1.addLayout(h1)
-
-            w = QWidget()
-            w.setLayout(v1)
+        v1 = QVBoxLayout()
+        v1.addWidget(self.name)
+        v1.addWidget(tab_layout)
+        w = QWidget()
+        w.setLayout(v1)
 
         self.refresh_relays()
         self.setCentralWidget(w)

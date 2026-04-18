@@ -113,7 +113,7 @@ class WindowMain(QMainWindow):
         action_method_new = QAction(l.new_config[g.L], self)
         action_method_open = QAction(l.open_config[g.L], self)
         action_method_run_view = QAction('View run method', self)
-        action_method_run_edit = QAction('Change run method name', self)
+        action_method_run_edit = QAction('Edit run method', self)
 
         action_run_new = QAction('New run', self)
         action_run_new_from = QAction('New run from config', self)
@@ -226,7 +226,7 @@ class WindowMain(QMainWindow):
         self.runAction_editConfig = self.contextmenu_run.addAction("Edit run info")
         self.contextmenu_run.addSeparator()
         self.runAction_viewMethod = self.contextmenu_run.addAction("View method")
-        self.runAction_editMethod = self.contextmenu_run.addAction("Edit method name")
+        self.runAction_editMethod = self.contextmenu_run.addAction("Edit method")
         self.contextmenu_run.addSeparator()
         self.runAction_viewData = self.contextmenu_run.addAction("Graph")
         self.runAction_analyzeData = self.contextmenu_run.addAction("Analyze")
