@@ -62,6 +62,22 @@ M_RELAY_INDEX = 'relay-index'
 M_RELAY_STATE = 'relay-state'
 M_FROM_SAMPLE = 'from-sample'
 M_FROM_FILE = 'from-file'
+M_UNITS = ('g/L', 'mg/L', 'ug/L', 'ng/L')
+M_UNITS_DATA = (1, 0.001, 0.000001, 0.000000001)
+M_CONFS = ('66.7%', '95%', '99%', '99.9%')
+M_CONFS_DATA = (0.667, 0.95, 0.99, 0.999)
+M_UNIT = 'unit'
+M_CONF = 'confidence-level'
+M_PEAK_V_MIN = 'expected-min-peak-voltage'
+M_PEAK_V_MAX = 'expected-max-peak-voltage'
+M_SG = 'savgol-enabled'
+M_SG_WINDOW = 'savgol-window'
+M_SG_ORDER = 'savgol-order'
+M_LP = 'lowpass-enabled'
+M_LP_ORDER = 'lowpass-order'
+M_LP_FREQ = 'lowpass-freq'
+
+
 
 # Keys for run (R) dictionary
 R_UID_SELF = 'uid'

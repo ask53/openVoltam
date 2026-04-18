@@ -117,13 +117,11 @@ class WindowMain(QMainWindow):
 
         action_run_new = QAction('New run', self)
         action_run_new_from = QAction('New run from config', self)
-        action_run_redo = QAction('Redo run', self)
         action_run_view = QAction('View info', self)
         action_run_edit = QAction('Edit info', self)
         action_run_export = QAction('Export as CSV', self)
         action_run_delete = QAction('Delete', self)
 
-        action_rep_redo = QAction('Redo replicate', self)
         action_rep_edit = QAction('Edit note', self)
         action_rep_export = QAction('Export as CSV', self)
         action_rep_delete = QAction('Delete', self)
@@ -144,13 +142,11 @@ class WindowMain(QMainWindow):
 
         action_run_new.triggered.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
         action_run_new_from.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
-        action_run_redo.triggered.connect(self.redo_run)
         action_run_view.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
         action_run_edit.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_EDIT))
         action_run_export.triggered.connect(self.export_selected_reps_as_csv)
         action_run_delete.triggered.connect(self.delete_runs)
 
-        action_rep_redo.triggered.connect(self.redo_run)
         action_rep_edit.triggered.connect(self.edit_rep_note)
         action_rep_export.triggered.connect(self.export_selected_reps_as_csv)
         action_rep_delete.triggered.connect(self.delete_reps)
@@ -179,8 +175,6 @@ class WindowMain(QMainWindow):
         file_menu.addAction(action_run_new)
         file_menu.addAction(action_run_new_from)
         file_menu.addSeparator()
-        file_menu.addAction(action_run_redo)
-        file_menu.addSeparator()
         file_menu.addAction(action_run_view)
         file_menu.addAction(action_run_edit)
         file_menu.addSeparator()
@@ -192,8 +186,6 @@ class WindowMain(QMainWindow):
         file_menu.addAction(action_run_delete)
 
         file_menu = menu.addMenu('Replicate')
-        file_menu.addAction(action_rep_redo)
-        file_menu.addSeparator()
         file_menu.addAction(action_rep_edit)
         file_menu.addSeparator()
         file_menu.addAction(action_rep_export)
@@ -206,7 +198,6 @@ class WindowMain(QMainWindow):
         file_menu.addAction(action_analyze_results)
 
         self.actions_run_one_only = [action_run_new_from,
-                                     action_run_redo,
                                      action_run_view,
                                      action_run_edit,
                                      action_method_run_view,
@@ -214,8 +205,7 @@ class WindowMain(QMainWindow):
         self.actions_run_one_plus = [action_run_export,
                                      action_run_delete,
                                      action_analyze_peaks]
-        self.actions_rep_one_only = [action_rep_redo,
-                                     action_rep_edit]
+        self.actions_rep_one_only = [action_rep_edit]
         self.actions_rep_one_plus = [action_rep_export,
                                      action_rep_delete,
                                      action_analyze_peaks]
@@ -231,7 +221,6 @@ class WindowMain(QMainWindow):
         self.contextmenu_rep = QMenu(self)      # Menu for when rep is clicked
 
         self.runAction_runAgain = self.contextmenu_run.addAction("New run from config")
-        self.runAction_redoRun = self.contextmenu_run.addAction("Redo this run")
         self.contextmenu_run.addSeparator()
         self.runAction_viewConfig = self.contextmenu_run.addAction("View run info")
         self.runAction_editConfig = self.contextmenu_run.addAction("Edit run info")
@@ -245,8 +234,6 @@ class WindowMain(QMainWindow):
         self.contextmenu_run.addSeparator()
         self.runAction_delete = self.contextmenu_run.addAction("Delete run(s)")
 
-        self.runAction_redoRep = self.contextmenu_rep.addAction("Redo this rep")
-        self.contextmenu_rep.addSeparator()
         self.repAction_editNote = self.contextmenu_rep.addAction("Edit replicate note")
         self.contextmenu_rep.addSeparator()
         self.repAction_viewData = self.contextmenu_rep.addAction("Graph")
@@ -256,7 +243,6 @@ class WindowMain(QMainWindow):
         self.repAction_delete = self.contextmenu_rep.addAction("Delete replicates(s)")
 
         self.runAction_runAgain.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
-        self.runAction_redoRun.triggered.connect(self.redo_run)
         self.runAction_viewConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
         self.runAction_editConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_EDIT))
         self.runAction_viewMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
@@ -266,7 +252,6 @@ class WindowMain(QMainWindow):
         self.runAction_exportData.triggered.connect(self.export_selected_reps_as_csv)
         self.runAction_delete.triggered.connect(self.delete_runs)
         
-        self.runAction_redoRep.triggered.connect(self.redo_run)
         self.repAction_editNote.triggered.connect(self.edit_rep_note)
         self.repAction_viewData.triggered.connect(self.view_data_selected_reps)
         self.repAction_analyzeData.triggered.connect(self.anayze_data_selected_reps)
@@ -274,13 +259,11 @@ class WindowMain(QMainWindow):
         self.repAction_delete.triggered.connect(self.delete_reps)
 
         self.runActions_oneOnly = [self.runAction_runAgain,
-                                   self.runAction_redoRun,
                                    self.runAction_editConfig,
                                    self.runAction_viewConfig,
                                    self.runAction_viewMethod,
                                    self.runAction_editMethod]
-        self.repActions_oneOnly = [self.repAction_editNote,
-                                   self.runAction_redoRep]
+        self.repActions_oneOnly = [self.repAction_editNote]
         
         #####################
         #                   #
@@ -862,10 +845,9 @@ class WindowMain(QMainWindow):
     #   2. open_run_config_with_uid             #
     #   3. open_method_with_uid                 #
     #   4. export_selected_reps_as_csv          #
-    #   5. redo_run                             #
-    #   6. delete_runs                          #
-    #   7. delete_reps                          #
-    #   8. confirm_delete                       #
+    #   5. delete_runs                          #
+    #   6. delete_reps                          #
+    #   7. confirm_delete                       #
     #                                           #
     #############################################
 
@@ -979,24 +961,6 @@ class WindowMain(QMainWindow):
         if dest:
             self.start_async_export(reps, dest)
 
-    def redo_run(self):
-        msg_box = QMessageBox()    
-        msg_box.setWindowTitle("Just checking...") 
-        msg_box.setText('This modifies a previous run.\nAll data and analysis for this run will be lost.\nAre you sure you want to rerun?\n\n(To create a *new run* with this run\'s configuration,  select "New run from config".)')
-        msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
-
-        # customize button language text for multi-language support
-        but_save = msg_box.button(QMessageBox.StandardButton.Ok)
-        but_save.setText('Rerun')
-        but_canc = msg_box.button(QMessageBox.StandardButton.Cancel)
-        but_canc.setText('Cancel')
-
-        resp = msg_box.exec()
-            
-        if resp == QMessageBox.StandardButton.Ok:
-            reps = self.get_all_selected_reps()
-            self.new_win_view_run(reps)
-
     def delete_runs(self):
         runs = self.get_all_selected_runs()                     # Get selected runs (ignore selected reps that aren't part of selected runs)
         reps = self.get_all_reps_in_runs(runs)                  # Get all reps of selected runs
@@ -1007,9 +971,6 @@ class WindowMain(QMainWindow):
         if self.confirm_delete():
             callback = partial(self.start_async_save, g.SAVE_TYPE_CALCS_ARCHIVE, [True, calcs_to_archive])
             self.start_async_save(g.SAVE_TYPE_REP_DELETE, [reps], onSuccess=callback)
-
-
-        
 
     def delete_reps(self):
         if self.confirm_delete():
