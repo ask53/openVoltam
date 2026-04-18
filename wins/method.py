@@ -347,20 +347,7 @@ class WindowMethod(QMainWindow):
             #   ANALYSIS TAB                    #
             #                                   #
             #####################################
-            print('a')
-            unit_lbl = QLabel("Unit")
-            self.unit = QComboBox()
-            for i, u in enumerate(g.M_UNITS):
-                self.unit.addItem(u, g.M_UNITS_DATA[i])
-            self.unit.currentIndexChanged.connect(self.changed_value)
-            print('b')
 
-            ci_lbl = QLabel("Confidence level")
-            self.ci = QComboBox()
-            for i, c in enumerate(g.M_CONFS):
-                self.ci.addItem(c, g.M_CONFS_DATA[i])
-            self.ci.currentIndexChanged.connect(self.changed_value)
-            print('c')
             peak_min_lbl = QLabel("Min")
             peak_max_lbl = QLabel("Max")
             self.peak_min = QDoubleSpinBox()
@@ -371,13 +358,13 @@ class WindowMethod(QMainWindow):
             self.peak_max.valueChanged.connect(self.changed_value)
             peak_min_unit_lbl = QLabel("V")
             peak_max_unit_lbl = QLabel("V")
-            print('d')
+
             g_peak_lay = QVBoxLayout()
             g_peak_lay.addLayout(horizontalize([peak_min_lbl, self.peak_min, peak_min_unit_lbl], True))
             g_peak_lay.addLayout(horizontalize([peak_max_lbl, self.peak_max, peak_max_unit_lbl], True))
             g_peak = QGroupBox("Expected peak location")
             g_peak.setLayout(g_peak_lay)
-            print('e')
+
             sg_window_lbl = QLabel("Window length")
             sg_order_lbl = QLabel("Order of polynomial fit")
             self.sg_window = QSpinBox()
@@ -391,7 +378,7 @@ class WindowMethod(QMainWindow):
             g_sg_lay.addLayout(horizontalize([sg_order_lbl, self.sg_order], True))
             self.g_sg.setCheckable(True)
             self.g_sg.setLayout(g_sg_lay)
-            print('f')
+
             lp_order_lbl = QLabel("Order")
             lp_freq_lbl = QLabel("Critical frequency")
             self.lp_order = QSpinBox()
@@ -405,18 +392,42 @@ class WindowMethod(QMainWindow):
             g_lp_lay.addLayout(horizontalize([lp_freq_lbl, self.lp_freq], True))
             self.g_lp.setCheckable(True)
             self.g_lp.setLayout(g_lp_lay)
-            print('g')
+
             vA = QVBoxLayout()
-            vA.addLayout(horizontalize([unit_lbl, self.unit], True))
-            vA.addLayout(horizontalize([ci_lbl, self.ci], True))
+            
             vA.addWidget(g_peak)
             vA.addWidget(self.g_sg)
             vA.addWidget(self.g_lp)
             vA.addStretch()
-            print('h')
-            w3 = QWidget()
-            w3.setLayout(vA)
-            print('i')
+
+            wAnalysis = QWidget()
+            wAnalysis.setLayout(vA)
+
+            #####################################
+            #                                   #
+            #   CALCULATION TAB                 #
+            #                                   #
+            #####################################
+
+            unit_lbl = QLabel("Unit")
+            self.unit = QComboBox()
+            for i, u in enumerate(g.M_UNITS):
+                self.unit.addItem(u, g.M_UNITS_DATA[i])
+            self.unit.currentIndexChanged.connect(self.changed_value)
+
+            ci_lbl = QLabel("Confidence level")
+            self.ci = QComboBox()
+            for i, c in enumerate(g.M_CONFS):
+                self.ci.addItem(c, g.M_CONFS_DATA[i])
+            self.ci.currentIndexChanged.connect(self.changed_value)
+
+            vC = QVBoxLayout()
+            vC.addLayout(horizontalize([unit_lbl, self.unit], True))
+            vC.addLayout(horizontalize([ci_lbl, self.ci], True))
+            vC.addStretch()
+
+            wCalc = QWidget()
+            wCalc.setLayout(vC)
 
             
             #####################################
@@ -442,15 +453,14 @@ class WindowMethod(QMainWindow):
             h2 = QHBoxLayout()
             h2.addLayout(v4)
             h2.addLayout(v5)
-            w2 = QWidget()
-            w2.setLayout(h2)
+            wConfig = QWidget()
+            wConfig.setLayout(h2)
 
             t2 = QTabWidget()
             t2.setTabPosition(QTabWidget.TabPosition.North)
-            t2.addTab(w2, 'Configuration')
-            t2.addTab(w3, 'Analysis')
-            
-            
+            t2.addTab(wConfig, 'Configuration')
+            t2.addTab(wAnalysis, 'Analysis')
+            t2.addTab(wCalc, 'Calculation')
 
             v6 = QVBoxLayout()
             v6.addWidget(self.name)
@@ -487,8 +497,8 @@ class WindowMethod(QMainWindow):
         
         if self.mode == g.WIN_MODE_NEW or self.mode == g.WIN_MODE_EDIT:
             self.hide_new_step_pane()
-            self.init_form_values()
-            print('a')
+            self.init_step_form_values()
+            self.init_values()
 
         if not self.mode == g.WIN_MODE_NEW: 
             try:
@@ -512,17 +522,11 @@ class WindowMethod(QMainWindow):
             
             
 
-    def init_form_values(self):
-        #################
-        #   TITLE       #
-        #################
+    def init_step_form_values(self):
+        #Reset title
         self.g_step.setTitle(l.sp_add_step[g.L])
         self.but_add_step.setText(l.sp_add_btn[g.L])
-
-
-        #####################
-        #   CONFIG TAB      #
-        #####################        
+       
         # Reset all values common to all runs
         self.step_name.setText('')
         self.data_collect.setCurrentIndex(0)
@@ -548,12 +552,11 @@ class WindowMethod(QMainWindow):
         for sp_type in g.M_TYPES:
             self.ts[sp_type].setValue(0)
 
+    def init_values(self):
 
         ###################
         #   ANALYSIS TAB  #
         ###################
-        self.unit.setCurrentIndex(1)
-        self.ci.setCurrentIndex(1)
         self.peak_min.setValue(0)
         self.peak_max.setValue(0)
         self.g_sg.setChecked(False)
@@ -562,16 +565,25 @@ class WindowMethod(QMainWindow):
         self.g_lp.setChecked(False)
         self.lp_order.setValue(1)
         self.lp_freq.setValue(0.05)
-        
 
+        ###################
+        #   CALC TAB      #
+        ###################
+        self.unit.setCurrentIndex(1)
+        self.ci.setCurrentIndex(1)
         
 
     def set_values(self):
+        #####       GET DATA        #####
         if self.path:                                   # if there is a path to a method file,
             data = get_data_from_file(self.path)        #   get the most up to date data from the file
         elif self.method_id:                            # otherwise, if there is a method id given,
             data = get_method_from_file_data(self.parent.data, self.method_id)   #  use it to grab the method data
+
+        #####       SET NAME        #####
         self.name.setText(data[g.M_NAME])               # set name
+
+        #####   SET CONFIG TAB      #####
         self.dt.setValue(data[g.M_SAMPLE_FREQ])                  # set dt
         cr_text = data[g.M_CURRENT_RANGE]               # set current range
         self.current_range.setCurrentIndex(g.CURRENT_RANGES.index(cr_text))
@@ -580,6 +592,24 @@ class WindowMethod(QMainWindow):
         self.steps = data[g.M_STEPS]                    # set steps 
         self.refresh_list()                             # rebuild visual steps list based on self.steps
 
+        ##### SET ANALYSIS TAB     #####
+        self.peak_min.setValue(data[g.M_PEAK_V_MIN])
+        self.peak_max.setValue(data[g.M_PEAK_V_MAX])        
+        self.g_sg.setChecked(data[g.M_SG])
+        self.g_lp.setChecked(data[g.M_LP])
+        if self.g_sg.isChecked():
+            self.sg_window.setValue(data[g.M_SG_WINDOW])
+            self.sg_order.setValue(data[g.M_SG_ORDER])
+        if self.g_lp.isChecked():
+            self.lp_order.setValue(data[g.M_LP_ORDER])
+            self.lp_freq.setValue(data[g.M_LP_FREQ])
+
+        ##### SET CALCULATION TAB   #####
+        self.unit.setCurrentIndex(self.unit.findData(data[g.M_UNIT]))
+        self.ci.setCurrentIndex(self.ci.findData(data[g.M_CONF]))
+
+         
+        
     #####################################
     #                                   #
     #   Handlers for changed widgets    #
@@ -780,7 +810,7 @@ class WindowMethod(QMainWindow):
 
     
     def set_step_values_for_editing(self, step):
-        self.init_form_values()                     # initialize all form values
+        self.init_step_form_values()                     # initialize all form values
         
         # Modify title and button text
         self.g_step.setTitle(l.sp_edit_step[g.L])
@@ -1073,7 +1103,7 @@ class WindowMethod(QMainWindow):
         self.but_edit.setIcon(QIcon(g.ICON_EDIT))
         self.but_edit.setToolTip('Cancel')
         self.g_step.hide()                              # hide the add/edit step pane
-        self.init_form_values()                     # and wipe the form 
+        self.init_step_form_values()                     # and wipe the form 
         self.editing = False
         self.update_buttons()
         
@@ -1135,7 +1165,7 @@ class WindowMethod(QMainWindow):
         self.but_add.setToolTip('Add new step')
         self.adding = False
         self.editing = False
-        self.init_form_values()                     # and wipe the form
+        self.init_step_form_values()                     # and wipe the form
         self.update_buttons()
         
 
@@ -1160,12 +1190,7 @@ class WindowMethod(QMainWindow):
                 g.M_RELAYS_ON: relays_on,
                 g.M_TYPE: step_type,
                 g.M_T: self.ts[step_type].value()
-                }
-            '''g.M_STIR: self.is_checked(self.stirrer),
-                g.M_VIBRATE: self.is_checked(self.vibrator),'''
-
-
-            
+                }            
             
             ############################################ IF ADDING ANOTHER STEP TYPE, ADD ANOTHER ELIF TO THE CODE BELOW ############
             data_specific = {}                                                                                                      #
@@ -1192,7 +1217,7 @@ class WindowMethod(QMainWindow):
             self.selected = []          # clears selection and will clear highlights when list is refreshed
             self.refresh_list()         # refresh the list (to visualize the new row and clear stale highlights)
             self.hide_new_step_pane()   # close the pane that allows the user to add a new step
-            self.init_form_values()     # reset the hidden pane to initial values
+            self.init_step_form_values()     # reset the hidden pane to initial values
             self.changed_value()
         
 
