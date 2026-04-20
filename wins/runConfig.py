@@ -128,10 +128,11 @@ class WindowRunConfig(QMainWindow):
         v_stdadd = QVBoxLayout()
         self.w_stdadd_vol_std = QDoubleSpinBox()
         self.w_stdadd_conc_std = QDoubleSpinBox()
-        w_stdadd_vol_std_lbl = QLabel('Volume standard added [mL]')
-        w_stdadd_conc_std_lbl = QLabel('Standard concentration [mg/L]')
+        w_stdadd_vol_std_lbl = QLabel('Volume standard added [uL]')
+        self.stdadd_conc_lbl_pre = 'Standard concentration'
+        self.w_stdadd_conc_std_lbl = QLabel(self.stdadd_conc_lbl_pre)
         v_stdadd.addLayout(horizontalize([w_stdadd_vol_std_lbl, self.w_stdadd_vol_std], True))
-        v_stdadd.addLayout(horizontalize([w_stdadd_conc_std_lbl, self.w_stdadd_conc_std], True))
+        v_stdadd.addLayout(horizontalize([self.w_stdadd_conc_std_lbl, self.w_stdadd_conc_std], True))
         g_stdadd = QGroupBox("Standard addition parameters")
         g_stdadd.setLayout(v_stdadd)
 
@@ -263,6 +264,15 @@ class WindowRunConfig(QMainWindow):
             relays = self.method.currentData()['method'][g.M_EXT_DEVICES]
         self.graph.update_plot(steps, relays, show_labels=False, reps=reps)
 
+    def update_std_add_vol(self):
+        if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
+            
+
+
+            
+            self.w_stdadd_conc_std_lbl = self.stdadd_conc_lbl_pre + ' HEREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE'
+            
+
     def update_win(self):
         if self.mode != g.WIN_MODE_NEW:
             self.set_form()
@@ -284,6 +294,7 @@ class WindowRunConfig(QMainWindow):
         saved version and refreshes graph."""
         self.saved = False
         self.refresh_graph()
+        self.update_std_add_vol()
 
     def device_changed(self):
         """Resets flag to indicate that the run config has been modified from

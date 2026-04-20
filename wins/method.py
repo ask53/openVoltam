@@ -262,8 +262,8 @@ class WindowMethod(QMainWindow):
 
         unit_lbl = QLabel("Unit")
         self.unit = QComboBox()
-        for i, u in enumerate(g.M_UNITS):
-            self.unit.addItem(u, g.M_UNITS_DATA[i])
+        for key in g.M_UNIT_CONVERTERS.keys():
+            self.unit.addItem(key, g.M_UNIT_CONVERTERS[key])
         self.unit.currentIndexChanged.connect(self.changed_value)
 
         ci_lbl = QLabel("Confidence level")
@@ -583,7 +583,7 @@ class WindowMethod(QMainWindow):
             self.lp_freq.setValue(data[g.M_LP_FREQ])
 
         ##### SET CALCULATION TAB   #####
-        self.unit.setCurrentIndex(self.unit.findData(data[g.M_UNIT]))
+        self.unit.setCurrentIndex(self.unit.findText(data[g.M_UNIT]))
         self.ci.setCurrentIndex(self.ci.findData(data[g.M_CONF]))
 
          
@@ -1336,7 +1336,7 @@ class WindowMethod(QMainWindow):
                 g.M_CURRENT_RANGE: self.current_range.currentText(),
                 g.M_EXT_DEVICES: self.relays, 
                 g.M_STEPS: self.steps,
-                g.M_UNIT: self.unit.currentData(),
+                g.M_UNIT: self.unit.currentText(),
                 g.M_CONF: self.ci.currentData(),
                 g.M_PEAK_V_MIN: self.peak_min.value(),
                 g.M_PEAK_V_MAX: self.peak_max.value()
