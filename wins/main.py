@@ -1271,19 +1271,20 @@ class WindowMain(QMainWindow):
     #############################################
 
     def start_async_save(self, saveType, params, onSuccess=False, onError=False):
-        if not self.process:
+        if self.process:        # if there is alreayd a process running
+            return              # don't start another one! 
+        
+        self.process = QProcess()
+        self.process.readyReadStandardOutput.connect(self.handle_save_stdout)
+        self.process.readyReadStandardError.connect(self.handle_save_stderr)
+        self.process.finished.connect(partial(self.handle_finished_save, onSuccess, onError))
+        self.status.showMessage("Saving...")
+        self.progress_bar.setVisible(True)
 
-            self.process = QProcess()
-            self.process.readyReadStandardOutput.connect(self.handle_save_stdout)
-            self.process.readyReadStandardError.connect(self.handle_save_stderr)
-            self.process.finished.connect(partial(self.handle_finished_save, onSuccess, onError))
-            self.status.showMessage("Saving...")
-            self.progress_bar.setVisible(True)
-
-            if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
-                self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_SAVE, self.path, saveType, str(params)])
-            else:
-                self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_SAVE, self.path, saveType, str(params)])
+        if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
+            self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_SAVE, self.path, saveType, str(params)])
+        else:
+            self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_SAVE, self.path, saveType, str(params)])
 
             
 

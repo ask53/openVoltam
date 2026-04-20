@@ -339,6 +339,49 @@ def show_warning(title, msg):
         return True
     return False
 
+
+def check_analysis_conflict(data, reps_to_change):
+    """ Takes in data (current data of sample) and list of reps_to_change in the form
+    [(run-x1, rep-y1), (run-x2, rep-y2), ... , (run-xn, rep-xn)]. IF any of the reps that
+    are being changed have any analyses, it asks the user what they would like to do
+    about it.
+    
+    Returns:
+        (continue, List of calculation in conflict)
+    Where
+        continue == True if either there are no calculations in conflict OR the user
+            wants to archive the conflicting calculations and
+        continue == False if the user selects to "cancel" the operation that would have
+            produced the conflict.
+        List of calculations in conflict is a list of all calcs with conflicts in the form:
+            [calc-id1, calc-id2, ... , calc-idn]"""
+    # Make list of reps that have analyses
+    reps_in_conflict = []
+    for rep_tuple in reps_to_change:
+        rep = get_rep(data, rep_tuple)
+        if rep[g.R_ANALYSIS]:
+            reps_in_conflict.append(rep_tuple)
+
+    # If no conflict, return true and move on with your life
+    if not reps_in_conflict:
+        return True, []
+
+    # If there IS a conflict, ask the user about it
+    title = 'Erase analyses?'
+    body = 'This action changes settings that are used in analyses.\nTo continue with this action requires erasing analyses for the following reps:'
+    for rep in reps_in_conflict:
+        body = body + '\n   - ' + str(rep[0])+', '+str(rep[1])
+    body = body + '\nWould you like to continue?'
+    resp = confirmMessageBox(title, body).exec()
+
+    # If user says 'cancel'
+    if resp == QMessageBox.StandardButton.Cancel:
+        return False, []
+
+    # If user says 'archive and continue' 
+    return True, reps_in_conflict
+
+
 def check_calc_conflict(data, reps_to_change):
     """ Takes in data (current data of sample) and list of reps_to_change in the form
     [(run-x1, rep-y1), (run-x2, rep-y2), ... , (run-xn, rep-xn)]. IF any of the reps that

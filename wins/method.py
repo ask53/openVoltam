@@ -118,6 +118,7 @@ class WindowMethod(QMainWindow):
         self.mode_changable = mode_changable
 
         self.saved = True
+        self.analysis_change = False
         self.adding = False     # flag for whether step is being added
         self.editing = False    # flag for whether step is being edited
         self.close_on_save = False
@@ -204,8 +205,8 @@ class WindowMethod(QMainWindow):
         self.peak_max = QDoubleSpinBox()
         self.peak_min.setMinimum(-999)
         self.peak_max.setMinimum(-999)
-        self.peak_min.valueChanged.connect(self.changed_value)
-        self.peak_max.valueChanged.connect(self.changed_value)
+        self.peak_min.valueChanged.connect(self.analysis_impacted)
+        self.peak_max.valueChanged.connect(self.analysis_impacted)
         peak_min_unit_lbl = QLabel("V")
         peak_max_unit_lbl = QLabel("V")
 
@@ -220,9 +221,9 @@ class WindowMethod(QMainWindow):
         self.sg_window = QSpinBox()
         self.sg_order = QSpinBox()
         self.g_sg = QGroupBox("Use Savitzky-Golay smoothing")
-        self.sg_window.valueChanged.connect(self.changed_value)
-        self.sg_order.valueChanged.connect(self.changed_value)
-        self.g_sg.toggled.connect(self.changed_value)
+        self.sg_window.valueChanged.connect(self.analysis_impacted)
+        self.sg_order.valueChanged.connect(self.analysis_impacted)
+        self.g_sg.toggled.connect(self.analysis_impacted)
         g_sg_lay = QVBoxLayout()
         g_sg_lay.addLayout(horizontalize([sg_window_lbl, self.sg_window], True))
         g_sg_lay.addLayout(horizontalize([sg_order_lbl, self.sg_order], True))
@@ -234,9 +235,9 @@ class WindowMethod(QMainWindow):
         self.lp_order = QSpinBox()
         self.lp_freq = QDoubleSpinBox()
         self.g_lp = QGroupBox("Use Low-pass Butterworth smoothing")
-        self.g_lp.toggled.connect(self.changed_value)
-        self.lp_order.valueChanged.connect(self.changed_value)
-        self.lp_freq.valueChanged.connect(self.changed_value)
+        self.g_lp.toggled.connect(self.analysis_impacted)
+        self.lp_order.valueChanged.connect(self.analysis_impacted)
+        self.lp_freq.valueChanged.connect(self.analysis_impacted)
         g_lp_lay = QVBoxLayout()
         g_lp_lay.addLayout(horizontalize([lp_order_lbl, self.lp_order], True))
         g_lp_lay.addLayout(horizontalize([lp_freq_lbl, self.lp_freq], True))
@@ -483,15 +484,11 @@ class WindowMethod(QMainWindow):
         if self.mode == g.WIN_MODE_NEW or self.mode == g.WIN_MODE_EDIT:
             self.hide_new_step_pane()
             self.init_step_form_values()
-            self.init_values()
+
+        self.init_values()
 
         if not self.mode == g.WIN_MODE_NEW: 
-            try:
-                self.set_values()
-            except Exception as e:
-                print('here, error with set_values()!')
-                print(e)
-
+            self.set_values()
 
         if self.mode == g.WIN_MODE_NEW:
             self.set_mode_new()
@@ -500,11 +497,7 @@ class WindowMethod(QMainWindow):
         elif self.mode == g.WIN_MODE_VIEW_WITH_MINOR_EDITS:
             self.set_mode_viewish()
         else:
-            self.set_mode_view()
-
-        self.saved = True
-        
-            
+            self.set_mode_view()           
             
 
     def init_step_form_values(self):
@@ -601,14 +594,21 @@ class WindowMethod(QMainWindow):
     #                                   #
     #####################################
 
-    def changed_name(self):
-        self.saved = False
-        self.set_header()
-        self.status.showMessage('')
+    def changed_name(self):             # routine for any name changes
+        self.set_header()               # set the window header to match the name
+        self.changed_value()            # indicate that a method value has been changed!
+        
+    def changed_value(self):            # routine for any changes to the method
+        self.saved = False              # reset saved flag to signify unsaved changes
+        self.status.showMessage('')     # clear any statuses being shown (ie. if it, for example, says 'Saved.' already, we want this message to disappear)
 
-    def changed_value(self):
-        self.saved = False
-        self.status.showMessage('')
+    def analysis_impacted(self):         # if an analysis is impacted
+        self.analysis_change = True   # set flag
+        self.changed_value()            # and run routing for a calc being impacted (changes to any analysis may impact a calc)
+
+
+    
+        
 
     
 
@@ -623,18 +623,21 @@ class WindowMethod(QMainWindow):
         self.set_header()
         self.set_button_bar([self.but_new_save])
         self.toggle_widget_editability()
+        self.reset_save_trackers()
 
     def set_mode_edit(self):
         self.mode = g.WIN_MODE_EDIT
         self.set_header()
         self.set_button_bar([self.but_edit_save, self.but_edit_save_as])
         self.toggle_widget_editability()
+        self.reset_save_trackers()
 
     def set_mode_view(self):
         self.mode = g.WIN_MODE_VIEW_ONLY
         self.set_header()
         self.set_button_bar([self.but_view_only])
         self.toggle_widget_editability()
+        self.reset_save_trackers()
 
     def set_mode_viewish(self):
         self.mode = g.WIN_MODE_VIEW_WITH_MINOR_EDITS
@@ -643,6 +646,12 @@ class WindowMethod(QMainWindow):
         self.toggle_widget_editability()
         self.name.setText(self.name.text())             # This just sets the name text again and moves the cursor to the name field
         self.name.setSelection(0,len(self.name.text())) # Highlight name
+        self.reset_save_trackers()
+
+    def reset_save_trackers(self):
+        self.analysis_change = False
+        self.saved = True
+        
 
     def set_button_bar(self, buttonList):
         """Takes in a button widget. Removes all removable buttons from layout, then adds
@@ -1268,6 +1277,21 @@ class WindowMethod(QMainWindow):
         self.method_save()                      # save the file!
 
     def method_save(self):
+        # if saving a local method, make sure we archive impacted calcs and delete impacted analyses
+        if self.mode == g.WIN_MODE_VIEW_WITH_MINOR_EDITS:
+            tasks = []
+            for run in self.parent.data[g.S_RUNS]:
+                if run[g.R_UID_METHOD] == self.method_id:
+                    reps = get_all_reps_from_run_id(self.parent.data, run[g.R_UID_SELF])
+                    for rep in reps:
+                        tasks.append(rep)
+            analyses_to_delete = []
+            if self.analysis_change:
+                continue_action, analyses_to_delete = check_analysis_conflict(self.parent.data, tasks)
+                if not continue_action:
+                    self.set_buttons_enabled()
+                    return
+        
         data = self.gather_inputs()
         
         if self.mode == g.WIN_MODE_NEW or self.mode == g.WIN_MODE_EDIT:
@@ -1275,7 +1299,13 @@ class WindowMethod(QMainWindow):
         else:
             self.status.showMessage('Saving method...')
             data[g.M_UID_SELF] = self.method_id
-            self.parent.start_async_save(g.SAVE_TYPE_METHOD_MOD, [self.method_id, data], onSuccess=self.after_save_method_success, onError=self.after_save_method_error)
+
+            cb_suc = self.after_save_method_success
+            cb_err = self.after_save_method_error
+
+            cb_analysis = partial(self.parent.start_async_save, g.SAVE_TYPE_ANALYSES_DEL, [analyses_to_delete], cb_suc, cb_err)     # Callback to delete analyses after method is saved
+            
+            self.parent.start_async_save(g.SAVE_TYPE_METHOD_MOD, [self.method_id, data], onSuccess=cb_analysis, onError=cb_err)
 
     def gather_inputs(self):
         # Gather optional savgol filter parameters

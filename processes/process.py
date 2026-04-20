@@ -327,6 +327,21 @@ def save_change_calcs_archive(data, params):
             calc[g.C_ARCHIVED] = archive_status
     return data
 
+def save_delete_analyses(data, params):
+    tasks = params[0]
+    for task in tasks:
+        run_id, rep_id = task
+        for run in data[g.S_RUNS]:
+            rep_wiped = False
+            for rep in run[g.R_REPLICATES]:
+                if run[g.R_UID_SELF] == run_id and rep[g.R_UID_SELF] == rep_id:
+                    rep[g.R_ANALYSIS] = {}
+                    rep_wiped = True
+                    break
+            if rep_wiped: break
+    return data
+                    
+
 def save():    
     try:
         path = sys.argv[2]                  # get path of file to read from
@@ -356,6 +371,8 @@ def save():
             data=save_delete_calc(data, params)
         elif saveType == g.SAVE_TYPE_CALCS_ARCHIVE:
             data=save_change_calcs_archive(data,params)
+        elif saveType == g.SAVE_TYPE_ANALYSES_DEL:
+            data=save_delete_analyses(data, params)
         
         write_data_to_file(path, data)
         data = remove_data_from_layout(data) 
