@@ -72,7 +72,7 @@ M_SG_ORDER = 'savgol-order'
 M_LP = 'lowpass-enabled'
 M_LP_ORDER = 'lowpass-order'
 M_LP_FREQ = 'lowpass-freq'
-M_UNIT_CONVERTERS = {'g/L': 1,
+M_UNIT_CONVERTERS = {'g/L': 1,              # multiply by these to convert this unit to g/L
                      'mg/L': 0.001,
                      'ug/L': 0.000001,
                      'ng/L': 0.000000001}

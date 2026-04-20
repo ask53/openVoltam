@@ -266,11 +266,9 @@ class WindowRunConfig(QMainWindow):
 
     def update_std_add_vol(self):
         if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
-            
-
-
-            
-            self.w_stdadd_conc_std_lbl = self.stdadd_conc_lbl_pre + ' HEREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE'
+            method_unit = str(self.method.currentData()['method'][g.M_UNIT])
+            self.w_stdadd_conc_std_lbl.setText(self.stdadd_conc_lbl_pre + ' [' + method_unit + ']')
+            self.w_stdadd_conc_std.setValue(0)
             
 
     def update_win(self):
