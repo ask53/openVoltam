@@ -199,8 +199,6 @@ class WindowAnalyze(QMainWindow):
                 self.voltamograms[i].toggle_endpoint()
             except Exception as e:
                 print(e)
-            
-        
         
         
     def save_and_close(self):
