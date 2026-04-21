@@ -18,6 +18,15 @@ WIN_MODE_VIEW_WITH_MINOR_EDITS = 'view-with-edits'
 WIN_MODE_RIGHT = 'right'
 WIN_MODE_CLOSED = 'close'
 
+# Unit conversions
+UNIT_CONV_CONC = {'g/L': 1000,      # multiply by these to convert this unit to g/L
+                  'mg/L': 1,        # ALL VOLUMES AND CONCENTRATIONS ARE STORED IN
+                  'ug/L': 0.001,    # THE .ovs FILE IN UNITS OF MILILITERS AND 
+                  'ng/L': 0.000001} # MILIGRAMS PER LITER RESPECTIVELY (mL and mg/L)
+UNIT_CONV_VOL = {'L': 1000,
+                 'mL': 1,
+                 'uL': 0.001}
+
 # Keys for sample (S) dictionary
 S_NAME = "sample_name"
 S_DATE_ENTERED = "date_first_saved"
@@ -72,10 +81,6 @@ M_SG_ORDER = 'savgol-order'
 M_LP = 'lowpass-enabled'
 M_LP_ORDER = 'lowpass-order'
 M_LP_FREQ = 'lowpass-freq'
-M_UNIT_CONVERTERS = {'g/L': 1,              # multiply by these to convert this unit to g/L
-                     'mg/L': 0.001,
-                     'ug/L': 0.000001,
-                     'ng/L': 0.000000001}
 M_CONFS = ('66.7%', '95%', '99%', '99.9%')
 M_CONFS_DATA = (0.667, 0.95, 0.99, 0.999)
 
@@ -91,10 +96,10 @@ R_REPLICATES = 'replicates'
 R_TYPE_BLANK = "blank"
 R_TYPE_SAMPLE = "sample"
 R_TYPE_STDADD = "standard_addition"
-R_SAMPLE_VOL = "sample_vol_mL"
-R_TOTAL_VOL = "total_vol_mL"
-R_STD_ADDED_VOL = "standard_vol_mL"
-R_STD_CONC = "standard_conc_ppb"
+R_SAMPLE_VOL = "sample_vol"
+R_TOTAL_VOL = "total_vol"
+R_STD_ADDED_VOL = "standard_vol"
+R_STD_CONC = "standard_conc"
 R_TIMESTAMP = "created"
 R_STATUS = 'status'
 R_DATA = 'data'

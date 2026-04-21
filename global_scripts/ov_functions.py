@@ -433,13 +433,19 @@ def check_calc_conflict(data, reps_to_change):
     # If user says 'archive and continue' 
     return True, calcs_in_conflict
 
-def convert_2_gpL(val, unit):
+def convert_conc_to_file_unit(conc, unit):
     """converts the value (float) in unit units into grams per liter"""
-    return val / g.M_UNIT_CONVERTERS[unit]
+    return conc * g.UNIT_CONV_CONC[unit]
 
-def convert_from_gpL(val, unit):
+def convert_conc_from_file_unit(conc, unit):
     """converts the value (float) in grams per liter to the requested unit"""
-    return val * g.M_UNIT_CONVERTERS[unit]
+    return conc / g.UNIT_CONV_CONC[unit]
+
+def convert_vol_to_file_unit(vol, unit):
+    return vol * g.UNIT_CONV_VOL[unit]
+
+def convert_vol_from_file_unit(vol, unit):
+    return vol / g.UNIT_CONV_VOL[unit]
 
 
 

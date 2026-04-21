@@ -262,8 +262,8 @@ class WindowMethod(QMainWindow):
 
         unit_lbl = QLabel("Unit")
         self.unit = QComboBox()
-        for key in g.M_UNIT_CONVERTERS.keys():
-            self.unit.addItem(key, g.M_UNIT_CONVERTERS[key])
+        for key in g.UNIT_CONV_CONC.keys():
+            self.unit.addItem(key, g.UNIT_CONV_CONC[key])
         self.unit.currentIndexChanged.connect(self.changed_value)
 
         ci_lbl = QLabel("Confidence level")

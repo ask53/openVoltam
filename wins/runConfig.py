@@ -142,6 +142,8 @@ class WindowRunConfig(QMainWindow):
                        self.w_stdadd_conc_std]
         for w in ws_in_stack:
             w.valueChanged.connect(self.value_changed)
+            w.setRange(0, 999999)
+            w.setDecimals(3)
                
         self.type_stack.addWidget(w_blank)
         self.type_stack.addWidget(g_sample)
@@ -247,12 +249,13 @@ class WindowRunConfig(QMainWindow):
                         break
                                                                     # Then load the data for the relevant section of the stacked layout
                 if run[g.R_TYPE] == g.R_TYPE_SAMPLE:                # if this run was the sample
-                    self.w_sample_sample_vol.setValue(run[g.R_SAMPLE_VOL])
-                    self.w_sample_total_vol.setValue(run[g.R_TOTAL_VOL])
+                    self.w_sample_sample_vol.setValue(convert_vol_from_file_unit(run[g.R_SAMPLE_VOL], 'mL'))
+                    self.w_sample_total_vol.setValue(convert_vol_from_file_unit(run[g.R_TOTAL_VOL], 'mL'))
                     
                 elif run[g.R_TYPE] == g.R_TYPE_STDADD:              # if this run was the standard addition
-                    self.w_stdadd_vol_std.setValue(run[g.R_STD_ADDED_VOL])
-                    self.w_stdadd_conc_std.setValue(run[g.R_STD_CONC])
+                    method_unit = method[g.M_UNIT]
+                    self.w_stdadd_vol_std.setValue(convert_vol_from_file_unit(run[g.R_STD_ADDED_VOL], 'uL'))
+                    self.w_stdadd_conc_std.setValue(convert_conc_from_file_unit(run[g.R_STD_CONC], method_unit))
             self.refresh_graph()                                    # refresh the graph pane
 
     def refresh_graph(self):
@@ -340,13 +343,16 @@ class WindowRunConfig(QMainWindow):
         
 
     def view_method(self):
-        if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
-            if self.method.currentData()['type'] == g.M_FROM_SAMPLE:    # if method is from an existing run in sample file
-                method_id = self.method.currentData()['method'][g.M_UID_SELF]
-                self.parent.new_win_method_by_id(g.WIN_MODE_VIEW_ONLY, method_id, False)
-            else:                                                       # if method is from a separatemethod file
-                path = self.method.currentData()['path']
-                self.parent.new_win_method_by_path(g.WIN_MODE_VIEW_ONLY, path, False)
+        try:
+            if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
+                if self.method.currentData()['type'] == g.M_FROM_SAMPLE:    # if method is from an existing run in sample file
+                    method_id = self.method.currentData()['method'][g.M_UID_SELF]
+                    self.parent.new_win_method_by_id(g.WIN_MODE_VIEW_ONLY, method_id, False)
+                else:                                                       # if method is from a separatemethod file
+                    path = self.method.currentData()['path']
+                    self.parent.new_win_method_by_path(g.WIN_MODE_VIEW_ONLY, path, False)
+        except Exception as e:
+            print(e)
                 
 
     #########################################
@@ -582,11 +588,12 @@ class WindowRunConfig(QMainWindow):
             run[g.R_TYPE] = run_type                        # Add current run type to dict
             
             if run_type == g.R_TYPE_SAMPLE:                 # If its a sample run, add the relevant parameters   
-                run[g.R_SAMPLE_VOL] = self.w_sample_sample_vol.value()
-                run[g.R_TOTAL_VOL] = self.w_sample_total_vol.value()
+                run[g.R_SAMPLE_VOL] = convert_vol_to_file_unit(self.w_sample_sample_vol.value(), 'mL')
+                run[g.R_TOTAL_VOL] = convert_vol_to_file_unit(self.w_sample_total_vol.value(), 'mL')
             elif run_type == g.R_TYPE_STDADD:               # If its a standard addition run, add the relevant parameters 
-                run[g.R_STD_ADDED_VOL] = self.w_stdadd_vol_std.value()
-                run[g.R_STD_CONC] = self.w_stdadd_conc_std.value()
+                method_unit = str(self.method.currentData()['method'][g.M_UNIT])
+                run[g.R_STD_ADDED_VOL] = convert_vol_to_file_unit(self.w_stdadd_vol_std.value(), 'uL')
+                run[g.R_STD_CONC] = convert_conc_to_file_unit(self.w_stdadd_conc_std.value(), method_unit)
                 
             return run
         except Exception as e:
