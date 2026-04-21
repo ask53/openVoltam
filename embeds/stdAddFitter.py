@@ -36,6 +36,7 @@ class StdAddFitterPlot(QMainWindow):
         self.parent = parent
         self.type = None
         self.points = None
+        self.results = False
 
         # Data to return to user 
         self.eqn = None
@@ -136,8 +137,8 @@ class StdAddFitterPlot(QMainWindow):
                     v0_total = run[g.R_TOTAL_VOL]
                 elif run[g.R_TYPE] == g.R_TYPE_STDADD:
                     V_tot = V_tot + run[g.R_STD_ADDED_VOL]
-                    N_tot = N_tot + (run[g.R_STD_CONC] * run[g.R_STD_ADDED_VOL])
-                    x = N_tot / V_tot
+                    N_tot = N_tot + (run[g.R_STD_CONC] * run[g.R_STD_ADDED_VOL])            # As long as all vols and concs are in consistent units
+                    x = N_tot / V_tot                                                       # The result will be in the standard concentration unit
                 for replicate in point:                     # for each replicate in this point
                     (run_id, rep_id, run) = replicate
                     rep = self.get_rep_from_run(rep_id, run)
@@ -172,7 +173,7 @@ class StdAddFitterPlot(QMainWindow):
         self.calc_id = calc[g.R_UID_SELF]
         self.type = calc[g.C_TYPE]
         self.points_simple = calc[g.C_POINTS]
-        self.intervals = (calc[g.C_CI_95], calc[g.C_CI_99])
+        self.intervals = calc[g.C_ERROR_MARGINS]
 
         x_all = np.zeros(0)     # init arrays to hold data
         y_all = np.zeros(0)
@@ -246,7 +247,9 @@ class StdAddFitterPlot(QMainWindow):
         self.allpts, = self.canvas.axes.plot(x,y, 'o', color=self.color_rep)            # Plot all data points in purple
         self.avgpts, = self.canvas.axes.plot(x_avg, y_avg, 'D', color=self.color_avg)   # Add averages as diamont points in pink
         
-        if x_avg.size >= 3:                                                         # If there are enough points to do a linear regression
+        if x_avg.size < 3:
+            self.results = False
+        else:                                                   # If there are enough points to do a linear regression
             if self.reg_type == g.C_REG_TYPE_PTS:               # if all points have same # of samples
                 x_reg, y_reg = (x,y)
                 color = self.color_rep
@@ -263,17 +266,16 @@ class StdAddFitterPlot(QMainWindow):
             intervals = self.get_confidence_intervals(x_reg, y_reg, m, b)
             
             # Store calculated values on the self variable
-            if m==0:
-                self.eqn = None
-            else:
-                self.eqn = f'y = {round(m,4)} * x + {round(b,4)}'
-                self.slope = float(m)
-                self.intercept = float(b)
-                self.c_sample = float(b/m)
-                self.r2 = float(r_value*r_value)
-                self.stderr = float(std_err)
-                self.c_pre_dilution = float(self.c_sample * v_tot / v_sam)
-                self.intervals = intervals
+            
+            self.eqn = f'y = {round(m,4)} * x + {round(b,4)}'
+            self.slope = float(m)
+            self.intercept = float(b)
+            self.c_sample = float(b/m)
+            self.r2 = float(r_value*r_value)
+            self.stderr = float(std_err)
+            self.c_pre_dilution = float(self.c_sample * v_tot / v_sam)
+            self.intervals = intervals
+            self.results = True
                    
         self.canvas.draw()
 
@@ -328,15 +330,25 @@ class StdAddFitterPlot(QMainWindow):
         s_x = (s_y / abs(m)) * sqrt( (1/n) + (y_bar*y_bar / (m*m*ssx)) )
 
         # get student's t-value for various confidence levels
-        t_95 = t.ppf(1-0.025, df)
+
+        confs = {}
+        for i, conf in enumerate(g.M_CONFS_DATA):
+            t_val = t.ppf((1+conf)/2, df)
+            margin_of_error = float(t_val * s_x)
+            confs[g.M_CONFS[i]] = margin_of_error
+                                    
+        '''t_95 = t.ppf(1-0.025, df)
         t_99 = t.ppf(1-0.005, df)
 
         ci_95 = float(t_95*s_x)
-        ci_99 = float(t_99*s_x)
+        ci_99 = float(t_99*s_x)'''
 
-        return (ci_95, ci_99)
+        return confs
 
     def get_results(self):
+        if not self.results:
+            return None
+        
         res = {g.C_EQN: self.eqn,
                g.C_SLOPE: self.slope,
                g.C_INT: self.intercept,
@@ -347,11 +359,8 @@ class StdAddFitterPlot(QMainWindow):
                g.C_TYPE: self.type,
                g.C_REG_TYPE: self.reg_type,
                g.C_POINTS: self.points_simple,
-               g.C_CI_95: self.intervals[0],
-               g.C_CI_99: self.intervals[1],
+               g.C_ERROR_MARGINS: self.intervals,
                g.C_ARCHIVED: self.archived}
-
-        print(self.points_simple)
             
         return res
             

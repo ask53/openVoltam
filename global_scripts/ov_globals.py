@@ -23,9 +23,9 @@ UNIT_CONV_CONC = {'g/L': 1000,      # multiply by these to convert this unit to 
                   'mg/L': 1,        # ALL VOLUMES AND CONCENTRATIONS ARE STORED IN
                   'ug/L': 0.001,    # THE .ovs FILE IN UNITS OF MILILITERS AND 
                   'ng/L': 0.000001} # MILIGRAMS PER LITER RESPECTIVELY (mL and mg/L)
-UNIT_CONV_VOL = {'L': 1000,
-                 'mL': 1,
-                 'uL': 0.001}
+UNIT_CONV_VOL = {'L': 1,
+                 'mL': 0.001,
+                 'uL': 0.000001}
 
 # Keys for sample (S) dictionary
 S_NAME = "sample_name"
@@ -152,8 +152,7 @@ C_TYPES = (C_TYPE_PEAKBASE, C_TYPE_PEAKZERO, C_TYPE_SLOPE_L, C_TYPE_SLOPE_R, C_T
 C_REG_TYPE_PTS = 'points'
 C_REG_TYPE_AVG = 'averages'
 C_REG_TYPES = (C_REG_TYPE_PTS, C_REG_TYPE_AVG)
-C_CI_95 = 'margin-of-error-95'
-C_CI_99 = 'margin-of-error-99'
+C_ERROR_MARGINS = 'margins-of-error'
 
 # Calculation results
 C_EQN = 'reg-equation'

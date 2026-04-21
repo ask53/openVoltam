@@ -156,7 +156,7 @@ class WindowCalculate(QMainWindow):
             txt = calc[g.R_UID_SELF] + ' ('+calc[g.C_TYPE] +', '+calc[g.C_REG_TYPE]+')\n'
             if calc[g.C_ARCHIVED]: txt = '[ARCHIVED] '+txt
             txt = txt + runtxt + '\n'
-            txt = txt + 'Result: '+str(round(calc[g.C_CONC_ORIGINAL],8))+' +/- '+str(round(float(calc[g.C_CI_95]), 6))+' mg/L'
+            #txt = txt + 'Result: '+str(round(calc[g.C_CONC_ORIGINAL],8))+' +/- '+str(round(float(calc[g.C_CI_95]), 6))+' mg/L'
             if calc[g.C_NOTE]:
                 txt = txt + '\nNote: '+str(calc[g.C_NOTE])
             
@@ -1063,20 +1063,74 @@ class WindowCalculate(QMainWindow):
         self.saved = False
 
     def get_and_show_results(self):
+
         r = self.graph.get_results()
-        if not r[g.C_EQN]:
+        print(r)
+
+
+
+        if not r:
             txt = 'None'
         else:
-            txt = '<b>Sample concentration</b> (w/ 95% confidence interval): '+str(round(float(r[g.C_CONC_ORIGINAL]), 9))+' +/- '+str(round(float(r[g.C_CI_95]), 6))+' mg/L<br><br>'
+
+            txt = self.get_result_header(r)
+            txt = txt + self.format_result_as_string(r)
+
+
+
+            txt = txt + '------------<br><br>'
             txt = txt + 'Model: y = '+str(r[g.C_SLOPE])+' * x + '+str(r[g.C_INT])+'<br><br>'
             txt = txt + 'R^2: '+str(round(float(r[g.C_R2]), 4))+'<br>'
             txt = txt + 'Standard error: '+str(round(float(r[g.C_STDERR]), 4))
         self.results.setText(txt)
         self.results_stack.setCurrentIndex(1)
-        if not r[g.C_EQN]:
+        if not r:
             return None
         else:
             return r
+
+    def get_result_header(self, r):
+        run_id = r[g.C_POINTS][0][0][g.C_RUN_ID]
+        run = get_run_from_file_data(self.parent.data, run_id)
+        method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
+        conf_i = g.M_CONFS_DATA.index(method[g.M_CONF])
+        conf = g.M_CONFS[conf_i]
+        print(conf)
+        print(type(conf))
+        return "<b>Result</b> (" + conf + "):<br>"
+
+    def format_result_as_string(self, r):
+        # 1. Get user-selected confidence level from method
+        # 2. get no detect limit
+        # 3. if result < no-detect limit:
+        #   3a. return NO-DETECT
+        #   3b. and return the result +/- ME in parentheses
+        # 4. Check if CI includes 0
+        #   4a. if so, return: THE CONFIDENCE INTERVAL INCLUDES 0, WE RECOMMEND INCLUDING MORE REPLICATES OR ADDITIONAL STANDARD ADDITIONS"
+        # 5. IF we are here, return value +/- ME
+
+        ###################################
+        #
+        #   HERE HER HERE HERE
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        ##
+        #
+        #
+        #############################################################################
+        
+        txt = 'hi<br><br>'
+
+        return txt
 
         
             
