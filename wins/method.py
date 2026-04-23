@@ -128,6 +128,9 @@ class WindowMethod(QMainWindow):
         self.selected = []
         self.relays = []
         self.status = self.statusBar()
+        
+        self.dl_val = 0
+        self.changing_unit = False
 
         # Method name field
         self.name = QLineEdit()
@@ -264,7 +267,7 @@ class WindowMethod(QMainWindow):
         self.unit = QComboBox()
         for key in g.UNIT_CONV_CONC.keys():
             self.unit.addItem(key, g.UNIT_CONV_CONC[key])
-        self.unit.currentIndexChanged.connect(self.changed_value)
+        self.unit.currentIndexChanged.connect(self.changed_unit)
 
         ci_lbl = QLabel("Confidence level")
         self.ci = QComboBox()
@@ -272,10 +275,21 @@ class WindowMethod(QMainWindow):
             self.ci.addItem(c, g.M_CONFS_DATA[i])
         self.ci.currentIndexChanged.connect(self.changed_value)
 
+        self.dl_lbl_base = "Detection limit"
+        self.dl_lbl = QLabel(self.dl_lbl_base)
+        self.dl = QDoubleSpinBox()
+        self.dl.setRange(0, 9999)
+        self.dl.setDecimals(3)
+        self.dl.setValue(0)
+        self.dl.valueChanged.connect(self.changed_dl)
+
         vC = QVBoxLayout()
         vC.addLayout(horizontalize([unit_lbl, self.unit], True))
         vC.addLayout(horizontalize([ci_lbl, self.ci], True))
+        vC.addLayout(horizontalize([self.dl_lbl, self.dl], True))
         vC.addStretch()
+
+        
 
         wCalc = QWidget()
         wCalc.setLayout(vC)
@@ -290,7 +304,7 @@ class WindowMethod(QMainWindow):
         self.ws_for_viewish = [self.name, self.peak_min, self.peak_max,
                                self.g_sg, self.sg_window, self.sg_order,
                                self.g_lp, self.lp_order, self.lp_freq,
-                               self.unit, self.ci]
+                               self.unit, self.ci, self.dl]
 
        
 
@@ -547,8 +561,10 @@ class WindowMethod(QMainWindow):
         ###################
         #   CALC TAB      #
         ###################
+        self.dl.setValue(0)
         self.unit.setCurrentIndex(1)
         self.ci.setCurrentIndex(1)
+        
         
 
     def set_values(self):
@@ -585,6 +601,7 @@ class WindowMethod(QMainWindow):
         ##### SET CALCULATION TAB   #####
         self.unit.setCurrentIndex(self.unit.findText(data[g.M_UNIT]))
         self.ci.setCurrentIndex(self.ci.findData(data[g.M_CONF]))
+        self.dl.setValue(convert_conc_from_file_unit(data[g.M_DETECTION_LIMIT], data[g.M_UNIT]))
 
          
         
@@ -602,9 +619,26 @@ class WindowMethod(QMainWindow):
         self.saved = False              # reset saved flag to signify unsaved changes
         self.status.showMessage('')     # clear any statuses being shown (ie. if it, for example, says 'Saved.' already, we want this message to disappear)
 
-    def analysis_impacted(self):         # if an analysis is impacted
-        self.analysis_change = True   # set flag
+    def analysis_impacted(self):        # if an analysis is impacted
+        self.analysis_change = True     # set flag
         self.changed_value()            # and run routing for a calc being impacted (changes to any analysis may impact a calc)
+
+    def changed_unit(self):
+        self.changing_unit = True
+        unit = self.unit.currentText()                                          # When the unit is changed
+        dl_newunit = convert_conc_from_file_unit(self.dl_val, unit)
+        self.dl.setValue(dl_newunit)                                            # Update the detection limit to match the new unit
+        self.dl_lbl.setText(self.dl_lbl_base + ' ['+unit+']')                   # And update the label to match as well.
+        self.changed_value()
+        self.changing_unit = False
+
+    def changed_dl(self):
+        if self.changing_unit:
+            return
+        unit = self.unit.currentText()
+        self.dl_val = convert_conc_to_file_unit(self.dl.value(), unit)            
+        self.changed_value()
+
 
 
     
@@ -1339,7 +1373,8 @@ class WindowMethod(QMainWindow):
                 g.M_UNIT: self.unit.currentText(),
                 g.M_CONF: self.ci.currentData(),
                 g.M_PEAK_V_MIN: self.peak_min.value(),
-                g.M_PEAK_V_MAX: self.peak_max.value()
+                g.M_PEAK_V_MAX: self.peak_max.value(),
+                g.M_DETECTION_LIMIT: convert_conc_to_file_unit(self.dl.value(), self.unit.currentText())
                 }
 
         #Append optional filter parameters
