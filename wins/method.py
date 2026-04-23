@@ -279,7 +279,7 @@ class WindowMethod(QMainWindow):
         self.dl_lbl = QLabel(self.dl_lbl_base)
         self.dl = QDoubleSpinBox()
         self.dl.setRange(0, 9999)
-        self.dl.setDecimals(2)
+        self.dl.setDecimals(3)
         self.dl.setValue(0)
         self.dl.valueChanged.connect(self.changed_dl)
 
