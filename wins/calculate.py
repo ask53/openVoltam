@@ -1,4 +1,3 @@
-
 """
 calculate.py
 
@@ -6,6 +5,7 @@ A window that allows the user to use analyzed data, collected with
 the potentiostat, to back-calculate the concentration of the
 species of interest in the original sample.
 """
+
 from global_scripts import ov_globals as g
 from global_scripts.ov_functions import *
 
@@ -1063,74 +1063,124 @@ class WindowCalculate(QMainWindow):
         self.saved = False
 
     def get_and_show_results(self):
+        try:
 
-        r = self.graph.get_results()
-        print(r)
-
-
-
-        if not r:
-            txt = 'None'
-        else:
-
-            txt = self.get_result_header(r)
-            txt = txt + self.format_result_as_string(r)
+            r = self.graph.get_results()
 
 
 
-            txt = txt + '------------<br><br>'
-            txt = txt + 'Model: y = '+str(r[g.C_SLOPE])+' * x + '+str(r[g.C_INT])+'<br><br>'
-            txt = txt + 'R^2: '+str(round(float(r[g.C_R2]), 4))+'<br>'
-            txt = txt + 'Standard error: '+str(round(float(r[g.C_STDERR]), 4))
-        self.results.setText(txt)
-        self.results_stack.setCurrentIndex(1)
-        if not r:
-            return None
-        else:
-            return r
+            if not r:
+                txt = 'None'
+            else:
+                # Append run settings from method to dict
+                run_id = r[g.C_POINTS][0][0][g.C_RUN_ID]
+                method_id = get_run_from_file_data(self.parent.data, run_id)[g.R_UID_METHOD]
+                method = get_method_from_file_data(self.parent.data, method_id)
+                for key in (g.M_UNIT, g.M_CONF, g.M_DETECTION_LIMIT):
+                    r[key] = method[key]
+
+                # Get result text to display (as html)
+
+                txt = self.get_result_header(r)
+                results = self.format_result_as_string(r)
+                for res in results:
+                    txt = txt + res + '<br>'
+
+
+                txt = txt + '------------<br><br>'
+                txt = txt + 'Model: y = '+str(r[g.C_SLOPE])+' * x + '+str(r[g.C_INT])+'<br><br>'
+                txt = txt + 'R^2: '+str(round(float(r[g.C_R2]), 4))+'<br>'
+                txt = txt + 'Standard error: '+str(round(float(r[g.C_STDERR]), 4))
+            self.results.setText(txt)
+            self.results_stack.setCurrentIndex(1)
+            
+            print(r)
+            
+            if not r: return None
+            else: return r
+        except Exception as e:
+            print(e)
 
     def get_result_header(self, r):
-        run_id = r[g.C_POINTS][0][0][g.C_RUN_ID]
+        '''run_id = r[g.C_POINTS][0][0][g.C_RUN_ID]
         run = get_run_from_file_data(self.parent.data, run_id)
-        method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
-        conf_i = g.M_CONFS_DATA.index(method[g.M_CONF])
+        method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])'''
+        conf_i = g.M_CONFS_DATA.index(r[g.M_CONF])
         conf = g.M_CONFS[conf_i]
-        print(conf)
-        print(type(conf))
         return "<b>Result</b> (" + conf + "):<br>"
 
     def format_result_as_string(self, r):
-        # 1. Get user-selected confidence level from method
-        # 2. get no detect limit
-        # 3. if result < no-detect limit:
-        #   3a. return NO-DETECT
-        #   3b. and return the result +/- ME in parentheses
-        # 4. Check if CI includes 0
-        #   4a. if so, return: THE CONFIDENCE INTERVAL INCLUDES 0, WE RECOMMEND INCLUDING MORE REPLICATES OR ADDITIONAL STANDARD ADDITIONS"
-        # 5. IF we are here, return value +/- ME
+        conf_i = g.M_CONFS_DATA.index(r[g.M_CONF])
+        conf = g.M_CONFS[conf_i]
+        unit = r[g.M_UNIT]
+        dl = convert_conc_from_file_unit(r[g.M_DETECTION_LIMIT], unit)
+        val = convert_conc_from_file_unit(r[g.C_CONC_ORIGINAL], unit)
+        margin = convert_conc_from_file_unit(r[g.C_ERROR_MARGINS][conf], unit)
+        res = self.get_result_sig_figs(val, margin, unit)
+        paren_res = '(' + res + ')'
 
-        ###################################
-        #
-        #   HERE HER HERE HERE
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        ##
-        #
-        #
-        #############################################################################
+        if (val + margin)/(val - margin) > 0: margin_includes_zero = False
+        else: margin_includes_zero = True
+
         
-        txt = 'hi<br><br>'
+        
 
-        return txt
+        if val > dl and not margin_includes_zero:   # return the result!
+            return [res]
+        elif 0 > val and not margin_includes_zero:    # return an ERROR msg here, we're getting a confidently negative result.
+            return ['ERROR',  'Results are negative, please check the way the calculation is set up', paren_res]
+        elif margin_includes_zero and margin > dl:  # display WARNING here, encourage user to add more points or std adds
+            return ['INSUFFICIENT DATA', 'The data range is quite broad. Try adding additional replicates or standard additions to reduce variance', paren_res]
+        else:                                       # display NO DETECT here
+            return ['NO DETECT', paren_res]
+        
+    def get_result_sig_figs(self, val, margin, unit):
+        """Rounds val and margin to 1 extra decimal place beyond the first significant digit of
+        the margin of error. Egs:
+            4.23456 +/- 2.45678 -> 4.2 +/- 2.5
+            4.23456 +/- 0.05678 -> 4.235 +/- 0.057
+        Returns result as string
+        """
+        print(val)
+        print(margin)
+        print()
+        decimals = self.get_place_of_first_sig_fig(margin) + 1
+        if decimals <= 0:                            # if we are rounding to the left of the decimal place
+            v = str(int(round(val, decimals)))
+            me = str(int(round(margin, decimals)))
+        else:            
+            v = f'{round(val, decimals):.{decimals}f}'
+            me = f'{round(margin, decimals):.{decimals}f}'
+        return v + ' +/- ' + me + ' ' + str(unit)
+
+    def get_place_of_first_sig_fig(self, val):
+        s = f'{float(val):.15f}'    # cast val as string, with scientific notation suppressed
+        count = 0
+        found_decimal = False
+        found_start = False
+        found_something = False
+        
+        for char in s:
+            if char == '.':
+                found_decimal = True
+                if found_start:
+                    found_something = True
+                    count = -1 * (count-1)  # remove 1 because the 1s place is indexed at 0.
+                    break
+            elif char in '123456789':
+                found_start = True
+                if found_decimal:
+                    found_something = True
+                    break
+                
+            if found_start or found_decimal:
+                count = count + 1
+
+        if not found_something: count = 0
+        
+        return count
+            
+            
 
         
             
