@@ -156,7 +156,8 @@ class WindowCalculate(QMainWindow):
             txt = calc[g.R_UID_SELF] + ' ('+calc[g.C_TYPE] +', '+calc[g.C_REG_TYPE]+')\n'
             if calc[g.C_ARCHIVED]: txt = '[ARCHIVED] '+txt
             txt = txt + runtxt + '\n'
-            #txt = txt + 'Result: '+str(round(calc[g.C_CONC_ORIGINAL],8))+' +/- '+str(round(float(calc[g.C_CI_95]), 6))+' mg/L'
+            main_result = self.format_result_as_string(calc)[0]
+            txt = txt + main_result
             if calc[g.C_NOTE]:
                 txt = txt + '\nNote: '+str(calc[g.C_NOTE])
             
@@ -1066,6 +1067,7 @@ class WindowCalculate(QMainWindow):
         try:
 
             r = self.graph.get_results()
+            
 
 
 
@@ -1076,8 +1078,17 @@ class WindowCalculate(QMainWindow):
                 run_id = r[g.C_POINTS][0][0][g.C_RUN_ID]
                 method_id = get_run_from_file_data(self.parent.data, run_id)[g.R_UID_METHOD]
                 method = get_method_from_file_data(self.parent.data, method_id)
+                print()
+                print(method)
+                print()
                 for key in (g.M_UNIT, g.M_CONF, g.M_DETECTION_LIMIT):
                     r[key] = method[key]
+                print()
+                print('---')
+                print()
+                print(r)
+                print()
+                print('---')
 
                 # Get result text to display (as html)
 
@@ -1094,7 +1105,7 @@ class WindowCalculate(QMainWindow):
             self.results.setText(txt)
             self.results_stack.setCurrentIndex(1)
             
-            print(r)
+            #print(r)
             
             if not r: return None
             else: return r
@@ -1116,6 +1127,11 @@ class WindowCalculate(QMainWindow):
         dl = convert_conc_from_file_unit(r[g.M_DETECTION_LIMIT], unit)
         val = convert_conc_from_file_unit(r[g.C_CONC_ORIGINAL], unit)
         margin = convert_conc_from_file_unit(r[g.C_ERROR_MARGINS][conf], unit)
+
+        print('val: '+str(val))
+        print('ME: +-'+str(margin))
+        print('detection limit: '+str(dl))
+        
         res = self.get_result_sig_figs(val, margin, unit)
         paren_res = '(' + res + ')'
 

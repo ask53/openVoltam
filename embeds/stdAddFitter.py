@@ -263,7 +263,7 @@ class StdAddFitterPlot(QMainWindow):
                                                                         # Set up regression label
             self.label_regression_line(x_avg, y_reg, m, b, r_value*r_value, color)
             
-            intervals = self.get_confidence_intervals(x_reg, y_reg, m, b)
+            intervals = self.get_confidence_intervals(x_reg, y, m, b)
             
             # Store calculated values on the self variable
             
@@ -315,7 +315,8 @@ class StdAddFitterPlot(QMainWindow):
         ssr = 0
         for i,y in enumerate(y_array):
             y_reg = m * x_array[i] + b
-            ssr = ssr + (y-y_reg)*(y-y_reg)
+            sr_i = (y-y_reg)*(y-y_reg)
+            ssr = ssr + sr_i
         df = n - 2
         s_y = sqrt(ssr / df)
 
@@ -336,12 +337,6 @@ class StdAddFitterPlot(QMainWindow):
             t_val = t.ppf((1+conf)/2, df)
             margin_of_error = float(t_val * s_x)
             confs[g.M_CONFS[i]] = margin_of_error
-                                    
-        '''t_95 = t.ppf(1-0.025, df)
-        t_99 = t.ppf(1-0.005, df)
-
-        ci_95 = float(t_95*s_x)
-        ci_99 = float(t_99*s_x)'''
 
         return confs
 
