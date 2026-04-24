@@ -2,7 +2,6 @@ contourpy==1.3.3
 cycler==0.12.1
 fonttools==4.62.0
 future==1.0.0
-iorodeo-potentiostat @ file:///C:/Users/floop%20floop%20burble/Documents/GitHub/potentiostat/software/python/potentiostat
 iso8601==2.1.0
 kiwisolver==1.5.0
 matplotlib==3.10.8
