@@ -1311,7 +1311,7 @@ class WindowMethod(QMainWindow):
         self.method_save()                      # save the file!
 
     def method_save(self):
-        # if saving a local method, make sure we archive impacted calcs and delete impacted analyses
+        # if saving a local method, make sure we update impacted calcs and delete impacted analyses
         if self.mode == g.WIN_MODE_VIEW_WITH_MINOR_EDITS:
             tasks = []
             for run in self.parent.data[g.S_RUNS]:
@@ -1319,27 +1319,46 @@ class WindowMethod(QMainWindow):
                     reps = get_all_reps_from_run_id(self.parent.data, run[g.R_UID_SELF])
                     for rep in reps:
                         tasks.append(rep)
+            # Check analyses
             analyses_to_delete = []
             if self.analysis_change:
                 continue_action, analyses_to_delete = check_analysis_conflict(self.parent.data, tasks)
                 if not continue_action:
                     self.set_buttons_enabled()
                     return
-        
-        data = self.gather_inputs()
-        
-        if self.mode == g.WIN_MODE_NEW or self.mode == g.WIN_MODE_EDIT:
-            self.start_async_overwrite(data)
-        else:
-            self.status.showMessage('Saving method...')
-            data[g.M_UID_SELF] = self.method_id
 
+            # Check calcs
+            calcs_to_update = []
+            continue_action, calcs_to_update = check_calc_conflict(self.parent.data, tasks)
+            if not continue_action:
+                self.set_buttons_enabled()
+                return
+            
+            
+            
+            
+
+        # Gather all the inputs in the method into a dictionary
+        data = self.gather_inputs()
+
+        
+        if self.mode == g.WIN_MODE_NEW or self.mode == g.WIN_MODE_EDIT:     # If we are working on an .ovm (method) file
+            self.start_async_overwrite(data)                                #   just dump all the data in, overwriting what is already ther
+        else:                                                               # If we are workign in an .ovs (sample) file
+            self.status.showMessage('Saving method...')                     #   We have to be a bit more nuanced. Using an async save
+            data[g.M_UID_SELF] = self.method_id                             #   process here to update the relevant part of the existing
+                                                                            #   .ovs file
             cb_suc = self.after_save_method_success
             cb_err = self.after_save_method_error
 
+            unit = data[g.M_UNIT]
+            dl = data[g.M_DETECTION_LIMIT]
+            conf = data[g.M_CONF] 
+
             cb_analysis = partial(self.parent.start_async_save, g.SAVE_TYPE_ANALYSES_DEL, [analyses_to_delete], cb_suc, cb_err)     # Callback to delete analyses after method is saved
+            cb_calcs = partial(self.parent.start_async_save, g.SAVE_TYPE_CALCS_FROM_METHOD, [unit, dl, conf, calcs_to_update], cb_analysis, cb_err)
             
-            self.parent.start_async_save(g.SAVE_TYPE_METHOD_MOD, [self.method_id, data], onSuccess=cb_analysis, onError=cb_err)
+            self.parent.start_async_save(g.SAVE_TYPE_METHOD_MOD, [self.method_id, data], onSuccess=cb_calcs, onError=cb_err)
 
     def gather_inputs(self):
         # Gather optional savgol filter parameters

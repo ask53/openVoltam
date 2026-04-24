@@ -235,6 +235,7 @@ SAVE_TYPE_CALC_EDIT = 'edit-calc'
 SAVE_TYPE_CALC_DELETE = 'calc-del'
 SAVE_TYPE_CALCS_ARCHIVE = 'calcs-archive'
 SAVE_TYPE_ANALYSES_DEL = 'analyses-del'
+SAVE_TYPE_CALCS_FROM_METHOD = 'calcs-method-settings'
 
 # Input 
 RC_REPS_MIN = 1

@@ -44,6 +44,7 @@ class WindowCalculate(QMainWindow):
         self.calc_id = calc_id
         self.suggestion = suggestion
         self.mode_prev = None
+        
 
         self.reset_globals()
 
@@ -68,6 +69,7 @@ class WindowCalculate(QMainWindow):
         self.updating_runs = False
         self.on_save_mode = None
         self.on_save_calc = None
+        self.archived = False
         
         self.to_preset = False
         if self.mode in (g.WIN_MODE_EDIT, g.WIN_MODE_VIEW_ONLY) and self.calc_id:
@@ -260,6 +262,7 @@ class WindowCalculate(QMainWindow):
             txt = self.calc_id
             calc = self.get_calc_from_id(self.calc_id)
             if calc[g.C_ARCHIVED]:
+                self.archived = True
                 txt = '[ARCHIVED] '+txt
         title = QLabel(txt)
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -822,7 +825,8 @@ class WindowCalculate(QMainWindow):
                 self.set_widget_border(run_list, self.border_width_active, self.border_color_todo)
             # Update next pane based on status of this pane
             self.update_points(selector_index, run_list)
-            self.graph.update_points(self.points)
+            if not self.archived:
+                self.graph.update_points(self.points)
             self.update_selectors()
             self.updating_runs = False
         except Exception as e:
@@ -847,8 +851,8 @@ class WindowCalculate(QMainWindow):
                 self.set_widget_border(tree, self.border_width_active, self.border_color_todo)
 
             self.update_points(i+1, tree)
-            
-            self.graph.update_points(self.points)
+            if not self.archived:
+                self.graph.update_points(self.points)
             self.update_selectors()
 
             
@@ -1075,21 +1079,17 @@ class WindowCalculate(QMainWindow):
                 txt = 'None'
             else:
                 # Append run settings from method to dict
-                run_id = r[g.C_POINTS][0][0][g.C_RUN_ID]
-                method_id = get_run_from_file_data(self.parent.data, run_id)[g.R_UID_METHOD]
-                method = get_method_from_file_data(self.parent.data, method_id)
-                print()
-                print(method)
-                print()
-                for key in (g.M_UNIT, g.M_CONF, g.M_DETECTION_LIMIT):
-                    r[key] = method[key]
-                print()
-                print('---')
-                print()
-                print(r)
-                print()
-                print('---')
+                if self.archived:
+                    calc_method_settings_holder = self.get_calc_from_id(self.calc_id)   # grab calc method settings from existing calc
+                    
+                else:
+                    run_id = r[g.C_POINTS][0][0][g.C_RUN_ID]
+                    method_id = get_run_from_file_data(self.parent.data, run_id)[g.R_UID_METHOD]
+                    calc_method_settings_holder = get_method_from_file_data(self.parent.data, method_id)    # grab calc method settings from method
 
+                for key in (g.M_UNIT, g.M_CONF, g.M_DETECTION_LIMIT):
+                    r[key] = calc_method_settings_holder[key]
+                
                 # Get result text to display (as html)
 
                 txt = self.get_result_header(r)
@@ -1127,10 +1127,6 @@ class WindowCalculate(QMainWindow):
         dl = convert_conc_from_file_unit(r[g.M_DETECTION_LIMIT], unit)
         val = convert_conc_from_file_unit(r[g.C_CONC_ORIGINAL], unit)
         margin = convert_conc_from_file_unit(r[g.C_ERROR_MARGINS][conf], unit)
-
-        print('val: '+str(val))
-        print('ME: +-'+str(margin))
-        print('detection limit: '+str(dl))
         
         res = self.get_result_sig_figs(val, margin, unit)
         paren_res = '(' + res + ')'
@@ -1157,9 +1153,6 @@ class WindowCalculate(QMainWindow):
             4.23456 +/- 0.05678 -> 4.235 +/- 0.057
         Returns result as string
         """
-        print(val)
-        print(margin)
-        print()
         decimals = self.get_place_of_first_sig_fig(margin) + 1
         if decimals <= 0:                            # if we are rounding to the left of the decimal place
             v = str(int(round(val, decimals)))

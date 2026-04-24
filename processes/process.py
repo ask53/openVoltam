@@ -340,6 +340,17 @@ def save_delete_analyses(data, params):
                     break
             if rep_wiped: break
     return data
+
+def save_update_calcs_method_settings(data, params):
+    unit, dl, conf, calcs = params
+    for calc in data[g.S_PROCESSED]:
+        if calc[g.R_UID_SELF] in calcs:
+            if not calc[g.C_ARCHIVED]: 
+                calc[g.M_UNIT] = unit
+                calc[g.M_DETECTION_LIMIT] = dl
+                calc[g.M_CONF] = conf
+    return data
+            
                     
 
 def save():    
@@ -373,6 +384,8 @@ def save():
             data=save_change_calcs_archive(data,params)
         elif saveType == g.SAVE_TYPE_ANALYSES_DEL:
             data=save_delete_analyses(data, params)
+        elif saveType == g.SAVE_TYPE_CALCS_FROM_METHOD:
+            data=save_update_calcs_method_settings(data, params)
         
         write_data_to_file(path, data)
         data = remove_data_from_layout(data) 

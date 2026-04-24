@@ -106,6 +106,7 @@ class StdAddFitterPlot(QMainWindow):
         self.update_points(self.points)
 
     def update_points(self, points):
+        print('updating LIVE data1')
         self.points = points
         if not self.type:       # if there is no type, can't get y values!
             return
@@ -192,9 +193,11 @@ class StdAddFitterPlot(QMainWindow):
                 y_sum = y_sum + y
             x_avg = np.append(x_avg, x)
             y_avg = np.append(y_avg, y_sum/len(point))
-        
+
+        self.plot_xy_data(x_all, y_all, x_avg, y_avg)
         self.plot_regression_line(x_avg, m, b, self.color_avg)
         self.label_regression_line(x_avg, y_avg, m, b, r_sq, self.color_avg)
+        self.results = True
 
         
         
@@ -241,11 +244,8 @@ class StdAddFitterPlot(QMainWindow):
         Plots the x v. y in one color, x_avg v. y_avg, in another color. If there are at least
         three data points on the average plot, it adds a linear regression trendline, displays
         the r-squared value, and stores the results on self."""
-        
-        self.canvas.axes.cla()                                                      # Clear the axes
-        self.set_axis_labels()                                                      # Add axes labels back in
-        self.allpts, = self.canvas.axes.plot(x,y, 'o', color=self.color_rep)            # Plot all data points in purple
-        self.avgpts, = self.canvas.axes.plot(x_avg, y_avg, 'D', color=self.color_avg)   # Add averages as diamont points in pink
+
+        self.plot_xy_data(x,y, x_avg, y_avg)
         
         if x_avg.size < 3:
             self.results = False
@@ -278,6 +278,12 @@ class StdAddFitterPlot(QMainWindow):
             self.results = True
                    
         self.canvas.draw()
+
+    def plot_xy_data(self, x, y, x_avg, y_avg):
+        self.canvas.axes.cla()                                                      # Clear the axes
+        self.set_axis_labels()                                                      # Add axes labels back in
+        self.allpts, = self.canvas.axes.plot(x,y, 'o', color=self.color_rep)            # Plot all data points in purple
+        self.avgpts, = self.canvas.axes.plot(x_avg, y_avg, 'D', color=self.color_avg)   # Add averages as diamont points in pink
 
     def plot_regression_line(self, x_avg, m, b, color):
         y_reg = np.zeros(0)

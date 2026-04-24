@@ -420,7 +420,7 @@ def check_calc_conflict(data, reps_to_change):
 
     # If there IS a conflict, ask the user about it
     title = 'Archive check'
-    body = 'This action modifies replicates that are used in calculations.\nTo continue with this action requires archiving the following calculations:'
+    body = 'This action modifies replicates that are used in calculations.\nTo continue with this action requires archiving or modifying the following calculations:'
     for calc in calcs_in_conflict:
         body = body + '\n   - ' + str(calc)
     body = body + '\nWould you like to continue?'
@@ -494,7 +494,7 @@ class confirmMessageBox(QMessageBox):
         self.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
 
         but_ok = self.button(QMessageBox.StandardButton.Ok)
-        but_ok.setText('Continue and archive calculations')
+        but_ok.setText('Continue (and modify calculations)')
         but_canc = self.button(QMessageBox.StandardButton.Cancel)
         but_canc.setText(l.s_edit_cancel[g.L])
 class warningMessageBox(QMessageBox):
