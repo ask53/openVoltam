@@ -1516,6 +1516,7 @@ class WindowMethod(QMainWindow):
                     if sig[g.M_RAMP_V1] != bac[g.M_RAMP_V1] or sig[g.M_RAMP_V2] != bac[g.M_RAMP_V2] or sig[g.M_T] != bac[g.M_T]:
                         resp = show_warning("Warning: data collection", "Just a heads up, the data and background collection steps have differnt values.\nAre you sure you want to continue?")   
                         if not resp: return False
+
         ###################
         #   ANALYSIS TAB  #
         ###################
@@ -1533,7 +1534,13 @@ class WindowMethod(QMainWindow):
                 show_alert(self, 'Error!', 'The Savitzky-Golay order must be smaller than the window size (Analysis tab).')
                 return False
            
-
+        ###################
+        #   CALC TAB      #
+        ###################
+        if not self.dl.value():
+            resp = show_warning("Warning: calculation settings", "No detection limit has been set (Calculation tab).\nAre you sure you want to continue?")   
+            if not resp: return False
+            
         
         return True
 

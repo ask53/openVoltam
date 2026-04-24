@@ -1136,15 +1136,21 @@ class WindowCalculate(QMainWindow):
 
         
         
-
-        if val > dl and not margin_includes_zero:   # return the result!
-            return [res]
-        elif 0 > val and not margin_includes_zero:    # return an ERROR msg here, we're getting a confidently negative result.
-            return ['ERROR',  'Results are negative, please check the way the calculation is set up', paren_res]
-        elif margin_includes_zero and margin > dl:  # display WARNING here, encourage user to add more points or std adds
-            return ['INSUFFICIENT DATA', 'The data range is quite broad. Try adding additional replicates or standard additions to reduce variance', paren_res]
-        else:                                       # display NO DETECT here
-            return ['NO DETECT', paren_res]
+        if dl:
+            if val > dl and not margin_includes_zero:   # return the result!
+                return [res]
+            elif 0 > val and not margin_includes_zero:    # return an ERROR msg here, we're getting a confidently negative result.
+                return ['ERROR',  'Results are negative, please check the way the calculation is set up', paren_res]
+            elif margin_includes_zero and margin > dl:  # display WARNING here, encourage user to add more points or std adds
+                return ['INSUFFICIENT DATA', 'The data range is quite broad. Try adding additional replicates or standard additions to reduce variance', paren_res]
+            else:                                       # display NO DETECT here
+                return ['NO DETECT', paren_res]
+        else:
+            if 0 > val and not margin_includes_zero:
+                return ['ERROR',  'Results are negative, please check the way the calculation is set up', paren_res]
+            else:
+                return ['WARNING', 'No detection limit set in method...examine the margin of error closely before using.', paren_res]
+                
         
     def get_result_sig_figs(self, val, margin, unit):
         """Rounds val and margin to 1 extra decimal place beyond the first significant digit of
