@@ -30,6 +30,7 @@ class WindowResultsView(QMainWindow):
         try:
             self.voltamogram.plot_reps(tasks, showraw=showraw)
         except Exception as e:
+            print('error here in resulltsView win!')
             print(e)
         
         self.setCentralWidget(self.voltamogram)   

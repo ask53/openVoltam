@@ -96,23 +96,25 @@ class VoltamogramPlot(QMainWindow):
             x = x.reshape(x.shape[0])
             y = np.array(pd.DataFrame(rep[g.R_DATA])[[g.R_DATA_CURR]].values)
             y = y.reshape(y.shape[0])
-            x_back = np.array(pd.DataFrame(rep[g.R_BACKGROUND])[[g.R_DATA_VOLT]].values)
-            x_back = x_back.reshape(x_back.shape[0])
-            y_back = np.array(pd.DataFrame(rep[g.R_BACKGROUND])[[g.R_DATA_CURR]].values)
-            y_back = y_back.reshape(y_back.shape[0])
-            
-            # 1b. Resize
             x = self.resize_data(x, g.VOG_RESIZE)
             y = self.resize_data(y, g.VOG_RESIZE)
 
-            if x_back.size != 0 and y_back.size != 0:
+            if rep[g.R_BACKGROUND]:
+                x_back = np.array(pd.DataFrame(rep[g.R_BACKGROUND])[[g.R_DATA_VOLT]].values)
+                x_back = x_back.reshape(x_back.shape[0])
+                y_back = np.array(pd.DataFrame(rep[g.R_BACKGROUND])[[g.R_DATA_CURR]].values)
+                y_back = y_back.reshape(y_back.shape[0])
                 x_back = self.resize_data(x_back, g.VOG_RESIZE)
                 y_back = self.resize_data(y_back, g.VOG_RESIZE)
 
+            else:
+                x_back, y_back = (np.zeros(0), np.zeros(0))
+
             # 2. If background is present & subbackground==True, interpolate background and subtract
-            if x_back.size != 0 and y_back.size != 0 and subbackground:
+            if x_back.size and subbackground:
                 y_back = np.interp(x, x_back, y_back)   # interpolate background to match voltage of signal
                 y = y - y_back                          # subtrack background from signal
+
             
             # 3. If smooth, smooth result
             y_raw = y.copy()                        # store copy of y as y_raw in case we want to display it to user    
@@ -125,7 +127,7 @@ class VoltamogramPlot(QMainWindow):
             if lopass:
                 y = self.butter_lowpass_filter(y, g.VOG_LP_CUTOFF, g.VOG_LP_FS,
                                                order=g.VOG_LP_ORDER)
-                
+
 
             # 5. If predictpeak, guess baseline and peak locations, store as vars in self
             #
@@ -377,6 +379,7 @@ class VoltamogramPlot(QMainWindow):
         lstyles = {}
         runs_displayed = []
         for rep in reps_to_disp:
+            
             if onerun: indexer = rep['rep_uid']
             else: indexer = rep['run_uid']
             
@@ -393,12 +396,12 @@ class VoltamogramPlot(QMainWindow):
             else:
                 if onerun: lbl = rep['run_uid']+', '+rep['rep_uid']
                 else: lbl = rep['run_uid']
-                
+
             self.plot_rep(rep, subbackground=subbackground, smooth=smooth,
                           lopass=lopass, showraw=showraw, predictpeak=predictpeak,
                           color=color, linestyle=lstyle, lbl=lbl)
             runs_displayed.append(rep['run_uid'])
-
+            
         # 3. Add legend
         if reps_to_disp:
             if not predictpeak:
