@@ -118,15 +118,15 @@ class VoltamogramPlot(QMainWindow):
             
             # 3. If smooth, smooth result
             y_raw = y.copy()                        # store copy of y as y_raw in case we want to display it to user    
-
-            if smooth:
-                y = savgol_filter(y, window_length=g.VOG_SG_WINDOW_LEN,
-                                  polyorder=g.VOG_SG_POLYORDER, mode='nearest')
+            method = rep[g.R_UID_METHOD]            # get method from rep
+            
+            if method[g.M_SG]:
+                y = savgol_filter(y, window_length=method[g.M_SG_WINDOW],
+                                  polyorder=method[g.M_SG_ORDER], mode='nearest')
 
             # 4. If lopass, pass result thru lopass filter
-            if lopass:
-                y = self.butter_lowpass_filter(y, g.VOG_LP_CUTOFF, g.VOG_LP_FS,
-                                               order=g.VOG_LP_ORDER)
+            if method[g.LP]:
+                y = self.butter_lowpass_filter(y, method)
 
 
             # 5. If predictpeak, guess baseline and peak locations, store as vars in self
@@ -346,30 +346,34 @@ class VoltamogramPlot(QMainWindow):
             rep = {'run_uid':run_id,
                    'rep_uid':rep_id}
             for fullrun in all_data[g.S_RUNS]:
-                if fullrun[g.R_UID_SELF] == run_id:    
+                if fullrun[g.R_UID_SELF] == run_id:
+
+                    # grab method details for this run to pass to plotter
+                    run = get_run_from_file_data(all_data, run_id)
+                    method_id = run[g.R_UID_METHOD]
+                    method = get_method_from_file_data(all_data, method_id)
+                    
+
+
+
                     for fullrep in fullrun[g.R_REPLICATES]:
                         if fullrep[g.R_UID_SELF] == rep_id:
                             found = True
                             try: 
-                                rep[g.R_DATA] = fullrep[g.R_DATA]
+                                rep[g.R_DATA] = fullrep[g.R_DATA]               # grab data if there is any
                             except Exception as e:
                                 print(e)
                                 rep[g.R_DATA] = []
                             try:
-                                rep[g.R_BACKGROUND] = fullrep[g.R_BACKGROUND]
+                                rep[g.R_BACKGROUND] = fullrep[g.R_BACKGROUND]   # grab background data if there is any
                             except Exception as e:
                                 print(e)
                                 rep[g.R_BACKGROUND] = []
                             break
                     if found: break
-            if rep[g.R_DATA] or rep[g.R_BACKGROUND]:    
+            if rep[g.R_DATA] or rep[g.R_BACKGROUND]:
+                rep[g.R_UID_METHOD] = method
                 reps_to_disp.append(rep)
-            
-            ### FOR DEBUGGING, UNCOMMENT
-            #
-            #print(reps_to_disp)
-            #
-            #########################
 
         onerun = False
         if len(runs_to_disp) == 1: onerun=True
@@ -473,7 +477,7 @@ class VoltamogramPlot(QMainWindow):
           
         return file_out
 
-    def butter_lowpass_filter(self, data, cutoff_freq, fs, order=5):
+    def butter_lowpass_filter(self, data, method):
         """
         Applies a Butterworth low-pass filter to the input data.
 
@@ -486,9 +490,9 @@ class VoltamogramPlot(QMainWindow):
         Returns:
             numpy.array: The filtered signal.
         """
-        nyquist = 0.5 * fs
-        normal_cutoff = cutoff_freq / nyquist
-        b, a = butter(order, normal_cutoff, btype='low', analog=False)
+        order = method[g.M_LP_ORDER]
+        freq = method[g.M_LP_FREQ]
+        b, a = butter(order, freq, btype='low', analog=False)
         filtered_data = filtfilt(b, a, data) # Use filtfilt for zero phase distortion
         return filtered_data
 
