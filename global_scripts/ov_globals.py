@@ -138,6 +138,9 @@ A_BASE_0_X = 'baseline_lower_x'
 A_BASE_0_Y = 'baseline_lower_y'
 A_BASE_1_X = 'baseline_upper_x'
 A_BASE_1_Y = 'baseline_upper_y'
+A_DERIV_LEFT = 'max-derivative-left'
+A_DERIV_RIGHT = 'max-derivative-right'
+A_DERIV_MEAN = 'mean-max-derivatives'
 
 # Calculation window globals
 C_STACK_INDEX_BASE = 0

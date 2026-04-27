@@ -381,7 +381,7 @@ class VoltamogramPlot(QMainWindow):
         self.endpoints[i].set_ydata([y])
         self.baseline.set_ydata(self.base_y)
 
-        self.guess_peak()                   
+        self.guess_peak()
 
         self.canvas.draw_idle()
 
@@ -422,7 +422,7 @@ class VoltamogramPlot(QMainWindow):
             y_base = m*x+b
             y = self.y[i]
 
-            self.set_peak(x,y_base,y) 
+            self.set_peak(x,y_base,y)
             self.canvas.draw_idle()
      
 
@@ -458,7 +458,27 @@ class VoltamogramPlot(QMainWindow):
         
         m = float(y1-y0)/float(x1-x0)   # slope of baseline
         b = y0-m*x0                     # y intercept of baseline
-        return (x0, y0, x1, y1, m, b)  
+        return (x0, y0, x1, y1, m, b)
+
+    def get_derivs(self):
+        (x0, y0, x1, y1, m, b) = self.get_baseline_params()
+        x0i = np.where(self.x==x0)[0][0]
+        x1i = np.where(self.x==x1)[0][0]
+        peakxi = np.where(self.x==self.peak_x)[0][0]
+
+        x_left = self.x[x0i:peakxi]
+        y_left = self.y[x0i:peakxi]
+        x_right = self.x[peakxi:x1i]
+        y_right = self.y[peakxi:x1i]
+
+        d_left = np.gradient(y_left, x_left)
+        d_right = np.gradient(y_right, x_right)
+
+        l_max = abs(float(max(d_left)))
+        r_max = abs(float(min(d_right)))
+        mean_max = (l_max + r_max) / 2.
+
+        return l_max, r_max, mean_max        
         
 
     #####################################
@@ -678,6 +698,7 @@ class VoltamogramPlot(QMainWindow):
         (x0, y0, x1, y1, m, b) = self.get_baseline_params()
         y_base = m*self.peak_x+b
         ht = self.peak_y-y_base
+        deriv_l, deriv_r, deriv_avg = self.get_derivs()
         
         return {g.A_PEAK_X: float(self.peak_x),
                 g.A_PEAK_Y: float(self.peak_y),
@@ -685,4 +706,7 @@ class VoltamogramPlot(QMainWindow):
                 g.A_BASE_0_X: float(x0),
                 g.A_BASE_0_Y: float(y0),
                 g.A_BASE_1_X: float(x1),
-                g.A_BASE_1_Y: float(y1)}
+                g.A_BASE_1_Y: float(y1),
+                g.A_DERIV_LEFT: deriv_l,
+                g.A_DERIV_RIGHT: deriv_r,
+                g.A_DERIV_MEAN: deriv_avg}

@@ -223,6 +223,8 @@ class WindowMethod(QMainWindow):
         sg_order_lbl = QLabel("Order of polynomial fit")
         self.sg_window = QSpinBox()
         self.sg_order = QSpinBox()
+        self.sg_window.setRange(0,999999)
+        self.sg_order.setRange(0,99)
         self.g_sg = QGroupBox("Use Savitzky-Golay smoothing")
         self.sg_window.valueChanged.connect(self.analysis_impacted)
         self.sg_order.valueChanged.connect(self.analysis_impacted)

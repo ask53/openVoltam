@@ -143,7 +143,11 @@ class WindowAnalyze(QMainWindow):
 
     def store_results(self):
         i = self.stack.currentIndex()
-        self.results[i] = self.voltamograms[i].get_analysis_results()
+        try:
+            self.results[i] = self.voltamograms[i].get_analysis_results()
+            print(self.results[i])
+        except Exception as e:
+            print(e)
 
     def process_next(self):
         if self.stack.currentIndex() == len(self.tasks)-1:  # if we're on last task already
