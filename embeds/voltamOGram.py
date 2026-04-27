@@ -125,16 +125,13 @@ class VoltamogramPlot(QMainWindow):
                                   polyorder=method[g.M_SG_ORDER], mode='nearest')
 
             # 4. If lopass, pass result thru lopass filter
-            if method[g.LP]:
+            if method[g.M_LP]:
                 y = self.butter_lowpass_filter(y, method)
 
 
             # 5. If predictpeak, guess baseline and peak locations, store as vars in self
-            #
-            #
-            #
-            #
-            ########################################################################3
+            if predictpeak:
+                peak, base = self.get_predicted_basepoints(x, y, method)
             
             # 6. Show final result
             if showraw:                                 # first, show raw data if requested
@@ -149,11 +146,11 @@ class VoltamogramPlot(QMainWindow):
             if predictpeak:
                 self.x = x      # store x and y for access from mouseclick/move handlers
                 self.y = y
-                self.base_x = np.array([x[1], x[-2]])
-                self.base_y = np.array([y[1], y[-2]])
+                self.base_x = np.array(base[0])
+                self.base_y = np.array(base[1])
                 self.active_endpoint = 0
-                self.peak_x = 0
-                self.peak_y = 0
+                self.peak_x = peak[0]
+                self.peak_y = peak[1]
                 
                 ep0, = self.canvas.axes.plot(self.base_x[0], self.base_y[0], 'o',
                                              mfc='#80008033',mec='black', mew=2,
@@ -172,13 +169,154 @@ class VoltamogramPlot(QMainWindow):
                                                         mfc='#013ea833', mec='None',
                                                         markersize='18', picker=18)
                 self.endpoints = (ep0,ep1)
-                self.guess_peak()
+
+                (x0, y0, x1, y1, m, b) = self.get_baseline_params()
+                self.set_peak(self.peak_x, m*self.peak_x+b, self.peak_y)
                 
                 self.canvas.callbacks.connect('pick_event', self.on_pick)
                 self.canvas.mpl_connect('button_release_event', self.on_but_release)
                 self.canvas.mpl_connect('motion_notify_event', self.on_mouse_move)
                 
             self.canvas.draw()
+
+
+    #####################################################
+    #                                                   #
+    #   PEAK FINDING FUNCTIONS AND THEIR FRIENDS        #
+    #           (BETWEEN REVOLUTIONS :P )               #
+    #                                                   #
+    #   1. get_local_extremes()                         #
+    #   2. get_x_y_valules()                            #
+    #   3. get_index_of_closest_vaule(l, val)           #
+    #   4. get_predicted_basepoints()                   #
+    #                                                   #
+    #####################################################
+
+    def get_local_extremes_i(self, data):
+        data = np.gradient(data)
+        prev_d = None
+        mins = []
+        maxes = []
+        for i,d in enumerate(data):
+            if d == 0:
+                zeros.append(i)
+                prev_d = None
+            elif prev_d:
+                if d*prev_d < 0:  # if this and the previous data point are on oposite sides of zero
+                    if prev_d > 0:
+                        if abs(d)<abs(prev_d): maxes.append(i)
+                        else: maxes.append(i-1)
+                    else:
+                        if abs(d)<abs(prev_d): mins.append(i)
+                        else: mins.append(i-1)
+                prev_d = d
+            else:
+                prev_d = d
+    
+        return mins, maxes
+
+    def get_x_y_values(self, x, y, iz):
+        """Takes in:
+        - x, a numpy array of x values
+        - y, a numpy array of y values
+        - iz, a list of indices such that all indices in iz are on both x and y
+        ALGORITHM:
+        For each index, grab the corresponding x and y values.
+        Returns:
+          - [0], a list of the x values at the indices
+          - [1], a list of the y values at the indices"""
+        ext_x = []
+        ext_y = []
+        for i in iz:
+            ext_x.append(float(x[i]))
+            ext_y.append(float(y[i]))
+        return ext_x, ext_y
+
+    def get_index_of_closest_value(self, l, val):
+        """takes in a list of floats or ints, l, and a vaule (float or int).
+        Returns the index of the value in l which is closest to val"""
+        difs = []
+        for el in l:
+            dif = abs(float(val)-float(el))
+            difs.append(dif)
+        min_dif = min(difs)
+        return difs.index(min_dif)
+
+    def get_predicted_basepoints(self, x, y, method):
+        base = ((x[0], x[-1]), (y[0], y[-1]))               # set defaullt basepoints to ends of curve
+        peak = (0,0)
+        
+        I_d1 = np.gradient(y, x)                            # 1st deriv
+        I_d2 = np.gradient(I_d1, x)                         # 2nd deriv
+        I_d3 = np.gradient(I_d2, x)                         # 3rd deriv
+             
+        mins0_i, maxes0_i = self.get_local_extremes_i(y)         # maxes/mins of originall function
+        mins2_i, maxes2_i = self.get_local_extremes_i(I_d2)      # maxes/mins of 2nd deriv
+        mins3_i, maxes3_i = self.get_local_extremes_i(I_d3)      # maxes/mins of 3rd deriv
+
+        # 1. Guess the peak
+        peaks_x, peaks_y = self.get_x_y_values(x, y, maxes0_i)   # get x and y vaules of the local maxes of y
+
+        if len(peaks_x) == 0:                               # no peaks id'd, set baseline endpoints to end of run values
+            return peak, base 
+                                                    
+        vmin = method[g.M_PEAK_V_MIN]                       # if there is at least 1 identified peak    
+        vmax = method[g.M_PEAK_V_MAX]                       # grab the index of the peak closest to the middle
+        x_mid = vmin + (vmax-vmin)/2.                       # of the user-set expected peak voltage range
+        i = self.get_index_of_closest_value(peaks_x, x_mid)
+
+        peak = (peaks_x[i],peaks_y[i])
+        peak_i = maxes0_i[i]
+
+        # 2. Guess the basepoints 
+        bp_candidates_i = mins0_i + maxes2_i + maxes3_i     # Start with all possible basepoints (mins of y or maxes of y'' or y''')
+        bps_left_i = []
+        bps_right_i = []
+        n = x.size
+        cutoff_i = 0.075*n                                  # define a cutoff (nearness to the end for which we'll ignore possible basepoints)
+        
+        for bp_i in bp_candidates_i:
+            if bp_i > cutoff_i and bp_i < n - cutoff_i:     # discard any possible basepoints that are too close to ends of data
+                if bp_i < peak_i:                           # if basepoint to the left of peak
+                    bps_left_i.append(bp_i)                 #   add it to the list of possible basepoints left of peak
+                elif bp_i > peak_i:                         # if its to the right of the peak (ok to discard peak)
+                    bps_right_i.append(bp_i)                #   add it to the list of possible basepoints right of peak
+
+        bp_pairs_i = []                                     # Build a list of possible basepoints, inculde distance between them
+        for i in bps_left_i:
+            for j in bps_right_i:
+                bp_pairs_i.append({'left': i,
+                                   'right': j,
+                                   'dif': j-i})
+                                            
+        bp_pairs_i = list(reversed(sorted(bp_pairs_i, key=lambda x: x['dif'])))     # sort the list from largest to smallest difference
+        bp_found = False
+        for pair in bp_pairs_i:                             # loop through all possible pairs (from furthest apart to closest)
+            i1, i2 = pair['left'], pair['right']            # as soon as we find a pair whose baseline doesn't intersect the curve
+            x1, y1, x2, y2 = x[i1], y[i1], x[i2], y[i2]     # at all, those are our baselines!
+            m = (y2 - y1) / (x2 - x1)                       # slope
+            b = y2 - m*x2                                   # intercept
+
+            blx = x[i1+1:i2]                                # array of x vaules for baseline (exculde actual baseline points where baseline for sure intersects
+            bly = []                
+            for val in blx:
+                bly.append(m*val+b)                         # for each baseline x value, get the corresponding baseline y value (y = mx+b)
+
+            y_sub = y[i1+1:i2]                              # subset of y that matchest range of this particular baseilne
+
+            bly = np.array(bly)                             # convert to np arrays for intersection comparison
+            y_sub = np.array(y_sub)
+
+            intersections = np.argwhere(np.diff(np.sign(y_sub-bly))).flatten() # get list of indices of intersection points between baseline and curve
+
+            if len(intersections) == 0:                     # if the lines don't cross
+                bp_found = True                             # we found our suggested baseline!
+                break
+
+        if bp_found:                                        # if a baseline was found, 
+            base = ((x1, x2), (y1,y2))                      #   overwrite the default baselines with our new found baseline
+
+        return peak, base
 
             
     #################################################

@@ -162,12 +162,15 @@ class WindowAnalyze(QMainWindow):
         self.refresh_progress(i)
 
     def set_graph(self, i):
-        lines = self.voltamograms[i].get_line_count()
-        if lines == 0:
-            self.voltamograms[i].plot_reps([self.tasks[i]], subbackground=True, smooth=True,
-                                           lopass=True, showraw=True, predictpeak=True)
-            if self.results[i]:
-                self.voltamograms[i].set_analysis(self.results[i])
+        try:
+            lines = self.voltamograms[i].get_line_count()
+            if lines == 0:
+                self.voltamograms[i].plot_reps([self.tasks[i]], subbackground=True, smooth=True,
+                                               lopass=True, showraw=True, predictpeak=True)
+                if self.results[i]:
+                    self.voltamograms[i].set_analysis(self.results[i])
+        except Exception as e:
+            print(e)
         
 
     def update_buttons(self, i):
