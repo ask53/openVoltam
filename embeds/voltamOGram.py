@@ -96,8 +96,8 @@ class VoltamogramPlot(QMainWindow):
             x = x.reshape(x.shape[0])
             y = np.array(pd.DataFrame(rep[g.R_DATA])[[g.R_DATA_CURR]].values)
             y = y.reshape(y.shape[0])
-            x = self.resize_data(x, g.VOG_RESIZE)
-            y = self.resize_data(y, g.VOG_RESIZE)
+            '''x = self.resize_data(x, g.VOG_RESIZE)
+            y = self.resize_data(y, g.VOG_RESIZE)'''
 
             if rep[g.R_BACKGROUND]:
                 x_back = np.array(pd.DataFrame(rep[g.R_BACKGROUND])[[g.R_DATA_VOLT]].values)
