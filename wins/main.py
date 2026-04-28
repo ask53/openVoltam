@@ -1343,18 +1343,21 @@ class WindowMain(QMainWindow):
     #############################################
 
     def closeEvent(self, event):
-        msg_box = QMessageBox()    
-        msg_box.setWindowTitle("Are you sure?") 
-        msg_box.setText('This will close this sample and all associated windows including active runs, run configurations, and analysis.\n\nAre you sure you want to close?\n')
-        msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+        if self.children:                       # if there are child windows open, confirm user wants all windows to close
+            msg_box = QMessageBox()    
+            msg_box.setWindowTitle("Are you sure?") 
+            msg_box.setText('This will close this sample and all associated windows including active runs, run configurations, and analysis.\n\nAre you sure you want to close?\n')
+            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
 
-        # customize button language text for multi-language support
-        but_close = msg_box.button(QMessageBox.StandardButton.Ok)
-        but_close.setText('Close')
-        but_canc = msg_box.button(QMessageBox.StandardButton.Cancel)
-        but_canc.setText('Cancel')
+            # customize button language text for multi-language support
+            but_close = msg_box.button(QMessageBox.StandardButton.Ok)
+            but_close.setText('Close')
+            but_canc = msg_box.button(QMessageBox.StandardButton.Cancel)
+            but_canc.setText('Cancel')
 
-        resp = msg_box.exec()
+            resp = msg_box.exec()
+        else:                                   # if the main window has no open child windows, don't show warning
+            resp = QMessageBox.StandardButton.Ok
             
         if resp == QMessageBox.StandardButton.Ok:
             current_child = False
