@@ -152,27 +152,27 @@ class VoltamogramPlot(QMainWindow):
                 self.peak_x = peak[0]
                 self.peak_y = peak[1]
                 
-                ep0, = self.canvas.axes.plot(self.base_x[0], self.base_y[0], 'o',
+                ep0, = self.canvas.axes.plot(self.base_x[0], self.base_y[0], 'o',               # set the left baseline endpoint
                                              mfc='#80008033',mec='black', mew=2,
                                              markersize='36', picker=40)
 
-                ep1, = self.canvas.axes.plot(self.base_x[1], self.base_y[1], 'o',
+                ep1, = self.canvas.axes.plot(self.base_x[1], self.base_y[1], 'o',               # set the right baseline endpoint
                                              mfc='#80008033', mec='None', mew=2,
                                              markersize='36', picker=40)
                 
-                self.baseline, = self.canvas.axes.plot(self.base_x, self.base_y, '-',
+                self.baseline, = self.canvas.axes.plot(self.base_x, self.base_y, '-',           # draw the baseline between the endpoints
                                                        color='#800080bb')
 
-                tempxy = np.array([self.peak_x,self.peak_x])
-                self.peakline, = self.canvas.axes.plot(tempxy, tempxy, '-', color='#00ddff')
-                self.peakpoint, = self.canvas.axes.plot(self.peak_x, self.peak_y, 'o',
+                tempxy = np.array([self.peak_x,self.peak_x]) 
+                self.peakline, = self.canvas.axes.plot(tempxy, tempxy, '-', color='#00ddff')    # draw the line from baseline to peak
+                self.peakpoint, = self.canvas.axes.plot(self.peak_x, self.peak_y, 'o',          # draw the peak marker
                                                         mfc='#013ea833', mec='None',
                                                         markersize='18', picker=18)
-                self.endpoints = (ep0,ep1)
+                self.endpoints = (ep0,ep1)                                                      # store the endpoint graphs on self
 
-                (x0, y0, x1, y1, m, b) = self.get_baseline_params()
-                self.set_peak(self.peak_x, m*self.peak_x+b, self.peak_y)
-                
+                self.guess_peak()                                                               # guess the peak between the endpoints
+
+                # Connect callback handlers for picking the graph, clicking the graph, and moving the mouse
                 self.canvas.callbacks.connect('pick_event', self.on_pick)
                 self.canvas.mpl_connect('button_release_event', self.on_but_release)
                 self.canvas.mpl_connect('motion_notify_event', self.on_mouse_move)
@@ -199,8 +199,7 @@ class VoltamogramPlot(QMainWindow):
         maxes = []
         for i,d in enumerate(data):
             if d == 0:
-                zeros.append(i)
-                prev_d = None
+                pass
             elif prev_d:
                 if d*prev_d < 0:  # if this and the previous data point are on oposite sides of zero
                     if prev_d > 0:
