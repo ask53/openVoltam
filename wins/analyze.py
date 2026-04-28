@@ -145,7 +145,6 @@ class WindowAnalyze(QMainWindow):
         i = self.stack.currentIndex()
         try:
             self.results[i] = self.voltamograms[i].get_analysis_results()
-            print(self.results[i])
         except Exception as e:
             print(e)
 
@@ -198,15 +197,9 @@ class WindowAnalyze(QMainWindow):
         applyStyles()
 
     def keyPressEvent(self, event):
-        print('keypress!')
         if event.text() in ('z', '.'):
-            print('switching active point!')
-            try:
-                i = self.stack.currentIndex()
-                self.voltamograms[i].toggle_endpoint()
-            except Exception as e:
-                print(e)
-        
+            i = self.stack.currentIndex()
+            self.voltamograms[i].toggle_endpoint()
         
     def save_and_close(self):
         # 0. Check if this messes up any existing calculations
@@ -232,7 +225,6 @@ class WindowAnalyze(QMainWindow):
             
 
     def save_success(self, event=False):
-        print('got here!')
         self.status.showMessage("Saved!")
         self.saved = True
         self.close()
