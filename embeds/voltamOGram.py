@@ -104,8 +104,19 @@ class VoltamogramPlot(QMainWindow):
                 x_back = x_back.reshape(x_back.shape[0])
                 y_back = np.array(pd.DataFrame(rep[g.R_BACKGROUND])[[g.R_DATA_CURR]].values)
                 y_back = y_back.reshape(y_back.shape[0])
-                x_back = self.resize_data(x_back, g.VOG_RESIZE)
-                y_back = self.resize_data(y_back, g.VOG_RESIZE)
+
+                ###### DO NOT RESIZE EITHER SIGNAL OR BACKGROUND
+                #
+                '''
+                if x.size > x_back.size:
+                    x_back = self.resize_data(x_back, x.size)
+                    y_back = self.resize_data(y_back, x.size)
+                elif x.size < x_back.size:
+                    x = self.resize_data(x, x_back.size)
+                    y = self.resize_data(y, x_back.size)
+                '''
+                #
+                ##################################################
 
             else:
                 x_back, y_back = (np.zeros(0), np.zeros(0))
@@ -119,10 +130,12 @@ class VoltamogramPlot(QMainWindow):
             # 3. If smooth, smooth result
             y_raw = y.copy()                        # store copy of y as y_raw in case we want to display it to user    
             method = rep[g.R_UID_METHOD]            # get method from rep
+            window = method[g.M_SG_WINDOW]
+            order = method[g.M_SG_ORDER]
             
             if method[g.M_SG]:
-                y = savgol_filter(y, window_length=method[g.M_SG_WINDOW],
-                                  polyorder=method[g.M_SG_ORDER], mode='nearest')
+                y = savgol_filter(y, window_length=window,
+                                  polyorder=order, mode='nearest')
 
             # 4. If lopass, pass result thru lopass filter
             if method[g.M_LP]:
