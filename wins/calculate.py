@@ -1089,7 +1089,6 @@ class WindowCalculate(QMainWindow):
 
                 for key in (g.M_UNIT, g.M_CONF, g.M_DETECTION_LIMIT):
                     r[key] = calc_method_settings_holder[key]
-                
                 # Get result text to display (as html)
 
                 txt = self.get_result_header(r)
@@ -1097,15 +1096,12 @@ class WindowCalculate(QMainWindow):
                 for res in results:
                     txt = txt + res + '<br>'
 
-
                 txt = txt + '------------<br><br>'
                 txt = txt + 'Model: y = '+str(r[g.C_SLOPE])+' * x + '+str(r[g.C_INT])+'<br><br>'
                 txt = txt + 'R^2: '+str(round(float(r[g.C_R2]), 4))+'<br>'
                 txt = txt + 'Standard error: '+str(round(float(r[g.C_STDERR]), 4))
             self.results.setText(txt)
             self.results_stack.setCurrentIndex(1)
-            
-            #print(r)
             
             if not r: return None
             else: return r

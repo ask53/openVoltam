@@ -106,7 +106,6 @@ class StdAddFitterPlot(QMainWindow):
         self.update_points(self.points)
 
     def update_points(self, points):
-        print('updating LIVE data1')
         self.points = points
         if not self.type:       # if there is no type, can't get y values!
             return
@@ -217,19 +216,17 @@ class StdAddFitterPlot(QMainWindow):
     def get_y(self, rep):
         """Returns a floating point value from the dict, rep, based on which type
         of analysis has been selected in self.type by the user"""
+        a = rep[g.R_ANALYSIS]
         if self.type == g.C_TYPE_PEAKBASE:
-            return rep[g.R_ANALYSIS][g.A_PEAK_HEIGHT]
+            return a[g.A_PEAK_HEIGHT]
         elif self.type == g.C_TYPE_PEAKZERO:
-            return rep[g.R_ANALYSIS][g.A_PEAK_Y]
+            return a[g.A_PEAK_Y]
         elif self.type == g.C_TYPE_SLOPE_L:
-            print('Not ready to run SLOPE_L calcs yet!')
-            return 0
+            return a[g.A_DERIV_LEFT]
         elif self.type == g.C_TYPE_SLOPE_R:
-            print('Not ready to run SLOPE_R calcs yet!')
-            return 0
+            return a[g.A_DERIV_RIGHT]
         elif self.type == g.C_TYPE_SLOPE_AVG:
-            print('Not ready to run SLOPE_AVG calcs yet!')
-            return 0
+            return a[g.A_DERIV_MEAN]
                 
                 
                 
