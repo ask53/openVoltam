@@ -88,7 +88,7 @@ class VoltamogramPlot(QMainWindow):
         self.canvas.axes.set_ylabel('Current [uA]')
 
     def plot_rep(self, rep, subbackground=True, showsmoothed=False, showraw=True, predictpeak=False, color='black', linestyle='solid', lbl=''):
-        
+        print(rep)
         if rep[g.R_DATA]:
             # 1. Convert rep signal and background data to 1D numpy arrays then resize
             # 1a. Convert to numpy array
@@ -171,11 +171,11 @@ class VoltamogramPlot(QMainWindow):
                 
                 ep0, = self.canvas.axes.plot(self.base_x[0], self.base_y[0], 'o',               # set the left baseline endpoint
                                              mfc='#80008033',mec='black', mew=2,
-                                             markersize='36', picker=40)
+                                             markersize='36', picker=20)
 
                 ep1, = self.canvas.axes.plot(self.base_x[1], self.base_y[1], 'o',               # set the right baseline endpoint
                                              mfc='#80008033', mec='None', mew=2,
-                                             markersize='36', picker=40)
+                                             markersize='36', picker=20)
                 
                 self.baseline, = self.canvas.axes.plot(self.base_x, self.base_y, '-',           # draw the baseline between the endpoints
                                                        color='#800080bb')
@@ -506,7 +506,8 @@ class VoltamogramPlot(QMainWindow):
     #                                   #
     #####################################
 
-    def plot_reps(self, reps, subbackground=True, showsmoothed=False, showraw=True, predictpeak=False):
+    def plot_reps(self, reps, subbackground=True, showsmoothed=False, showraw=True, predictpeak=False, color=None, legend=True):
+        print(reps)
         # 1. Get data from file for specified reps
         all_data = get_data_from_file(self.parent.path)     # read file including all raw data
         
@@ -562,12 +563,12 @@ class VoltamogramPlot(QMainWindow):
             else: indexer = rep['run_uid']
             
             if indexer in list(run_colors.keys()):
-                color = run_colors[indexer]
+                lcolor = run_colors[indexer]
                 lstyle = lstyles[indexer]
             else:
-                color = self.colors[len(run_colors)%len(self.colors)]
+                lcolor = self.colors[len(run_colors)%len(self.colors)]
                 lstyle = self.linestyles[len(lstyles)%len(self.linestyles)]
-                run_colors[indexer] = color
+                run_colors[indexer] = lcolor
                 lstyles[indexer] = lstyle
             if indexer in runs_displayed:
                 lbl = ''
@@ -575,17 +576,34 @@ class VoltamogramPlot(QMainWindow):
                 if onerun: lbl = rep['run_uid']+', '+rep['rep_uid']
                 else: lbl = rep['run_uid']
 
+            if color:
+                lcolor=color
+
+            
+
             self.plot_rep(rep, subbackground=subbackground, showsmoothed=showsmoothed,
                           showraw=showraw, predictpeak=predictpeak,
-                          color=color, linestyle=lstyle, lbl=lbl)
+                          color=lcolor, linestyle=lstyle, lbl=lbl)
             runs_displayed.append(rep['run_uid'])
             
         # 3. Add legend
-        if reps_to_disp:
+        if reps_to_disp and legend:
             if not predictpeak:
                 self.canvas.axes.legend()
         
-    def plot_runs(self, runs, subbackground=True, showsmoothed=False, showraw=True, predictpeak=False):
+    def plot_runs(self, runs, subbackground=True, showsmoothed=False, showraw=True, predictpeak=False, color=None, legend=True):
+        tasks = []
+        for run in runs:
+            run_id = run[g.R_UID_SELF]
+            for rep in run[g.R_REPLICATES]:
+                rep_id = rep[g.R_UID_SELF]
+                tasks.append((run_id, rep_id))
+                
+        self.plot_reps(tasks, subbackground=subbackground, showsmoothed=showsmoothed,
+                       showraw=showraw, predictpeak=predictpeak, color=color, legend=legend)
+
+
+        '''print(runs)
         # 1. Get data from file for specified runs
         all_data = get_data_from_file(self.parent.path)     # read file including all raw data
 
@@ -617,7 +635,7 @@ class VoltamogramPlot(QMainWindow):
                     
         # 3. Add legend
         if any_display:
-            self.canvas.axes.legend()
+            self.canvas.axes.legend()'''
 
 
     #############################################

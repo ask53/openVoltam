@@ -541,25 +541,32 @@ class WindowRunView(QMainWindow):
     #########################################
     
     def set_voltamogram(self):
-        run_id = self.tasks[0][0]
+        run_id = self.tasks[0][0]                   # get run ID
         method_id = ''
-        for run in self.parent.data[g.S_RUNS]:
-            if run[g.R_UID_SELF] == run_id:
-                method_id = run[g.R_UID_METHOD]
+        for run in self.parent.data[g.S_RUNS]:  
+            if run[g.R_UID_SELF] == run_id:         
+                method_id = run[g.R_UID_METHOD]     # get method of this run
                 break
-        runs_to_plot = []
-        if method_id:
-            for run in self.parent.data[g.S_RUNS]:
+        runs_to_plot = [] 
+        if method_id:                                   # if we found a method
+            for run in self.parent.data[g.S_RUNS]:      # find all runs with matching method
                 if run[g.R_UID_METHOD] == method_id:
                     runs_to_plot.append(run)
+
         try:
-            self.voltamogram.plot_runs(runs_to_plot)
+            self.voltamogram.plot_runs(runs_to_plot, showsmoothed=True, showraw=False,
+                                       color='grey', legend=False)
         except Exception as e:
             print('eeek here!')
             print(e)
 
-    def update_voltamogram(self, rep):
-        self.voltamogram.plot_rep(rep, color='black')
+    def update_voltamogram(self, task):
+        try:
+            print(task)
+            self.voltamogram.plot_reps([task], showsmoothed=True, showraw=False,
+                                       color='black', legend=False)
+        except Exception as e:
+            print(e)
         
 
     #########################################
@@ -571,7 +578,8 @@ class WindowRunView(QMainWindow):
     def synchronous_data_save(self):
         try:
             data = get_data_from_file(self.parent.path)
-            rep = get_rep(data, self.tasks[self.current_task])
+            task = self.tasks[self.current_task]
+            rep = get_rep(data, task)
             if self.error_run_flag:
                 rep[g.R_STATUS] = g.R_STATUS_ERROR
             else:
@@ -585,7 +593,7 @@ class WindowRunView(QMainWindow):
                 print(e)
 
             write_data_to_file(self.parent.path, data)
-            self.update_voltamogram(rep)
+            self.update_voltamogram(task)
             data = remove_data_from_layout(data)
             self.parent.data = data
             self.parent.update_win()
