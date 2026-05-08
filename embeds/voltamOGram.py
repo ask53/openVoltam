@@ -87,7 +87,7 @@ class VoltamogramPlot(QMainWindow):
         self.canvas.axes.set_xlabel('Voltage [V]')
         self.canvas.axes.set_ylabel('Current [uA]')
 
-    def plot_rep(self, rep, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False, color='black', linestyle='solid', lbl=''):
+    def plot_rep(self, rep, subbackground=True, showsmoothed=False, showraw=True, predictpeak=False, color='black', linestyle='solid', lbl=''):
         
         if rep[g.R_DATA]:
             # 1. Convert rep signal and background data to 1D numpy arrays then resize
@@ -126,36 +126,40 @@ class VoltamogramPlot(QMainWindow):
                 y_back = np.interp(x, x_back, y_back)   # interpolate background to match voltage of signal
                 y = y - y_back                          # subtrack background from signal
 
-            
-            # 3. If smooth, smooth result
-            y_raw = y.copy()                        # store copy of y as y_raw in case we want to display it to user    
-            method = rep[g.R_UID_METHOD]            # get method from rep
-            window = method[g.M_SG_WINDOW]
-            order = method[g.M_SG_ORDER]
-            
-            if method[g.M_SG]:
-                y = savgol_filter(y, window_length=window,
-                                  polyorder=order, mode='nearest')
+            y_raw = y.copy()                            # store copy of y as y_raw in case we want to display it to user
 
-            # 4. If lopass, pass result thru lopass filter
-            if method[g.M_LP]:
-                y = self.butter_lowpass_filter(y, method)
+            # 3. Show raw data
+            if showraw:                                 # first, show raw data if requested
+                self.canvas.axes.plot(x, y_raw, 'lightgrey', linestyle=linestyle,
+                                      linewidth=1, label='raw data')
+
+            # 4. If smooth, smooth result
+            if showsmoothed:
+            
+                method = rep[g.R_UID_METHOD]            # get method from rep
+                window = method[g.M_SG_WINDOW]
+                order = method[g.M_SG_ORDER]
+
+                # 4a. If the method calls for smoothing (Savitzky Golay) do it!
+                if method[g.M_SG]:
+                    y = savgol_filter(y, window_length=window,
+                                      polyorder=order, mode='nearest')
+
+                # 4b. If method calls for low pass filtering, do it!
+                if method[g.M_LP]:
+                    y = self.butter_lowpass_filter(y, method)
 
 
             # 5. If predictpeak, guess baseline and peak locations, store as vars in self
             if predictpeak:
                 peak, base = self.get_predicted_basepoints(x, y, method)
             
-            # 6. Show final result
-            if showraw:                                 # first, show raw data if requested
-                self.canvas.axes.plot(x, y_raw, 'lightgrey', linestyle=linestyle,
-                                      linewidth=1, label='raw data')
+            # 6. Show smoothed data
+            if showsmoothed:
+                self.smoothed, = self.canvas.axes.plot(x, y, color, linestyle=linestyle,
+                                      linewidth=2, label=lbl, picker=2)          
 
-            # 7. Show smoothed data
-            self.smoothed, = self.canvas.axes.plot(x, y, color, linestyle=linestyle,
-                                  linewidth=2, label=lbl, picker=2)          # then show smoothed, filtered data on top.
-
-            # 8. If predictpeak, show baseline (with adjustable handles) and peak location
+            # 7. If predictpeak, show baseline (with adjustable handles) and peak location
             if predictpeak:
                 self.x = x      # store x and y for access from mouseclick/move handlers
                 self.y = y
@@ -502,7 +506,7 @@ class VoltamogramPlot(QMainWindow):
     #                                   #
     #####################################
 
-    def plot_reps(self, reps, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False):
+    def plot_reps(self, reps, subbackground=True, showsmoothed=False, showraw=True, predictpeak=False):
         # 1. Get data from file for specified reps
         all_data = get_data_from_file(self.parent.path)     # read file including all raw data
         
@@ -571,8 +575,8 @@ class VoltamogramPlot(QMainWindow):
                 if onerun: lbl = rep['run_uid']+', '+rep['rep_uid']
                 else: lbl = rep['run_uid']
 
-            self.plot_rep(rep, subbackground=subbackground, smooth=smooth,
-                          lopass=lopass, showraw=showraw, predictpeak=predictpeak,
+            self.plot_rep(rep, subbackground=subbackground, showsmoothed=showsmoothed,
+                          showraw=showraw, predictpeak=predictpeak,
                           color=color, linestyle=lstyle, lbl=lbl)
             runs_displayed.append(rep['run_uid'])
             
@@ -581,7 +585,7 @@ class VoltamogramPlot(QMainWindow):
             if not predictpeak:
                 self.canvas.axes.legend()
         
-    def plot_runs(self, runs, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False):
+    def plot_runs(self, runs, subbackground=True, showsmoothed=False, showraw=True, predictpeak=False):
         # 1. Get data from file for specified runs
         all_data = get_data_from_file(self.parent.path)     # read file including all raw data
 
@@ -607,10 +611,10 @@ class VoltamogramPlot(QMainWindow):
                     else: lbl = ''
                     run_displayed = True
                     any_display = True
-                    self.plot_rep(rep, subbackground=subbackground, smooth=smooth,
-                                  lopass=lopass, showraw=showraw, predictpeak=predictpeak,
+                    self.plot_rep(rep, subbackground=subbackground, showsmoothed=showsmoothed,
+                                  showraw=showraw, predictpeak=predictpeak,
                                   color=color, linestyle=lstyle, lbl=lbl)
-
+                    
         # 3. Add legend
         if any_display:
             self.canvas.axes.legend()

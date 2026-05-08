@@ -168,8 +168,7 @@ class WindowAnalyze(QMainWindow):
         try:
             lines = self.voltamograms[i].get_line_count()
             if lines == 0:
-                self.voltamograms[i].plot_reps([self.tasks[i]], subbackground=True, smooth=True,
-                                               lopass=True, showraw=True, predictpeak=True)
+                self.voltamograms[i].plot_reps([self.tasks[i]], subbackground=True, showsmoothed=True, showraw=True, predictpeak=True)
                 if self.results[i]:
                     self.voltamograms[i].set_analysis(self.results[i])
         except Exception as e:

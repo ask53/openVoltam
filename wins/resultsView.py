@@ -28,7 +28,7 @@ class WindowResultsView(QMainWindow):
         if len(tasks) > 1:
             showraw = False
         try:
-            self.voltamogram.plot_reps(tasks, showraw=showraw)
+            self.voltamogram.plot_reps(tasks, showsmoothed=True, showraw=showraw)
         except Exception as e:
             print('error here in resulltsView win!')
             print(e)

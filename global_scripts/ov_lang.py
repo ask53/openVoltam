@@ -11,7 +11,7 @@ open_config = ['Open method', 'Abrir config']
 edit_config = ['Edit method','Modificar config']
 new_config_full = ['New method','Ajuste de voltametría nueva']
 view_config_full = ['View method','Revisar ajustes de voltametría']
-info_msg = ["Welcome to <a href='https://github.com/ask53/openVoltam'>OpenVoltam</a>!<br><br>An open source project by <a href='https://www.caminosdeagua.org'>Caminos de Agua</a> and <a href='https://www.iorodeo.com'>IO Rodeo</a><br><br>v0.0 | 2025","Bienvenidx a <a href='https://github.com/ask53/openVoltam'>OpenVoltam</a>!<br><br>Un proyecto de fuente abierta por <a href='https://www.caminosdeagua.org'>Caminos de Agua</a> y <a href='https://www.iorodeo.com'>IO Rodeo</a><br><br>v0.0 | 2025"]
+info_msg = ["Welcome to <a href='https://github.com/ask53/openVoltam'>OpenVoltam</a>!<br><br>An open source project by <a href='https://www.caminosdeagua.org'>Caminos de Agua</a> and <a href='https://www.iorodeo.com'>IO Rodeo</a><br><br>v0.1 | 2026","Bienvenidx a <a href='https://github.com/ask53/openVoltam'>OpenVoltam</a>!<br><br>Un proyecto de fuente abierta por <a href='https://www.caminosdeagua.org'>Caminos de Agua</a> y <a href='https://www.iorodeo.com'>IO Rodeo</a><br><br>v0.1 | 2026"]
 window_home = ['OpenVoltam','OpenVoltam']
 
 # Menus

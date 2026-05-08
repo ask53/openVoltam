@@ -341,7 +341,7 @@ class WindowRunView(QMainWindow):
                     if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
                         self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_RUN, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled), str(relay_pins)])
                     else:
-                        self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_RUN, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled)])
+                        self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_RUN, str(self.dt), i_max, str(self.steps), self.port, str(self.relays_enabled), str(relay_pins)])
 
 
 
@@ -515,7 +515,6 @@ class WindowRunView(QMainWindow):
         self.start_run()
         
     def next_run_with_save(self):
-        print('here! yay!')
         self.msg_box.setCurrentIndex(0)
         self.synchronous_data_save()
 
@@ -542,7 +541,6 @@ class WindowRunView(QMainWindow):
     #########################################
     
     def set_voltamogram(self):
-        print('setting the voltam-o-gram!')
         run_id = self.tasks[0][0]
         method_id = ''
         for run in self.parent.data[g.S_RUNS]:
@@ -555,13 +553,13 @@ class WindowRunView(QMainWindow):
                 if run[g.R_UID_METHOD] == method_id:
                     runs_to_plot.append(run)
         try:
-            self.voltamogram.plot_runs(runs_to_plot, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False)
+            self.voltamogram.plot_runs(runs_to_plot)
         except Exception as e:
             print('eeek here!')
             print(e)
 
     def update_voltamogram(self, rep):
-        self.voltamogram.plot_rep(rep, subbackground=True, smooth=True, lopass=True, showraw=False, predictpeak=False, color='black')
+        self.voltamogram.plot_rep(rep, color='black')
         
 
     #########################################
