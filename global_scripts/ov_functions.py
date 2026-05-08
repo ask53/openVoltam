@@ -433,6 +433,26 @@ def check_calc_conflict(data, reps_to_change):
     # If user says 'archive and continue' 
     return True, calcs_in_conflict
 
+def get_analyzed_value(a, atype):
+    """Returns a floating point value from the dict, rep, based on which type
+    of analysis, atype, has been given. If there is no analysis for the given
+    rep, returns None."""
+    
+    if not a:
+        return None
+    if atype == g.C_TYPE_PEAKBASE:
+        return a[g.A_PEAK_HEIGHT]
+    elif atype == g.C_TYPE_PEAKZERO:
+        return a[g.A_PEAK_Y]
+    elif atype == g.C_TYPE_SLOPE_L:
+        return a[g.A_DERIV_LEFT]
+    elif atype == g.C_TYPE_SLOPE_R:
+        return a[g.A_DERIV_RIGHT]
+    elif atype == g.C_TYPE_SLOPE_AVG:
+        return a[g.A_DERIV_MEAN]
+
+
+
 def convert_conc_to_file_unit(conc, unit):
     """converts the value (float) in unit units into grams per liter"""
     return conc * g.UNIT_CONV_CONC[unit]
@@ -449,7 +469,7 @@ def convert_vol_from_file_unit(vol, unit):
 
 
 
-    
+
 
 
 

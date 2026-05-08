@@ -146,34 +146,39 @@ class WindowAnalyze(QMainWindow):
 
     def get_results(self):
         i = self.stack.currentIndex()
-        return self.voltamograms[i].get_analysis_results()
+        r = self.voltamograms[i].get_analysis_results()
+        return i, r
 
     def show_results(self):
-        r = self.get_results()
-        print(r)
-        ########################################################
-        #
-        #   HERE HERE HERE HERE HERE
-        #
-        #   Write the function here that shows the results when button is clicked
-        #   on left side of status bar
-        #
+        i, r = self.get_results()
+        types_eng = ('Peak ht (from base)', 'Peak ht (from 0)', 'Deriv (L)', 'Derv (R)', 'Deriv (avg)')
+        msg = ''
+        for i, t in enumerate(g.C_TYPES):
+            val = str(round(get_analyzed_value(r, t), 4))
+            msg = msg + types_eng[i] + ' = ' + val + ' |  '
+            if i == len(g.C_TYPES)-1:
+                msg = msg[0:-3]                 # remove end separator from last value
+        self.status.showMessage(msg)
+
         
+            
+
 
     def hide_results(self):
+        self.status.clearMessage()
         ######################################################3
         #
         #   HERE HERE HERE HERE
         #
-        #   1. Write function to hide results
         #   2. Call function anytime anything changes (user moves point, clicks graph, etc.)
         return
 
     def store_results(self):
-        r = self.get_results()
+        i, r = self.get_results()
         self.results[i] = r
-
+        
     def process_next(self):
+        self.hide_results()
         if self.stack.currentIndex() == len(self.tasks)-1:  # if we're on last task already
             saved = self.save_and_close()                   #   try to save
         else:                                               # if we're not on the last task,

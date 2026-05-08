@@ -7,6 +7,7 @@ as well as R^2 value of fit.
 
 """
 from global_scripts import ov_globals as g
+from global_scripts.ov_functions import get_analyzed_value
 
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT, FigureCanvasQTAgg
 from matplotlib.figure import Figure
@@ -142,9 +143,9 @@ class StdAddFitterPlot(QMainWindow):
                 for replicate in point:                     # for each replicate in this point
                     (run_id, rep_id, run) = replicate
                     rep = self.get_rep_from_run(rep_id, run)
-                    x_all = np.append(x_all, x)             
-                    y = self.get_y(rep)                     # get y based on self.type             
-                    y_sum = y_sum + y                       # sum ys for averaging later
+                    x_all = np.append(x_all, x)
+                    y = get_analyzed_value(rep[g.R_ANALYSIS], self.type)        # get y based on self.type
+                    y_sum = y_sum + y                                           # sum ys for averaging later
                     y_all = np.append(y_all, y)
                     self.points_simple[-1].append({g.C_RUN_ID: run_id,
                                                    g.C_REP_ID: rep_id,
@@ -200,10 +201,6 @@ class StdAddFitterPlot(QMainWindow):
 
         
         
-        
-            
-        
-
     def get_rep_from_run(self, rep_id, run):
         """ returns a rep object from a run object and rep_id, the unique ID of the rep.
         If rep_id is not found in run[g.R_REPLICATES], returns False"""
@@ -211,24 +208,7 @@ class StdAddFitterPlot(QMainWindow):
             if rep[g.R_UID_SELF] == rep_id:
                 return rep
         return False
-
-
-    def get_y(self, rep):
-        """Returns a floating point value from the dict, rep, based on which type
-        of analysis has been selected in self.type by the user"""
-        a = rep[g.R_ANALYSIS]
-        if self.type == g.C_TYPE_PEAKBASE:
-            return a[g.A_PEAK_HEIGHT]
-        elif self.type == g.C_TYPE_PEAKZERO:
-            return a[g.A_PEAK_Y]
-        elif self.type == g.C_TYPE_SLOPE_L:
-            return a[g.A_DERIV_LEFT]
-        elif self.type == g.C_TYPE_SLOPE_R:
-            return a[g.A_DERIV_RIGHT]
-        elif self.type == g.C_TYPE_SLOPE_AVG:
-            return a[g.A_DERIV_MEAN]
-                
-                
+                    
                 
     def plot_points(self, x, y, x_avg, y_avg, v_sam, v_tot):
         """Takes in:
