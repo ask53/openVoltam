@@ -102,11 +102,14 @@ class WindowAnalyze(QMainWindow):
         h0.addStretch()
         h0.addWidget(helptext)
         h0.addStretch()
-        
+
+        self.but_results = QPushButton('Show results')
+        self.but_results.clicked.connect(self.show_results)
         self.but_next = QPushButton()
         self.but_next.clicked.connect(self.next_click)
 
         h1 = QHBoxLayout()
+        h1.addWidget(self.but_results)
         h1.addStretch()
         h1.addWidget(self.but_next)
 
@@ -141,12 +144,34 @@ class WindowAnalyze(QMainWindow):
         self.store_results()
         self.process_next()
 
-    def store_results(self):
+    def get_results(self):
         i = self.stack.currentIndex()
-        try:
-            self.results[i] = self.voltamograms[i].get_analysis_results()
-        except Exception as e:
-            print(e)
+        return self.voltamograms[i].get_analysis_results()
+
+    def show_results(self):
+        r = self.get_results()
+        print(r)
+        ########################################################
+        #
+        #   HERE HERE HERE HERE HERE
+        #
+        #   Write the function here that shows the results when button is clicked
+        #   on left side of status bar
+        #
+        
+
+    def hide_results(self):
+        ######################################################3
+        #
+        #   HERE HERE HERE HERE
+        #
+        #   1. Write function to hide results
+        #   2. Call function anytime anything changes (user moves point, clicks graph, etc.)
+        return
+
+    def store_results(self):
+        r = self.get_results()
+        self.results[i] = r
 
     def process_next(self):
         if self.stack.currentIndex() == len(self.tasks)-1:  # if we're on last task already

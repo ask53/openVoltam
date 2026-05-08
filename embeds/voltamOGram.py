@@ -88,7 +88,6 @@ class VoltamogramPlot(QMainWindow):
         self.canvas.axes.set_ylabel('Current [uA]')
 
     def plot_rep(self, rep, subbackground=True, showsmoothed=False, showraw=True, predictpeak=False, color='black', linestyle='solid', lbl=''):
-        print(rep)
         if rep[g.R_DATA]:
             # 1. Convert rep signal and background data to 1D numpy arrays then resize
             # 1a. Convert to numpy array
@@ -507,7 +506,6 @@ class VoltamogramPlot(QMainWindow):
     #####################################
 
     def plot_reps(self, reps, subbackground=True, showsmoothed=False, showraw=True, predictpeak=False, color=None, legend=True):
-        print(reps)
         # 1. Get data from file for specified reps
         all_data = get_data_from_file(self.parent.path)     # read file including all raw data
         
@@ -601,41 +599,6 @@ class VoltamogramPlot(QMainWindow):
                 
         self.plot_reps(tasks, subbackground=subbackground, showsmoothed=showsmoothed,
                        showraw=showraw, predictpeak=predictpeak, color=color, legend=legend)
-
-
-        '''print(runs)
-        # 1. Get data from file for specified runs
-        all_data = get_data_from_file(self.parent.path)     # read file including all raw data
-
-        runs_to_show = []
-        for run in runs:
-            run_id = run[g.R_UID_SELF]
-            found = False
-            for fullrun in all_data[g.S_RUNS]:
-                if fullrun[g.R_UID_SELF] == run_id:
-                    runs_to_show.append(fullrun)
-                    found = True
-                    break
-                
-        # 2. Loop thru runs, plotting each rep
-        any_display = False
-        for i,run in enumerate(runs_to_show):
-            color = self.colors[i%len(self.colors)]
-            lstyle = self.linestyles[i%len(self.linestyles)]
-            run_displayed = False
-            for j,rep in enumerate(run[g.R_REPLICATES]):
-                if rep[g.R_DATA] or rep[g.R_BACKGROUND]:
-                    if not run_displayed: lbl=run[g.R_UID_SELF]+' ('+run[g.R_TYPE]+')'
-                    else: lbl = ''
-                    run_displayed = True
-                    any_display = True
-                    self.plot_rep(rep, subbackground=subbackground, showsmoothed=showsmoothed,
-                                  showraw=showraw, predictpeak=predictpeak,
-                                  color=color, linestyle=lstyle, lbl=lbl)
-                    
-        # 3. Add legend
-        if any_display:
-            self.canvas.axes.legend()'''
 
 
     #############################################
