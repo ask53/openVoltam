@@ -211,7 +211,7 @@ class WindowRunView(QMainWindow):
         #
         ##############################
         self.graphs = RunPlots()
-        self.voltamogram = VoltamogramPlot(self.parent, title='VOLTAM-O-GRAM')
+        self.voltamogram = VoltamogramPlot(self, title='VOLTAM-O-GRAM')
         self.set_voltamogram()
 
         v_left = QVBoxLayout()

@@ -22,7 +22,7 @@ class WindowResultsView(QMainWindow):
         
         self.setWindowTitle(self.parent.data[g.S_NAME]+' | Results Viewer')
 
-        self.voltamogram = VoltamogramPlot(self.parent)
+        self.voltamogram = VoltamogramPlot(self)
 
         showraw = True
         if len(tasks) > 1:

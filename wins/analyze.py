@@ -60,7 +60,7 @@ class WindowAnalyze(QMainWindow):
 
             title = QLabel('<b>'+task[0]+'  |  '+task[1]+'</b>')
             title.setObjectName('analysis-title-txt')
-            vgram = VoltamogramPlot(self.parent)
+            vgram = VoltamogramPlot(self)
             self.voltamograms.append(vgram)
 
             h = QHBoxLayout()
@@ -160,19 +160,16 @@ class WindowAnalyze(QMainWindow):
                 msg = msg[0:-3]                 # remove end separator from last value
         self.status.showMessage(msg)
 
-        
+
+    def vgram_updated(self):
+        """A Hndler to be called by the embedded voltamogram"""
+        self.hide_results()
             
 
 
     def hide_results(self):
         self.status.clearMessage()
-        ######################################################3
-        #
-        #   HERE HERE HERE HERE
-        #
-        #   2. Call function anytime anything changes (user moves point, clicks graph, etc.)
-        return
-
+        
     def store_results(self):
         i, r = self.get_results()
         self.results[i] = r

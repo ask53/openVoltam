@@ -55,6 +55,7 @@ class VoltamogramPlot(QMainWindow):
         super().__init__()
         
         self.parent = parent
+        self.grandparent = self.parent.parent
         self.dragging_end = False
         self.dragging_peak = False
         self.drag_index = 0
@@ -363,6 +364,7 @@ class VoltamogramPlot(QMainWindow):
                                    self.x[i], self.y[i])                # move the active endpoint to picked point
         elif event.artist == self.peakpoint:
             self.dragging_peak = True
+        self.tell_parent_plot_updated()
 
     def on_but_release(self, event):
         """Handler for when a mouse button is released"""
@@ -493,7 +495,13 @@ class VoltamogramPlot(QMainWindow):
         r_max = abs(float(min(d_right)))
         mean_max = (l_max + r_max) / 2.
 
-        return l_max, r_max, mean_max        
+        return l_max, r_max, mean_max
+
+    def tell_parent_plot_updated(self):
+        try:
+            self.parent.vgram_updated()
+        except:
+            pass
         
 
     #####################################
@@ -507,7 +515,7 @@ class VoltamogramPlot(QMainWindow):
 
     def plot_reps(self, reps, subbackground=True, showsmoothed=False, showraw=True, predictpeak=False, color=None, legend=True):
         # 1. Get data from file for specified reps
-        all_data = get_data_from_file(self.parent.path)     # read file including all raw data
+        all_data = get_data_from_file(self.grandparent.path)     # read file including all raw data
         
         reps_to_disp = []
         runs_to_disp = []
