@@ -27,21 +27,21 @@ UNIT_CONV_VOL = {'L': 1,
                  'mL': 0.001,
                  'uL': 0.000001}
 
-# Keys for session (S) dictionary
+# Keys for lab session (S) dictionary
 S_NAME = "session_name"
 S_DATE_ENTERED = "date_first_saved"
-S_DATE_COLLECTED = "date_sample_collected"
-S_LOC_COLLECTED = "location_collected"
-S_CONTACT = "contact_info"
-S_COLLECTED_BY = "collected_by"
-S_NOTES = "sample_comments"
 S_METHODS = "methods"
 S_SAMPLES = "samples"
 S_RUNS = "runs"
 S_PROCESSED = "calculations"
-
-S_EDITABLES = (S_NAME, S_DATE_COLLECTED, S_LOC_COLLECTED, S_CONTACT, S_COLLECTED_BY, S_NOTES)
 S_BLANK_ARRAYS = (S_METHODS, S_SAMPLES, S_RUNS, S_PROCESSED)
+
+# Keys for sample (SA) dictionary
+SA_DATE_COLLECTED = "date_sample_collected"
+SA_LOC_COLLECTED = "location_collected"
+SA_CONTACT = "contact_info"
+SA_COLLECTED_BY = "collected_by"
+SA_NOTES = "sample_comments"
 
 # Keys for method (M) dictionary
 M_UID_SELF = 'uid'

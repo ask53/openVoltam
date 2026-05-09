@@ -76,8 +76,8 @@ def get_path_from_user(win, pathtype):
     Returns a path if one is selected, otherwise returns an empty string"""
     try:
         path = ''
-        if pathtype=='sample':
-            path = QFileDialog.getOpenFileName(win, 'Open sample', '', g.SAMPLE_FILE_TYPES)[0]
+        if pathtype=='session':
+            path = QFileDialog.getOpenFileName(win, 'Open session', '', g.SAMPLE_FILE_TYPES)[0]
         elif pathtype=='method':
             path = QFileDialog.getOpenFileName(win, 'Open method', '', g.METHOD_FILE_TYPES)[0]
         elif pathtype=='folder':

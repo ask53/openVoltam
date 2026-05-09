@@ -131,8 +131,8 @@ class WindowMain(QMainWindow):
         action_analyze_results = QAction('Results', self)
         
         # connect menu bar labels with slots 
-        action_sample_new.triggered.connect(parent.new_sample)                      # this first group of menu functions come from the home window (parent)
-        action_sample_open.triggered.connect(parent.open_sample)
+        action_sample_new.triggered.connect(parent.new_session)                      # this first group of menu functions come from the home window (parent)
+        action_sample_open.triggered.connect(parent.open_session)
         action_sample_close.triggered.connect(self.close)
 
         action_method_new.triggered.connect(parent.new_method)
