@@ -1,6 +1,6 @@
 # openVoltam
 -- THIS IS IN PROGRESS AND DOES NOT YET WORK TO RUN A COMPLETE ANALYSIS.--
--- USE AT YOUR OWN RISK --
+-- USE AT YOUR OWN RISK -- 
 
 Open source software for running voltammetric tests and analyzing their results. Designed to work with the RodeoStat from IO Rodeo, https://iorodeo.com/pages/rodeostat
 
