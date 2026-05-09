@@ -66,8 +66,8 @@ class WindowWelcome(QMainWindow):
         lbl_icon.setPixmap(QPixmap(joindir(g.BASEDIR,"external/icons/logo.png")))
 
         # Create all buttons
-        but_sample_new = QPushButton(l.new_sample[g.L])
-        but_sample_open = QPushButton(l.open_sample[g.L])
+        but_sample_new = QPushButton('New session')
+        but_sample_open = QPushButton('Open session')
         but_config_new = QPushButton(l.new_config[g.L])
         but_config_open = QPushButton(l.open_config[g.L])
 
@@ -90,7 +90,7 @@ class WindowWelcome(QMainWindow):
         # add sample buttons into 2nd layout, wrap them in groupbox that labels them both
         layout_sample.addWidget(but_sample_new)
         layout_sample.addWidget(but_sample_open)
-        groupbox_sample = QGroupBox(l.menu_sample[g.L])
+        groupbox_sample = QGroupBox('Lab session')
         groupbox_sample.setLayout(layout_sample)
 
         # add config buttons into 3nd layout, wrap them in groupbox that labels them both
