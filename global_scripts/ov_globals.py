@@ -37,11 +37,13 @@ S_PROCESSED = "calculations"
 S_BLANK_ARRAYS = (S_METHODS, S_SAMPLES, S_RUNS, S_PROCESSED)
 
 # Keys for sample (SA) dictionary
+SA_NAME = "name"
 SA_DATE_COLLECTED = "date_sample_collected"
 SA_LOC_COLLECTED = "location_collected"
 SA_CONTACT = "contact_info"
 SA_COLLECTED_BY = "collected_by"
 SA_NOTES = "sample_comments"
+SA_UID_PREFIX = 'sample-'
 
 # Keys for method (M) dictionary
 M_UID_SELF = 'uid'
@@ -219,14 +221,17 @@ PROC_RUN_FROM_EXE = 'exe'
 ### CHANGE THIS TO MODIFY HOW PROGRAM RUNS PROCESSES
 #
 #
-#PROC_RUN_FROM = PROC_RUN_FROM_PYTHON
-PROC_RUN_FROM = PROC_RUN_FROM_EXE
+PROC_RUN_FROM = PROC_RUN_FROM_PYTHON
+#PROC_RUN_FROM = PROC_RUN_FROM_EXE
 #
 #
 ###############################################
 
 # Asynchronous save
-SAVE_TYPE_SAMPLE = 'sample'
+SAVE_TYPE_EDIT_SESH_NAME = 'edit-session-name'
+SAVE_TYPE_SAMPLE_NEW = 'sample-new'
+SAVE_TYPE_SAMPLE_EDIT = 'sample-edit'
+SAVE_TYPE_SAMPLE_DELETE = 'sample-delete'
 SAVE_TYPE_RUN_NEW = 'new-run'
 SAVE_TYPE_REP_DELETE = 'rep-del'
 SAVE_TYPE_REP_MOD = 'rep-no-data'

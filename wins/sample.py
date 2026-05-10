@@ -64,7 +64,7 @@ class WindowSample(QMainWindow):
         # The name field 
         self.w_name = QLineEdit()                                       # init line edit
         self.w_name.setMaxLength(63)                                    # set properties
-        self.w_name.setObjectName(encodeCustomName(g.S_NAME))           # add object name for specific styling and data mgmt
+        self.w_name.setObjectName(encodeCustomName(g.SA_NAME))          # add object name for specific styling and data mgmt
         self.w_name.textEdited.connect(self.update_edited_status)
 
         # the date collected field 
@@ -72,7 +72,7 @@ class WindowSample(QMainWindow):
         self.w_date_collected = QDateEdit()                                                 # init input
         self.w_date_collected.setDisplayFormat(g.DATE_DISPLAY_FORMAT)                       # set input properties
         self.w_date_collected.setCalendarPopup(True)                                
-        self.w_date_collected.setObjectName(encodeCustomName(g.S_DATE_COLLECTED))           # add name to input for data mgmt
+        self.w_date_collected.setObjectName(encodeCustomName(g.SA_DATE_COLLECTED))           # add name to input for data mgmt
         self.w_date_collected.userDateChanged.connect(self.update_edited_status)
         layouts.append(horizontalize([w_lbl_date_collected, self.w_date_collected]))   # add horizontal layout of label and input
                                                                                             #   to list of horizontal layouts
@@ -80,7 +80,7 @@ class WindowSample(QMainWindow):
         w_lbl_loc = QLabel(l.s_edit_loc[g.L])
         self.w_loc = QLineEdit()
         self.w_loc.setMaxLength(63)
-        self.w_loc.setObjectName(encodeCustomName(g.S_LOC_COLLECTED))
+        self.w_loc.setObjectName(encodeCustomName(g.SA_LOC_COLLECTED))
         self.w_loc.textEdited.connect(self.update_edited_status)
         layouts.append(horizontalize([w_lbl_loc, self.w_loc]))
 
@@ -88,7 +88,7 @@ class WindowSample(QMainWindow):
         w_lbl_contact = QLabel(l.s_edit_contact[g.L])
         self.w_contact = QLineEdit()
         self.w_contact.setMaxLength(63)
-        self.w_contact.setObjectName(encodeCustomName(g.S_CONTACT))
+        self.w_contact.setObjectName(encodeCustomName(g.SA_CONTACT))
         self.w_contact.textEdited.connect(self.update_edited_status)
         layouts.append(horizontalize([w_lbl_contact, self.w_contact]))
 
@@ -96,14 +96,14 @@ class WindowSample(QMainWindow):
         w_lbl_sampler = QLabel(l.s_edit_sampler[g.L])
         self.w_sampler = QLineEdit()
         self.w_sampler.setMaxLength(63)
-        self.w_sampler.setObjectName(encodeCustomName(g.S_COLLECTED_BY))
+        self.w_sampler.setObjectName(encodeCustomName(g.SA_COLLECTED_BY))
         self.w_sampler.textEdited.connect(self.update_edited_status)
         layouts.append(horizontalize([w_lbl_sampler, self.w_sampler]))
 
         # the notes field
         w_lbl_notes = QLabel(l.s_edit_notes[g.L])
         self.w_notes = QPlainTextEdit()
-        self.w_notes.setObjectName(encodeCustomName(g.S_NOTES))
+        self.w_notes.setObjectName(encodeCustomName(g.SA_NOTES))
         self.w_notes.textChanged.connect(self.update_edited_status)
         layouts.append(horizontalize([w_lbl_notes, self.w_notes]))
 
@@ -210,12 +210,10 @@ class WindowSample(QMainWindow):
     def start_save_new(self):
         self.set_buttons_enabled(False)
         if self.validate():
-            initial_name = guess_filename(self.w_name.text())
-            self.path = QFileDialog.getSaveFileName(self, 'Save sample', initial_name, g.SAMPLE_FILE_TYPES)[0]
-            
-            if not self.path or self.path == '':            # if the user didn't select a path
-                return                                      # don't try to save, just return
-            self.saveFile()
+            try:
+                self.saveFile()
+            except Exception as e:
+                print(e)
         else:
             self.set_buttons_enabled(True)
             
@@ -239,53 +237,42 @@ class WindowSample(QMainWindow):
             return True
     
     def saveFile(self):
-        # Gather all of the data into a dictionary
-        lineedits = self.findChildren(QLineEdit)            # grab all line edit objects from form
-        dateedits = self.findChildren(QDateEdit)            # grab all date edit objects from form
-        textedits = self.findChildren(QPlainTextEdit)            # grab all paragraph text edit objects from form
-        newSample = True
-        data = self.parent.data
-            
-        # loop through all line edit elements, saving entered text
-        for el in lineedits:
-            if isCustomName(el.objectName()):
-                data.update({decodeCustomName(el.objectName()): el.text()})
+        data = self.gather_data()
+        print(data)
 
-        # loop through all date elements, saving date
-        for el in dateedits:
-            if isCustomName(el.objectName()):
-                data.update({decodeCustomName(el.objectName()): el.date().toString(g.DATE_STORAGE_FORMAT)})
-
-        # loop through all paragraph edit(textedit) elements, saving text
-        for el in textedits:
-            if isCustomName(el.objectName()):
-                data.update({decodeCustomName(el.objectName()): el.toPlainText()})
-
-        if self.mode == g.WIN_MODE_NEW:
-            # append current datetime
-            data.update({g.S_DATE_ENTERED: QDateTime.currentDateTime().toString(g.DATETIME_STORAGE_FORMAT)})
         
-            # append empty arrays for future data
-            for key in g.S_BLANK_ARRAYS:
-                data.update({key:[]})
+        
+        
 
         # Do actual save!
         if self.mode == g.WIN_MODE_NEW:                         # iF new sample
-            try:
-                write_data_to_file(self.path, data)     # do a synchronous save
-                self.saved = True
-                self.parent.open_sample(self.path)      
-                self.close()
-            except:
-                self.status.showMessage('ERROR: File did not save.', g.SB_DURATION)
-
+            savetype = g.SAVE_TYPE_SAMPLE_NEW
+            self.close_on_save = True
         else:
-            self.set_mode_view()
-            self.status.showMessage('Saving...', g.SB_DURATION)
-            try:
-                self.parent.start_async_save(g.SAVE_TYPE_SAMPLE, [data], onSuccess=self.after_save_success, onError=self.after_save_error)
-            except Exception as e:
-                print(e)
+            savetype = g.SAVE_TYPE_SAMPLE_EDIT
+            
+        self.set_mode_view()
+        self.status.showMessage('Saving...', g.SB_DURATION)
+        self.parent.start_async_save(savetype, [data], onSuccess=self.after_save_success, onError=self.after_save_error)
+
+
+    def gather_data(self):
+        # bundle all the data
+        data = {g.SA_NAME: self.w_name.text(),
+                g.SA_DATE_COLLECTED: self.w_date_collected.date().toString(g.DATE_STORAGE_FORMAT),
+                g.SA_LOC_COLLECTED: self.w_loc.text(),
+                g.SA_CONTACT: self.w_contact.text(),
+                g.SA_COLLECTED_BY: self.w_sampler.text(),
+                g.SA_NOTES: self.w_notes.toPlainText()}
+        if self.mode == g.WIN_MODE_NEW:                     # if this is a new sample
+            ids = get_ids(self.parent.data, g.S_SAMPLES)    # get the appropriate next uid
+            this_id = get_next_id(ids, g.SA_UID_PREFIX)
+            data[g.R_UID_SELF] = this_id
+        else:
+            data[g.R_UID_SELF] = self.sample_id             # otherwise, use the existing uid
+            
+        return data
+        
                 
     def after_save_success(self):
         self.saved = True

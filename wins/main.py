@@ -39,6 +39,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QGridLayout,
+    QStackedLayout,
     QTableWidget,
     QWidget,
     QLabel,
@@ -51,7 +52,9 @@ from PyQt6.QtWidgets import (
     QMenu,
     QInputDialog,
     QProgressBar,
-    QMessageBox
+    QMessageBox,
+    QLineEdit,
+    QTabWidget
 )
 
 #######
@@ -72,6 +75,8 @@ class WindowMain(QMainWindow):
         self.children = []
         self.setObjectName('window-sample')
         self.layout = {}                  # for storing an outline of runs and reps and which are selected
+        self.tabs = None
+        self.tab_ids = []
         self.select_all_prog_check_flag = False
         self.save_error_flag = False
         self.read_error_flag = False
@@ -90,13 +95,6 @@ class WindowMain(QMainWindow):
         self.progress_bar.setMaximumWidth(g.SB_PROGRESS_BAR_WIDTH)  # Set a fixed width
         self.progress_bar.setVisible(False)     # Hide it initially
         self.status.addPermanentWidget(self.progress_bar)
-
-        #####################
-        #                   #
-        #   begin data read #
-        #                   #
-        ##################### 
-        self.start_async_read()
 
         #####################
         #                   #
@@ -273,15 +271,19 @@ class WindowMain(QMainWindow):
 
         lay = QVBoxLayout()
         
-        but_view = QPushButton('info')
-        but_config = QPushButton('NEW RUN')
-        but_calc = QPushButton('Calculate')
+        but_view = QPushButton()
+        but_view.setIcon(QIcon(g.ICON_EDIT))
+        but_samp = QPushButton('New sample')
+        #but_config = QPushButton('NEW RUN')
+        #but_calc = QPushButton('Calculate')
         but_res_sample = QPushButton('Results')
-        self.buts = [but_view, but_config, but_calc, but_res_sample]        
+        self.buts = [but_view, but_samp, but_res_sample]
+        #but_config, but_calc
         
-        but_view.clicked.connect(self.new_win_sample)
-        but_config.clicked.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
-        but_calc.clicked.connect(partial(self.new_win_calculator, g.WIN_MODE_NEW))
+        but_view.clicked.connect(self.edit_session_name)
+        but_samp.clicked.connect(self.new_sample)
+        #but_config.clicked.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
+        #but_calc.clicked.connect(partial(self.new_win_calculator, g.WIN_MODE_NEW))
         but_res_sample.clicked.connect(partial(self.new_win_calculator, g.WIN_MODE_RIGHT))
  
         vl1 = QVLine()
@@ -290,20 +292,21 @@ class WindowMain(QMainWindow):
 
         self.lbl_sample_name = TitleLbl("")
         
-        l_sample_header = QHBoxLayout()
-        l_sample_header.addWidget(self.lbl_sample_name)
-        l_sample_header.addWidget(but_view)
-        l_sample_header.addWidget(vl1)
-        l_sample_header.addStretch()
-        l_sample_header.addWidget(vl2)
-        l_sample_header.addWidget(but_config)
-        l_sample_header.addWidget(vl3)
-        l_sample_header.addWidget(but_calc)
-        l_sample_header.addWidget(but_res_sample)
+        l_session_header = QHBoxLayout()
+        l_session_header.addWidget(self.lbl_sample_name)
+        l_session_header.addWidget(but_view)
+        l_session_header.addWidget(vl1)
+        l_session_header.addStretch()
+        l_session_header.addWidget(vl2)
+        #l_session_header.addWidget(but_config)
+        l_session_header.addWidget(but_samp)
+        l_session_header.addWidget(vl3)
+        #l_session_header.addWidget(but_calc)
+        l_session_header.addWidget(but_res_sample)
 
-        w_sample_header = QWidget()                         # create a widget to hold the layout (which can be styled)
-        w_sample_header.setLayout(l_sample_header)          # add the layout to the widget
-        w_sample_header.setObjectName("sample-header")      # add a name to target with QSS
+        w_session_header = QWidget()                         # create a widget to hold the layout (which can be styled)
+        w_session_header.setLayout(l_session_header)          # add the layout to the widget
+        w_session_header.setObjectName("session-header")      # add a name to target with QSS
 
         ###########################################################################################################################
         #
@@ -311,7 +314,7 @@ class WindowMain(QMainWindow):
         #   (For now, just the "select all" checkbox, might move this later (holdover from when this was a row of buttons...
         #
  
-        l_run_header = QHBoxLayout()
+        '''l_run_header = QHBoxLayout()
 
         self.cb_all = QCheckBox()
         lbl_cb_all = QLabel("Select all")
@@ -326,20 +329,31 @@ class WindowMain(QMainWindow):
 
         self.w_run_header = QWidget()                    # create a widget to hold the layout (which can be styled)
         self.w_run_header.setLayout(l_run_header)        # add the layout to the widget
-        self.w_run_header.setObjectName("run-header-row")# add a name to target with QSS
+        self.w_run_header.setObjectName("run-header-row")# add a name to target with QSS'''
 
         #
         #
         ############################################################################################################################
+
+        # Create a placeholder widget where the main window will go
+        lay_ph = QVBoxLayout()
+        lay_ph.addWidget(QWidget())
+        lay_ph.addStretch()
+        w_ph = QWidget()
+        w_ph.setLayout(lay_ph)
         
-        self.w_run_history_area = QScrollArea()
-        
-        # Add all of these three widgets to our vertical layout
-        lay.addWidget(w_sample_header)
-        lay.addWidget(self.w_run_header)
-        lay.addWidget(self.w_run_history_area)
+        # Add both of these widgets to our vertical layout
+        lay.addWidget(w_session_header)     # add the header
+        lay.addWidget(w_ph)                 # add a placeholder widget for the main area
 
         setWsEnabled(self.buts, False)
+
+        #####################
+        #                   #
+        #   begin data read #
+        #                   #
+        ##################### 
+        self.start_async_read()
         
         # Display! 
         self.w = QWidget()
@@ -352,13 +366,9 @@ class WindowMain(QMainWindow):
             sample_name = self.data[g.S_NAME]
             self.setWindowTitle(sample_name)                                    # Set the sample window title
             self.lbl_sample_name.updateTitleLbl(sample_name)                    # Set the sample name
-            pos = self.w_run_history_area.verticalScrollBar().sliderPosition()  # Get scroll bar slider position
-            self.w_run_history_area.setParent(None)                             # remove run history pane from layout
-            self.widgetize_runs()                                               # get updated run history as a widget    
-            self.centralWidget().layout().addWidget(self.w_run_history_area)    # add the updated run history back to layout
-            self.update_highlights()
+            self.set_main_area()
+            #self.update_highlights()
             self.update_menu()
-            self.w_run_history_area.verticalScrollBar().setSliderPosition(pos)  # set scrollbar slider to previous position
             self.update_children()
         except Exception as e:
             print(e)
@@ -374,6 +384,45 @@ class WindowMain(QMainWindow):
     #   4. add_row_to_main                      #
     #                                           #
     #############################################
+
+    def set_main_area(self):
+
+        # If there are samples, create tabbed layout
+        d = self.data
+        self.centralWidget().children()[-1].setParent(None) # remove bottom widget from centralWidget
+
+        self.tabs = QTabWidget()
+        self.tab_ids = []
+        
+        for i, sample in enumerate(d[g.S_SAMPLES]):
+            self.tabs.addTab(QWidget(), sample[g.SA_NAME])
+            self.tab_ids.append(sample[g.R_UID_SELF])
+
+            but_run = QPushButton("New run")
+            but_calc = QPushButton("Calculate")
+
+            header_sample_0 = QHBoxLayout()
+            header_sample_0.addStretch()
+            header_sample_0.addWidget(but_run)
+            header_sample_0.addWidget(but_calc)
+
+            
+            header_sample_1 = Q
+            
+
+        self.centralWidget().layout().addWidget(self.tabs)  # append tab widget to end of main layout
+    
+
+        
+
+    def new_sample(self):
+        print('starting a new sample!')
+        try:
+            self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_NEW))
+        except Exception as e:
+            print(e)
+        
+        
 
     def widgetize_runs(self):
         layout_old = self.layout.copy()                     # Store copy of old layout
@@ -455,7 +504,7 @@ class WindowMain(QMainWindow):
         self.w_run_history_container = QWidget()
         self.w_run_history_container.setLayout(self.grid)
         self.w_run_history_container.setObjectName('runs-container')
-        self.w_run_history_area.setWidget(self.w_run_history_container)
+        #self.w_run_history_area.setWidget(self.w_run_history_container)
 
     def do_nothing(self, w):
         """This is necessary so that each widget has a callback function if clicked.
@@ -1004,7 +1053,7 @@ class WindowMain(QMainWindow):
     #                                           #
     #   Functions for opening new windows       #
     #                                           #
-    #   1. new_win_sample                       #
+    #   1. edit_session_name                       #
     #   2. new_win_config_run                   #
     #   3. new_win_view_run                     #
     #   4. new_win_method_by_id                 #
@@ -1021,8 +1070,24 @@ class WindowMain(QMainWindow):
     #                                           #
     #############################################
 
-    def new_win_sample(self):
-        self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_VIEW_ONLY))
+    def edit_session_name(self, oldname):
+        try:
+            title = 'Edit lab session name'
+            text = 'Lab session name:'
+            oldname = self.data[g.S_NAME]
+            newname, ok = QInputDialog().getText(self, title, text, text=oldname)
+            print(ok)
+            print(newname)
+            if ok and newname != oldname:
+                self.start_async_save(g.SAVE_TYPE_EDIT_SESH_NAME, [newname])
+        except Exception as e:
+            print(e)
+            
+        
+
+
+        
+        #self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_VIEW_ONLY))
 
     def new_win_config_run(self, mode, run_id=False):
         self.new_win_one_of_type(WindowRunConfig(self, mode, run_id))

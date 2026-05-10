@@ -152,11 +152,19 @@ def export():
 #   For each type of save, when the save completes, it sends a writes the data dictionary (not including raw data)
 #   back as data. 
 
-def save_update_sample(data, params):   # Takes the sample parameters
-    newData = params[0]                 # passed in params[0]
-    for key in g.S_EDITABLES:           # and overwrites the existing values
-        data[key] = newData[key]        # with the passed values
+def save_edit_session_name(data, params):
+    name = params[0]
+    data[g.S_NAME] = name
     return data
+
+def save_new_sample(data, params):   # Takes the sample parameters
+    newData = params[0]                 # passed in params[0]
+    data[g.S_SAMPLES].append(newData)
+    return data
+
+def save_edit_sample(data,parms):
+    return data
+
 
 def save_add_new_run(data, params):
     newRun = params[0]               
@@ -360,8 +368,12 @@ def save():
         params = literal_eval(sys.argv[4])  # cast sys.argv[4] from string to list
         data = get_data_from_file(path)     # read file from path (returns dict)
 
-        if saveType == g.SAVE_TYPE_SAMPLE:
-            data=save_update_sample(data, params)
+        if saveType == g.SAVE_TYPE_EDIT_SESH_NAME:
+            data=save_edit_session_name(data, params)
+        elif saveType == g.SAVE_TYPE_SAMPLE_NEW:
+            data=save_new_sample(data, params)
+        elif saveType == g.SAVE_TYPE_SAMPLE_EDIT:
+            data=save_edit_sample(data, params)
         elif saveType == g.SAVE_TYPE_RUN_NEW:
             data=save_add_new_run(data, params)
         elif saveType == g.SAVE_TYPE_REP_DELETE:

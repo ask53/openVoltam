@@ -7,7 +7,7 @@ QLineEdit#ov-method-name {
 	background-color: rgba(0,0,0,0);
 }
 
-QLabel#ov_sample_name {
+QLabel#ov_session_name {
 	font-size: 18pt;
 	padding-right: 2px;
 }
@@ -29,7 +29,7 @@ QMainWindow QStatusBar {
 	border-top: 1px solid grey;
 }
 
-WindowMain #sample-header {
+WindowMain #session-header {
 	background-color: pink;
 	border: 1px solid grey;
 }
