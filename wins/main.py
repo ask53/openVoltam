@@ -54,7 +54,8 @@ from PyQt6.QtWidgets import (
     QProgressBar,
     QMessageBox,
     QLineEdit,
-    QTabWidget
+    QTabWidget,
+    QTreeWidget
 )
 
 #######
@@ -395,24 +396,71 @@ class WindowMain(QMainWindow):
         self.tab_ids = []
         
         for i, sample in enumerate(d[g.S_SAMPLES]):
-            self.tabs.addTab(QWidget(), sample[g.SA_NAME])
-            self.tab_ids.append(sample[g.R_UID_SELF])
-
             but_run = QPushButton("New run")
             but_calc = QPushButton("Calculate")
 
             header_sample_0 = QHBoxLayout()
-            header_sample_0.addStretch()
             header_sample_0.addWidget(but_run)
             header_sample_0.addWidget(but_calc)
 
-            
-            header_sample_1 = Q
+            but_edit = QPushButton()
+            but_del = QPushButton()
+            but_edit.setIcon(QIcon(g.ICON_EDIT))
+            but_del.setIcon(QIcon(g.ICON_TRASH))
+
+            msg = self.get_sample_description(sample)
+            lbl = QLabel(msg)
+            lbl.setWordWrap(True)
+
+            h_but_0 = QHBoxLayout()
+            h_but_0.addWidget(but_edit)
+            h_but_0.addWidget(but_del)
+
+            v_but_0 = QVBoxLayout()
+            #v_but_0.addStretch()
+            v_but_0.addLayout(h_but_0)
+            #v_but_0.addStretch()
+
+            h_sample_1 = QHBoxLayout()
+            h_sample_1.addWidget(lbl)
+            h_sample_1.addLayout(v_but_0)
+            h_sample_1.addStretch()
+
+            v_sample = QVBoxLayout()
+            v_sample.addLayout(h_sample_1)
+            v_sample.addWidget(QHLine())
+            v_sample.addLayout(header_sample_0)
+            v_sample.addWidget(tree)
+
+            # if there are runs for this sample, add the tree:
+            #   tree = QTreeWidget()
+            # if not:
+            #   v_sample.addStretch()
+
+            w = QWidget()
+            w.setLayout(v_sample)
+
+            self.tabs.addTab(w, sample[g.SA_NAME])
+            self.tab_ids.append(sample[g.R_UID_SELF])
             
 
         self.centralWidget().layout().addWidget(self.tabs)  # append tab widget to end of main layout
     
-
+    def get_sample_description(self, s):
+        """Takes in a sample object, s, returns html string of description"""
+        d = ''
+        if s[g.SA_DATE_COLLECTED]:
+            d = d + '<b>Date collected</b>: '+s[g.SA_DATE_COLLECTED] + '<br>'
+        if s[g.SA_LOC_COLLECTED]:
+            d = d + '<b>Location</b>: '+s[g.SA_LOC_COLLECTED] + '<br>'
+        if s[g.SA_COLLECTED_BY]:
+            d = d + '<b>By</b>: '+s[g.SA_COLLECTED_BY] + '<br>'
+        if s[g.SA_NOTES]:
+            d = d + '<b>Notes</b>: '+s[g.SA_NOTES] + '<br>'
+        d = d[0:-4]                                                             # remove final <br>
+        return d
+        
+        
         
 
     def new_sample(self):
