@@ -412,43 +412,47 @@ class WindowMain(QMainWindow):
             lbl = QLabel(msg)
             lbl.setWordWrap(True)
 
-            h_but_0 = QHBoxLayout()
-            h_but_0.addWidget(but_edit)
-            h_but_0.addWidget(but_del)
-
-            v_but_0 = QVBoxLayout()
-            #v_but_0.addStretch()
-            v_but_0.addLayout(h_but_0)
-            #v_but_0.addStretch()
-
             h_sample_1 = QHBoxLayout()
             h_sample_1.addWidget(lbl)
-            h_sample_1.addLayout(v_but_0)
+            h_sample_1.addWidget(QVLine())
+            h_sample_1.addWidget(but_edit)
+            h_sample_1.addWidget(but_del)
             h_sample_1.addStretch()
 
             v_sample = QVBoxLayout()
             v_sample.addLayout(h_sample_1)
             v_sample.addWidget(QHLine())
             v_sample.addLayout(header_sample_0)
-            v_sample.addWidget(tree)
 
-            # if there are runs for this sample, add the tree:
-            #   tree = QTreeWidget()
-            # if not:
-            #   v_sample.addStretch()
+            w0 = QWidget()
+            w0.setLayout(v_sample)
+            color_index = i%7
+            w0.setObjectName('sample-'+str(color_index))
 
+            v = QVBoxLayout()
+            v.addWidget(w0)
+            
+            runs = get_runs_in_sample(self.data, sample[g.R_UID_SELF])
+            if runs:
+                tree = QTreeWidget()
+                v.addWidget(tree)
+            else:
+                v.addStretch()
+
+            
             w = QWidget()
-            w.setLayout(v_sample)
+            w.setLayout(v)
 
             self.tabs.addTab(w, sample[g.SA_NAME])
             self.tab_ids.append(sample[g.R_UID_SELF])
             
 
         self.centralWidget().layout().addWidget(self.tabs)  # append tab widget to end of main layout
+        applyStyles()
     
     def get_sample_description(self, s):
         """Takes in a sample object, s, returns html string of description"""
-        d = ''
+        d = "<div style='font-size: 16pt'>"+s[g.SA_NAME]+"</div><br>"
         if s[g.SA_DATE_COLLECTED]:
             d = d + '<b>Date collected</b>: '+s[g.SA_DATE_COLLECTED] + '<br>'
         if s[g.SA_LOC_COLLECTED]:

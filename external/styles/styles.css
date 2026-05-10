@@ -34,6 +34,42 @@ WindowMain #session-header {
 	border: 1px solid grey;
 }
 
+WindowMain QWidget#sample-0{
+	background-color: #EACCFF; /* purple */
+	border: 1px solid grey;
+}
+
+WindowMain QWidget#sample-1{
+	background-color: #CCE6FF; /* indigo */
+	border: 1px solid grey;
+}
+
+WindowMain QWidget#sample-2{
+	background-color: #CCFFFC; /* blue */
+	border: 1px solid grey;
+}
+
+WindowMain QWidget#sample-3{
+	background-color: #CCFFCE; /* green */
+	border: 1px solid grey;
+}
+
+WindowMain QWidget#sample-4{
+	background-color: #FCFFCC; /* yellow */ 
+	border: 1px solid grey;
+}
+
+WindowMain QWidget#sample-5{
+	background-color: #FFEECC; /* orange */
+	border: 1px solid grey;
+}
+
+WindowMain QWidget#sample-6{
+	background-color: pink; /* pink */
+	border: 1px solid grey;
+}
+	
+
 QWidget#runs-container QLabel, 
 QWidget#steps-container QLabel  {
 	background-color: none;

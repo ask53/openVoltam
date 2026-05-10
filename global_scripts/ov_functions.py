@@ -203,6 +203,19 @@ def scroll_area_resized(outer, inner, event):
 #
 ###########################################################3
 
+def get_sample_from_file_data(data, sample_id):
+    for sample in data[g.S_SAMPLES]:
+        if sample[g.R_UID_SELF] == sample_id:
+            return sample
+    return False
+
+def get_runs_in_sample(data, sample_id):
+    runs_of_sample = []
+    for run in data[g.S_RUNS]:
+        if run[g.R_UID_SAMPLE] == sample_id:
+            runs_of_sample.append(run)
+    return runs_of_sample
+
 def get_run_from_file_data(data, run_id):
     
     """ takes in a full dataset dictionary, data, and the uid of the run
