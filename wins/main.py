@@ -309,33 +309,6 @@ class WindowMain(QMainWindow):
         w_session_header.setLayout(l_session_header)          # add the layout to the widget
         w_session_header.setObjectName("session-header")      # add a name to target with QSS
 
-        ###########################################################################################################################
-        #
-        #   Define the second row ("run header")
-        #   (For now, just the "select all" checkbox, might move this later (holdover from when this was a row of buttons...
-        #
- 
-        '''l_run_header = QHBoxLayout()
-
-        self.cb_all = QCheckBox()
-        lbl_cb_all = QLabel("Select all")
-
-        self.cb_all.stateChanged.connect(partial(self.select_all_toggle, self.cb_all))  # connect checkbox to select_all_toggle function
-        lbl_cb_all.mouseReleaseEvent = self.select_all_lbl_clicked                      # when label is clicked, toggle checkbox
-
-        l_run_header.addWidget(self.cb_all)
-        l_run_header.addWidget(lbl_cb_all)
-
-        l_run_header.addStretch()
-
-        self.w_run_header = QWidget()                    # create a widget to hold the layout (which can be styled)
-        self.w_run_header.setLayout(l_run_header)        # add the layout to the widget
-        self.w_run_header.setObjectName("run-header-row")# add a name to target with QSS'''
-
-        #
-        #
-        ############################################################################################################################
-
         # Create a placeholder widget where the main window will go
         lay_ph = QVBoxLayout()
         lay_ph.addWidget(QWidget())
@@ -404,8 +377,10 @@ class WindowMain(QMainWindow):
             header_sample_0.addWidget(but_calc)
 
             but_edit = QPushButton()
-            but_del = QPushButton()
             but_edit.setIcon(QIcon(g.ICON_EDIT))
+            but_edit.clicked.connect(self.edit_sample)
+            but_del = QPushButton()
+            
             but_del.setIcon(QIcon(g.ICON_TRASH))
 
             lbl_s_name = QLabel("<div style='font-size: 16pt'>"+sample[g.SA_NAME]+"</div>") # 
@@ -456,8 +431,6 @@ class WindowMain(QMainWindow):
     def get_sample_description(self, s):
         """Takes in a sample object, s, returns html string of description"""
         d = ''
-        print(s[g.SA_DATE_COLLECTED])
-        print(type(s[g.SA_DATE_COLLECTED]))
         if s[g.SA_DATE_COLLECTED] and s[g.SA_DATE_COLLECTED] != g.QT_DEFAULT_DATE:
             d = d + '<b>Date collected</b>: '+s[g.SA_DATE_COLLECTED] + '<br>'
         if s[g.SA_LOC_COLLECTED]:
@@ -469,7 +442,28 @@ class WindowMain(QMainWindow):
         d = d[0:-4]                                                             # remove final <br>
         return d
         
-        
+    def edit_sample(self):
+        try:
+            s_id = self.get_current_sample_id()
+            print(s_id)
+            ###############################################
+            #
+            #   HERE HERE HERE HERE
+            #
+            #
+            #
+            #
+            #
+            #############################################################################################
+        except Exception as e:
+            print(e)
+        # get currently selected sample tab
+        # open a sample edit window for this sample
+        print('editing sample!')
+
+    def get_current_sample_id(self):
+        i = self.tabs.currentIndex()
+        return self.tab_ids[i]
         
 
     def new_sample(self):
