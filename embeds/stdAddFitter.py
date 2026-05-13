@@ -240,7 +240,7 @@ class StdAddFitterPlot(QMainWindow):
                                                                         # Set up regression label
             self.label_regression_line(x_avg, y_reg, m, b, r_value*r_value, color)
             
-            intervals = self.get_confidence_intervals(x_reg, y, m, b)
+            intervals = self.get_confidence_intervals(x_reg, y, m, b, v_tot/v_sam)
             
             # Store calculated values on the self variable
             
@@ -283,13 +283,15 @@ class StdAddFitterPlot(QMainWindow):
                                   rotation=angle_deg, rotation_mode='anchor', color=color,
                                   transform_rotates_text=True)
 
-    def get_confidence_intervals(self, x_array, y_array, m, b):
+    def get_confidence_intervals(self, x_array, y_array, m, b, dilution_factor):
         """Returns the 95% and 99% confidence interval +/- ranges for the x intercept
         of the regression line y = m * x + b, taking in the following arguments:
             - x_array   a numpy array of the x data to which the regression was fitted
             - y_array   a numpy array of the y data to which the regression was fitted
             - m   slope of the fit
             - b   y-intercept of the fit
+            - dilution_factor   float, total volume / sample volume (multiply result by
+                this to get initial concentration / margin of error
         Returns: (95% value, 99% value)"""
 
         # get the standard deviation of y as a function of x (s_y)
@@ -318,7 +320,7 @@ class StdAddFitterPlot(QMainWindow):
         confs = {}
         for i, conf in enumerate(g.M_CONFS_DATA):
             t_val = t.ppf((1+conf)/2, df)
-            margin_of_error = float(t_val * s_x)
+            margin_of_error = float(t_val * s_x * dilution_factor)
             confs[g.M_CONFS[i]] = margin_of_error
 
         return confs
