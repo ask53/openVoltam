@@ -408,12 +408,13 @@ class WindowMain(QMainWindow):
             but_edit.setIcon(QIcon(g.ICON_EDIT))
             but_del.setIcon(QIcon(g.ICON_TRASH))
 
-            msg = self.get_sample_description(sample)
-            lbl = QLabel(msg)
-            lbl.setWordWrap(True)
+            lbl_s_name = QLabel("<div style='font-size: 16pt'>"+sample[g.SA_NAME]+"</div>") # 
+            desc = self.get_sample_description(sample)
+            lbl_desc = QLabel(desc)
+            lbl_desc.setWordWrap(True)
 
             h_sample_1 = QHBoxLayout()
-            h_sample_1.addWidget(lbl)
+            h_sample_1.addWidget(lbl_s_name)
             h_sample_1.addWidget(QVLine())
             h_sample_1.addWidget(but_edit)
             h_sample_1.addWidget(but_del)
@@ -421,6 +422,8 @@ class WindowMain(QMainWindow):
 
             v_sample = QVBoxLayout()
             v_sample.addLayout(h_sample_1)
+            if desc:
+                v_sample.addWidget(lbl_desc)
             v_sample.addWidget(QHLine())
             v_sample.addLayout(header_sample_0)
 
@@ -452,8 +455,10 @@ class WindowMain(QMainWindow):
     
     def get_sample_description(self, s):
         """Takes in a sample object, s, returns html string of description"""
-        d = "<div style='font-size: 16pt'>"+s[g.SA_NAME]+"</div><br>"
-        if s[g.SA_DATE_COLLECTED]:
+        d = ''
+        print(s[g.SA_DATE_COLLECTED])
+        print(type(s[g.SA_DATE_COLLECTED]))
+        if s[g.SA_DATE_COLLECTED] and s[g.SA_DATE_COLLECTED] != g.QT_DEFAULT_DATE:
             d = d + '<b>Date collected</b>: '+s[g.SA_DATE_COLLECTED] + '<br>'
         if s[g.SA_LOC_COLLECTED]:
             d = d + '<b>Location</b>: '+s[g.SA_LOC_COLLECTED] + '<br>'

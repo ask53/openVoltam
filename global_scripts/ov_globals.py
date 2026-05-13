@@ -4,6 +4,7 @@ CURRENT_RANGES = ('1uA', '10uA', '100uA', '1000uA', '10000uA')
 
 # PyQt globals
 QT_NOTHING_SELECTED_INDEX = -1
+QT_DEFAULT_DATE = '2000-01-01'
 
 # Status bar
 SB_DURATION = 6000  # duration of status bar messages in [ms]
