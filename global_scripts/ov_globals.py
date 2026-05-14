@@ -94,6 +94,7 @@ M_CONFS_DATA = (0.667, 0.95, 0.99, 0.999)
 # Keys for run (R) dictionary
 R_UID_SELF = 'uid'
 R_UID_METHOD = 'method'
+R_UID_SAMPLE = 'sample'
 R_DEVICE = 'device'
 R_TYPE = 'run_type'
 R_NOTES = 'notes'

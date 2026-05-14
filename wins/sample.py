@@ -34,7 +34,7 @@ from PyQt6.QtWidgets import (
 )
 
 class WindowSample(QMainWindow):
-    def __init__(self, parent, mode=g.WIN_MODE_NEW):  
+    def __init__(self, parent, mode=g.WIN_MODE_NEW, sample_id=None):  
         super().__init__()                          # if path, load sample deets, else load empty edit window for new sample
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.parent = parent                        # store the parent object in object-wide scope
@@ -45,6 +45,7 @@ class WindowSample(QMainWindow):
         self.close_on_save = False
         self.status = self.statusBar()
         self.progress_bar = QProgressBar()
+        self.sample_id = sample_id
 
         #####################
         #                   #
@@ -150,7 +151,7 @@ class WindowSample(QMainWindow):
             self.set_mode_view()
 
     def update_win(self):
-        data = self.parent.data
+        data = get_sample_from_file_data(self.parent.data, self.sample_id)
         w = self.w
         
         textedits = w.findChildren(QLineEdit)

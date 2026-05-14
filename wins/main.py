@@ -78,6 +78,7 @@ class WindowMain(QMainWindow):
         self.layout = {}                  # for storing an outline of runs and reps and which are selected
         self.tabs = None
         self.tab_ids = []
+        self.current_tab = 0
         self.select_all_prog_check_flag = False
         self.save_error_flag = False
         self.read_error_flag = False
@@ -286,22 +287,18 @@ class WindowMain(QMainWindow):
         #but_config.clicked.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
         #but_calc.clicked.connect(partial(self.new_win_calculator, g.WIN_MODE_NEW))
         but_res_sample.clicked.connect(partial(self.new_win_calculator, g.WIN_MODE_RIGHT))
- 
-        vl1 = QVLine()
-        vl2 = QVLine()
-        vl3 = QVLine()
 
         self.lbl_sample_name = TitleLbl("")
+        self.lbl_sample_name.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         
         l_session_header = QHBoxLayout()
         l_session_header.addWidget(self.lbl_sample_name)
         l_session_header.addWidget(but_view)
-        l_session_header.addWidget(vl1)
+        l_session_header.addWidget(QVLine())
         l_session_header.addStretch()
-        l_session_header.addWidget(vl2)
         #l_session_header.addWidget(but_config)
         l_session_header.addWidget(but_samp)
-        l_session_header.addWidget(vl3)
+        l_session_header.addWidget(QVLine())
         #l_session_header.addWidget(but_calc)
         l_session_header.addWidget(but_res_sample)
 
@@ -360,6 +357,8 @@ class WindowMain(QMainWindow):
     #############################################
 
     def set_main_area(self):
+        if self.tabs:
+            self.current_tab = self.tabs.currentIndex()
 
         # If there are samples, create tabbed layout
         d = self.data
@@ -369,24 +368,26 @@ class WindowMain(QMainWindow):
         self.tab_ids = []
         
         for i, sample in enumerate(d[g.S_SAMPLES]):
-            but_run = QPushButton("New run")
-            but_calc = QPushButton("Calculate")
-
-            header_sample_0 = QHBoxLayout()
-            header_sample_0.addWidget(but_run)
-            header_sample_0.addWidget(but_calc)
+            lbl_s_name = QLabel("<div style='font-size: 16pt'>"+sample[g.SA_NAME]+"</div>")
+            lbl_s_name.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            desc = self.get_sample_description(sample)
+            lbl_desc = QLabel(desc)
+            lbl_desc.setWordWrap(True)
+            lbl_desc.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
 
             but_edit = QPushButton()
             but_edit.setIcon(QIcon(g.ICON_EDIT))
             but_edit.clicked.connect(self.edit_sample)
             but_del = QPushButton()
-            
             but_del.setIcon(QIcon(g.ICON_TRASH))
 
-            lbl_s_name = QLabel("<div style='font-size: 16pt'>"+sample[g.SA_NAME]+"</div>") # 
-            desc = self.get_sample_description(sample)
-            lbl_desc = QLabel(desc)
-            lbl_desc.setWordWrap(True)
+            but_run = QPushButton("New run")
+            but_run.clicked.connect(self.new_run)
+            but_calc = QPushButton("Calculate")
+
+            header_sample_0 = QHBoxLayout()
+            header_sample_0.addWidget(but_run)
+            header_sample_0.addWidget(but_calc)
 
             h_sample_1 = QHBoxLayout()
             h_sample_1.addWidget(lbl_s_name)
@@ -413,6 +414,14 @@ class WindowMain(QMainWindow):
             runs = get_runs_in_sample(self.data, sample[g.R_UID_SELF])
             if runs:
                 tree = QTreeWidget()
+                #####################################################
+                #
+                #   HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE
+                #
+                #   Setup tree here
+
+
+                
                 v.addWidget(tree)
             else:
                 v.addStretch()
@@ -426,6 +435,7 @@ class WindowMain(QMainWindow):
             
 
         self.centralWidget().layout().addWidget(self.tabs)  # append tab widget to end of main layout
+        self.tabs.setCurrentIndex(self.current_tab)         # activate tab (this is needed to stay on same tab during ongoing use, rather than jumping to tab 0)
         applyStyles()
     
     def get_sample_description(self, s):
@@ -433,33 +443,28 @@ class WindowMain(QMainWindow):
         d = ''
         if s[g.SA_DATE_COLLECTED] and s[g.SA_DATE_COLLECTED] != g.QT_DEFAULT_DATE:
             d = d + '<b>Date collected</b>: '+s[g.SA_DATE_COLLECTED] + '<br>'
-        if s[g.SA_LOC_COLLECTED]:
+        if s[g.SA_LOC_COLLECTED] and not self.is_only_whitespace(s[g.SA_LOC_COLLECTED]):
             d = d + '<b>Location</b>: '+s[g.SA_LOC_COLLECTED] + '<br>'
-        if s[g.SA_COLLECTED_BY]:
+        if s[g.SA_COLLECTED_BY] and not self.is_only_whitespace(s[g.SA_COLLECTED_BY]):
             d = d + '<b>By</b>: '+s[g.SA_COLLECTED_BY] + '<br>'
-        if s[g.SA_NOTES]:
+        if s[g.SA_NOTES] and not self.is_only_whitespace(s[g.SA_NOTES]):
             d = d + '<b>Notes</b>: '+s[g.SA_NOTES] + '<br>'
         d = d[0:-4]                                                             # remove final <br>
         return d
+
+    def is_only_whitespace(self, s):
+        """returns True is string s is only whitespace (spaces, tabs, returns, etc.)
+        and False otherwise"""
+        if  "".join(s.split()) == "":
+            return True
+        return False
         
     def edit_sample(self):
         try:
             s_id = self.get_current_sample_id()
-            print(s_id)
-            ###############################################
-            #
-            #   HERE HERE HERE HERE
-            #
-            #
-            #
-            #
-            #
-            #############################################################################################
+            self.new_win_one_with_value(WindowSample(self, mode=g.WIN_MODE_EDIT, sample_id=s_id), "sample_id", s_id)
         except Exception as e:
             print(e)
-        # get currently selected sample tab
-        # open a sample edit window for this sample
-        print('editing sample!')
 
     def get_current_sample_id(self):
         i = self.tabs.currentIndex()
@@ -472,6 +477,10 @@ class WindowMain(QMainWindow):
             self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_NEW))
         except Exception as e:
             print(e)
+
+    def new_run(self):
+        sample_id = self.get_current_sample_id()
+        self.new_win_config_run(g.WIN_MODE_NEW, sample_id=sample_id)
         
         
 
@@ -1140,8 +1149,8 @@ class WindowMain(QMainWindow):
         
         #self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_VIEW_ONLY))
 
-    def new_win_config_run(self, mode, run_id=False):
-        self.new_win_one_of_type(WindowRunConfig(self, mode, run_id))
+    def new_win_config_run(self, mode, run_id=False, sample_id=False):
+        self.new_win_one_of_type(WindowRunConfig(self, mode, run_id, sample_id))
 
     def new_win_view_run(self, tasks):
         self.new_win_one_of_type(WindowRunView(self, tasks))

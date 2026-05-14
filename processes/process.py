@@ -162,7 +162,17 @@ def save_new_sample(data, params):   # Takes the sample parameters
     data[g.S_SAMPLES].append(newData)
     return data
 
-def save_edit_sample(data,parms):
+def save_edit_sample(data, params):
+    newSamp = params[0]
+    s_id = newSamp[g.R_UID_SELF]
+    found = False
+    for sample in data[g.S_SAMPLES]:        # Find the relevant sample from file
+        if sample[g.R_UID_SELF] == s_id:
+            found = True
+            break
+    if found:                               # If found
+        for key in sample.keys():           # Loop thru sample keys
+            sample[key] = newSamp[key]
     return data
 
 
