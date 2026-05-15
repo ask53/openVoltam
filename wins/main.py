@@ -341,15 +341,11 @@ class WindowMain(QMainWindow):
             sample_name = self.data[g.S_NAME]
             self.setWindowTitle(sample_name)                                    # Set the sample window title
             self.lbl_sample_name.updateTitleLbl(sample_name)                    # Set the sample name
-            print('0')
             self.set_main_area()
             self.update_highlights()
             self.update_menu()
-            print('4')
             self.update_children()
-            print('4.5')
             self.resizeEvent(None)
-            print('5')
         except Exception as e:
             print(e)
         
@@ -376,8 +372,6 @@ class WindowMain(QMainWindow):
         self.tabs = QTabWidget()
         self.tabs.currentChanged.connect(self.tab_changed)
         self.tab_ids = []
-
-        print('1')
         
         for i, sample in enumerate(d[g.S_SAMPLES]):
             # Set up sample header
@@ -394,14 +388,6 @@ class WindowMain(QMainWindow):
             but_del = QPushButton()
             but_del.setIcon(QIcon(g.ICON_TRASH))
 
-            '''but_run = QPushButton("New run")
-            but_run.clicked.connect(self.new_run)
-            but_calc = QPushButton("Calculate")
-
-            header_sample_0 = QHBoxLayout()
-            header_sample_0.addWidget(but_run)
-            header_sample_0.addWidget(but_calc)'''
-
             h_sample_1 = QHBoxLayout()
             h_sample_1.addWidget(lbl_s_name)
             h_sample_1.addWidget(QVLine())
@@ -413,8 +399,6 @@ class WindowMain(QMainWindow):
             v_sample.addLayout(h_sample_1)
             if desc:
                 v_sample.addWidget(lbl_desc)
-            '''v_sample.addWidget(QHLine())
-            v_sample.addLayout(header_sample_0)'''
 
             w0 = QWidget()
             w0.setLayout(v_sample)
@@ -438,13 +422,10 @@ class WindowMain(QMainWindow):
             self.tabs.addTab(w, sample[g.SA_NAME])
             self.tab_ids.append(sample[g.R_UID_SELF])
 
-        print('2')
-
         self.centralWidget().layout().addWidget(self.tabs)  # append tab widget to end of main layout
         self.tabs.setCurrentIndex(self.current_tab)         # activate tab (this is needed to stay on same tab during ongoing use, rather than jumping to tab 0)
         applyStyles()
 
-        print('3')
     
     def get_sample_description(self, s):
         """Takes in a sample object, s, returns html string of description"""
@@ -1498,20 +1479,16 @@ class WindowMain(QMainWindow):
         if not self.tabs:
             return
         try:
-            print('a')
             i = self.tabs.currentIndex()
             if len(self.tabs.widget(i).children()) == 3:
                 scroll_area = self.tabs.widget(i).children()[-1]
                 w = scroll_area.widget()
                 wid = scroll_area.width()
-                print('b')
                 sbar = scroll_area.verticalScrollBar()
                 if sbar.isVisible():
                     wid = wid - sbar.width() - 5
-                print('c')
                 w.setMinimumWidth(wid)
                 w.setMaximumWidth(wid)
-                print('d')
         except Exception as e:
             print(e)
 
