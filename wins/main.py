@@ -364,6 +364,9 @@ class WindowMain(QMainWindow):
     def set_main_area(self):
         if self.tabs:
             self.current_tab = self.tabs.currentIndex()
+            print('saving tab!')
+            print(self.current_tab)
+            print()
 
         # If there are samples, create tabbed layout
         d = self.data
@@ -421,75 +424,10 @@ class WindowMain(QMainWindow):
             # IF there are runs, setup sample tree
             runs = get_runs_in_sample(self.data, sample[g.R_UID_SELF])
             if runs:
-                '''tree = QTreeWidget()
-                tree.header().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-                tree.setHeaderLabels(('Run', 'Type/Status', 'Method/Last ran', 'Note', 'Analyzed'))
-                tree.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
-                tree.setAlternatingRowColors(True)
-                
-                
-                for run in runs:
-                    run_id = run[g.R_UID_SELF]
-                    method = get_method_from_file_data(self.data, run[g.R_UID_METHOD])
-                    types = {g.R_TYPE_BLANK: 'Blank',
-                             g.R_TYPE_SAMPLE: 'Sample',
-                             g.R_TYPE_STDADD: 'Standard addition'}
-                    item=QTreeWidgetItem(tree)
-                    item.setData(0, Qt.ItemDataRole.UserRole, run)
-                    #item.setStyleSheet('margin-top: 40px')
-                    lbl_runid = QLabel('<b>'+run_id+'</b>')
-                    lbl_runtype = QLabel('<b>'+types[run[g.R_TYPE]]+'</b>')
-                    lbl_runmeth = QLabel('<b>'+method[g.M_NAME]+'</b>')
-                    lbl_runnote = QLabel(run[g.R_NOTES])
-                    lbl_runnote.setWordWrap(True)
-                    tree.setItemWidget(item, 0, lbl_runid)
-                    tree.setItemWidget(item, 1, lbl_runtype)
-                    tree.setItemWidget(item, 2, lbl_runmeth)
-                    tree.setItemWidget(item, 3, lbl_runnote)
-                    for rep in run[g.R_REPLICATES]:
-                        statuses={g.R_STATUS_PENDING: 'Pending...',
-                                  g.R_STATUS_ERROR: 'ErRoR =0',
-                                  g.R_STATUS_COMPLETE: 'Complete!'}
-                        subitem = QTreeWidgetItem(item)
-                        subitem.setData(0, Qt.ItemDataRole.UserRole, rep)
-                        subitem.setText(0, rep[g.R_UID_SELF])
-                        subitem.setText(1, statuses[rep[g.R_STATUS]])
-                        subitem.setText(2, rep[g.R_TIMESTAMP_REP])
-                        subitem.setText(3, rep[g.R_NOTES])
-                        if rep[g.R_ANALYSIS]:
-                            check_icon = QLabel()
-                            check_icon.setPixmap(QIcon(g.ICON_CHECK).pixmap(QSize(20,20)))
-                            tree.setItemWidget(subitem, 4, check_icon)
-                            
-                    #item.setChildIndicatorPolicy(QTreeWidgetItem.ChildIndicatorPolicy.DontShowIndicator)
-                    item.setExpanded(True)           # expand the item, then remove the arrow to expand/collapse it (force it open)
-
-
-                ######
-                # NOW SETUP THE OLD VERSION HEREEEE
-                #####
-
-                
-                
-                    
-                        
-                #####################################################
-                #
-                #   HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE
-                #
-                #   Setup tree here
-
-
-                #tree.expandAll()
-                #tree.setItemsExpandable(False)
-                v.addWidget(tree)'''
                 w_cust=self.widgetize_runs(sample[g.R_UID_SELF])
                 v.addWidget(w_cust)
-                
             else:                       # if there are not runs
                 v.addStretch()          # add a stretch to the layout to keep everything nice and tidy
-
-            
             
             w = QWidget()
             w.setLayout(v)
@@ -499,6 +437,9 @@ class WindowMain(QMainWindow):
             
 
         self.centralWidget().layout().addWidget(self.tabs)  # append tab widget to end of main layout
+        print('setting tab!')
+        print(self.current_tab)
+        
         self.tabs.setCurrentIndex(self.current_tab)         # activate tab (this is needed to stay on same tab during ongoing use, rather than jumping to tab 0)
         applyStyles()
     
@@ -547,7 +488,7 @@ class WindowMain(QMainWindow):
         self.new_win_config_run(g.WIN_MODE_NEW, sample_id=sample_id)
 
     def tab_changed(self):
-        self.current_tab = self.tabs.currentIndex()
+        return
         
         
         
@@ -625,7 +566,7 @@ class WindowMain(QMainWindow):
         # update self.layout to ensure that highlights maintain over update
         for run in self.layout_old:
             if run in self.layout:
-                for rep in layout_old[run]['selected']:
+                for rep in self.layout_old[run]['selected']:
                     if rep in self.layout[run]['reps']:
                         self.layout[run]['selected'].append(rep)
         
