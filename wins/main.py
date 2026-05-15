@@ -1483,10 +1483,15 @@ class WindowMain(QMainWindow):
             if len(self.tabs.widget(i).children()) == 3:
                 scroll_area = self.tabs.widget(i).children()[-1]
                 w = scroll_area.widget()
-                wid = scroll_area.width()
+                wid_sa = scroll_area.width()
+                wid_win = self.width()
+                if wid_win - wid_sa > 100:          # sometimes, when window is refreshed, the sa width is wonky. In that case
+                    wid = wid_win-42                #   set our width to 42 less than the width of the full qmainwindow
+                else:                               # otherwise
+                    wid = wid_sa                    #   match our width to the qscrollarea width
                 sbar = scroll_area.verticalScrollBar()
-                if sbar.isVisible():
-                    wid = wid - sbar.width() - 5
+                if sbar.isVisible():                # if the scrollbar is visible
+                    wid = wid - sbar.width() - 5    # adjust our width accordingly
                 w.setMinimumWidth(wid)
                 w.setMaximumWidth(wid)
         except Exception as e:
