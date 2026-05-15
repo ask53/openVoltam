@@ -65,6 +65,7 @@ class WindowRunConfig(QMainWindow):
         self.sample.setPlaceholderText(l.rc_select[g.L])
         for sample in self.parent.data[g.S_SAMPLES]:
             self.sample.addItem(sample[g.SA_NAME], sample[g.R_UID_SELF])
+        self.sample.currentIndexChanged.connect(self.value_changed)
     
 
         method_lbl = QLabel("Method")
@@ -84,7 +85,7 @@ class WindowRunConfig(QMainWindow):
         self.device.setPlaceholderText(l.rc_select[g.L])
         for dev in devices:
             self.device.addItem(dev['name'], dev)
-        self.device.currentIndexChanged.connect(self.device_changed)
+        self.device.currentIndexChanged.connect(self.value_changed)
             
         run_type_lbl = QLabel("Run type")
         #####################
@@ -167,9 +168,9 @@ class WindowRunConfig(QMainWindow):
         
         self.buts = [self.but_new, self.but_edit, self.but_view]
 
-        # Define which buttons are enabled on which modes
+        # Define which widgets are enabled on which modes
         self.ws_for_new = [self.method, but_m_load, self.device, self.replicates]
-        self.ws_for_edit = [self.run_type, self.w_sample_sample_vol, self.w_sample_total_vol,
+        self.ws_for_edit = [self.sample, self.run_type, self.w_sample_sample_vol, self.w_sample_total_vol,
                              self.w_stdadd_vol_std, self.w_stdadd_conc_std, self.notes]
         self.ws_for_view = [but_view_method]
       
@@ -300,10 +301,9 @@ class WindowRunConfig(QMainWindow):
     #   Handlers for changed widgets        #
     #                                       #
     #   1. method_changed                   #
-    #   2. device_changed                   #
-    #   3. run_type_changed                 #
-    #   4. reps_changed                     #
-    #   5. value_changed                    #
+    #   2. run_type_changed                 #
+    #   3. reps_changed                     #
+    #   4. value_changed                    #
     #                                       #
     #########################################
 
@@ -313,11 +313,6 @@ class WindowRunConfig(QMainWindow):
         self.saved = False
         self.refresh_graph()
         self.update_std_add_vol()
-
-    def device_changed(self):
-        """Resets flag to indicate that the run config has been modified from
-        saved version."""
-        self.saved = False
 
     def run_type_changed(self, i):
         """Resets flag to indicate that the run config has been modified from
