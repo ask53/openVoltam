@@ -427,7 +427,7 @@ class WindowMain(QMainWindow):
             self.tabs.addTab(w, sample[g.SA_NAME])
             self.tab_ids.append(sample[g.R_UID_SELF])
 
-        self.centralWidget().layout().insertWidget(insert_i, self.tabs)  # append tab widget to end of main layout
+        self.centralWidget().layout().insertWidget(insert_i, self.tabs)  # insert tab widget to same spot previous tab widget was located (this preserves stretches, animationes, etc.)
         self.tabs.setCurrentIndex(self.current_tab)         # activate tab (this is needed to stay on same tab during ongoing use, rather than jumping to tab 0)
         applyStyles()
 
