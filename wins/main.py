@@ -417,7 +417,7 @@ class WindowMain(QMainWindow):
             # IF there are runs, setup sample tree
             runs = get_runs_in_sample(self.data, sample[g.R_UID_SELF])
             if runs:
-                tree = QTreeWidget()
+                '''tree = QTreeWidget()
                 tree.header().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
                 tree.setHeaderLabels(('Run', 'Type/Status', 'Method/Last ran', 'Note', 'Analyzed'))
                 tree.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
@@ -478,12 +478,14 @@ class WindowMain(QMainWindow):
 
                 #tree.expandAll()
                 #tree.setItemsExpandable(False)
-                v.addWidget(tree)
+                v.addWidget(tree)'''
+                w_cust=self.widgetize_runs(sample[g.R_UID_SELF])
                 v.addWidget(w_cust)
+                
             else:                       # if there are not runs
                 v.addStretch()          # add a stretch to the layout to keep everything nice and tidy
 
-            w_cust=self.widgetize_runs(sample[g.R_UID_SELF])
+            
             
             w = QWidget()
             w.setLayout(v)
