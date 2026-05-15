@@ -78,6 +78,7 @@ class WindowMain(QMainWindow):
         self.children = []
         self.setObjectName('window-sample')
         self.layout = {}                  # for storing an outline of runs and reps and which are selected
+        self.layout_old = {}
         self.tabs = None
         self.tab_ids = []
         self.current_tab = 0
@@ -336,11 +337,13 @@ class WindowMain(QMainWindow):
 
     def update_win(self):
         try:
+            self.layout_old = self.layout.copy()                # Store copy of old layout
+            self.layout = {}                                    # Reinit self.layout to be refilled 
             sample_name = self.data[g.S_NAME]
             self.setWindowTitle(sample_name)                                    # Set the sample window title
             self.lbl_sample_name.updateTitleLbl(sample_name)                    # Set the sample name
             self.set_main_area()
-            #self.update_highlights()
+            self.update_highlights()
             self.update_menu()
             self.update_children()
         except Exception as e:
@@ -367,6 +370,7 @@ class WindowMain(QMainWindow):
         self.centralWidget().children()[-1].setParent(None) # remove bottom widget from centralWidget
 
         self.tabs = QTabWidget()
+        self.tabs.currentChanged.connect(self.tab_changed)
         self.tab_ids = []
         
         for i, sample in enumerate(d[g.S_SAMPLES]):
@@ -541,12 +545,15 @@ class WindowMain(QMainWindow):
     def new_run(self):
         sample_id = self.get_current_sample_id()
         self.new_win_config_run(g.WIN_MODE_NEW, sample_id=sample_id)
+
+    def tab_changed(self):
+        self.current_tab = self.tabs.currentIndex()
+        
+        
         
         
 
     def widgetize_runs(self, sample_id):
-        layout_old = self.layout.copy()                     # Store copy of old layout
-        self.layout = {}                                    # Reinit self.layout to be refilled 
         
         grid = QGridLayout()                           # init grid layout (that is inside scroll area)
         grid.setHorizontalSpacing(0)
@@ -616,7 +623,7 @@ class WindowMain(QMainWindow):
         grid.setColumnStretch(len(headers)-1,1)
 
         # update self.layout to ensure that highlights maintain over update
-        for run in layout_old:
+        for run in self.layout_old:
             if run in self.layout:
                 for rep in layout_old[run]['selected']:
                     if rep in self.layout[run]['reps']:
@@ -692,7 +699,6 @@ class WindowMain(QMainWindow):
     #############################################
 
     def rep_clicked(self, w, event):
-        print('here!')
         keys = QApplication.keyboardModifiers()
         btn = event.button()
         run = w.property('ov-run')
@@ -728,7 +734,6 @@ class WindowMain(QMainWindow):
                 #
                 ##################
             self.update_menu()
-            #self.update_select_all_checkbox()
             self.update_highlights()                                                            # update styles to apply hightlighting
         except Exception as e:
             print(e)
@@ -897,22 +902,26 @@ class WindowMain(QMainWindow):
         on the selected list, it sets their objectName to their selected name. If they're not
         on the selected list, it sets their objectName to ther NOT selected name.
         """
-        ws = self.w_run_history_container.children()            # grab all table widgets
-        for w in ws:
-            run = w.property('ov-run')
-            rep = w.property('ov-rep')
-            select = False
-            if run:                                             # excludes any non-run or rep widgets (eg. headers)
-                if rep:                                         # For all widgets that are part of a replicate row
-                    if rep in self.layout[run]['selected']:     # set name for selected reps
-                        select = True
-                else:                                           # For all widgets that are part of a run (but not a rep!)
-                    if self.all_reps_of_run_are_selected(run):  # set name for all runs that have all reps selected
-                        select = True
-                if select:
-                    w.setObjectName(w.property('ov-selected-qss-name'))
-                else:
-                    w.setObjectName(w.property('ov-qss-name'))
+        #ws = self.w_run_history_container.children()            # grab all table widgets
+        for i in range(0,self.tabs.count()):
+            if len(self.tabs.widget(i).children()) == 3:
+                scroll_area = self.tabs.widget(i).children()[-1]
+                ws = scroll_area.widget().children()
+                for w in ws:
+                    run = w.property('ov-run')
+                    rep = w.property('ov-rep')
+                    select = False
+                    if run:                                             # excludes any non-run or rep widgets (eg. headers)
+                        if rep:                                         # For all widgets that are part of a replicate row
+                            if rep in self.layout[run]['selected']:     # set name for selected reps
+                                select = True
+                        else:                                           # For all widgets that are part of a run (but not a rep!)
+                            if self.all_reps_of_run_are_selected(run):  # set name for all runs that have all reps selected
+                                select = True
+                        if select:
+                            w.setObjectName(w.property('ov-selected-qss-name'))
+                        else:
+                            w.setObjectName(w.property('ov-qss-name'))
         applyStyles()                                           #Grab QSS Stylesheet and apply it, now that names have been changed
 
     '''def select_all_lbl_clicked(self, event):        # this exists so that the "select all" label can be clicked
