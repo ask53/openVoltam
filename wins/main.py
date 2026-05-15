@@ -313,7 +313,7 @@ class WindowMain(QMainWindow):
         lay_ph = QVBoxLayout()
         lay_ph.addWidget(QWidget())
         lay_ph.addStretch()
-        w_ph = QWidget()
+        w_ph = QTabWidget()
         w_ph.setLayout(lay_ph)
         
         # Add both of these widgets to our vertical layout
@@ -367,8 +367,13 @@ class WindowMain(QMainWindow):
 
         # If there are samples, create tabbed layout
         d = self.data
-        self.centralWidget().children()[-1].setParent(None) # remove bottom widget from centralWidget
 
+        
+        for insert_i, w in enumerate(self.centralWidget().children()):
+            if type(w) == type(QTabWidget()):
+                w.setParent(None)
+                break
+        
         self.tabs = QTabWidget()
         self.tabs.currentChanged.connect(self.tab_changed)
         self.tab_ids = []
@@ -422,7 +427,7 @@ class WindowMain(QMainWindow):
             self.tabs.addTab(w, sample[g.SA_NAME])
             self.tab_ids.append(sample[g.R_UID_SELF])
 
-        self.centralWidget().layout().addWidget(self.tabs)  # append tab widget to end of main layout
+        self.centralWidget().layout().insertWidget(insert_i, self.tabs)  # append tab widget to end of main layout
         self.tabs.setCurrentIndex(self.current_tab)         # activate tab (this is needed to stay on same tab during ongoing use, rather than jumping to tab 0)
         applyStyles()
 
