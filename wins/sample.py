@@ -137,7 +137,7 @@ class WindowSample(QMainWindow):
             
         # if a path was entered, gather the data from the specified file and display it
         if not self.mode == g.WIN_MODE_NEW:
-            self.update_win()
+            self.update_win_from_parent()
 
         self.saved = True               #set this again as the process of setting text may mess with this flag, but no data has changed
         self.setCentralWidget(self.w)
@@ -150,7 +150,7 @@ class WindowSample(QMainWindow):
         else:
             self.set_mode_view()
 
-    def update_win(self):
+    def update_win_from_parent(self):
         data = get_sample_from_file_data(self.parent.data, self.sample_id)
         w = self.w
         
@@ -172,6 +172,9 @@ class WindowSample(QMainWindow):
             if isCustomName(el.objectName()):
                 d = QDate.fromString(data[decodeCustomName(el.objectName())], g.DATE_STORAGE_FORMAT)
                 el.setDate(d)
+
+    def update_win(self):
+        return
 
     def set_mode_new(self):
         self.mode = g.WIN_MODE_NEW
@@ -238,12 +241,7 @@ class WindowSample(QMainWindow):
             return True
     
     def saveFile(self):
-        data = self.gather_data()
-        print(data)
-
-        
-        
-        
+        data = self.gather_data()        
 
         # Do actual save!
         if self.mode == g.WIN_MODE_NEW:                         # iF new sample
@@ -251,8 +249,8 @@ class WindowSample(QMainWindow):
             self.close_on_save = True
         else:
             savetype = g.SAVE_TYPE_SAMPLE_EDIT
+            self.set_mode_view()
             
-        self.set_mode_view()
         self.status.showMessage('Saving...', g.SB_DURATION)
         self.parent.start_async_save(savetype, [data], onSuccess=self.after_save_success, onError=self.after_save_error)
 
@@ -279,6 +277,9 @@ class WindowSample(QMainWindow):
         self.saved = True
         self.status.showMessage('Saved!', g.SB_DURATION)
         self.set_buttons_enabled(True)
+        print(self.mode)
+        if self.mode == g.WIN_MODE_NEW:                                     # if this was a new sample we just created
+            self.parent.tabs.setCurrentIndex(self.parent.tabs.count()-1)    # navigate to it in the parent window
         if self.close_on_save:
             self.close()
         

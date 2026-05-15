@@ -279,14 +279,14 @@ class WindowMain(QMainWindow):
         but_view = QPushButton()
         but_view.setIcon(QIcon(g.ICON_EDIT))
         but_samp = QPushButton('New sample')
-        #but_config = QPushButton('NEW RUN')
-        #but_calc = QPushButton('Calculate')
+        but_config = QPushButton('New run')
+        but_calc = QPushButton('Calculate')
         but_res_sample = QPushButton('Results')
         self.buts = [but_view, but_samp, but_res_sample]
-        #but_config, but_calc
         
         but_view.clicked.connect(self.edit_session_name)
         but_samp.clicked.connect(self.new_sample)
+        but_config.clicked.connect(self.new_run)
         #but_config.clicked.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
         #but_calc.clicked.connect(partial(self.new_win_calculator, g.WIN_MODE_NEW))
         but_res_sample.clicked.connect(partial(self.new_win_calculator, g.WIN_MODE_RIGHT))
@@ -297,12 +297,12 @@ class WindowMain(QMainWindow):
         l_session_header = QHBoxLayout()
         l_session_header.addWidget(self.lbl_sample_name)
         l_session_header.addWidget(but_view)
-        l_session_header.addWidget(QVLine())
         l_session_header.addStretch()
-        #l_session_header.addWidget(but_config)
         l_session_header.addWidget(but_samp)
         l_session_header.addWidget(QVLine())
-        #l_session_header.addWidget(but_calc)
+        l_session_header.addWidget(but_config)
+        l_session_header.addWidget(QVLine())
+        l_session_header.addWidget(but_calc)
         l_session_header.addWidget(but_res_sample)
 
         w_session_header = QWidget()                         # create a widget to hold the layout (which can be styled)
@@ -334,7 +334,6 @@ class WindowMain(QMainWindow):
         self.w.setLayout(lay)
         self.setCentralWidget(self.w)
         
-
     def update_win(self):
         try:
             self.layout_old = self.layout.copy()                # Store copy of old layout
@@ -342,10 +341,15 @@ class WindowMain(QMainWindow):
             sample_name = self.data[g.S_NAME]
             self.setWindowTitle(sample_name)                                    # Set the sample window title
             self.lbl_sample_name.updateTitleLbl(sample_name)                    # Set the sample name
+            print('0')
             self.set_main_area()
             self.update_highlights()
             self.update_menu()
+            print('4')
             self.update_children()
+            print('4.5')
+            self.resizeEvent(None)
+            print('5')
         except Exception as e:
             print(e)
         
@@ -363,10 +367,7 @@ class WindowMain(QMainWindow):
 
     def set_main_area(self):
         if self.tabs:
-            self.current_tab = self.tabs.currentIndex()
-            print('saving tab!')
-            print(self.current_tab)
-            print()
+            self.current_tab = self.tabs.currentIndex()     # save current tab
 
         # If there are samples, create tabbed layout
         d = self.data
@@ -375,6 +376,8 @@ class WindowMain(QMainWindow):
         self.tabs = QTabWidget()
         self.tabs.currentChanged.connect(self.tab_changed)
         self.tab_ids = []
+
+        print('1')
         
         for i, sample in enumerate(d[g.S_SAMPLES]):
             # Set up sample header
@@ -391,13 +394,13 @@ class WindowMain(QMainWindow):
             but_del = QPushButton()
             but_del.setIcon(QIcon(g.ICON_TRASH))
 
-            but_run = QPushButton("New run")
+            '''but_run = QPushButton("New run")
             but_run.clicked.connect(self.new_run)
             but_calc = QPushButton("Calculate")
 
             header_sample_0 = QHBoxLayout()
             header_sample_0.addWidget(but_run)
-            header_sample_0.addWidget(but_calc)
+            header_sample_0.addWidget(but_calc)'''
 
             h_sample_1 = QHBoxLayout()
             h_sample_1.addWidget(lbl_s_name)
@@ -410,8 +413,8 @@ class WindowMain(QMainWindow):
             v_sample.addLayout(h_sample_1)
             if desc:
                 v_sample.addWidget(lbl_desc)
-            v_sample.addWidget(QHLine())
-            v_sample.addLayout(header_sample_0)
+            '''v_sample.addWidget(QHLine())
+            v_sample.addLayout(header_sample_0)'''
 
             w0 = QWidget()
             w0.setLayout(v_sample)
@@ -434,14 +437,14 @@ class WindowMain(QMainWindow):
 
             self.tabs.addTab(w, sample[g.SA_NAME])
             self.tab_ids.append(sample[g.R_UID_SELF])
-            
+
+        print('2')
 
         self.centralWidget().layout().addWidget(self.tabs)  # append tab widget to end of main layout
-        print('setting tab!')
-        print(self.current_tab)
-        
         self.tabs.setCurrentIndex(self.current_tab)         # activate tab (this is needed to stay on same tab during ongoing use, rather than jumping to tab 0)
         applyStyles()
+
+        print('3')
     
     def get_sample_description(self, s):
         """Takes in a sample object, s, returns html string of description"""
@@ -477,7 +480,6 @@ class WindowMain(QMainWindow):
         
 
     def new_sample(self):
-        print('starting a new sample!')
         try:
             self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_NEW))
         except Exception as e:
@@ -488,11 +490,15 @@ class WindowMain(QMainWindow):
         self.new_win_config_run(g.WIN_MODE_NEW, sample_id=sample_id)
 
     def tab_changed(self):
-        return
-        
-        
-        
-        
+        if not self.tab_ids:
+            return
+        i = self.tabs.currentIndex()
+        sample_id = self.tab_ids[i]
+        for run in self.layout.keys():
+            if self.layout[run]['sample_id'] != sample_id:
+                self.layout[run]['selected'] = []
+        self.update_highlights()
+        self.resizeEvent(None)
 
     def widgetize_runs(self, sample_id):
         
@@ -513,11 +519,12 @@ class WindowMain(QMainWindow):
         # Loop through all runs in sample's dataset
         for i, run in enumerate(self.data[g.S_RUNS]):
             if run[g.R_UID_SAMPLE] == sample_id:
-                print('here!')
                 # For each run, create a row for each replicate and add it to the grid, leaving the first cell of each row blank
                 start_row = row
                 run_id = run[g.R_UID_SELF]
-                self.layout[run_id] = {'selected':[],'reps':[]}                     # initialize holing spot for run data 
+                self.layout[run_id] = {'sample_id':sample_id,
+                                       'selected':[],
+                                       'reps':[]}                     # initialize holing spot for run data 
                 for j, rep in enumerate(run[g.R_REPLICATES]):
                     rep_name = l.r_rep_abbrev[g.L] + ' '+rep[g.R_UID_SELF].split('-')[-1]
                     rep_status = rep[g.R_STATUS]
@@ -531,14 +538,16 @@ class WindowMain(QMainWindow):
                     is_last = False
                     if j == len(run[g.R_REPLICATES])-1: is_last=True                # figure out if current rep is last of run
 
-                    if (i+j)%2 == 0 and is_last: qss_name = 'run-rep-even-last'     # even rows that are last rep of run
-                    elif (i+j)%2 != 0 and is_last: qss_name = 'run-rep-odd-last'    # odd rows that are last rep of run
-                    elif (i+j)%2 == 0: qss_name = 'run-rep-even'                    # regular even rows
+                    if j%2 == 0 and is_last: qss_name = 'run-rep-even-last'     # even rows that are last rep of run
+                    elif j%2 != 0 and is_last: qss_name = 'run-rep-odd-last'    # odd rows that are last rep of run
+                    elif j%2 == 0: qss_name = 'run-rep-even'                    # regular even rows
                     else: qss_name = 'run-rep-odd'                                  # regular odd rows
                     
                     rep_id = rep[g.R_UID_SELF]
                     ws_rep = []
                     for k,s in enumerate(rep_strs):
+                        if k==len(rep_strs)-1:
+                            qss_name = qss_name + '-right'
                         w = self.create_w(html_escape(s), qss_name, self.rep_clicked, run_id, rep_id, is_icon=icons[k])
                         ws_rep.append(w)   
                     row = self.add_row_to_main(grid, ws_rep, row, h_offset=1)
@@ -573,13 +582,12 @@ class WindowMain(QMainWindow):
         w_in = QWidget()
         w_in.setLayout(grid)
         w_in.setObjectName('runs-container')
-
+        
         w = QScrollArea()
         w.setWidget(w_in)
 
         return w
-        #self.w_run_history_area.setWidget(self.w_run_history_container)
-
+ 
     def do_nothing(self, w):
         """This is necessary so that each widget has a callback function if clicked.
         Pls don't delete even tho is looks oh so deleteable!"""
@@ -686,6 +694,7 @@ class WindowMain(QMainWindow):
         btn = event.button()
         run = w.property('ov-run')
 
+
         if btn == Qt.MouseButton.RightButton and keys == Qt.KeyboardModifier.NoModifier:    # regular right click
             if not self.all_reps_of_run_are_selected(run):
                 self.clear_selected()
@@ -714,7 +723,6 @@ class WindowMain(QMainWindow):
             ##################
 
         self.update_menu()
-        self.update_select_all_checkbox()
         self.update_highlights()
 
     #####################################################
@@ -1479,6 +1487,33 @@ class WindowMain(QMainWindow):
     def set_enabled_children(self, enabled=True):
         for win in self.children:
             win.setEnabled(enabled)
+
+    #############################################
+    #                                           #
+    #   Window resize event handler             #
+    #                                           #
+    #############################################
+
+    def resizeEvent(self, event):
+        if not self.tabs:
+            return
+        try:
+            print('a')
+            i = self.tabs.currentIndex()
+            if len(self.tabs.widget(i).children()) == 3:
+                scroll_area = self.tabs.widget(i).children()[-1]
+                w = scroll_area.widget()
+                wid = scroll_area.width()
+                print('b')
+                sbar = scroll_area.verticalScrollBar()
+                if sbar.isVisible():
+                    wid = wid - sbar.width() - 5
+                print('c')
+                w.setMinimumWidth(wid)
+                w.setMaximumWidth(wid)
+                print('d')
+        except Exception as e:
+            print(e)
 
     #############################################
     #                                           #
