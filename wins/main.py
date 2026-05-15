@@ -55,7 +55,9 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QLineEdit,
     QTabWidget,
-    QTreeWidget
+    QTreeWidget,
+    QTreeWidgetItem,
+    QAbstractItemView
 )
 
 #######
@@ -368,6 +370,7 @@ class WindowMain(QMainWindow):
         self.tab_ids = []
         
         for i, sample in enumerate(d[g.S_SAMPLES]):
+            # Set up sample header
             lbl_s_name = QLabel("<div style='font-size: 16pt'>"+sample[g.SA_NAME]+"</div>")
             lbl_s_name.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             desc = self.get_sample_description(sample)
@@ -410,10 +413,62 @@ class WindowMain(QMainWindow):
 
             v = QVBoxLayout()
             v.addWidget(w0)
-            
+
+            # IF there are runs, setup sample tree
             runs = get_runs_in_sample(self.data, sample[g.R_UID_SELF])
             if runs:
                 tree = QTreeWidget()
+                tree.header().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+                tree.setHeaderLabels(('Run', 'Type/Status', 'Method/Last ran', 'Note', 'Analyzed'))
+                tree.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
+                tree.setAlternatingRowColors(True)
+                
+                
+                for run in runs:
+                    run_id = run[g.R_UID_SELF]
+                    method = get_method_from_file_data(self.data, run[g.R_UID_METHOD])
+                    types = {g.R_TYPE_BLANK: 'Blank',
+                             g.R_TYPE_SAMPLE: 'Sample',
+                             g.R_TYPE_STDADD: 'Standard addition'}
+                    item=QTreeWidgetItem(tree)
+                    item.setData(0, Qt.ItemDataRole.UserRole, run)
+                    #item.setStyleSheet('margin-top: 40px')
+                    lbl_runid = QLabel('<b>'+run_id+'</b>')
+                    lbl_runtype = QLabel('<b>'+types[run[g.R_TYPE]]+'</b>')
+                    lbl_runmeth = QLabel('<b>'+method[g.M_NAME]+'</b>')
+                    lbl_runnote = QLabel(run[g.R_NOTES])
+                    lbl_runnote.setWordWrap(True)
+                    tree.setItemWidget(item, 0, lbl_runid)
+                    tree.setItemWidget(item, 1, lbl_runtype)
+                    tree.setItemWidget(item, 2, lbl_runmeth)
+                    tree.setItemWidget(item, 3, lbl_runnote)
+                    for rep in run[g.R_REPLICATES]:
+                        statuses={g.R_STATUS_PENDING: 'Pending...',
+                                  g.R_STATUS_ERROR: 'ErRoR =0',
+                                  g.R_STATUS_COMPLETE: 'Complete!'}
+                        subitem = QTreeWidgetItem(item)
+                        subitem.setData(0, Qt.ItemDataRole.UserRole, rep)
+                        subitem.setText(0, rep[g.R_UID_SELF])
+                        subitem.setText(1, statuses[rep[g.R_STATUS]])
+                        subitem.setText(2, rep[g.R_TIMESTAMP_REP])
+                        subitem.setText(3, rep[g.R_NOTES])
+                        if rep[g.R_ANALYSIS]:
+                            check_icon = QLabel()
+                            check_icon.setPixmap(QIcon(g.ICON_CHECK).pixmap(QSize(20,20)))
+                            tree.setItemWidget(subitem, 4, check_icon)
+                            
+                    #item.setChildIndicatorPolicy(QTreeWidgetItem.ChildIndicatorPolicy.DontShowIndicator)
+                    item.setExpanded(True)           # expand the item, then remove the arrow to expand/collapse it (force it open)
+
+
+                ######
+                # NOW SETUP THE OLD VERSION HEREEEE
+                #####
+
+                
+                
+                    
+                        
                 #####################################################
                 #
                 #   HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE
@@ -421,11 +476,14 @@ class WindowMain(QMainWindow):
                 #   Setup tree here
 
 
-                
+                #tree.expandAll()
+                #tree.setItemsExpandable(False)
                 v.addWidget(tree)
-            else:
-                v.addStretch()
+                v.addWidget(w_cust)
+            else:                       # if there are not runs
+                v.addStretch()          # add a stretch to the layout to keep everything nice and tidy
 
+            w_cust=self.widgetize_runs(sample[g.R_UID_SELF])
             
             w = QWidget()
             w.setLayout(v)
@@ -484,13 +542,13 @@ class WindowMain(QMainWindow):
         
         
 
-    def widgetize_runs(self):
+    def widgetize_runs(self, sample_id):
         layout_old = self.layout.copy()                     # Store copy of old layout
         self.layout = {}                                    # Reinit self.layout to be refilled 
         
-        self.grid = QGridLayout()                           # init grid layout (that is inside scroll area)
-        self.grid.setHorizontalSpacing(0)
-        self.grid.setVerticalSpacing(0)
+        grid = QGridLayout()                           # init grid layout (that is inside scroll area)
+        grid.setHorizontalSpacing(0)
+        grid.setVerticalSpacing(0)
         
         # create column headers and add them to the grid layout
         headers = ['RUN INFO','REPLICATE', 'STATUS', 'LAST ATTEMPTED', 'NOTES', 'ANALYZED']
@@ -500,59 +558,60 @@ class WindowMain(QMainWindow):
             w_heads.append(w)
 
         row = 0
-        row = self.add_row_to_main(w_heads, row)
+        row = self.add_row_to_main(grid, w_heads, row)
 
         # Loop through all runs in sample's dataset
         for i, run in enumerate(self.data[g.S_RUNS]):
+            if run[g.R_UID_SAMPLE] == sample_id:
+                print('here!')
+                # For each run, create a row for each replicate and add it to the grid, leaving the first cell of each row blank
+                start_row = row
+                run_id = run[g.R_UID_SELF]
+                self.layout[run_id] = {'selected':[],'reps':[]}                     # initialize holing spot for run data 
+                for j, rep in enumerate(run[g.R_REPLICATES]):
+                    rep_name = l.r_rep_abbrev[g.L] + ' '+rep[g.R_UID_SELF].split('-')[-1]
+                    rep_status = rep[g.R_STATUS]
+                    rep_time = rep[g.R_TIMESTAMP_REP]
+                    rep_notes = rep[g.R_NOTES]
+                    rep_proc = ''
+                    if rep[g.R_ANALYSIS]: rep_proc = g.ICON_CHECK
+                    rep_strs = (rep_name,rep_status,rep_time,rep_notes,rep_proc)
+                    icons = (False, False, False, False, True)
 
-            # For each run, create a row for each replicate and add it to the grid, leaving the first cell of each row blank
-            start_row = row
-            run_id = run[g.R_UID_SELF]
-            self.layout[run_id] = {'selected':[],'reps':[]}                     # initialize holing spot for run data 
-            for j, rep in enumerate(run[g.R_REPLICATES]):
-                rep_name = l.r_rep_abbrev[g.L] + ' '+rep[g.R_UID_SELF].split('-')[-1]
-                rep_status = rep[g.R_STATUS]
-                rep_time = rep[g.R_TIMESTAMP_REP]
-                rep_notes = rep[g.R_NOTES]
-                rep_proc = ''
-                if rep[g.R_ANALYSIS]: rep_proc = g.ICON_CHECK
-                rep_strs = (rep_name,rep_status,rep_time,rep_notes,rep_proc)
-                icons = (False, False, False, False, True)
+                    is_last = False
+                    if j == len(run[g.R_REPLICATES])-1: is_last=True                # figure out if current rep is last of run
 
-                is_last = False
-                if j == len(run[g.R_REPLICATES])-1: is_last=True                # figure out if current rep is last of run
-
-                if (i+j)%2 == 0 and is_last: qss_name = 'run-rep-even-last'     # even rows that are last rep of run
-                elif (i+j)%2 != 0 and is_last: qss_name = 'run-rep-odd-last'    # odd rows that are last rep of run
-                elif (i+j)%2 == 0: qss_name = 'run-rep-even'                    # regular even rows
-                else: qss_name = 'run-rep-odd'                                  # regular odd rows
+                    if (i+j)%2 == 0 and is_last: qss_name = 'run-rep-even-last'     # even rows that are last rep of run
+                    elif (i+j)%2 != 0 and is_last: qss_name = 'run-rep-odd-last'    # odd rows that are last rep of run
+                    elif (i+j)%2 == 0: qss_name = 'run-rep-even'                    # regular even rows
+                    else: qss_name = 'run-rep-odd'                                  # regular odd rows
+                    
+                    rep_id = rep[g.R_UID_SELF]
+                    ws_rep = []
+                    for k,s in enumerate(rep_strs):
+                        w = self.create_w(html_escape(s), qss_name, self.rep_clicked, run_id, rep_id, is_icon=icons[k])
+                        ws_rep.append(w)   
+                    row = self.add_row_to_main(grid, ws_rep, row, h_offset=1)
+                    self.layout[run_id]['reps'].append(rep_id)
                 
-                rep_id = rep[g.R_UID_SELF]
-                ws_rep = []
-                for k,s in enumerate(rep_strs):
-                    w = self.create_w(html_escape(s), qss_name, self.rep_clicked, run_id, rep_id, is_icon=icons[k])
-                    ws_rep.append(w)   
-                row = self.add_row_to_main(ws_rep, row, h_offset=1)
-                self.layout[run_id]['reps'].append(rep_id)
-            
-            # Vertically merge all the first cells for this run's replicates and add run information
-            run_name = 'Run '+run[g.R_UID_SELF].split('-')[-1]
-            run_type = l.rc_types[run[g.R_TYPE]][g.L]
-            method_name = get_method_from_file_data(self.data, run[g.R_UID_METHOD])[g.M_NAME]
-            run_notes = run[g.R_NOTES]
-            run_str = '<u>'+html_escape(run_name)+'</u><br>'
-            run_str = run_str + '<b>'+'Type'+'</b>: '+html_escape(run_type)+'<br>'
-            run_str = run_str + '<b>'+'Method'+'</b>: '+html_escape(method_name)+'<br>'
-            run_str = run_str + '<b>'+'Notes'+'</b>: '+html_escape(run_notes)
+                # Vertically merge all the first cells for this run's replicates and add run information
+                run_name = 'Run '+run[g.R_UID_SELF].split('-')[-1]
+                run_type = l.rc_types[run[g.R_TYPE]][g.L]
+                method_name = get_method_from_file_data(self.data, run[g.R_UID_METHOD])[g.M_NAME]
+                run_notes = run[g.R_NOTES]
+                run_str = '<u>'+html_escape(run_name)+'</u><br>'
+                run_str = run_str + '<b>'+'Type'+'</b>: '+html_escape(run_type)+'<br>'
+                run_str = run_str + '<b>'+'Method'+'</b>: '+html_escape(method_name)+'<br>'
+                run_str = run_str + '<b>'+'Notes'+'</b>: '+html_escape(run_notes)
 
-            if i%2 == 0: qss_name = 'run-even'
-            else: qss_name = 'run-odd'
+                if i%2 == 0: qss_name = 'run-even'
+                else: qss_name = 'run-odd'
 
-            w = self.create_w(run_str, qss_name, self.run_clicked, run_id)
-            
-            self.add_row_to_main([w], start_row, v_merge=row-start_row)
+                w = self.create_w(run_str, qss_name, self.run_clicked, run_id)
+                
+                self.add_row_to_main(grid, [w], start_row, v_merge=row-start_row)
 
-        self.grid.setColumnStretch(len(headers)-1,1)
+        grid.setColumnStretch(len(headers)-1,1)
 
         # update self.layout to ensure that highlights maintain over update
         for run in layout_old:
@@ -561,9 +620,14 @@ class WindowMain(QMainWindow):
                     if rep in self.layout[run]['reps']:
                         self.layout[run]['selected'].append(rep)
         
-        self.w_run_history_container = QWidget()
-        self.w_run_history_container.setLayout(self.grid)
-        self.w_run_history_container.setObjectName('runs-container')
+        w_in = QWidget()
+        w_in.setLayout(grid)
+        w_in.setObjectName('runs-container')
+
+        w = QScrollArea()
+        w.setWidget(w_in)
+
+        return w
         #self.w_run_history_area.setWidget(self.w_run_history_container)
 
     def do_nothing(self, w):
@@ -599,7 +663,7 @@ class WindowMain(QMainWindow):
         w.setProperty('ov-selected-qss-name', 'selected-'+qss_name)
         return w
 
-    def add_row_to_main(self, ws, row, h_offset=0, v_merge=1, h_merge=1):
+    def add_row_to_main(self, grid, ws, row, h_offset=0, v_merge=1, h_merge=1):
         """
         Adds a new row of QWidgets to the self.grid object. Requires there being one self.grid object.
         Arguments:
@@ -613,7 +677,7 @@ class WindowMain(QMainWindow):
             The incremented row index
         """
         for i, w in enumerate(ws):
-            self.grid.addWidget(w, row, i+h_offset, v_merge, h_merge)
+            grid.addWidget(w, row, i+h_offset, v_merge, h_merge)
         return row+1
 
     #############################################
@@ -626,43 +690,46 @@ class WindowMain(QMainWindow):
     #############################################
 
     def rep_clicked(self, w, event):
+        print('here!')
         keys = QApplication.keyboardModifiers()
         btn = event.button()
         run = w.property('ov-run')
         rep = w.property('ov-rep')
+        try:
+            if btn == Qt.MouseButton.RightButton and keys == Qt.KeyboardModifier.NoModifier:        # regular right click
+                if not self.rep_is_selected(run, rep):                                              # If the clicked rep is not selected
+                    self.clear_selected()                                                           # Make it the only one selected
+                    self.add_rep_to_selected(run, rep)
+                    self.update_highlights()
+                self.open_rightclick_menu_rep(event)                                                # Open right-click context menu
 
-        if btn == Qt.MouseButton.RightButton and keys == Qt.KeyboardModifier.NoModifier:        # regular right click
-            if not self.rep_is_selected(run, rep):                                              # If the clicked rep is not selected
-                self.clear_selected()                                                           # Make it the only one selected
-                self.add_rep_to_selected(run, rep)
-                self.update_highlights()
-            self.open_rightclick_menu_rep(event)                                                # Open right-click context menu
+            elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.NoModifier:       # regular left click                                                            
+                N = self.N_reps_selected()                                                          # Get # of reps selected
+                rep_is_selected = self.rep_is_selected(run, rep)
+                self.clear_selected()                                                               # Clear all selections
+                if N > 1:                                                                           # If there were multiple selected, 
+                    self.add_rep_to_selected(run, rep)                                              # select the clicked rep (regardless of status)
+                elif not rep_is_selected:                                                           # if 1 or 0 selected, not including clicked one
+                    self.add_rep_to_selected(run, rep)                                              # select clicked rep (if clicked rep is already only selection, this deselects it)
 
-        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.NoModifier:       # regular left click                                                            
-            N = self.N_reps_selected()                                                          # Get # of reps selected
-            rep_is_selected = self.rep_is_selected(run, rep)
-            self.clear_selected()                                                               # Clear all selections
-            if N > 1:                                                                           # If there were multiple selected, 
-                self.add_rep_to_selected(run, rep)                                              # select the clicked rep (regardless of status)
-            elif not rep_is_selected:                                                           # if 1 or 0 selected, not including clicked one
-                self.add_rep_to_selected(run, rep)                                              # select clicked rep (if clicked rep is already only selection, this deselects it)
+            elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ControlModifier:  # ctrl+left click
+                if not self.rep_is_selected(run, rep):                                              # if clicked row not selected
+                    self.add_rep_to_selected(run, rep)                                              # add it to selection
+                else:                                                                               # otherwise,
+                    self.remove_rep_from_selected(run, rep)                                         # remove it from selection
 
-        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ControlModifier:  # ctrl+left click
-            if not self.rep_is_selected(run, rep):                                              # if clicked row not selected
-                self.add_rep_to_selected(run, rep)                                              # add it to selection
-            else:                                                                               # otherwise,
-                self.remove_rep_from_selected(run, rep)                                         # remove it from selection
-
-        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ShiftModifier:    # shift+left click
-            print('shift+click --- TODO: Add shift+click implemntation!!!')
-            ###################3
-            #
-            #   ADD SHIFT+CLICK IMPLEMENTATION HERE...
-            #
-            ##################
-        self.update_menu()
-        self.update_select_all_checkbox()
-        self.update_highlights()                                                            # update styles to apply hightlighting
+            elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ShiftModifier:    # shift+left click
+                print('shift+click --- TODO: Add shift+click implemntation!!!')
+                ###################3
+                #
+                #   ADD SHIFT+CLICK IMPLEMENTATION HERE...
+                #
+                ##################
+            self.update_menu()
+            #self.update_select_all_checkbox()
+            self.update_highlights()                                                            # update styles to apply hightlighting
+        except Exception as e:
+            print(e)
         
 
 
@@ -846,7 +913,7 @@ class WindowMain(QMainWindow):
                     w.setObjectName(w.property('ov-qss-name'))
         applyStyles()                                           #Grab QSS Stylesheet and apply it, now that names have been changed
 
-    def select_all_lbl_clicked(self, event):        # this exists so that the "select all" label can be clicked
+    '''def select_all_lbl_clicked(self, event):        # this exists so that the "select all" label can be clicked
         self.cb_all.toggle()                        #   as well as the checkbox itself
 
     def select_all_toggle(self, w):
@@ -874,7 +941,7 @@ class WindowMain(QMainWindow):
             self.cb_all.setChecked(True)
         elif not self.all_reps_are_selected() and self.cb_all.checkState() != Qt.CheckState.Unchecked:
             self.select_all_prog_check_flag = True
-            self.cb_all.setChecked(False)
+            self.cb_all.setChecked(False)'''
 
     def update_menu(self):
         runs = self.N_runs_selected()

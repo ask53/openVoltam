@@ -16,6 +16,8 @@ QMainWindow#window-view-sample QLabel#ov_sample_name {
 	padding-left: 0;
 }
 
+
+
 WindowViewSample QTextEdit {
 	background-color: #eeeeee;
 	border: 0;
@@ -67,6 +69,10 @@ WindowMain QWidget#sample-5{
 WindowMain QWidget#sample-6{
 	background-color: pink; /* pink */
 	border: 1px solid grey;
+}
+
+WindowMain QTreeWidget::item {
+	padding: 4px 2px;
 }
 	
 
