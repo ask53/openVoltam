@@ -71,10 +71,11 @@ WindowMain QWidget#sample-6{
 	border: 1px solid grey;
 }
 
-WindowMain QTreeWidget::item {
-	padding: 4px 2px;
-}
-	
+WindowMain QScrollArea,
+WindowMain QScrollArea QWidget {
+	background-color: #ffffff;
+	border: 0px solid #ffffff;
+}	
 
 QWidget#runs-container QLabel, 
 QWidget#steps-container QLabel  {
@@ -91,7 +92,7 @@ QWidget#runs-container QLabel#run-even,
 QWidget#runs-container QLabel#run-rep-even, 
 QWidget#runs-container QLabel#run-rep-even-last, 
 QWidget#steps-container QLabel#step-cell-even {
-	background-color: white;
+	background-color: #f4f4f4;
 	border-top: 1px solid black;
 }
 
@@ -99,7 +100,7 @@ QWidget#runs-container QLabel#run-odd,
 QWidget#runs-container QLabel#run-rep-odd, 
 QWidget#runs-container QLabel#run-rep-odd-last, 
 QWidget#steps-container QLabel#step-cell-odd {
-	background-color: #dddddd;
+	background-color: #ececec;
 	border-top: 1px solid black;
 }
 
