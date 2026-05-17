@@ -393,7 +393,7 @@ class WindowMain(QMainWindow):
             but_del = QPushButton()
             but_del.setIcon(QIcon(g.ICON_TRASH))
 
-            h_sample_1 = QHBoxLayout()
+            '''h_sample_1 = QHBoxLayout()
             h_sample_1.addWidget(lbl_s_name)
             h_sample_1.addWidget(QVLine())
             h_sample_1.addWidget(but_edit)
@@ -401,29 +401,41 @@ class WindowMain(QMainWindow):
             h_sample_1.addStretch()
 
             v_sample = QVBoxLayout()
-            v_sample.addLayout(h_sample_1)
+            v_sample.addLayout(h_sample_1)'''
+            v = QVBoxLayout()
+            v.addWidget(lbl_s_name)
+            v.addLayout(horizontalize([but_edit, but_del]))
+            
             if desc:
-                v_sample.addWidget(lbl_desc)
-
+                #v_sample.addWidget(lbl_desc)
+                v.addWidget(lbl_desc)
+            v.addStretch()
+            
             w0 = QWidget()
-            w0.setLayout(v_sample)
+            #w0.setLayout(v_sample)
+            w0.setLayout(v)
             color_index = i%7
             w0.setObjectName('sample-'+str(color_index))
 
-            v = QVBoxLayout()
-            v.addWidget(w0)
-
+            #v = QVBoxLayout()
+            #v.addWidget(w0)
+            h = QHBoxLayout()
+            
             # IF there are runs, setup sample tree
             runs = get_runs_in_sample(self.data, sample[g.R_UID_SELF])
             if runs:
                 w_cust=self.widgetize_runs(sample[g.R_UID_SELF])
-                v.addWidget(w_cust)
+                #v.addWidget(w_cust)
+                h.addWidget(w_cust)
             else:                       # if there are not runs
-                v.addStretch()          # add a stretch to the layout to keep everything nice and tidy
-            
-            w = QWidget()
-            w.setLayout(v)
+                #v.addStretch()          # add a stretch to the layout to keep everything nice and tidy
+                h.addStretch()
 
+            h.addWidget(w0)
+            w = QWidget()
+            #w.setLayout(v)
+            w.setLayout(h)
+            
             self.tabs.addTab(w, sample[g.SA_NAME])
             self.tab_ids.append(sample[g.R_UID_SELF])
 
@@ -478,13 +490,17 @@ class WindowMain(QMainWindow):
     def tab_changed(self):
         if not self.tab_ids:
             return
-        i = self.tabs.currentIndex()
-        sample_id = self.tab_ids[i]
-        for run in self.layout.keys():
-            if self.layout[run]['sample_id'] != sample_id:
-                self.layout[run]['selected'] = []
-        self.update_highlights()
-        self.resizeEvent(None)
+        try:
+            i = self.tabs.currentIndex()
+            sample_id = self.tab_ids[i]
+            for run in self.layout.keys():
+                if self.layout[run]['sample_id'] != sample_id:
+                    self.layout[run]['selected'] = []
+            self.update_highlights()
+            self.resizeEvent(None)
+        except Exception as e:
+            print('here in the tab_changed error handler:')
+            print(e)
 
     def widgetize_runs(self, sample_id):
         
@@ -634,6 +650,7 @@ class WindowMain(QMainWindow):
     #############################################
 
     def rep_clicked(self, w, event):
+    
         keys = QApplication.keyboardModifiers()
         btn = event.button()
         run = w.property('ov-run')
@@ -671,6 +688,7 @@ class WindowMain(QMainWindow):
             self.update_menu()
             self.update_highlights()                                                            # update styles to apply hightlighting
         except Exception as e:
+            print('here in the rep_clicked error handler!')
             print(e)
         
 
@@ -822,6 +840,19 @@ class WindowMain(QMainWindow):
     def clear_selected(self):
         for run in self.layout:
             self.layout[run]['selected'] = []
+
+    def get_scroll_area_children(self, tab):
+        sa = False
+        for child in self.tabs.widget(tab).children():
+            if type(child) == type(QScrollArea):
+                sa = child
+                break
+        if sa:
+            try: w = sa.widget()
+            except: return False
+            return w.children()
+        return False
+        
     
     def update_highlights(self):
         """Using the current state of the self.layout list, modifies the objectName
@@ -837,11 +868,25 @@ class WindowMain(QMainWindow):
         on the selected list, it sets their objectName to their selected name. If they're not
         on the selected list, it sets their objectName to ther NOT selected name.
         """
-        #ws = self.w_run_history_container.children()            # grab all table widgets
         for i in range(0,self.tabs.count()):
-            if len(self.tabs.widget(i).children()) == 3:
-                scroll_area = self.tabs.widget(i).children()[-1]
-                ws = scroll_area.widget().children()
+            '''sa = False
+            for child in self.tabs.widget(i).children():
+                if type(child) == type(QScrollArea()):
+                    sa = child
+                    break
+            if sa:
+                try: container = sa.widget()    # if there is no widget set in scroll area
+                except: return                  # then there is no content, return because there are no highlights to update
+                ws = container.children()'''
+            ws = self.get_scroll_area_children(i)
+            ########################################################
+            #
+            #   HERE AND PREVIOUS FUNCTION (get_scroll_area_children)
+            #   AND SIZECHANGED HANDLER, ISSUE LOCATING SCROLL AREA
+            #   AND WORKING WITH EMPTY SCROLL AREAS
+            #
+            ##########################################################
+            if ws:
                 for w in ws:
                     run = w.property('ov-run')
                     rep = w.property('ov-rep')
@@ -858,6 +903,7 @@ class WindowMain(QMainWindow):
                         else:
                             w.setObjectName(w.property('ov-qss-name'))
         applyStyles()                                           #Grab QSS Stylesheet and apply it, now that names have been changed
+        
 
     '''def select_all_lbl_clicked(self, event):        # this exists so that the "select all" label can be clicked
         self.cb_all.toggle()                        #   as well as the checkbox itself
@@ -1500,6 +1546,7 @@ class WindowMain(QMainWindow):
                 w.setMinimumWidth(wid)
                 w.setMaximumWidth(wid)
         except Exception as e:
+            print('window resize handler:')
             print(e)
 
     #############################################
