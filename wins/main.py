@@ -32,7 +32,7 @@ from time import sleep
 # import PyQt6/PySide6 stuff
 from PyQt6.QtTest import QTest
 from PyQt6.QtGui import QAction, QFont, QIcon
-from PyQt6.QtCore import QDate, Qt, QProcess, QSize
+from PyQt6.QtCore import QDate, Qt, QProcess, QSize, QMargins
 from PyQt6.QtWidgets import (
     QMainWindow,
     QPushButton,
@@ -382,6 +382,7 @@ class WindowMain(QMainWindow):
             # Set up sample header
             lbl_s_name = QLabel("<div style='font-size: 16pt'>"+sample[g.SA_NAME]+"</div>")
             lbl_s_name.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            lbl_s_name.setWordWrap(True)
             desc = self.get_sample_description(sample)
             lbl_desc = QLabel(desc)
             lbl_desc.setWordWrap(True)
@@ -393,45 +394,35 @@ class WindowMain(QMainWindow):
             but_del = QPushButton()
             but_del.setIcon(QIcon(g.ICON_TRASH))
 
-            '''h_sample_1 = QHBoxLayout()
-            h_sample_1.addWidget(lbl_s_name)
-            h_sample_1.addWidget(QVLine())
-            h_sample_1.addWidget(but_edit)
-            h_sample_1.addWidget(but_del)
-            h_sample_1.addStretch()
-
-            v_sample = QVBoxLayout()
-            v_sample.addLayout(h_sample_1)'''
             v = QVBoxLayout()
             v.addWidget(lbl_s_name)
             v.addLayout(horizontalize([but_edit, but_del]))
             
             if desc:
-                #v_sample.addWidget(lbl_desc)
                 v.addWidget(lbl_desc)
-            v.addStretch()
             
             w0 = QWidget()
-            #w0.setLayout(v_sample)
             w0.setLayout(v)
-            color_index = i%7
+            color_index = i%6
             w0.setObjectName('sample-'+str(color_index))
 
-            #v = QVBoxLayout()
-            #v.addWidget(w0)
+            v2 = QVBoxLayout()
+            v2.addWidget(w0)
+            v2.addStretch()
+
             h = QHBoxLayout()
+            h.addLayout(v2)
             
             # IF there are runs, setup sample tree
             runs = get_runs_in_sample(self.data, sample[g.R_UID_SELF])
             if runs:
                 w_cust=self.widgetize_runs(sample[g.R_UID_SELF])
-                #v.addWidget(w_cust)
                 h.addWidget(w_cust)
             else:                       # if there are not runs
                 #v.addStretch()          # add a stretch to the layout to keep everything nice and tidy
                 h.addStretch()
 
-            h.addWidget(w0)
+            
             w = QWidget()
             #w.setLayout(v)
             w.setLayout(h)
@@ -586,6 +577,9 @@ class WindowMain(QMainWindow):
         w_in.setObjectName('runs-container')
         
         w = QScrollArea()
+        sa_margins = QMargins()
+        sa_margins.setLeft(0)
+        w.setViewportMargins(sa_margins)
         w.setWidget(w_in)
 
         return w
@@ -841,16 +835,12 @@ class WindowMain(QMainWindow):
         for run in self.layout:
             self.layout[run]['selected'] = []
 
-    def get_scroll_area_children(self, tab):
-        sa = False
-        for child in self.tabs.widget(tab).children():
-            if type(child) == type(QScrollArea):
-                sa = child
-                break
-        if sa:
-            try: w = sa.widget()
-            except: return False
-            return w.children()
+    def get_scroll_area(self, i):
+        """Returns the children of the QScrollArea widget in the tab i. If there is no
+        QScrollArea widget found, or if it has no set widget ithin it, returns False."""
+        for child in self.tabs.widget(i).children():
+            if type(child) == type(QScrollArea()):
+                return child
         return False
         
     
@@ -868,40 +858,29 @@ class WindowMain(QMainWindow):
         on the selected list, it sets their objectName to their selected name. If they're not
         on the selected list, it sets their objectName to ther NOT selected name.
         """
-        for i in range(0,self.tabs.count()):
-            '''sa = False
-            for child in self.tabs.widget(i).children():
-                if type(child) == type(QScrollArea()):
-                    sa = child
-                    break
-            if sa:
-                try: container = sa.widget()    # if there is no widget set in scroll area
-                except: return                  # then there is no content, return because there are no highlights to update
-                ws = container.children()'''
-            ws = self.get_scroll_area_children(i)
-            ########################################################
-            #
-            #   HERE AND PREVIOUS FUNCTION (get_scroll_area_children)
-            #   AND SIZECHANGED HANDLER, ISSUE LOCATING SCROLL AREA
-            #   AND WORKING WITH EMPTY SCROLL AREAS
-            #
-            ##########################################################
-            if ws:
-                for w in ws:
-                    run = w.property('ov-run')
-                    rep = w.property('ov-rep')
-                    select = False
-                    if run:                                             # excludes any non-run or rep widgets (eg. headers)
-                        if rep:                                         # For all widgets that are part of a replicate row
-                            if rep in self.layout[run]['selected']:     # set name for selected reps
-                                select = True
-                        else:                                           # For all widgets that are part of a run (but not a rep!)
-                            if self.all_reps_of_run_are_selected(run):  # set name for all runs that have all reps selected
-                                select = True
-                        if select:
-                            w.setObjectName(w.property('ov-selected-qss-name'))
-                        else:
-                            w.setObjectName(w.property('ov-qss-name'))
+        
+        tab_i = self.tabs.currentIndex()
+        sa = self.get_scroll_area(tab_i)
+        ws = False
+        try: ws = sa.widget().children()    # get the children
+        except: pass                        # if no widget set, ignore the error
+
+        if ws:
+            for w in ws:
+                run = w.property('ov-run')
+                rep = w.property('ov-rep')
+                select = False
+                if run:                                             # excludes any non-run or rep widgets (eg. headers)
+                    if rep:                                         # For all widgets that are part of a replicate row
+                        if rep in self.layout[run]['selected']:     # set name for selected reps
+                            select = True
+                    else:                                           # For all widgets that are part of a run (but not a rep!)
+                        if self.all_reps_of_run_are_selected(run):  # set name for all runs that have all reps selected
+                            select = True
+                    if select:
+                        w.setObjectName(w.property('ov-selected-qss-name'))
+                    else:
+                        w.setObjectName(w.property('ov-qss-name'))
         applyStyles()                                           #Grab QSS Stylesheet and apply it, now that names have been changed
         
 
@@ -1531,20 +1510,21 @@ class WindowMain(QMainWindow):
             return
         try:
             i = self.tabs.currentIndex()
-            if len(self.tabs.widget(i).children()) == 3:
-                scroll_area = self.tabs.widget(i).children()[-1]
-                w = scroll_area.widget()
-                wid_sa = scroll_area.width()
-                wid_win = self.width()
-                if wid_win - wid_sa > 100:          # sometimes, when window is refreshed, the sa width is wonky. In that case
-                    wid = wid_win-42                #   set our width to 42 less than the width of the full qmainwindow
-                else:                               # otherwise
-                    wid = wid_sa                    #   match our width to the qscrollarea width
-                sbar = scroll_area.verticalScrollBar()
-                if sbar.isVisible():                # if the scrollbar is visible
-                    wid = wid - sbar.width() - 5    # adjust our width accordingly
-                w.setMinimumWidth(wid)
-                w.setMaximumWidth(wid)
+            sa = self.get_scroll_area(i)
+            if sa:
+                w = False
+                try: w = sa.widget()
+                except: pass
+                if w:
+                    wid_sa = sa.width()
+                    wid_win = self.width()
+                    sa_border_wid = 1
+                    wid = wid_sa - sa_border_wid                  #   match our width to the qscrollarea width (minus any border width)
+                    sbar = sa.verticalScrollBar()
+                    if sbar.isVisible():                # if the scrollbar is visible
+                        wid = wid - sbar.width()    # adjust our width accordingly
+                    w.setMinimumWidth(wid)
+                    w.setMaximumWidth(wid)
         except Exception as e:
             print('window resize handler:')
             print(e)

@@ -23,21 +23,17 @@ WindowViewSample QTextEdit {
 	border: 0;
 }
 
-/*QTableWidget::item QLabel {
-	padding: 0 0;
-}*/
-
 QMainWindow QStatusBar {
 	border-top: 1px solid grey;
 }
 
 WindowMain #session-header {
-	background-color: pink;
+	background-color: #fdbfff; 	/* pink */ 
 	border: 1px solid grey;
 }
 
 WindowMain QWidget#sample-0{
-	background-color: #EACCFF; /* purple */
+	background-color: #bda1ff; /* purple */
 	border: 1px solid grey;
 }
 
@@ -57,31 +53,28 @@ WindowMain QWidget#sample-3{
 }
 
 WindowMain QWidget#sample-4{
-	background-color: #FCFFCC; /* yellow */ 
-	border: 1px solid grey;
-}
-
-WindowMain QWidget#sample-5{
 	background-color: #FFEECC; /* orange */
 	border: 1px solid grey;
 }
 
-WindowMain QWidget#sample-6{
+WindowMain QWidget#sample-5{
 	background-color: pink; /* pink */
 	border: 1px solid grey;
 }
 
 WindowMain QScrollArea {
-	background-color: #ffffff;
-	border: 0px solid #ffffff;
+	background-color: white;
+	border: 0px solid white;
+	border-left: 1px solid grey;
+	border-top: 1px solid grey;
 	padding: 0;
 	margin: 0;
 }	
 
 WindowMain QScrollArea QWidget {
-	background-color: #ffffff;
+	background-color: white;
 }
-
+	
 WindowMain QScrollArea QScrollBar {
 	background-color: #ececec;
 }
@@ -192,7 +185,7 @@ QWidget#runs-container QLabel#selected-run-rep-odd-right,
 QWidget#runs-container QLabel#selected-run-rep-even-right, 
 QWidget#runs-container QLabel#selected-run-rep-odd-last-right,
 QWidget#runs-container QLabel#selected-run-rep-even-last-right {
-	background-color: #ecbafc; 	/* pastel lavender */
+	background-color: #fffcaa; 	/* paler yellow */
 }
 
 QWidget#runs-container QLabel#selected-run-odd, 
@@ -201,7 +194,7 @@ QWidget#steps-container QLabel#step-cell-even-selected,
 QWidget#steps-container QLabel#step-cell-odd-selected,
 QWidget#runs-container QLabel#selected-run-odd-right, 
 QWidget#runs-container QLabel#selected-run-even-right {
-	background-color: #fcecba; 	/* pastel gold */
+	background-color: #fdf873; 	/* brighter yellow */
 }
 
 QWidget#runs-container QLabel#selected-run-rep-odd-last,
