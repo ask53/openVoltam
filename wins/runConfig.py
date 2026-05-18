@@ -65,7 +65,7 @@ class WindowRunConfig(QMainWindow):
         self.sample.setPlaceholderText(l.rc_select[g.L])
         for sample in self.parent.data[g.S_SAMPLES]:
             self.sample.addItem(sample[g.SA_NAME], sample[g.R_UID_SELF])
-        self.sample.currentIndexChanged.connect(self.value_changed)
+        self.sample.currentIndexChanged.connect(self.sample_changed)
     
 
         method_lbl = QLabel("Method")
@@ -307,23 +307,28 @@ class WindowRunConfig(QMainWindow):
     #                                       #
     #########################################
 
+    def sample_changed(self):
+        self.value_changed()
+        tab_i = self.sample.currentIndex()
+        self.parent.tabs.setCurrentIndex(tab_i)
+        
     def method_changed(self, i):
         """Resets flag to indicate that the run config has been modified from
         saved version and refreshes graph."""
-        self.saved = False
+        self.value_changed()
         self.refresh_graph()
         self.update_std_add_vol()
 
     def run_type_changed(self, i):
         """Resets flag to indicate that the run config has been modified from
         saved version and toggles stacked layout to appropriate stack."""
-        self.saved = False
+        self.value_changed()
         self.type_stack.setCurrentIndex(i)
 
     def reps_changed(self):
         """Resets flag to indicate that the run config has been modified from
         saved version and refreshes graph."""
-        self.saved = False
+        self.value_changed()
         self.refresh_graph()
 
     def value_changed(self):
