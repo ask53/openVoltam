@@ -38,27 +38,32 @@ WindowMain QWidget#sample-0{
 }
 
 WindowMain QWidget#sample-1{
-	background-color: #CCE6FF; /* indigo */
+	background-color: #a1bbff; /* blue */
 	border: 1px solid grey;
 }
 
 WindowMain QWidget#sample-2{
-	background-color: #CCFFFC; /* blue */
+	background-color: #a1f4ff; /* teal */
 	border: 1px solid grey;
 }
 
 WindowMain QWidget#sample-3{
-	background-color: #CCFFCE; /* green */
+	background-color: #a1ffba; /* teal-green */
 	border: 1px solid grey;
 }
 
 WindowMain QWidget#sample-4{
-	background-color: #FFEECC; /* orange */
+	background-color: #d3ffa1; /* yellow-green */
 	border: 1px solid grey;
 }
 
 WindowMain QWidget#sample-5{
-	background-color: pink; /* pink */
+	background-color: #ffd0a1; /* orange */
+	border: 1px solid grey;
+}
+
+WindowMain QWidget#sample-6{
+	background-color: #ffa1a1; /* red */
 	border: 1px solid grey;
 }
 

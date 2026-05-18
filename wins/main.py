@@ -345,7 +345,7 @@ class WindowMain(QMainWindow):
             self.update_highlights()
             self.update_menu()
             self.update_children()
-            self.resizeEvent(None)
+            #self.resizeEvent(None)
         except Exception as e:
             print(e)
         
@@ -403,7 +403,7 @@ class WindowMain(QMainWindow):
             
             w0 = QWidget()
             w0.setLayout(v)
-            color_index = i%6
+            color_index = i%7
             w0.setObjectName('sample-'+str(color_index))
 
             v2 = QVBoxLayout()
@@ -488,7 +488,7 @@ class WindowMain(QMainWindow):
                 if self.layout[run]['sample_id'] != sample_id:
                     self.layout[run]['selected'] = []
             self.update_highlights()
-            self.resizeEvent(None)
+            self.scroll_area_resized()
         except Exception as e:
             print('here in the tab_changed error handler:')
             print(e)
@@ -500,7 +500,7 @@ class WindowMain(QMainWindow):
         grid.setVerticalSpacing(0)
         
         # create column headers and add them to the grid layout
-        headers = ['RUN INFO','REPLICATE', 'STATUS', 'LAST ATTEMPTED', 'NOTES', 'ANALYZED']
+        headers = ['','Replicate', 'Status', 'Datetime', 'Notes', 'Analyzed']
         w_heads = []
         for header in headers:
             w = self.create_w(header, qss_name='run-col-header')
@@ -576,13 +576,13 @@ class WindowMain(QMainWindow):
         w_in.setLayout(grid)
         w_in.setObjectName('runs-container')
         
-        w = QScrollArea()
-        sa_margins = QMargins()
-        sa_margins.setLeft(0)
-        w.setViewportMargins(sa_margins)
+        w = QRunScrollArea(self)
         w.setWidget(w_in)
 
         return w
+
+    def sa_resize(self):
+        print('RESIZE DETECTED!')
  
     def do_nothing(self, w):
         """This is necessary so that each widget has a callback function if clicked.
@@ -839,7 +839,7 @@ class WindowMain(QMainWindow):
         """Returns the children of the QScrollArea widget in the tab i. If there is no
         QScrollArea widget found, or if it has no set widget ithin it, returns False."""
         for child in self.tabs.widget(i).children():
-            if type(child) == type(QScrollArea()):
+            if type(child) == type(QRunScrollArea(self)):
                 return child
         return False
         
@@ -1505,7 +1505,7 @@ class WindowMain(QMainWindow):
     #                                           #
     #############################################
 
-    def resizeEvent(self, event):
+    def scroll_area_resized(self):
         if not self.tabs:
             return
         try:
@@ -1577,6 +1577,15 @@ class TitleLbl(QLabel):
     def updateTitleLbl(self, new_name):
         self.setText(new_name)
 
+
+class QRunScrollArea(QScrollArea):
+    def __init__(self, parent):
+        super(QScrollArea, self).__init__()
+        self.parent = parent
+
+    def resizeEvent(self, event):
+        self.parent.scroll_area_resized()
+        
 
         
         
