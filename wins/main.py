@@ -108,51 +108,59 @@ class WindowMain(QMainWindow):
         #####################
         menu = self.menuBar()
 
-        # add labels ("actions") for menu bar
-        action_sample_new = QAction(l.new_sample[g.L], self)
-        action_sample_open = QAction(l.open_sample[g.L], self)
-        action_sample_close = QAction('Close', self)
+        # Lab session menu
+        action_session_new = QAction('New session', self)
+        action_session_open = QAction('Open session', self)
+        action_session_close = QAction('Close', self)
+
+        action_session_new.triggered.connect(parent.new_session)
+        action_session_open.triggered.connect(parent.open_session)
+        action_session_close.triggered.connect(self.close)
         
+        # Method menu
         action_method_new = QAction(l.new_config[g.L], self)
         action_method_open = QAction(l.open_config[g.L], self)
-        action_method_run_view = QAction('View run method', self)
+        action_method_run_view = QAction('Method info', self)
         action_method_run_edit = QAction('Edit run method', self)
-
-        action_run_new = QAction('New run', self)
-        action_run_new_from = QAction('New run from config', self)
-        action_run_view = QAction('View info', self)
-        action_run_edit = QAction('Edit info', self)
-        action_run_export = QAction('Export as CSV', self)
-        action_run_delete = QAction('Delete', self)
-
-        action_rep_edit = QAction('Edit note', self)
-        action_rep_export = QAction('Export as CSV', self)
-        action_rep_delete = QAction('Delete', self)
-
-        action_analyze_peaks = QAction('Analyze', self)
-        action_analyze_calculate = QAction('Calculate', self)
-        action_analyze_results = QAction('Results', self)
-        
-        # connect menu bar labels with slots 
-        action_sample_new.triggered.connect(parent.new_session)                      # this first group of menu functions come from the home window (parent)
-        action_sample_open.triggered.connect(parent.open_session)
-        action_sample_close.triggered.connect(self.close)
 
         action_method_new.triggered.connect(parent.new_method)
         action_method_open.triggered.connect(parent.open_method)
         action_method_run_view.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
         action_method_run_edit.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_WITH_MINOR_EDITS))
 
+        # Sample menu
+        action_sample_new = QAction(l.new_sample[g.L], self)
+        action_sample_edit = QAction('Edit sample info', self)
+        action_sample_del = QAction('Delete sample', self)
+
+        action_sample_new.triggered.connect(self.new_sample)
+        action_sample_edit.triggered.connect(self.edit_sample)
+        action_sample_del.triggered.connect(self.delete_sample)
+
+        action_run_new = QAction('New run', self)
+        action_run_new_from = QAction('New run from config', self)
+        action_run_view = QAction('Run info', self)
+        action_run_export = QAction('Export', self)
+        action_run_delete = QAction('Delete', self)
+
+        action_rep_edit = QAction('Edit rep note', self)
+        '''action_rep_export = QAction('Export as CSV', self)
+        action_rep_delete = QAction('Delete', self)'''
+
+        action_graph = QAction('Graph', self)
+        action_analyze_peaks = QAction('Analyze', self)
+        action_analyze_calculate = QAction('Calculate', self)
+        action_analyze_results = QAction('Results', self)
+        
+        
+        
+
         action_run_new.triggered.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
         action_run_new_from.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
         action_run_view.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
-        action_run_edit.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_EDIT))
         action_run_export.triggered.connect(self.export_selected_reps_as_csv)
         action_run_delete.triggered.connect(self.delete_reps)
-
         action_rep_edit.triggered.connect(self.edit_rep_note)
-        action_rep_export.triggered.connect(self.export_selected_reps_as_csv)
-        action_rep_delete.triggered.connect(self.delete_reps)
 
         action_analyze_peaks.triggered.connect(self.anayze_data_selected_reps)
         action_analyze_calculate.triggered.connect(partial(self.new_win_calculator, g.WIN_MODE_NEW))
@@ -161,57 +169,57 @@ class WindowMain(QMainWindow):
         
 
         # Add menu top labels then populate the menus with the above slotted labels
-        file_menu = menu.addMenu(l.menu_sample[g.L])
-        file_menu.addAction(action_sample_new)
-        file_menu.addAction(action_sample_open)
-        file_menu.addSeparator()
-        file_menu.addAction(action_sample_close)
+        m = menu.addMenu('Lab session')
+        m.addAction(action_session_new)
+        m.addAction(action_session_open)
+        m.addSeparator()
+        m.addAction(action_session_close)
         
-        file_menu = menu.addMenu(l.menu_config[g.L])      
-        file_menu.addAction(action_method_new)
-        file_menu.addAction(action_method_open)
-        file_menu.addSeparator()
-        file_menu.addAction(action_method_run_view)
-        file_menu.addAction(action_method_run_edit)
+        m = menu.addMenu(l.menu_config[g.L])      
+        m.addAction(action_method_new)
+        m.addAction(action_method_open)
+        m.addSeparator()
+        m.addAction(action_method_run_edit)
 
-        file_menu = menu.addMenu(l.menu_run[g.L])
-        file_menu.addAction(action_run_new)
-        file_menu.addAction(action_run_new_from)
-        file_menu.addSeparator()
-        file_menu.addAction(action_run_view)
-        file_menu.addAction(action_run_edit)
-        file_menu.addSeparator()
-        file_menu.addAction(action_method_run_view)
-        file_menu.addAction(action_method_run_edit)
-        file_menu.addSeparator()
-        file_menu.addAction(action_run_export)
-        file_menu.addSeparator()
-        file_menu.addAction(action_run_delete)
+        m = menu.addMenu(l.menu_sample[g.L])
+        m.addAction(action_sample_new)
+        m.addSeparator()
+        m.addAction(action_sample_edit)
+        m.addAction(action_sample_del)
 
-        file_menu = menu.addMenu('Replicate')
-        file_menu.addAction(action_rep_edit)
-        file_menu.addSeparator()
-        file_menu.addAction(action_rep_export)
-        file_menu.addSeparator()
-        file_menu.addAction(action_rep_delete)
+        m = menu.addMenu(l.menu_run[g.L])
+        m.addAction(action_run_new)
+        m.addAction(action_run_new_from)
+        m.addSeparator()
+        m.addAction(action_run_view)
+        m.addAction(action_method_run_view)
+        m.addSeparator()
+        m.addAction(action_rep_edit)
+        m.addSeparator()
+        m.addAction(action_run_export)
+        m.addSeparator()
+        m.addAction(action_run_delete)
 
-        file_menu = menu.addMenu('Analysis')
-        file_menu.addAction(action_analyze_peaks)
-        file_menu.addAction(action_analyze_calculate)
-        file_menu.addAction(action_analyze_results)
+        m = menu.addMenu('Analysis')
+        m.addAction(action_graph)
+        m.addAction(action_analyze_peaks)
+        m.addSeparator()
+        m.addAction(action_analyze_calculate)
+        m.addAction(action_analyze_results)
 
         self.actions_run_one_only = [action_run_new_from,
                                      action_run_view,
-                                     action_run_edit,
                                      action_method_run_view,
                                      action_method_run_edit]
         self.actions_run_one_plus = [action_run_export,
                                      action_run_delete,
                                      action_analyze_peaks]
         self.actions_rep_one_only = [action_rep_edit]
-        self.actions_rep_one_plus = [action_rep_export,
-                                     action_rep_delete,
+        self.actions_rep_one_plus = [action_graph,
                                      action_analyze_peaks]
+        self.actions_sample_one_plus = [action_run_new,
+                                        action_sample_edit,
+                                        action_sample_del]
         
 
         #####################################
@@ -221,8 +229,7 @@ class WindowMain(QMainWindow):
         #####################################
         
         self.context_menu = QMenu(self)      # Menu for when run is clicked
-        #self.contextmenu_rep = QMenu(self)      # Menu for when rep is clicked
-
+        
         self.a_runAgain = self.context_menu.addAction("New run from config")
         self.context_menu.addSeparator()
         self.a_viewConfig = self.context_menu.addAction("Run info")
@@ -291,6 +298,7 @@ class WindowMain(QMainWindow):
         but_calc = QPushButton('Calculate')
         but_res_sample = QPushButton('Results')
         self.buts = [but_view, but_samp, but_res_sample]
+        self.buts_with_sample_only = [but_config]
         
         but_view.clicked.connect(self.edit_session_name)
         but_samp.clicked.connect(self.new_sample)
@@ -344,24 +352,24 @@ class WindowMain(QMainWindow):
         
     def update_win(self):
         try:
-            print('a')
             self.layout_old = self.layout.copy()                # Store copy of old layout
             self.layout = {}                                    # Reinit self.layout to be refilled 
             sample_name = self.data[g.S_NAME]
-            print('b')
             self.setWindowTitle(sample_name)                                    # Set the sample window title
             self.lbl_sample_name.updateTitleLbl(sample_name)                    # Set the sample name
-            print('c')
-            self.set_move_to_menu()
-            print('d')
-            self.set_main_area()
-            self.update_highlights()
-            print('e')
-            self.update_menu()
             print('z')
+            self.set_move_to_menu()
+            print('y')
+            self.set_main_area()
+            print('x')
+            self.update_highlights()
+            print('a')
+            self.update_menu()
+            print('b')
             self.update_children()
             
         except Exception as e:
+            print('Error in update_win:')
             print(e)
 
 
@@ -369,13 +377,12 @@ class WindowMain(QMainWindow):
         
         self.move_to_menu.clear()
         self.move_to_menu_actions = []
-        print('0')
         for i, s in enumerate(self.data[g.S_SAMPLES]):          # Loop thru samples
             action = self.move_to_menu.addAction(s[g.SA_NAME])  # Add the sample name to the move-to menu
             action.triggered.connect(partial(self.move_to, i))  # When clicked, run the move_to(i) fn
             self.move_to_menu_actions.append(action)            # Append the action to a class-wide list for later access
-        print('1')
-        self.move_to_menu_actions[0].setEnabled(False)          # grey out the default tab in move-to menu to start 
+        if self.data[g.S_SAMPLES]:
+            self.move_to_menu_actions[0].setEnabled(False)          # grey out the default tab in move-to menu to start 
         
         
 
@@ -448,6 +455,7 @@ class WindowMain(QMainWindow):
             but_edit.clicked.connect(self.edit_sample)
             but_del = QPushButton()
             but_del.setIcon(QIcon(g.ICON_TRASH))
+            but_del.clicked.connect(self.delete_sample)
 
             v = QVBoxLayout()
             v.addWidget(lbl_s_name)
@@ -517,6 +525,15 @@ class WindowMain(QMainWindow):
             self.new_win_one_with_value(WindowSample(self, mode=g.WIN_MODE_EDIT, sample_id=s_id), "sample_id", s_id)
         except Exception as e:
             print(e)
+
+    def delete_sample(self):
+        #############################################################################################
+        #
+        #   HERE HERE HERE
+        #
+        ########################################################################################################################################################################################
+        print('deleting sample...')
+        return
 
     def get_current_sample_id(self):
         i = self.tabs.currentIndex()
@@ -899,6 +916,9 @@ class WindowMain(QMainWindow):
     def get_scroll_area(self, i):
         """Returns the children of the QScrollArea widget in the tab i. If there is no
         QScrollArea widget found, or if it has no set widget ithin it, returns False."""
+        try: self.tabs.widget(i).children()
+        except: return False
+        
         for child in self.tabs.widget(i).children():
             if type(child) == type(QRunScrollArea(self)):
                 return child
@@ -923,6 +943,7 @@ class WindowMain(QMainWindow):
         tab_i = self.tabs.currentIndex()
         sa = self.get_scroll_area(tab_i)
         ws = False
+        print('-')
         try: ws = sa.widget().children()    # get the children
         except: pass                        # if no widget set, ignore the error
 
@@ -944,36 +965,6 @@ class WindowMain(QMainWindow):
                         w.setObjectName(w.property('ov-qss-name'))
         applyStyles()                                           #Grab QSS Stylesheet and apply it, now that names have been changed
         
-
-    '''def select_all_lbl_clicked(self, event):        # this exists so that the "select all" label can be clicked
-        self.cb_all.toggle()                        #   as well as the checkbox itself
-
-    def select_all_toggle(self, w):
-        """Click handler for select-all checkbox. This runs when select-all checkbox is checked
-        programatically or by the user. The first step is to filter out programatic changes.
-        Then, if box is check, all replicates are selected. If unchecked, nothing is selected."""
-        if self.select_all_prog_check_flag:         # 1. If this function was triggered programatically
-            self.select_all_prog_check_flag = False # Reset flag and ignore (return)
-            return
-        if w.checkState() == Qt.CheckState.Checked: # 2. if this function was triggered by a user click and the box is now checked
-            self.add_all_to_selected()              # Add all reps to selected
-        else:                                       # If triggered by a user click and box is now unchecked
-            self.clear_selected()                      # Remove all selected
-        self.update_highlights()
-        self.update_menu()
-
-    def update_select_all_checkbox(self):
-        """This function adjusts the state of the select-all checkbox programatically. To indicate that
-        the change was programatic, before making a changes, the self.select_all_prog_check_flag is
-        set. The two conditions that cause action are:
-            1. If all reps are selected but select-all checkobx is not checked, check it!
-            2. If NOT all reps are selected but select-all checkobx is checked, uncheck it!"""
-        if self.all_reps_are_selected() and self.cb_all.checkState() != Qt.CheckState.Checked:
-            self.select_all_prog_check_flag = True
-            self.cb_all.setChecked(True)
-        elif not self.all_reps_are_selected() and self.cb_all.checkState() != Qt.CheckState.Unchecked:
-            self.select_all_prog_check_flag = True
-            self.cb_all.setChecked(False)'''
 
     def update_menu(self):
         runs = self.N_runs_selected()
@@ -998,10 +989,21 @@ class WindowMain(QMainWindow):
             yes = yes + self.actions_run_one_plus
             no = no + self.actions_run_one_only
 
+        # For samples
+        if len(self.data[g.S_SAMPLES]) > 0:
+            yes = yes + self.actions_sample_one_plus + self.buts_with_sample_only
+        else:
+            no = no + self.actions_sample_one_plus + self.buts_with_sample_only
+
         for action in yes:
             action.setEnabled(True)
         for action in no:
             action.setEnabled(False)
+
+        
+
+        
+        
 
     
 
@@ -1512,7 +1514,6 @@ class WindowMain(QMainWindow):
         self.save_error_flag = True
 
     def handle_finished_save(self, onSuccess, onError):
-        print('here in finished handler!')
         try:
             self.progress_bar.setVisible(False)                                             # Rehide the progress bar
             self.process = None                                                             # Wipe the process from memory
