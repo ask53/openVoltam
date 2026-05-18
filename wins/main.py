@@ -148,7 +148,7 @@ class WindowMain(QMainWindow):
         action_run_view.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
         action_run_edit.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_EDIT))
         action_run_export.triggered.connect(self.export_selected_reps_as_csv)
-        action_run_delete.triggered.connect(self.delete_runs)
+        action_run_delete.triggered.connect(self.delete_reps)
 
         action_rep_edit.triggered.connect(self.edit_rep_note)
         action_rep_export.triggered.connect(self.export_selected_reps_as_csv)
@@ -220,53 +220,61 @@ class WindowMain(QMainWindow):
         #                                   #
         #####################################
         
-        self.contextmenu_run = QMenu(self)      # Menu for when run is clicked
-        self.contextmenu_rep = QMenu(self)      # Menu for when rep is clicked
+        self.context_menu = QMenu(self)      # Menu for when run is clicked
+        #self.contextmenu_rep = QMenu(self)      # Menu for when rep is clicked
 
-        self.runAction_runAgain = self.contextmenu_run.addAction("New run from config")
-        self.contextmenu_run.addSeparator()
-        self.runAction_viewConfig = self.contextmenu_run.addAction("View run info")
-        self.runAction_editConfig = self.contextmenu_run.addAction("Edit run info")
-        self.contextmenu_run.addSeparator()
-        self.runAction_viewMethod = self.contextmenu_run.addAction("View method")
-        self.runAction_editMethod = self.contextmenu_run.addAction("Edit method")
-        self.contextmenu_run.addSeparator()
-        self.runAction_viewData = self.contextmenu_run.addAction("Graph")
-        self.runAction_analyzeData = self.contextmenu_run.addAction("Analyze")
-        self.runAction_exportData = self.contextmenu_run.addAction("Export")
-        self.contextmenu_run.addSeparator()
-        self.runAction_delete = self.contextmenu_run.addAction("Delete run(s)")
+        self.a_runAgain = self.context_menu.addAction("New run from config")
+        self.context_menu.addSeparator()
+        self.a_viewConfig = self.context_menu.addAction("Run info")
+        self.a_viewMethod = self.context_menu.addAction("Method info")
+        self.move_to_menu = QMenu('Move to...')
+        self.move_to_menu_actions = []
+        self.context_menu.addMenu(self.move_to_menu)
+        
+        self.context_menu.addSeparator()
+        self.a_editRepNote = self.context_menu.addAction("Edit rep note")
+        self.context_menu.addSeparator()
+        self.a_graph = self.context_menu.addAction("Graph")
+        self.a_analyze = self.context_menu.addAction("Analyze")
+        self.a_export = self.context_menu.addAction("Export")
+        self.context_menu.addSeparator()
+        self.a_delete = self.context_menu.addAction("Delete")
 
-        self.repAction_editNote = self.contextmenu_rep.addAction("Edit replicate note")
+
+
+        
+
+
+
+
+
+        '''self.repAction_editNote = self.contextmenu_rep.addAction("Edit replicate note")
         self.contextmenu_rep.addSeparator()
         self.repAction_viewData = self.contextmenu_rep.addAction("Graph")
         self.repAction_analyzeData = self.contextmenu_rep.addAction("Analyze")
         self.repAction_exportData = self.contextmenu_rep.addAction("Export")
         self.contextmenu_rep.addSeparator()
-        self.repAction_delete = self.contextmenu_rep.addAction("Delete replicates(s)")
+        self.repAction_delete = self.contextmenu_rep.addAction("Delete replicates(s)")'''
 
-        self.runAction_runAgain.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
-        self.runAction_viewConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
-        self.runAction_editConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_EDIT))
-        self.runAction_viewMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
-        self.runAction_editMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_WITH_MINOR_EDITS))
-        self.runAction_viewData.triggered.connect(self.view_data_selected_reps)
-        self.runAction_analyzeData.triggered.connect(self.anayze_data_selected_reps)
-        self.runAction_exportData.triggered.connect(self.export_selected_reps_as_csv)
-        self.runAction_delete.triggered.connect(self.delete_runs)
+        self.a_runAgain.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
+        self.a_viewConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
+        self.a_viewMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
+        self.a_editRepNote.triggered.connect(self.edit_rep_note)
+        self.a_graph.triggered.connect(self.view_data_selected_reps)
+        self.a_analyze.triggered.connect(self.anayze_data_selected_reps)
+        self.a_export.triggered.connect(self.export_selected_reps_as_csv)
+        self.a_delete.triggered.connect(self.delete_reps)
         
-        self.repAction_editNote.triggered.connect(self.edit_rep_note)
+        '''self.repAction_editNote.triggered.connect(self.edit_rep_note)
         self.repAction_viewData.triggered.connect(self.view_data_selected_reps)
         self.repAction_analyzeData.triggered.connect(self.anayze_data_selected_reps)
         self.repAction_exportData.triggered.connect(self.export_selected_reps_as_csv)
-        self.repAction_delete.triggered.connect(self.delete_reps)
+        self.repAction_delete.triggered.connect(self.delete_reps)'''
 
-        self.runActions_oneOnly = [self.runAction_runAgain,
-                                   self.runAction_editConfig,
-                                   self.runAction_viewConfig,
-                                   self.runAction_viewMethod,
-                                   self.runAction_editMethod]
-        self.repActions_oneOnly = [self.repAction_editNote]
+        self.run_actions_one = [self.a_runAgain,
+                                self.a_viewConfig,
+                                self.a_viewMethod]
+        self.rep_actions_one = [self.a_editRepNote]
         
         #####################
         #                   #
@@ -336,18 +344,39 @@ class WindowMain(QMainWindow):
         
     def update_win(self):
         try:
+            
             self.layout_old = self.layout.copy()                # Store copy of old layout
             self.layout = {}                                    # Reinit self.layout to be refilled 
             sample_name = self.data[g.S_NAME]
             self.setWindowTitle(sample_name)                                    # Set the sample window title
             self.lbl_sample_name.updateTitleLbl(sample_name)                    # Set the sample name
+            print('1')
+            self.set_move_to_menu()
             self.set_main_area()
+            print('2')
             self.update_highlights()
+            print('2a')
             self.update_menu()
+            print('3')
             self.update_children()
             #self.resizeEvent(None)
         except Exception as e:
             print(e)
+
+
+    def set_move_to_menu(self):
+        self.move_to_menu.clear()
+        for i, s in enumerate(self.data[g.S_SAMPLES]):
+            action = self.move_to_menu.addAction(s[g.SA_NAME])
+            action.triggered.connect(partial(self.move_to, i))
+            self.move_to_menu_actions.append(action)
+        
+        
+
+    def move_to(self, i):
+        """moves a selected run (with all its reps) to the sample with index i"""
+        print('moving to '+str(i))
+        
         
         
     #############################################
@@ -655,7 +684,7 @@ class WindowMain(QMainWindow):
                     self.clear_selected()                                                           # Make it the only one selected
                     self.add_rep_to_selected(run, rep)
                     self.update_highlights()
-                self.open_rightclick_menu_rep(event)                                                # Open right-click context menu
+                self.open_rightclick_menu(event)                                                    # Open right-click context menu
 
             elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.NoModifier:       # regular left click                                                            
                 N = self.N_reps_selected()                                                          # Get # of reps selected
@@ -698,7 +727,7 @@ class WindowMain(QMainWindow):
                 self.clear_selected()
                 self.add_run_to_selected(run)
                 self.update_highlights()
-            self.open_rightclick_menu_run(event)
+            self.open_rightclick_menu(event)
 
         elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.NoModifier:   # regular left click
             this_entire_run_is_only_selection = self.this_entire_run_and_nothing_else_is_selected(run)
@@ -789,10 +818,10 @@ class WindowMain(QMainWindow):
         return N
 
     def N_runs_selected(self):
-        """ Returns Int, # of runs currently selected"""
+        """ Returns Int, # of runs with any reps currently selected"""
         N = 0
-        for run in self.layout:
-            if self.all_reps_of_run_are_selected(run):
+        for run in self.layout.keys():
+            if self.layout[run]['selected']:
                 N = N + 1
         return N
 
@@ -915,8 +944,11 @@ class WindowMain(QMainWindow):
             self.cb_all.setChecked(False)'''
 
     def update_menu(self):
+        print('-')
         runs = self.N_runs_selected()
+        print('--')
         reps = self.N_reps_selected()
+        print('---')
         yes = []
         no = []
         # For reps 
@@ -949,34 +981,21 @@ class WindowMain(QMainWindow):
     #                                           #
     # Handlers for right-click "context" menus  #
     #                                           #
-    #   1. open_rightclick_menu_run             #
-    #   2. open_rightclick_menu_rep             #
+    #   1. open_rightclick_menu                 #
     #                                           #
     #############################################
 
-    def open_rightclick_menu_run(self, event):
-        """Opens the right-click context menu for runs. Takes in a mouseclick QEvent object
-        that contains the location of the click. Menu is displayed at that location"""
-        runs_selected = self.N_runs_selected()      # Get count of selected runs
-        is_enabled = False
-        if runs_selected == 1:                      # If just 1 run selected
-            is_enabled = True                       # Enable all menu actions
-        if runs_selected > 0:                       # If any # of runs selected at all
-            for action in self.runActions_oneOnly:  # Setup which actions are enabled
-                action.setEnabled(is_enabled)
-            self.contextmenu_run.exec(event.globalPosition().toPoint())     # And show the menu!
-
-    def open_rightclick_menu_rep(self, event):
-        """Opens the right-click context menu for reps. Takes in a mouseclick QEvent object
-        that contains the location of the click. Menu is displayed at that location"""
-        reps_selected = self.N_reps_selected()      # Get count of selected replicates
-        is_enabled = False
-        if reps_selected == 1:                      # If just 1 rep selected
-            is_enabled = True                       # Enable all menu actions
-        if reps_selected > 0:                       # If any reps at all are selected
-            for action in self.repActions_oneOnly:  # Setup which actions are enabled
-                action.setEnabled(is_enabled)
-            self.contextmenu_rep.exec(event.globalPosition().toPoint())     # And show the menu!
+    def open_rightclick_menu(self, event):
+        reps = self.N_reps_selected()   # Get count of selected replicates
+        runs = self.N_runs_selected()   # get count of all runs with at least one rep selected
+        for action in self.rep_actions_one:
+            if reps == 1: action.setEnabled(True)
+            else: action.setEnabled(False)
+        for action in self.run_actions_one:
+            if runs == 1: action.setEnabled(True)
+            else: action.setEnabled(False)
+        if reps or runs:
+            self.context_menu.exec(event.globalPosition().toPoint())
 
     #############################################
     #                                           #
@@ -992,9 +1011,8 @@ class WindowMain(QMainWindow):
     #   2. open_run_config_with_uid             #
     #   3. open_method_with_uid                 #
     #   4. export_selected_reps_as_csv          #
-    #   5. delete_runs                          #
-    #   6. delete_reps                          #
-    #   7. confirm_delete                       #
+    #   5. delete_reps                          #
+    #   6. confirm_delete                       #
     #                                           #
     #############################################
 
@@ -1108,22 +1126,16 @@ class WindowMain(QMainWindow):
         if dest:
             self.start_async_export(reps, dest)
 
-    def delete_runs(self):
-        runs = self.get_all_selected_runs()                     # Get selected runs (ignore selected reps that aren't part of selected runs)
-        reps = self.get_all_reps_in_runs(runs)                  # Get all reps of selected runs
-        
-        continue_action, calcs_to_archive = check_calc_conflict(self.data, reps)
-        if not continue_action:
-            return
-        if self.confirm_delete():
-            callback = partial(self.start_async_save, g.SAVE_TYPE_CALCS_ARCHIVE, [True, calcs_to_archive])
-            self.start_async_save(g.SAVE_TYPE_REP_DELETE, [reps], onSuccess=callback)
-
     def delete_reps(self):
-        if self.confirm_delete():
-            reps = self.get_all_selected_reps()                     # Get all selected reps
-            self.start_async_save(g.SAVE_TYPE_REP_DELETE, [reps])
+        reps = self.get_all_selected_reps()                                             # Get selected reps
+        continue_action, calcs_to_archive = check_calc_conflict(self.data, reps)        # Confirm whether user wants to continue, given this impacts calcs
+        if not continue_action:                                                         
+            return
+        if self.confirm_delete():                                                       # Confirm user wants to delete
+            callback = partial(self.start_async_save, g.SAVE_TYPE_CALCS_ARCHIVE, [True, calcs_to_archive])  # Define callback fn to archive impacted calcs
+            self.start_async_save(g.SAVE_TYPE_REP_DELETE, [reps], onSuccess=callback)   # Delete selected reps (and maybe their parent runs and connected methods) from file
 
+   
     def confirm_delete(self):
         title = 'Confirm delete'
         text = 'This will permanently delete all configurations and data associated with the selected runs or replicates.\n\nIf you are sure you want to delete, type DELETE below.'
@@ -1414,7 +1426,9 @@ class WindowMain(QMainWindow):
             self.status.showMessage("ERROR: Data read could not complete.", g.SB_DURATION)
         else:
             self.status.showMessage("Data loaded!", g.SB_DURATION)
+            print('a')
             self.update_win()
+            print('b')
             setWsEnabled(self.buts, True)                                   #   Enable buttons
         self.progress_bar.setVisible(False)
         self.read_error_flag = False

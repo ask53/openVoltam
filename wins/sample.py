@@ -278,8 +278,8 @@ class WindowSample(QMainWindow):
         self.status.showMessage('Saved!', g.SB_DURATION)
         self.set_buttons_enabled(True)
         print(self.mode)
-        if self.mode == g.WIN_MODE_NEW:                                     # if this was a new sample we just created
-            self.parent.tabs.setCurrentIndex(self.parent.tabs.count()-1)    # navigate to it in the parent window
+        if self.mode == g.WIN_MODE_NEW:                                                     # if this was a new sample we just created
+            self.parent.tabs.setCurrentIndex(self.parent.tabs.count()-1)                    # navigate to it in the parent window
         if self.close_on_save:
             self.close()
         
