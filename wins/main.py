@@ -581,9 +581,11 @@ class WindowMain(QMainWindow):
                 method_name = get_method_from_file_data(self.data, run[g.R_UID_METHOD])[g.M_NAME]
                 run_notes = run[g.R_NOTES]
                 run_str = '<u>'+html_escape(run_name)+'</u><br>'
-                run_str = run_str + '<b>'+'Type'+'</b>: '+html_escape(run_type)+'<br>'
-                run_str = run_str + '<b>'+'Method'+'</b>: '+html_escape(method_name)+'<br>'
-                run_str = run_str + '<b>'+'Notes'+'</b>: '+html_escape(run_notes)
+                run_str = run_str + '<b>Type</b>: '+html_escape(run_type)+'<br>'
+                run_str = run_str + '<b>Method</b>: '+html_escape(method_name)+'<br>'
+                if run_notes and not self.is_only_whitespace(run_notes):                # Only show notes if there are any!
+                    run_str = run_str + '<b>Notes</b>: '+html_escape(run_notes)+'<br>'
+                run_str = run_str[0:-4]                                             # strip last <br> from string
 
                 if i%2 == 0: qss_name = 'run-even'
                 else: qss_name = 'run-odd'
