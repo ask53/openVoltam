@@ -344,40 +344,66 @@ class WindowMain(QMainWindow):
         
     def update_win(self):
         try:
-            
+            print('a')
             self.layout_old = self.layout.copy()                # Store copy of old layout
             self.layout = {}                                    # Reinit self.layout to be refilled 
             sample_name = self.data[g.S_NAME]
+            print('b')
             self.setWindowTitle(sample_name)                                    # Set the sample window title
             self.lbl_sample_name.updateTitleLbl(sample_name)                    # Set the sample name
-            print('1')
+            print('c')
             self.set_move_to_menu()
+            print('d')
             self.set_main_area()
-            print('2')
             self.update_highlights()
-            print('2a')
+            print('e')
             self.update_menu()
-            print('3')
+            print('z')
             self.update_children()
-            #self.resizeEvent(None)
+            
         except Exception as e:
             print(e)
 
 
     def set_move_to_menu(self):
+        
         self.move_to_menu.clear()
-        for i, s in enumerate(self.data[g.S_SAMPLES]):
-            action = self.move_to_menu.addAction(s[g.SA_NAME])
-            action.triggered.connect(partial(self.move_to, i))
-            self.move_to_menu_actions.append(action)
+        self.move_to_menu_actions = []
+        print('0')
+        for i, s in enumerate(self.data[g.S_SAMPLES]):          # Loop thru samples
+            action = self.move_to_menu.addAction(s[g.SA_NAME])  # Add the sample name to the move-to menu
+            action.triggered.connect(partial(self.move_to, i))  # When clicked, run the move_to(i) fn
+            self.move_to_menu_actions.append(action)            # Append the action to a class-wide list for later access
+        print('1')
+        self.move_to_menu_actions[0].setEnabled(False)          # grey out the default tab in move-to menu to start 
         
         
 
     def move_to(self, i):
         """moves a selected run (with all its reps) to the sample with index i"""
-        print('moving to '+str(i))
-        
-        
+        runs = self.get_all_selected_runs()
+        sample_id = self.tab_ids[i]
+        print(runs)
+        print(sample_id)
+        print('starting!')
+        print()
+
+        ############################################################################################
+        #
+        #   HERE HERE
+        #
+        #   CHECK WHETHER THIS FUCKS UP ANY CALCULATIONS
+        #   IF SO, ASK USER WHETHER THEY'D LIKE TO CONTINUE
+        #   IF THEY SAY YES, LET THEM KNOW THAT THE CALC WILL BE ARCHIVED
+        #
+        #################################################################################################################################################################
+
+        cb = partial(self.go_to_tab, i)
+        self.start_async_save(g.SAVE_TYPE_RUN_MOVE, [runs, sample_id], onSuccess=cb)
+
+    def go_to_tab(self, i):
+        """Goes to tab i"""
+        self.tabs.setCurrentIndex(i)
         
     #############################################
     #                                           #
@@ -518,6 +544,10 @@ class WindowMain(QMainWindow):
                     self.layout[run]['selected'] = []
             self.update_highlights()
             self.scroll_area_resized()
+            for j, action in enumerate(self.move_to_menu_actions):  # adjust move-to submenu
+                if j==i: action.setEnabled(False)
+                else: action.setEnabled(True)
+                                            
         except Exception as e:
             print('here in the tab_changed error handler:')
             print(e)
@@ -946,11 +976,8 @@ class WindowMain(QMainWindow):
             self.cb_all.setChecked(False)'''
 
     def update_menu(self):
-        print('-')
         runs = self.N_runs_selected()
-        print('--')
         reps = self.N_reps_selected()
-        print('---')
         yes = []
         no = []
         # For reps 
@@ -1036,8 +1063,8 @@ class WindowMain(QMainWindow):
 
     def get_all_selected_runs(self):
         runs = []
-        for run in self.layout:
-            if self.all_reps_of_run_are_selected(run):
+        for run in self.layout.keys():
+            if self.layout[run]['selected']:
                 runs.append(run)
         return runs
 
@@ -1316,6 +1343,7 @@ class WindowMain(QMainWindow):
         for out in outs:
             if out:
                 self.export_success.append(out)
+        
 
     def handle_export_stderr(self):
         print('error msg:')
@@ -1428,9 +1456,7 @@ class WindowMain(QMainWindow):
             self.status.showMessage("ERROR: Data read could not complete.", g.SB_DURATION)
         else:
             self.status.showMessage("Data loaded!", g.SB_DURATION)
-            print('a')
             self.update_win()
-            print('b')
             setWsEnabled(self.buts, True)                                   #   Enable buttons
         self.progress_bar.setVisible(False)
         self.read_error_flag = False
@@ -1486,7 +1512,7 @@ class WindowMain(QMainWindow):
         self.save_error_flag = True
 
     def handle_finished_save(self, onSuccess, onError):
-        #print('here in finished handler!')
+        print('here in finished handler!')
         try:
             self.progress_bar.setVisible(False)                                             # Rehide the progress bar
             self.process = None                                                             # Wipe the process from memory

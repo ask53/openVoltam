@@ -283,6 +283,14 @@ def save_modify_run(data, params):
     
     return data
 
+def save_move_run(data, params):
+    tasks = params[0]
+    sample_id = params[1]
+    for run in data[g.S_RUNS]:              # Loop thru all runs
+        if run[g.R_UID_SELF] in tasks:      # If this run is on the list of runs to move
+            run[g.R_UID_SAMPLE] = sample_id # Reset sample_id to destination sample_id
+    return data
+
 def save_method_to_sample(data, params):     # append method to sample file
     newMethod = params[0]               
     data[g.S_METHODS].append(newMethod)
@@ -392,6 +400,8 @@ def save():
             data=save_modify_rep(data, params)
         elif saveType == g.SAVE_TYPE_RUN_MOD:
             data=save_modify_run(data, params)
+        elif saveType == g.SAVE_TYPE_RUN_MOVE:
+            data=save_move_run(data, params)
         elif saveType == g.SAVE_TYPE_METHOD_TO_SAMPLE:
             data=save_method_to_sample(data, params)
         elif saveType == g.SAVE_TYPE_METHOD_MOD:
