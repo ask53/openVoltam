@@ -120,12 +120,10 @@ class WindowMain(QMainWindow):
         # Method menu
         action_method_new = QAction(l.new_config[g.L], self)
         action_method_open = QAction(l.open_config[g.L], self)
-        action_method_run_view = QAction('Method info', self)
         action_method_run_edit = QAction('Edit run method', self)
 
         action_method_new.triggered.connect(parent.new_method)
         action_method_open.triggered.connect(parent.open_method)
-        action_method_run_view.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
         action_method_run_edit.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_WITH_MINOR_EDITS))
 
         # Sample menu
@@ -137,31 +135,30 @@ class WindowMain(QMainWindow):
         action_sample_edit.triggered.connect(self.edit_sample)
         action_sample_del.triggered.connect(self.delete_sample)
 
+        # Run menu
         action_run_new = QAction('New run', self)
         action_run_new_from = QAction('New run from config', self)
         action_run_view = QAction('Run info', self)
+        action_method_run_view = QAction('Method info', self)
+        action_rep_edit = QAction('Edit rep note', self)
         action_run_export = QAction('Export', self)
         action_run_delete = QAction('Delete', self)
-
-        action_rep_edit = QAction('Edit rep note', self)
-        '''action_rep_export = QAction('Export as CSV', self)
-        action_rep_delete = QAction('Delete', self)'''
+        
+        
+        action_run_new.triggered.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
+        action_run_new_from.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
+        action_run_view.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
+        action_method_run_view.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
+        action_rep_edit.triggered.connect(self.edit_rep_note)
+        action_run_export.triggered.connect(self.export_selected_reps_as_csv)
+        action_run_delete.triggered.connect(self.delete_reps)
 
         action_graph = QAction('Graph', self)
         action_analyze_peaks = QAction('Analyze', self)
         action_analyze_calculate = QAction('Calculate', self)
         action_analyze_results = QAction('Results', self)
-        
-        
-        
 
-        action_run_new.triggered.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
-        action_run_new_from.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
-        action_run_view.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
-        action_run_export.triggered.connect(self.export_selected_reps_as_csv)
-        action_run_delete.triggered.connect(self.delete_reps)
-        action_rep_edit.triggered.connect(self.edit_rep_note)
-
+        action_graph.triggered.connect(self.view_data_selected_reps)
         action_analyze_peaks.triggered.connect(self.anayze_data_selected_reps)
         action_analyze_calculate.triggered.connect(partial(self.new_win_calculator, g.WIN_MODE_NEW))
         action_analyze_results.triggered.connect(partial(self.new_win_calculator, g.WIN_MODE_RIGHT))
@@ -227,6 +224,7 @@ class WindowMain(QMainWindow):
         #   right-click ("context") menu    #
         #                                   #
         #####################################
+
         
         self.context_menu = QMenu(self)      # Menu for when run is clicked
         
@@ -248,21 +246,6 @@ class WindowMain(QMainWindow):
         self.a_delete = self.context_menu.addAction("Delete")
 
 
-
-        
-
-
-
-
-
-        '''self.repAction_editNote = self.contextmenu_rep.addAction("Edit replicate note")
-        self.contextmenu_rep.addSeparator()
-        self.repAction_viewData = self.contextmenu_rep.addAction("Graph")
-        self.repAction_analyzeData = self.contextmenu_rep.addAction("Analyze")
-        self.repAction_exportData = self.contextmenu_rep.addAction("Export")
-        self.contextmenu_rep.addSeparator()
-        self.repAction_delete = self.contextmenu_rep.addAction("Delete replicates(s)")'''
-
         self.a_runAgain.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
         self.a_viewConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
         self.a_viewMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
@@ -271,12 +254,6 @@ class WindowMain(QMainWindow):
         self.a_analyze.triggered.connect(self.anayze_data_selected_reps)
         self.a_export.triggered.connect(self.export_selected_reps_as_csv)
         self.a_delete.triggered.connect(self.delete_reps)
-        
-        '''self.repAction_editNote.triggered.connect(self.edit_rep_note)
-        self.repAction_viewData.triggered.connect(self.view_data_selected_reps)
-        self.repAction_analyzeData.triggered.connect(self.anayze_data_selected_reps)
-        self.repAction_exportData.triggered.connect(self.export_selected_reps_as_csv)
-        self.repAction_delete.triggered.connect(self.delete_reps)'''
 
         self.run_actions_one = [self.a_runAgain,
                                 self.a_viewConfig,
@@ -1050,9 +1027,9 @@ class WindowMain(QMainWindow):
     def get_single_selected_run(self):
         """Loops through layout, returns ID of first selected run.
         If no runs are selected, returns False."""
-        for run in self.layout:                         # Loop thru layout
-            if self.all_reps_of_run_are_selected(run):  # if this run is selected
-                return(run)                             # return unique ID of this run
+        for run in self.layout.keys():              # Loop thru layout
+            if self.layout[run]['selected']:        # if any of the reps of this run are selected
+                return run                          # return unique ID of this run
         return False
 
     def get_single_selected_rep(self):
