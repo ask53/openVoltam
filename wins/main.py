@@ -466,8 +466,16 @@ class WindowMain(QMainWindow):
             w = QWidget()
             #w.setLayout(v)
             w.setLayout(h)
+
+            tabname_len = 12
+            fullname = sample[g.SA_NAME]
+            if len(fullname) <= tabname_len:
+                name = fullname
+            else:
+                name = fullname[0:tabname_len]+'...'
             
-            self.tabs.addTab(w, sample[g.SA_NAME])
+            self.tabs.addTab(w, name)
+            self.tabs.setTabToolTip(i, fullname)
             self.tab_ids.append(sample[g.R_UID_SELF])
 
         self.centralWidget().layout().insertWidget(insert_i, self.tabs)  # insert tab widget to same spot previous tab widget was located (this preserves stretches, animationes, etc.)
