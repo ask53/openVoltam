@@ -36,12 +36,13 @@ from PyQt6.QtWidgets import (
 )
 
 class WindowCalculate(QMainWindow):
-    def __init__(self, parent, mode, calc_id=None, suggestion=None):  
+    def __init__(self, parent, mode, calc_id=None, sample_id=None, suggestion=None):  
         super().__init__()                          # if path, load sample deets, else load empty edit window for new sample
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.parent = parent
         self.mode = mode
         self.calc_id = calc_id
+        self.sample_id = sample_id
         self.suggestion = suggestion
         self.mode_prev = None
         
@@ -280,6 +281,12 @@ class WindowCalculate(QMainWindow):
         h0.addWidget(but_close)
         
         # far left column
+        samp_lbl = QLabel("Sample")
+        self.sample = QComboBox()
+        self.sample.setPlaceholderText('Select')
+        for i, sample in enumerate(self.parent.data[g.S_SAMPLES]):
+            self.sample.addItem(sample[g.SA_NAME], userData=sample)
+        self.sample.currentIndexChanged.connect(self.sample_changed)
         type_lbl = QLabel("Calculation type")
         self.type = QComboBox()
         self.type.setPlaceholderText('Select')
@@ -311,6 +318,8 @@ class WindowCalculate(QMainWindow):
         self.results_stack.addWidget(self.results)
 
         v0 = QVBoxLayout()
+        v0.addWidget(samp_lbl)
+        v0.addWidget(self.sample)	
         v0.addWidget(type_lbl)
         v0.addWidget(self.type)
         v0.addWidget(reg_type_lbl)
@@ -1047,6 +1056,18 @@ class WindowCalculate(QMainWindow):
             for col in range(0, tree.columnCount()):
                 runitem.setToolTip(col, "Please analyze to proceed")
 
+    def sample_changed(self):
+        print('sample has been changed!')
+        self.something_has_been_updated()
+        self.results_stack.setCurrentIndex(0)
+        self.sample_id = self.sample.currentData()[g.R_UID_SELF]
+        print(self.sample_id)
+        #####################
+        #
+        #   UPDATE THE WHOLE WINDOW GIVEN THE SAMPLE HAS BEEN CHANGED HEREEEEEE
+        #
+        ##########################
+        
     def type_changed(self):
         self.something_has_been_updated()
         self.results_stack.setCurrentIndex(0)

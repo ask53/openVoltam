@@ -64,7 +64,7 @@ class WindowSample(QMainWindow):
         
         # The name field 
         self.w_name = QLineEdit()                                       # init line edit
-        self.w_name.setMaxLength(63)                                    # set properties
+        self.w_name.setMaxLength(36)                                    # set properties
         self.w_name.setObjectName(encodeCustomName(g.SA_NAME))          # add object name for specific styling and data mgmt
         self.w_name.textEdited.connect(self.update_edited_status)
 
