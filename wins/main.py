@@ -138,6 +138,7 @@ class WindowMain(QMainWindow):
         # Run menu
         action_run_new = QAction('New run', self)
         action_run_new_from = QAction('New run from config', self)
+        action_run_redo = QAction('Rerun', self)
         action_run_view = QAction('Run info', self)
         action_method_run_view = QAction('Method info', self)
         action_rep_edit = QAction('Edit rep note', self)
@@ -147,6 +148,7 @@ class WindowMain(QMainWindow):
         
         action_run_new.triggered.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
         action_run_new_from.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
+        action_run_redo.triggered.connect(self.redo_run)
         action_run_view.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
         action_method_run_view.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
         action_rep_edit.triggered.connect(self.edit_rep_note)
@@ -187,6 +189,7 @@ class WindowMain(QMainWindow):
         m = menu.addMenu(l.menu_run[g.L])
         m.addAction(action_run_new)
         m.addAction(action_run_new_from)
+        m.addAction(action_run_redo)
         m.addSeparator()
         m.addAction(action_run_view)
         m.addAction(action_method_run_view)
@@ -205,6 +208,7 @@ class WindowMain(QMainWindow):
         m.addAction(action_analyze_results)
 
         self.actions_run_one_only = [action_run_new_from,
+                                     action_run_redo,
                                      action_run_view,
                                      action_method_run_view,
                                      action_method_run_edit]
@@ -229,6 +233,7 @@ class WindowMain(QMainWindow):
         self.context_menu = QMenu(self)      # Menu for when run is clicked
         
         self.a_runAgain = self.context_menu.addAction("New run from config")
+        self.a_runRedo = self.context_menu.addAction("Rerun")
         self.context_menu.addSeparator()
         self.a_viewConfig = self.context_menu.addAction("Run info")
         self.a_viewMethod = self.context_menu.addAction("Method info")
@@ -247,6 +252,7 @@ class WindowMain(QMainWindow):
 
 
         self.a_runAgain.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
+        self.a_runRedo.triggered.connect(self.redo_run)
         self.a_viewConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
         self.a_viewMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
         self.a_editRepNote.triggered.connect(self.edit_rep_note)
@@ -256,6 +262,7 @@ class WindowMain(QMainWindow):
         self.a_delete.triggered.connect(self.delete_reps)
 
         self.run_actions_one = [self.a_runAgain,
+                                self.a_runRedo,
                                 self.a_viewConfig,
                                 self.a_viewMethod]
         self.rep_actions_one = [self.a_editRepNote]
@@ -1141,6 +1148,24 @@ class WindowMain(QMainWindow):
         dest = get_path_from_user(self, 'folder')
         if dest:
             self.start_async_export(reps, dest)
+
+    def redo_run(self):
+        msg_box = QMessageBox()    
+        msg_box.setWindowTitle("Just checking...") 
+        msg_box.setText('This modifies a previous run.\nAll data and analysis for this run will be lost.\nAre you sure you want to rerun?\n\n(To create a *new run* with this run\'s configuration,  select "New run from config".)')
+        msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+
+        # customize button language text for multi-language support
+        but_save = msg_box.button(QMessageBox.StandardButton.Ok)
+        but_save.setText('Rerun')
+        but_canc = msg_box.button(QMessageBox.StandardButton.Cancel)
+        but_canc.setText('Cancel')
+
+        resp = msg_box.exec()
+
+        if resp == QMessageBox.StandardButton.Ok:
+            reps = self.get_all_selected_reps()
+            self.new_win_view_run(reps)
 
     def delete_reps(self):
         reps = self.get_all_selected_reps()                                             # Get selected reps
