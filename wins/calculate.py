@@ -46,7 +46,6 @@ class WindowCalculate(QMainWindow):
         self.suggestion = suggestion
         self.mode_prev = None
         
-
         self.reset_globals()
 
         # Status Bar and Progress Bar
@@ -208,6 +207,7 @@ class WindowCalculate(QMainWindow):
         self.mode_prev = self.mode
         self.mode = mode_new
         self.suggestion = None
+        self.sample_id = None
         self.set_layout()
 
     def continue_action(self, mode_new, calc_id):
@@ -287,6 +287,7 @@ class WindowCalculate(QMainWindow):
         for i, sample in enumerate(self.parent.data[g.S_SAMPLES]):
             self.sample.addItem(sample[g.SA_NAME], userData=sample)
         self.sample.currentIndexChanged.connect(self.sample_changed)
+        
         type_lbl = QLabel("Calculation type")
         self.type = QComboBox()
         self.type.setPlaceholderText('Select')
@@ -388,6 +389,14 @@ class WindowCalculate(QMainWindow):
             self.reg_type.setEnabled(False)
             self.notes.setEnabled(False)
             self.graph.set_view_only()
+
+        # Set sample
+        if self.sample_id:
+            for i in range(0, self.sample.count()):
+                if self.sample.itemData(i)[g.R_UID_SELF] == self.sample_id:
+                    self.sample.setCurrentIndex(i)
+                    break
+
 
         self.update_reg_type_on_graph()     # make sure graph has correct starting regression type 
             
@@ -714,9 +723,9 @@ class WindowCalculate(QMainWindow):
         # If any elements in run list, remove them all
         self.remove_all(run_list)
                     
-        # Add back in all runs with type == sample
+        # Add back in all runs with type == sample and who are of sample=self.sample_id
         for run in self.parent.data[g.S_RUNS]:          
-            if run[g.R_TYPE] == g.R_TYPE_SAMPLE:
+            if run[g.R_TYPE] == g.R_TYPE_SAMPLE and run[g.R_UID_SAMPLE] == self.sample_id:
                 method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
                 self.add_run_to_tree(run_list, run, method=method)
 
@@ -1057,16 +1066,25 @@ class WindowCalculate(QMainWindow):
                 runitem.setToolTip(col, "Please analyze to proceed")
 
     def sample_changed(self):
-        print('sample has been changed!')
-        self.something_has_been_updated()
-        self.results_stack.setCurrentIndex(0)
-        self.sample_id = self.sample.currentData()[g.R_UID_SELF]
-        print(self.sample_id)
+        try:
+            print('sample has been changed!')
+            self.something_has_been_updated()
+            self.results_stack.setCurrentIndex(0)
+            self.sample_id = self.sample.currentData()[g.R_UID_SELF]
+            print(self.sample_id)
+
+            self.suggestion = None
+            
+
         #####################
         #
         #   UPDATE THE WHOLE WINDOW GIVEN THE SAMPLE HAS BEEN CHANGED HEREEEEEE
         #
         ##########################
+        except Exception as e:
+            print('error here!')
+            print(e)
+        
         
     def type_changed(self):
         self.something_has_been_updated()

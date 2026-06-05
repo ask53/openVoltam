@@ -280,8 +280,7 @@ class WindowMain(QMainWindow):
         but_view.clicked.connect(self.edit_session_name)
         but_samp.clicked.connect(self.new_sample)
         but_config.clicked.connect(self.new_run)
-        #but_config.clicked.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
-        #but_calc.clicked.connect(partial(self.new_win_calculator, g.WIN_MODE_NEW))
+        but_calc.clicked.connect(self.new_calc)
         but_res_sample.clicked.connect(partial(self.new_win_calculator, g.WIN_MODE_RIGHT))
 
         self.lbl_sample_name = TitleLbl("")
@@ -334,15 +333,10 @@ class WindowMain(QMainWindow):
             sample_name = self.data[g.S_NAME]
             self.setWindowTitle(sample_name)                                    # Set the sample window title
             self.lbl_sample_name.updateTitleLbl(sample_name)                    # Set the sample name
-            print('z')
             self.set_move_to_menu()
-            print('y')
             self.set_main_area()
-            print('x')
             self.update_highlights()
-            print('a')
             self.update_menu()
-            print('b')
             self.update_children()
             
         except Exception as e:
@@ -534,6 +528,13 @@ class WindowMain(QMainWindow):
     def new_run(self):
         sample_id = self.get_current_sample_id()
         self.new_win_config_run(g.WIN_MODE_NEW, sample_id=sample_id)
+
+    def new_calc(self):
+        try:
+            sample_id = self.get_current_sample_id()
+            self.new_win_calculator(g.WIN_MODE_NEW, sample_id)
+        except Exception as e:
+            print(e)
 
     def tab_changed(self):
         if not self.tab_ids:
@@ -928,7 +929,6 @@ class WindowMain(QMainWindow):
         tab_i = self.tabs.currentIndex()
         sa = self.get_scroll_area(tab_i)
         ws = False
-        print('-')
         try: ws = sa.widget().children()    # get the children
         except: pass                        # if no widget set, ignore the error
 
@@ -1233,13 +1233,13 @@ class WindowMain(QMainWindow):
     def new_win_analysis(self, tasks):
         self.new_win_one_of_type(WindowAnalyze(self, tasks))
         
-    def new_win_calculator(self, mode):
+    def new_win_calculator(self, mode, sample_id):
         tasks = None
         if mode == g.WIN_MODE_NEW:                  # if we want a new calculation
             tasks = self.get_all_selected_reps()    #   grab all selected reps and try
             if not tasks: tasks = None              #   to start the calc with them
         try:
-            self.new_win_one_of_type(WindowCalculate(self, mode, suggestion=tasks))
+            self.new_win_one_of_type(WindowCalculate(self, mode, sample_id=sample_id, suggestion=tasks))
         except Exception as e:
             print(e)
             
