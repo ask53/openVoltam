@@ -829,7 +829,8 @@ class WindowCalculate(QMainWindow):
                 # loop backwards thru runs. If run doesn't match selected method, take it from list
                 all_items = [run_list.topLevelItem(x) for x in range(run_list.topLevelItemCount())]
                 for i,item in reversed(list(enumerate(all_items))):
-                    if item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_METHOD] != self.method:
+                    itemdata=item.data(0, Qt.ItemDataRole.UserRole)
+                    if itemdata[g.R_UID_METHOD] != self.method or itemdata[g.R_UID_SAMPLE] != self.sample_id:
                         run_list.takeTopLevelItem(i)
                 
                 # for each selected run, show all reps and select them, for deselected runs, remove children
@@ -1072,8 +1073,14 @@ class WindowCalculate(QMainWindow):
             self.results_stack.setCurrentIndex(0)
             self.sample_id = self.sample.currentData()[g.R_UID_SELF]
             print(self.sample_id)
-
             self.suggestion = None
+            try:
+                self.update_sample_runs(self.sample_tree, 0)
+            except Exception as e:
+                print('the error is here!')
+                print(e)
+
+            
             
 
         #####################
