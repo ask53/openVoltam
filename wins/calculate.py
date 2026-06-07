@@ -45,6 +45,7 @@ class WindowCalculate(QMainWindow):
         self.sample_id = sample_id
         self.suggestion = suggestion
         self.mode_prev = None
+        self.initializing = True
         
         self.reset_globals()
 
@@ -60,6 +61,7 @@ class WindowCalculate(QMainWindow):
         # Set the layout programatically
         self.adjust_suggestion()
         self.set_layout()
+        self.initializing = False
         
     def reset_globals(self):
         self.method = None
@@ -566,8 +568,9 @@ class WindowCalculate(QMainWindow):
             for stdadd in stdadds:
                 sample_found = False
                 method = stdadd[g.R_UID_METHOD]
+                sample_id = stdadd[g.R_UID_SAMPLE]
                 for run in self.parent.data[g.S_RUNS]:
-                    if run[g.R_UID_METHOD] == method:
+                    if run[g.R_UID_METHOD] == method and run[g.R_UID_SAMPLE] == sample_id:
                         replist = get_all_reps_from_run_id(self.parent.data, run[g.R_UID_SELF])
                         sample_found = True
                         break
@@ -577,6 +580,8 @@ class WindowCalculate(QMainWindow):
                         
 
     def set_layout(self):
+        print('1')
+        print(self.suggestion)
         self.reset_globals()            # Reset the globals
 
         l = self.get_full_layout()      # Get the layout
@@ -730,7 +735,14 @@ class WindowCalculate(QMainWindow):
                 self.add_run_to_tree(run_list, run, method=method)
 
     def preset_runs(self):
+        print('here1')
+        print('to_preset:')
+        print(self.to_preset)
+        print('suggestion:')
+        print(self.suggestion)
+        print()
         if self.to_preset:      # preset from calc with id calc_id
+            print('presetting!')
             calc = self.get_calc_from_id(self.calc_id)                  # get calc data
             points = calc[g.C_POINTS]
             for i, point in enumerate(points):
@@ -747,6 +759,7 @@ class WindowCalculate(QMainWindow):
                             break                                           # and break, because selecting it will modify the tree we're looping thru
 
         elif self.suggestion:                                               # if the user has selected some runs/reps to seed the calculation
+            print('suggesting!')
             for i, point in enumerate(self.points):                         # loop thru all points
                 if i==0: tree = self.sample_tree                            
                 else: tree = self.stdadd_selectors[i-1]['tree']
@@ -1073,7 +1086,8 @@ class WindowCalculate(QMainWindow):
             self.results_stack.setCurrentIndex(0)
             self.sample_id = self.sample.currentData()[g.R_UID_SELF]
             print(self.sample_id)
-            self.suggestion = None
+            if not self.initializing:
+                self.suggestion = None
             try:
                 self.update_sample_runs(self.sample_tree, 0)
             except Exception as e:
