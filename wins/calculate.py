@@ -153,13 +153,10 @@ class WindowCalculate(QMainWindow):
                         runs.append(run_id)
                         
             # Set text for the list label
-            runtxt = ''
-            for run in runs:
-                runtxt = runtxt + str(run) + ' | '
-            runtxt = runtxt[0:-3]                   # remove the pipe from the last entry
-            txt = calc[g.R_UID_SELF] + ' ('+calc[g.C_TYPE] +', '+calc[g.C_REG_TYPE]+')\n'
+            s_id = calc[g.C_SAMPLE_ID]
+            s = get_sample_from_file_data(self.parent.data, s_id)
+            txt = s[g.SA_NAME] + '\n'
             if calc[g.C_ARCHIVED]: txt = '[ARCHIVED] '+txt
-            txt = txt + runtxt + '\n'
             main_result = self.format_result_as_string(calc)[0]
             txt = txt + main_result
             if calc[g.C_NOTE]:
@@ -580,8 +577,6 @@ class WindowCalculate(QMainWindow):
                         
 
     def set_layout(self):
-        print('1')
-        print(self.suggestion)
         self.reset_globals()            # Reset the globals
 
         l = self.get_full_layout()      # Get the layout
@@ -1146,6 +1141,7 @@ class WindowCalculate(QMainWindow):
                     run_id = r[g.C_POINTS][0][0][g.C_RUN_ID]
                     method_id = get_run_from_file_data(self.parent.data, run_id)[g.R_UID_METHOD]
                     calc_method_settings_holder = get_method_from_file_data(self.parent.data, method_id)    # grab calc method settings from method
+                    
 
                 for key in (g.M_UNIT, g.M_CONF, g.M_DETECTION_LIMIT):
                     r[key] = calc_method_settings_holder[key]
@@ -1272,7 +1268,9 @@ class WindowCalculate(QMainWindow):
                 self.calc_id = get_next_id(ids, g.C_UID_PREFIX)
                 r[g.R_UID_SELF] = self.calc_id
                 
-            r[g.C_NOTE] = self.notes.toPlainText()
+            r[g.C_NOTE] = self.notes.toPlainText()                      # append the note and sample id to the calculation dict to save
+            r[g.C_SAMPLE_ID] = self.sample.currentData()[g.R_UID_SELF]
+
 
             self.progress_bar.setVisible(True)
             if not self.on_save_mode:

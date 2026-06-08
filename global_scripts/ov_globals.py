@@ -179,6 +179,7 @@ C_POINTS = 'points'
 C_NOTE = 'note'
 C_REP_ID = 'rep-id'
 C_RUN_ID = 'run-id'
+C_SAMPLE_ID = 'sample-id'
 C_X = 'x'
 C_Y = 'y'
 
