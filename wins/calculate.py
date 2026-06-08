@@ -375,7 +375,8 @@ class WindowCalculate(QMainWindow):
         v2.addLayout(h2)
 
         if self.mode == g.WIN_MODE_VIEW_ONLY:
-            calc = self.get_calc_from_id(self.calc_id)
+            calc = self.get_calc_from_id(self.calc_id)              # grab calc data
+            #self.sample_id = calc[g.C_SAMPLE_ID]                    # save sample id global 
             if calc[g.C_ARCHIVED]:
                 v2.addWidget(archived_txt)
             else:
@@ -384,17 +385,18 @@ class WindowCalculate(QMainWindow):
             v2.addWidget(but_save)
 
         if self.mode == g.WIN_MODE_VIEW_ONLY:                       # if view only, make a bunch of elements view_only
+            self.sample.setEnabled(False)
             self.type.setEnabled(False)
             self.reg_type.setEnabled(False)
             self.notes.setEnabled(False)
             self.graph.set_view_only()
 
         # Set sample
-        if self.sample_id:
+        '''if self.sample_id:
             for i in range(0, self.sample.count()):
                 if self.sample.itemData(i)[g.R_UID_SELF] == self.sample_id:
                     self.sample.setCurrentIndex(i)
-                    break
+                    break'''
 
 
         self.update_reg_type_on_graph()     # make sure graph has correct starting regression type 
@@ -616,21 +618,37 @@ class WindowCalculate(QMainWindow):
             print(e)
 
     def set_values(self):
-        if not self.mode in (g.WIN_MODE_EDIT, g.WIN_MODE_VIEW_ONLY):
-            return
-        calc = self.get_calc_from_id(self.calc_id)                  # get calc data
-        type_index = g.C_TYPES.index(calc[g.C_TYPE])
-        reg_type_index = g.C_REG_TYPES.index(calc[g.C_REG_TYPE])
-        txt = calc[g.C_NOTE]
-        self.type.setCurrentIndex(type_index)
-        self.reg_type.setCurrentIndex(reg_type_index)
-        self.notes.setPlainText(txt)
-        if self.mode == g.WIN_MODE_VIEW_ONLY:
-            self.set_view_only_points(calc)
-            if calc[g.C_ARCHIVED]:
-                self.graph.update_archived(calc)
-                
-        
+        if not self.mode in (g.WIN_MODE_EDIT, g.WIN_MODE_VIEW_ONLY, g.WIN_MODE_NEW):
+            pass
+        elif self.mode == g.WIN_MODE_NEW:       # If a new calc (either from main win or right pane)
+            self.set_sample_id()
+        else:                                   # If opening a saved calc
+            calc = self.get_calc_from_id(self.calc_id)                  # get calc data
+            self.set_sample_id(calc=calc)
+            type_index = g.C_TYPES.index(calc[g.C_TYPE])
+            reg_type_index = g.C_REG_TYPES.index(calc[g.C_REG_TYPE])
+            txt = calc[g.C_NOTE]
+            self.type.setCurrentIndex(type_index)
+            self.reg_type.setCurrentIndex(reg_type_index)
+            self.notes.setPlainText(txt)
+            if self.mode == g.WIN_MODE_VIEW_ONLY:
+                self.set_view_only_points(calc)
+                if calc[g.C_ARCHIVED]:
+                    self.graph.update_archived(calc)
+                    
+    def set_sample_id(self, calc=None):
+        """Sets the selection of the sample QComboBox (dropdown) to the sample
+        stored in self.sample_id"""
+        if not self.sample_id and not calc:         # if no sample id (new calc from main) and no calc (opening saved calc)
+            return                                  #   do nothing
+     
+        if calc:                                    # if we are opening a saved calc
+            self.sample_id = calc[g.C_SAMPLE_ID]    #   get the sample id from that calc
+                                  
+        for i in range(0, self.sample.count()):                         # Loop thru all samples in dropdown
+            if self.sample.itemData(i)[g.R_UID_SELF] == self.sample_id: # For the first one with a matching sample id
+                self.sample.setCurrentIndex(i)                          # select it! 
+                break                                                   # (and then break)
 
     def set_selector_indices(self):
         if self.mode == g.WIN_MODE_VIEW_ONLY:
@@ -640,6 +658,7 @@ class WindowCalculate(QMainWindow):
                 stack.setCurrentIndex(g.C_STACK_VIEW_TEXT)
 
     def set_view_only_points(self, calc): 
+        self.points = calc[g.C_POINTS]
         for i, pt in enumerate(calc[g.C_POINTS]):
             
             if i==0: txt = self.sample_txt
@@ -730,14 +749,7 @@ class WindowCalculate(QMainWindow):
                 self.add_run_to_tree(run_list, run, method=method)
 
     def preset_runs(self):
-        print('here1')
-        print('to_preset:')
-        print(self.to_preset)
-        print('suggestion:')
-        print(self.suggestion)
-        print()
         if self.to_preset:      # preset from calc with id calc_id
-            print('presetting!')
             calc = self.get_calc_from_id(self.calc_id)                  # get calc data
             points = calc[g.C_POINTS]
             for i, point in enumerate(points):
@@ -754,7 +766,6 @@ class WindowCalculate(QMainWindow):
                             break                                           # and break, because selecting it will modify the tree we're looping thru
 
         elif self.suggestion:                                               # if the user has selected some runs/reps to seed the calculation
-            print('suggesting!')
             for i, point in enumerate(self.points):                         # loop thru all points
                 if i==0: tree = self.sample_tree                            
                 else: tree = self.stdadd_selectors[i-1]['tree']
@@ -824,6 +835,7 @@ class WindowCalculate(QMainWindow):
 
         
     def update_sample_runs(self, run_list, selector_index):
+        print('here we are updating the sample runs!')
         if self.updating_runs:
             return
         self.updating_runs = True
@@ -879,6 +891,7 @@ class WindowCalculate(QMainWindow):
 
             self.update_points(i+1, tree)
             if not self.archived:
+                print('here in update std add')
                 self.graph.update_points(self.points)
             self.update_selectors()
 
@@ -906,6 +919,7 @@ class WindowCalculate(QMainWindow):
             print(e)
         
     def update_points(self, i, tree):
+        print('updating poinits')
         self.something_has_been_updated()
         self.results_stack.setCurrentIndex(0)
         self.points[i] = self.get_tasks_from_tree(tree, include_data=True)
@@ -916,6 +930,8 @@ class WindowCalculate(QMainWindow):
                     erase = True
             else:                   # erase data in all higher points
                 self.points[i] = []
+        print(self.points)
+        print()
 
     def show_reps_from_runs(self, tree, point_index):
         all_items = [tree.topLevelItem(x) for x in range(tree.topLevelItemCount())]
@@ -1081,6 +1097,7 @@ class WindowCalculate(QMainWindow):
             self.results_stack.setCurrentIndex(0)
             self.sample_id = self.sample.currentData()[g.R_UID_SELF]
             print(self.sample_id)
+            print()
             if not self.initializing:
                 self.suggestion = None
             try:

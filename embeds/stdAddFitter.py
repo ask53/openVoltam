@@ -107,11 +107,18 @@ class StdAddFitterPlot(QMainWindow):
         self.update_points(self.points)
 
     def update_points(self, points):
+        
+        print('-----')
+        print('POINTS:')
+        print(points)
         self.points = points
         if not self.type:       # if there is no type, can't get y values!
             return
         if not self.points:     # if there are no points selected, nothing to update!
             return
+
+        print('doing it!')
+        print()
 
         x_all = np.zeros(0)     # init arrays to hold data
         y_all = np.zeros(0)
