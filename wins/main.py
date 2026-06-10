@@ -441,18 +441,20 @@ class WindowMain(QMainWindow):
             
             if desc:
                 v.addWidget(lbl_desc)
+
+            w_res = WindowCalculate(self, g.WIN_MODE_EMBED, sample_id=sample[g.R_UID_SELF]) # Add embedded results
+            if w_res.calc_list.count() > 0:                                                 # if there are any
+                v.addWidget(QHLine())
+                v.addWidget(w_res)
+            v.addStretch()
             
             w0 = QWidget()
             w0.setLayout(v)
             color_index = i%7
             w0.setObjectName('sample-'+str(color_index))
 
-            v2 = QVBoxLayout()
-            v2.addWidget(w0)
-            v2.addStretch()
-
             h = QHBoxLayout()
-            h.addLayout(v2)
+            h.addWidget(w0)
             
             # IF there are runs, setup sample tree
             runs = get_runs_in_sample(self.data, sample[g.R_UID_SELF])
@@ -1267,6 +1269,9 @@ class WindowMain(QMainWindow):
             self.new_win_one_of_type(WindowCalculate(self, mode, sample_id=sample_id, suggestion=tasks))
         except Exception as e:
             print(e)
+
+    def new_win_open_calc(self, calc_id):
+        self.new_win_one_of_type(WindowCalculate(self, g.WIN_MODE_VIEW_ONLY, calc_id=calc_id))
             
     def new_win_one_of_type(self, obj):
         """Takes in a new object to create as child window of self.

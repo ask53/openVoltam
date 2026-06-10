@@ -98,44 +98,53 @@ class WindowCalculate(QMainWindow):
         self.calc_list.setSpacing(2)
         self.calc_list.itemSelectionChanged.connect(self.update_right_buttons)
         self.calc_list.itemDoubleClicked.connect(self.view_calc)
+
         
-        b_new = QPushButton()
-        b_edit = QPushButton()
-        b_dup = QPushButton()
-        b_del = QPushButton()
 
-        b_new.setIcon(QIcon(g.ICON_PLUS))
-        b_edit.setIcon(QIcon(g.ICON_EDIT))
-        b_dup.setIcon(QIcon(g.ICON_DUP))
-        b_del.setIcon(QIcon(g.ICON_TRASH))
-
-        b_new.clicked.connect(partial(self.go_to_mode, g.WIN_MODE_NEW))
-        b_edit.clicked.connect(self.edit_from_right)
-        b_dup.clicked.connect(self.duplicate)
-        b_del.clicked.connect(self.delete)
-
-        b_new.setToolTip('New')
-        b_edit.setToolTip('Edit')
-        b_dup.setToolTip('Duplicate')
-        b_del.setToolTip('Delete')
-
-        self.right_buttons_one_only = [b_edit]
-        self.right_buttons_one_plus = [b_dup, b_del]
-
-        lbl = QLabel("<i>double-click a <b>result</b> to view.</i>")
-        lbl.setWordWrap(True)
-        lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        v = QVBoxLayout()                               # Create vertical layout
+        v.addWidget(title)                              # Add title to layout
+        v.addWidget(self.calc_list)                     # Add list to layout
         
-        h2 = QHBoxLayout()
-        for b in (b_new, b_edit, b_dup, b_del):
-            h2.addWidget(b)
-        
-        v = QVBoxLayout()
-        v.addWidget(title)
-        v.addWidget(self.calc_list)
-        v.addLayout(h2)
-        v.addWidget(lbl)
 
+        if self.mode != g.WIN_MODE_EMBED:
+        
+            b_new = QPushButton()
+            b_edit = QPushButton()
+            b_dup = QPushButton()
+            b_del = QPushButton()
+
+            b_new.setIcon(QIcon(g.ICON_PLUS))
+            b_edit.setIcon(QIcon(g.ICON_EDIT))
+            b_dup.setIcon(QIcon(g.ICON_DUP))
+            b_del.setIcon(QIcon(g.ICON_TRASH))
+
+            b_new.clicked.connect(partial(self.go_to_mode, g.WIN_MODE_NEW))
+            b_edit.clicked.connect(self.edit_from_right)
+            b_dup.clicked.connect(self.duplicate)
+            b_del.clicked.connect(self.delete)
+
+            b_new.setToolTip('New')
+            b_edit.setToolTip('Edit')
+            b_dup.setToolTip('Duplicate')
+            b_del.setToolTip('Delete')
+
+            self.right_buttons_one_only = [b_edit]
+            self.right_buttons_one_plus = [b_dup, b_del]
+
+            h2 = QHBoxLayout()
+            for b in (b_new, b_edit, b_dup, b_del):
+                h2.addWidget(b)
+
+            lbl = QLabel("<i>double-click a <b>result</b> to view.</i>")
+            lbl.setWordWrap(True)
+            lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        
+            v.addLayout(h2)                                 # Add buttons to layout
+            v.addWidget(lbl)                                # Add label to layout
+
+        else:
+            self.right_buttons_one_only, self.right_buttons_one_plus = ([],[])  # set these as placeholders for embed (no buttons on embed)
+            
         self.update_calc_list()
         self.update_right_buttons()
         return v
@@ -143,29 +152,24 @@ class WindowCalculate(QMainWindow):
     def update_calc_list(self):
         self.calc_list.clear()
         for calc in self.parent.data[g.S_PROCESSED]:
-            
-            # get unique runs in calc
-            runs = []
-            for point in calc[g.C_POINTS]:
-                for rep in point:
-                    run_id = rep[g.C_RUN_ID]
-                    if not run_id in runs:
-                        runs.append(run_id)
-                        
-            # Set text for the list label
-            s_id = calc[g.C_SAMPLE_ID]
-            s = get_sample_from_file_data(self.parent.data, s_id)
-            txt = s[g.SA_NAME] + '\n'
-            if calc[g.C_ARCHIVED]: txt = '[ARCHIVED] '+txt
-            main_result = self.format_result_as_string(calc)[0]
-            txt = txt + main_result
-            if calc[g.C_NOTE]:
-                txt = txt + '\nNote: '+str(calc[g.C_NOTE])
-            
-            # Create the list element and attach it to the list
-            calcitem = QListWidgetItem(self.calc_list)
-            calcitem.setText(txt)
-            calcitem.setData(Qt.ItemDataRole.UserRole, calc)
+
+            if self.mode == g.WIN_MODE_EMBED and self.sample_id != calc[g.C_SAMPLE_ID]:
+                pass
+            else:     
+                # Set text for the list label
+                s_id = calc[g.C_SAMPLE_ID]
+                s = get_sample_from_file_data(self.parent.data, s_id)
+                txt = s[g.SA_NAME] + '\n'
+                if calc[g.C_ARCHIVED]: txt = '[ARCHIVED] '+txt
+                main_result = self.format_result_as_string(calc)[0]
+                txt = txt + main_result
+                if calc[g.C_NOTE]:
+                    txt = txt + '\nNote: '+str(calc[g.C_NOTE])
+                
+                # Create the list element and attach it to the list
+                calcitem = QListWidgetItem(self.calc_list)
+                calcitem.setText(txt)
+                calcitem.setData(Qt.ItemDataRole.UserRole, calc)
 
     #################################
     #                               #
@@ -179,8 +183,14 @@ class WindowCalculate(QMainWindow):
     #################################
 
     def view_calc(self, item):
-        calc_id = item.data(Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
-        self.go_to_mode(g.WIN_MODE_VIEW_ONLY, calc_id)
+        try:
+            calc_id = item.data(Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
+            if self.mode == g.WIN_MODE_EMBED:
+                self.parent.new_win_open_calc(calc_id)
+            else:
+                self.go_to_mode(g.WIN_MODE_VIEW_ONLY, calc_id)
+        except Exception as e:
+            print(e)
 
     def edit_from_right(self):
         item = self.calc_list.currentItem()
@@ -527,7 +537,7 @@ class WindowCalculate(QMainWindow):
 
     def get_full_layout(self):
         right = self.get_right_layout()
-        if self.mode == g.WIN_MODE_RIGHT:
+        if self.mode == g.WIN_MODE_RIGHT or self.mode == g.WIN_MODE_EMBED:
             lay = right
         else:
             left = self.get_left_layout()
@@ -631,6 +641,8 @@ class WindowCalculate(QMainWindow):
     def set_sample(self):
         """Sets the selection of the sample QComboBox (dropdown) to the sample
         stored in self.sample_id"""
+        if self.mode in (g.WIN_MODE_RIGHT, g.WIN_MODE_EMBED):
+            return
         if not self.sample_id and not self.calc_id: # if no sample id (new calc from main) and no calc (opening saved calc)
             return                                  #   do nothing
      
@@ -1314,6 +1326,9 @@ class WindowCalculate(QMainWindow):
         return
 
     def showEvent(self, event):
+        if self.mode == g.WIN_MODE_EMBED:
+            return
+        
         self.parent.setEnabled(False)
         self.parent.set_enabled_children(False)
         self.setEnabled(True)

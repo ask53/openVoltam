@@ -18,6 +18,7 @@ WIN_MODE_EDIT = 'edit'
 WIN_MODE_VIEW_WITH_MINOR_EDITS = 'view-with-edits'
 WIN_MODE_RIGHT = 'right'
 WIN_MODE_CLOSED = 'close'
+WIN_MODE_EMBED = 'embedded'
 
 # Unit conversions
 UNIT_CONV_CONC = {'g/L': 1000,      # multiply by these to convert this unit to g/L
