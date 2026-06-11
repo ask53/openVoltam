@@ -159,7 +159,10 @@ class WindowCalculate(QMainWindow):
                 # Set text for the list label
                 s_id = calc[g.C_SAMPLE_ID]
                 s = get_sample_from_file_data(self.parent.data, s_id)
-                txt = s[g.SA_NAME] + '\n'
+                if self.mode == g.WIN_MODE_EMBED:
+                    txt = ''
+                else:
+                    txt = s[g.SA_NAME] + '\n'
                 if calc[g.C_ARCHIVED]: txt = '[ARCHIVED] '+txt
                 main_result = self.format_result_as_string(calc)[0]
                 txt = txt + main_result

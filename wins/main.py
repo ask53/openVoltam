@@ -417,6 +417,13 @@ class WindowMain(QMainWindow):
         self.tabs = QTabWidget()
         self.tabs.currentChanged.connect(self.tab_changed)
         self.tab_ids = []
+
+        # Get list of all samples that already have saved calculations
+        samples_with_calcs = []
+        for calc in d[g.S_PROCESSED]:
+            s_id = calc[g.C_SAMPLE_ID]
+            if not s_id in samples_with_calcs:
+                samples_with_calcs.append(s_id)
         
         for i, sample in enumerate(d[g.S_SAMPLES]):
             # Set up sample header
@@ -442,8 +449,9 @@ class WindowMain(QMainWindow):
             if desc:
                 v.addWidget(lbl_desc)
 
-            w_res = WindowCalculate(self, g.WIN_MODE_EMBED, sample_id=sample[g.R_UID_SELF]) # Add embedded results
-            if w_res.calc_list.count() > 0:                                                 # if there are any
+            s_id = sample[g.R_UID_SELF]
+            if s_id in samples_with_calcs:                                      # if this sample has calculations
+                w_res = WindowCalculate(self, g.WIN_MODE_EMBED, sample_id=s_id) # Add embedded calc results
                 v.addWidget(QHLine())
                 v.addWidget(w_res)
             v.addStretch()
