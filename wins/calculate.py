@@ -829,12 +829,13 @@ class WindowCalculate(QMainWindow):
         selected_runs = self.get_all_selected_runs()
         
         runs_added = 0                                          
-        for run in self.parent.data[g.S_RUNS]:                  # Add run to this stdadd selector IF:   
-            if run[g.R_TYPE] == g.R_TYPE_STDADD:                #   - It is a standard addition type run
-                if run[g.R_UID_METHOD] == self.method:          #   - It's method matches the selected sample method
-                    if not run[g.R_UID_SELF] in selected_runs:  #   - It's not selected in any other standard addition selector
-                        self.add_run_to_tree(tree, run)
-                        runs_added = runs_added + 1
+        for run in self.parent.data[g.S_RUNS]:                      # Add run to this stdadd selector IF:   
+            if run[g.R_TYPE] == g.R_TYPE_STDADD:                    #   - It is a standard addition type run
+                if run[g.R_UID_METHOD] == self.method:              #   - It's method matches the selected sample method
+                    if run[g.R_UID_SAMPLE] == self.sample_id:       #   - It is from the selected sample
+                        if not run[g.R_UID_SELF] in selected_runs:  #   - It's not selected in any other standard addition selector
+                            self.add_run_to_tree(tree, run)
+                            runs_added = runs_added + 1
 
         if runs_added == 0:
             self.stdadd_selectors[i]['layout'].setCurrentIndex(g.C_STACK_INDEX_ERROR)
