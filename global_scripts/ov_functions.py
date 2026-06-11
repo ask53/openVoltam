@@ -245,10 +245,18 @@ def get_rep(data, ids):
     return False
 
 def get_all_reps_from_run_id(data, run_id):
-    run = get_run_from_file_data(data, run_id)
+    """Takes in either a run_id (str) or a list of run_ids (list).
+    Returns a list of all reps of the form [(runid, repid}, (runid,
+    repid),...,(runid, repid)]"""
+    runlist = run_id
+    if type(run_id) == type('str'): # This makes fn back-compatible with calls that
+        runlist = [run_id]          # request reps from a single run and just pass the id.
+
     replist = []
-    for rep in run[g.R_REPLICATES]:
-        replist.append((run_id, rep[g.R_UID_SELF]))
+    for run_id in runlist:
+        run = get_run_from_file_data(data, run_id)
+        for rep in run[g.R_REPLICATES]:
+            replist.append((run_id, rep[g.R_UID_SELF]))
     return replist
         
 
@@ -411,21 +419,21 @@ def check_calc_conflict(data, reps_to_change):
         List of calculations in conflict is a list of all calcs with conflicts in the form:
             [calc-id1, calc-id2, ... , calc-idn]"""
     
-    # Make list of calcs that use the reps in reps_to_change
+    # Make list of active (unarchived) calcs that use the reps in reps_to_change
     calcs_in_conflict = []
     for calc in data[g.S_PROCESSED]:
-        calc_found = False
-        for point in calc[g.C_POINTS]:
-            for rep in point:
-                rep_as_tuple = (rep[g.C_RUN_ID], rep[g.C_REP_ID])
-                if rep_as_tuple in reps_to_change:
-                    calc_id = calc[g.R_UID_SELF]
-                    if not calc_id in calcs_in_conflict:
-                        calcs_in_conflict.append(calc_id)
-                        calc_found = True
-                        break
-            if calc_found: break                    
-    print(calcs_in_conflict)            
+        if not calc[g.C_ARCHIVED]:
+            calc_found = False
+            for point in calc[g.C_POINTS]:
+                for rep in point:
+                    rep_as_tuple = (rep[g.C_RUN_ID], rep[g.C_REP_ID])
+                    if rep_as_tuple in reps_to_change:
+                        calc_id = calc[g.R_UID_SELF]
+                        if not calc_id in calcs_in_conflict:
+                            calcs_in_conflict.append(calc_id)
+                            calc_found = True
+                            break
+                if calc_found: break                               
     
     # If no conflict, return true and move on with your life
     if not calcs_in_conflict:
@@ -433,7 +441,7 @@ def check_calc_conflict(data, reps_to_change):
 
     # If there IS a conflict, ask the user about it
     title = 'Archive check'
-    body = 'This action modifies replicates that are used in calculations.\nTo continue with this action requires archiving or modifying the following calculations:'
+    body = 'This action modifies replicates that are used in calculations.\nTo continue with this action requires archiving the following calculations:'
     for calc in calcs_in_conflict:
         body = body + '\n   - ' + str(calc)
     body = body + '\nWould you like to continue?'
@@ -527,7 +535,7 @@ class confirmMessageBox(QMessageBox):
         self.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
 
         but_ok = self.button(QMessageBox.StandardButton.Ok)
-        but_ok.setText('Continue (and modify calculations)')
+        but_ok.setText('Continue (and archive calculations)')
         but_canc = self.button(QMessageBox.StandardButton.Cancel)
         but_canc.setText(l.s_edit_cancel[g.L])
 class warningMessageBox(QMessageBox):

@@ -360,31 +360,30 @@ class WindowMain(QMainWindow):
             action.triggered.connect(partial(self.move_to, i))  # When clicked, run the move_to(i) fn
             self.move_to_menu_actions.append(action)            # Append the action to a class-wide list for later access
         if self.data[g.S_SAMPLES]:
-            self.move_to_menu_actions[0].setEnabled(False)          # grey out the default tab in move-to menu to start 
-        
+            self.move_to_menu_actions[0].setEnabled(False)          # grey out the default tab in move-to menu to start         
         
 
     def move_to(self, i):
         """moves a selected run (with all its reps) to the sample with index i"""
         runs = self.get_all_selected_runs()
         sample_id = self.tab_ids[i]
-        print(runs)
-        print(sample_id)
-        print('starting!')
-        print()
+        
+        # Check if this will mess with any calculations, confirm whether user wants to continue
+        #   if continuing means archiving all impacted calculations
+        reps = get_all_reps_from_run_id(self.data, runs)
+        continue_action, calcs_to_archive = check_calc_conflict(self.data, reps)
+        if not continue_action:
+            return
+ 
+        # Define callback function
+        cb_calc = partial(self.start_async_save, g.SAVE_TYPE_CALCS_ARCHIVE, [True, calcs_to_archive])
 
-        ############################################################################################
-        #
-        #   HERE HERE
-        #
-        #   CHECK WHETHER THIS FUCKS UP ANY CALCULATIONS
-        #   IF SO, ASK USER WHETHER THEY'D LIKE TO CONTINUE
-        #   IF THEY SAY YES, LET THEM KNOW THAT THE CALC WILL BE ARCHIVED
-        #
-        #################################################################################################################################################################
+        # Figure out which call to make based on whether or not there are calcs to archive
+        if calcs_to_archive:
+            self.start_async_save(g.SAVE_TYPE_RUN_MOVE, [runs, sample_id], onSuccess=cb_calc)
+        else:
+            self.start_async_save(g.SAVE_TYPE_RUN_MOVE, [runs, sample_id])
 
-        cb = partial(self.go_to_tab, i)
-        self.start_async_save(g.SAVE_TYPE_RUN_MOVE, [runs, sample_id], onSuccess=cb)
 
     def go_to_tab(self, i):
         """Goes to tab i"""
