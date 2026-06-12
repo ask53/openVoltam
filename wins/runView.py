@@ -212,7 +212,9 @@ class WindowRunView(QMainWindow):
         ##############################
         self.graphs = RunPlots()
         self.voltamogram = VoltamogramPlot(self, title='VOLTAM-O-GRAM')
+
         self.set_voltamogram()
+
 
         v_left = QVBoxLayout()
 
@@ -541,24 +543,18 @@ class WindowRunView(QMainWindow):
     #########################################
     
     def set_voltamogram(self):
-        run_id = self.tasks[0][0]                   # get run ID
-        method_id = ''
-        for run in self.parent.data[g.S_RUNS]:  
-            if run[g.R_UID_SELF] == run_id:         
-                method_id = run[g.R_UID_METHOD]     # get method of this run
-                break
+        run_id = self.tasks[0][0]                   # get run info
+        run = get_run_from_file_data(self.parent.data, run_id)
+        sample_id = run[g.R_UID_SAMPLE]             # get sample run is attached to
+        method_id = run[g.R_UID_METHOD]             # get method from run
+        
         runs_to_plot = [] 
-        if method_id:                                   # if we found a method
-            for run in self.parent.data[g.S_RUNS]:      # find all runs with matching method
-                if run[g.R_UID_METHOD] == method_id:
-                    runs_to_plot.append(run)
-
-        try:
-            self.voltamogram.plot_runs(runs_to_plot, showsmoothed=True, showraw=False,
+        for run in self.parent.data[g.S_RUNS]:      # find all runs with matching method and sample
+            if run[g.R_UID_METHOD] == method_id and run[g.R_UID_SAMPLE] == sample_id:
+                runs_to_plot.append(run)
+                                                    # plot the found runs!
+        self.voltamogram.plot_runs(runs_to_plot, showsmoothed=True, showraw=False,
                                        color='grey', legend=False)
-        except Exception as e:
-            print('eeek here!')
-            print(e)
 
     def update_voltamogram(self, task):
         try:
