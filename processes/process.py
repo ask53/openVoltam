@@ -152,11 +152,72 @@ def export():
 #   For each type of save, when the save completes, it sends a writes the data dictionary (not including raw data)
 #   back as data. 
 
-def save_update_sample(data, params):   # Takes the sample parameters
-    newData = params[0]                 # passed in params[0]
-    for key in g.S_EDITABLES:           # and overwrites the existing values
-        data[key] = newData[key]        # with the passed values
+def save_edit_session_name(data, params):
+    name = params[0]
+    data[g.S_NAME] = name
     return data
+
+def save_new_sample(data, params):   # Takes the sample parameters
+    newData = params[0]                 # passed in params[0]
+    data[g.S_SAMPLES].append(newData)
+    return data
+
+def save_edit_sample(data, params):
+    newSamp = params[0]
+    s_id = newSamp[g.R_UID_SELF]
+    found = False
+    for sample in data[g.S_SAMPLES]:        # Find the relevant sample from file
+        if sample[g.R_UID_SELF] == s_id:
+            found = True
+            break
+    if found:                               # If found
+        for key in sample.keys():           # Loop thru sample keys
+            sample[key] = newSamp[key]
+    return data
+
+def save_delete_sample(data, params):
+    """Takes in the id of a sample to delete.
+    Algorithm:
+    1. Finds a list of all runs linked to that sample
+    2. Finds a list of all calcs linked to that sample
+    3. Deletes all runs from #1
+    4. Deletes all calcs from #2
+    5. Deletes sample"""
+    s_id = params[0]
+    replist = []
+    calclist = []
+
+    for run in data[g.S_RUNS]:                  # get list of all reps of runs from this sample
+        if run[g.R_UID_SAMPLE] == s_id:
+            for rep in run[g.R_REPLICATES]:
+                replist.append((run[g.R_UID_SELF], rep[g.R_UID_SELF]))
+
+    for calc in data[g.S_PROCESSED]:            # get list of calculations from this sample
+        if calc[g.C_SAMPLE_ID] == s_id:
+            calclist.append(calc[g.R_UID_SELF])
+
+    if replist:
+        data = save_delete_rep(data, [replist])     # delete reps, runs, and -- if applicable -- methods                  
+        
+    if calclist:
+        data = save_delete_calc(data, [calclist])   # delete calcs
+
+    
+    found = False                                   # remove sample with s_id as ID from data
+    for i, s in enumerate(data[g.S_SAMPLES]):
+        if s[g.R_UID_SELF] == s_id:
+            found = True
+            break
+    if found:
+        data[g.S_SAMPLES].pop(i)
+
+    return data
+
+    
+
+    
+    
+
 
 def save_add_new_run(data, params):
     newRun = params[0]               
@@ -265,6 +326,14 @@ def save_modify_run(data, params):
     
     return data
 
+def save_move_run(data, params):
+    tasks = params[0]
+    sample_id = params[1]
+    for run in data[g.S_RUNS]:              # Loop thru all runs
+        if run[g.R_UID_SELF] in tasks:      # If this run is on the list of runs to move
+            run[g.R_UID_SAMPLE] = sample_id # Reset sample_id to destination sample_id
+    return data
+
 def save_method_to_sample(data, params):     # append method to sample file
     newMethod = params[0]               
     data[g.S_METHODS].append(newMethod)
@@ -360,8 +429,14 @@ def save():
         params = literal_eval(sys.argv[4])  # cast sys.argv[4] from string to list
         data = get_data_from_file(path)     # read file from path (returns dict)
 
-        if saveType == g.SAVE_TYPE_SAMPLE:
-            data=save_update_sample(data, params)
+        if saveType == g.SAVE_TYPE_EDIT_SESH_NAME:
+            data=save_edit_session_name(data, params)
+        elif saveType == g.SAVE_TYPE_SAMPLE_NEW:
+            data=save_new_sample(data, params)
+        elif saveType == g.SAVE_TYPE_SAMPLE_EDIT:
+            data=save_edit_sample(data, params)
+        elif saveType == g.SAVE_TYPE_SAMPLE_DELETE:
+            data=save_delete_sample(data, params)
         elif saveType == g.SAVE_TYPE_RUN_NEW:
             data=save_add_new_run(data, params)
         elif saveType == g.SAVE_TYPE_REP_DELETE:
@@ -370,6 +445,8 @@ def save():
             data=save_modify_rep(data, params)
         elif saveType == g.SAVE_TYPE_RUN_MOD:
             data=save_modify_run(data, params)
+        elif saveType == g.SAVE_TYPE_RUN_MOVE:
+            data=save_move_run(data, params)
         elif saveType == g.SAVE_TYPE_METHOD_TO_SAMPLE:
             data=save_method_to_sample(data, params)
         elif saveType == g.SAVE_TYPE_METHOD_MOD:

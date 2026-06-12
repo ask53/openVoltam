@@ -4,6 +4,7 @@ CURRENT_RANGES = ('1uA', '10uA', '100uA', '1000uA', '10000uA')
 
 # PyQt globals
 QT_NOTHING_SELECTED_INDEX = -1
+QT_DEFAULT_DATE = '2000-01-01'
 
 # Status bar
 SB_DURATION = 6000  # duration of status bar messages in [ms]
@@ -17,6 +18,7 @@ WIN_MODE_EDIT = 'edit'
 WIN_MODE_VIEW_WITH_MINOR_EDITS = 'view-with-edits'
 WIN_MODE_RIGHT = 'right'
 WIN_MODE_CLOSED = 'close'
+WIN_MODE_EMBED = 'embedded'
 
 # Unit conversions
 UNIT_CONV_CONC = {'g/L': 1000,      # multiply by these to convert this unit to g/L
@@ -27,20 +29,23 @@ UNIT_CONV_VOL = {'L': 1,
                  'mL': 0.001,
                  'uL': 0.000001}
 
-# Keys for sample (S) dictionary
-S_NAME = "sample_name"
+# Keys for lab session (S) dictionary
+S_NAME = "session_name"
 S_DATE_ENTERED = "date_first_saved"
-S_DATE_COLLECTED = "date_sample_collected"
-S_LOC_COLLECTED = "location_collected"
-S_CONTACT = "contact_info"
-S_COLLECTED_BY = "collected_by"
-S_NOTES = "sample_comments"
 S_METHODS = "methods"
+S_SAMPLES = "samples"
 S_RUNS = "runs"
 S_PROCESSED = "calculations"
+S_BLANK_ARRAYS = (S_METHODS, S_SAMPLES, S_RUNS, S_PROCESSED)
 
-S_EDITABLES = (S_NAME, S_DATE_COLLECTED, S_LOC_COLLECTED, S_CONTACT, S_COLLECTED_BY, S_NOTES)
-S_BLANK_ARRAYS = (S_METHODS, S_RUNS, S_PROCESSED)
+# Keys for sample (SA) dictionary
+SA_NAME = "name"
+SA_DATE_COLLECTED = "date_sample_collected"
+SA_LOC_COLLECTED = "location_collected"
+SA_CONTACT = "contact_info"
+SA_COLLECTED_BY = "collected_by"
+SA_NOTES = "sample_comments"
+SA_UID_PREFIX = 'sample-'
 
 # Keys for method (M) dictionary
 M_UID_SELF = 'uid'
@@ -90,6 +95,7 @@ M_CONFS_DATA = (0.667, 0.95, 0.99, 0.999)
 # Keys for run (R) dictionary
 R_UID_SELF = 'uid'
 R_UID_METHOD = 'method'
+R_UID_SAMPLE = 'sample'
 R_DEVICE = 'device'
 R_TYPE = 'run_type'
 R_NOTES = 'notes'
@@ -174,6 +180,7 @@ C_POINTS = 'points'
 C_NOTE = 'note'
 C_REP_ID = 'rep-id'
 C_RUN_ID = 'run-id'
+C_SAMPLE_ID = 'sample-id'
 C_X = 'x'
 C_Y = 'y'
 
@@ -218,19 +225,23 @@ PROC_RUN_FROM_EXE = 'exe'
 ### CHANGE THIS TO MODIFY HOW PROGRAM RUNS PROCESSES
 #
 #
-#PROC_RUN_FROM = PROC_RUN_FROM_PYTHON
-PROC_RUN_FROM = PROC_RUN_FROM_EXE
+PROC_RUN_FROM = PROC_RUN_FROM_PYTHON
+#PROC_RUN_FROM = PROC_RUN_FROM_EXE
 #
 #
 ###############################################
 
 # Asynchronous save
-SAVE_TYPE_SAMPLE = 'sample'
+SAVE_TYPE_EDIT_SESH_NAME = 'edit-session-name'
+SAVE_TYPE_SAMPLE_NEW = 'sample-new'
+SAVE_TYPE_SAMPLE_EDIT = 'sample-edit'
+SAVE_TYPE_SAMPLE_DELETE = 'sample-delete'
 SAVE_TYPE_RUN_NEW = 'new-run'
 SAVE_TYPE_REP_DELETE = 'rep-del'
 SAVE_TYPE_REP_MOD = 'rep-no-data'
 SAVE_TYPE_REP_WITH_DATA = 'rep-w-data'
 SAVE_TYPE_RUN_MOD = 'run-mod'
+SAVE_TYPE_RUN_MOVE = 'run-move'
 SAVE_TYPE_METHOD_TO_SAMPLE = 'method-to-sample'
 SAVE_TYPE_METHOD_MOD = 'method-mod'
 SAVE_TYPE_CALC_NEW = 'new-calc'

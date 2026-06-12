@@ -7,7 +7,7 @@ QLineEdit#ov-method-name {
 	background-color: rgba(0,0,0,0);
 }
 
-QLabel#ov_sample_name {
+QLabel#ov_session_name {
 	font-size: 18pt;
 	padding-right: 2px;
 }
@@ -16,22 +16,72 @@ QMainWindow#window-view-sample QLabel#ov_sample_name {
 	padding-left: 0;
 }
 
+
+
 WindowViewSample QTextEdit {
 	background-color: #eeeeee;
 	border: 0;
 }
 
-/*QTableWidget::item QLabel {
-	padding: 0 0;
-}*/
-
 QMainWindow QStatusBar {
 	border-top: 1px solid grey;
 }
 
-WindowMain #sample-header {
-	background-color: pink;
+WindowMain #session-header {
+	background-color: #fdbfff; 	/* pink */ 
 	border: 1px solid grey;
+}
+
+WindowMain QWidget#sample-0{
+	background-color: #bda1ff; /* purple */
+	border: 1px solid grey;
+}
+
+WindowMain QWidget#sample-1{
+	background-color: #a1bbff; /* blue */
+	border: 1px solid grey;
+}
+
+WindowMain QWidget#sample-2{
+	background-color: #a1f4ff; /* teal */
+	border: 1px solid grey;
+}
+
+WindowMain QWidget#sample-3{
+	background-color: #a1ffba; /* teal-green */
+	border: 1px solid grey;
+}
+
+WindowMain QWidget#sample-4{
+	background-color: #d3ffa1; /* yellow-green */
+	border: 1px solid grey;
+}
+
+WindowMain QWidget#sample-5{
+	background-color: #ffd0a1; /* orange */
+	border: 1px solid grey;
+}
+
+WindowMain QWidget#sample-6{
+	background-color: #ffa1a1; /* red */
+	border: 1px solid grey;
+}
+
+WindowMain QScrollArea {
+	background-color: white;
+	border: 0px solid white;
+	border-left: 1px solid grey;
+	border-top: 1px solid grey;
+	padding: 0;
+	margin: 0;
+}	
+
+WindowMain QScrollArea QWidget {
+	background-color: white;
+}
+	
+WindowMain QScrollArea QScrollBar {
+	background-color: #ececec;
 }
 
 QWidget#runs-container QLabel, 
@@ -46,18 +96,25 @@ QWidget#runs-container QLabel#run-col-header {
 
 
 QWidget#runs-container QLabel#run-even, 
+QWidget#runs-container QLabel#run-odd,
 QWidget#runs-container QLabel#run-rep-even, 
-QWidget#runs-container QLabel#run-rep-even-last, 
+QWidget#runs-container QLabel#run-rep-even-last,
+QWidget#runs-container QLabel#run-even-right, 
+QWidget#runs-container QLabel#run-odd-right,
+QWidget#runs-container QLabel#run-rep-even-right, 
+QWidget#runs-container QLabel#run-rep-even-last-right, 
 QWidget#steps-container QLabel#step-cell-even {
-	background-color: white;
+	background-color: #f4f4f4;
 	border-top: 1px solid black;
 }
 
-QWidget#runs-container QLabel#run-odd, 
+ 
 QWidget#runs-container QLabel#run-rep-odd, 
-QWidget#runs-container QLabel#run-rep-odd-last, 
+QWidget#runs-container QLabel#run-rep-odd-last,
+QWidget#runs-container QLabel#run-rep-odd-right, 
+QWidget#runs-container QLabel#run-rep-odd-last-right, 
 QWidget#steps-container QLabel#step-cell-odd {
-	background-color: #dddddd;
+	background-color: #ececec;
 	border-top: 1px solid black;
 }
 
@@ -72,9 +129,38 @@ QWidget#runs-container QLabel#selected-run-even {
 }
 
 QWidget#runs-container QLabel#run-rep-odd-last, 
-QWidget#runs-container QLabel#run-rep-even-last {
+QWidget#runs-container QLabel#run-rep-even-last,
+QWidget#runs-container QLabel#run-rep-odd-last-right, 
+QWidget#runs-container QLabel#run-rep-even-last-right {
 	border-bottom: 1px solid black;
 	margin-bottom: 10px;
+}
+
+QWidget#runs-container QLabel#run-rep-odd-last-right, 
+QWidget#runs-container QLabel#run-rep-even-last-right,
+QWidget#runs-container QLabel#run-rep-odd-right, 
+QWidget#runs-container QLabel#run-rep-odd-last-right,
+QWidget#runs-container QLabel#selected-run-rep-odd-right, 
+QWidget#runs-container QLabel#selected-run-rep-even-right, 
+QWidget#runs-container QLabel#selected-run-rep-odd-last-right,
+QWidget#runs-container QLabel#selected-run-rep-even-last-right, 
+QWidget#steps-container QLabel#step-cell-even-selected-right, 
+QWidget#steps-container QLabel#step-cell-odd-selected-right,
+QWidget#runs-container QLabel#selected-run-odd-right, 
+QWidget#runs-container QLabel#selected-run-even-right,
+QWidget#runs-container QLabel#run-even-right, 
+QWidget#runs-container QLabel#run-odd-right,
+QWidget#runs-container QLabel#run-rep-even-right, 
+QWidget#runs-container QLabel#run-rep-even-last-right,
+QWidget#runs-container QLabel#selected-run-rep-odd-last-right,
+QWidget#runs-container QLabel#selected-run-rep-even-last-right,
+QWidget#runs-container QLabel#selected-run-odd-right, 
+QWidget#runs-container QLabel#selected-run-even-right,
+QWidget#runs-container QLabel#selected-run-rep-odd-right, 
+QWidget#runs-container QLabel#selected-run-rep-even-right, 
+QWidget#runs-container QLabel#selected-run-rep-odd-last-right,
+QWidget#runs-container QLabel#selected-run-rep-even-last-right {
+	border-right: 1px solid black;
 }
 
 QWidget#runs-container QLabel#selected-run-rep-odd, 
@@ -84,26 +170,42 @@ QWidget#runs-container QLabel#selected-run-rep-even-last,
 QWidget#steps-container QLabel#step-cell-even-selected, 
 QWidget#steps-container QLabel#step-cell-odd-selected,
 QWidget#runs-container QLabel#selected-run-odd, 
-QWidget#runs-container QLabel#selected-run-even {
+QWidget#runs-container QLabel#selected-run-even,
+QWidget#runs-container QLabel#selected-run-rep-odd-right, 
+QWidget#runs-container QLabel#selected-run-rep-even-right, 
+QWidget#runs-container QLabel#selected-run-rep-odd-last-right,
+QWidget#runs-container QLabel#selected-run-rep-even-last-right, 
+QWidget#steps-container QLabel#step-cell-even-selected-right, 
+QWidget#steps-container QLabel#step-cell-odd-selected-right,
+QWidget#runs-container QLabel#selected-run-odd-right, 
+QWidget#runs-container QLabel#selected-run-even-right {
 	border-top: 1px solid black;
 }
 
 QWidget#runs-container QLabel#selected-run-rep-odd, 
 QWidget#runs-container QLabel#selected-run-rep-even, 
 QWidget#runs-container QLabel#selected-run-rep-odd-last,
-QWidget#runs-container QLabel#selected-run-rep-even-last {
-	background-color: #ecbafc; 	/* pastel lavender */
+QWidget#runs-container QLabel#selected-run-rep-even-last,
+QWidget#runs-container QLabel#selected-run-rep-odd-right, 
+QWidget#runs-container QLabel#selected-run-rep-even-right, 
+QWidget#runs-container QLabel#selected-run-rep-odd-last-right,
+QWidget#runs-container QLabel#selected-run-rep-even-last-right {
+	background-color: #fffcaa; 	/* paler yellow */
 }
 
 QWidget#runs-container QLabel#selected-run-odd, 
 QWidget#runs-container QLabel#selected-run-even,
 QWidget#steps-container QLabel#step-cell-even-selected, 
-QWidget#steps-container QLabel#step-cell-odd-selected {
-	background-color: #fcecba; 	/* pastel gold */
+QWidget#steps-container QLabel#step-cell-odd-selected,
+QWidget#runs-container QLabel#selected-run-odd-right, 
+QWidget#runs-container QLabel#selected-run-even-right {
+	background-color: #fdf873; 	/* brighter yellow */
 }
 
 QWidget#runs-container QLabel#selected-run-rep-odd-last,
-QWidget#runs-container QLabel#selected-run-rep-even-last {
+QWidget#runs-container QLabel#selected-run-rep-even-last,
+QWidget#runs-container QLabel#selected-run-rep-odd-last-right,
+QWidget#runs-container QLabel#selected-run-rep-even-last-right {
 	border-bottom: 1px solid black;
 	margin-bottom: 10px;
 }

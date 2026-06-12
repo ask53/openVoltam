@@ -24,13 +24,12 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QLabel,
-    QFrame,
     QGroupBox,
     QLineEdit,
     QDateEdit,
     QTextEdit,
     QMessageBox,
-    QFrame    
+    QInputDialog
 )
 
 #######
@@ -66,14 +65,14 @@ class WindowWelcome(QMainWindow):
         lbl_icon.setPixmap(QPixmap(joindir(g.BASEDIR,"external/icons/logo.png")))
 
         # Create all buttons
-        but_sample_new = QPushButton(l.new_sample[g.L])
-        but_sample_open = QPushButton(l.open_sample[g.L])
+        but_sample_new = QPushButton('New session')
+        but_sample_open = QPushButton('Open session')
         but_config_new = QPushButton(l.new_config[g.L])
         but_config_open = QPushButton(l.open_config[g.L])
 
         # Connect relevant button signals to functions ("slots")
-        but_sample_new.clicked.connect(self.new_sample)
-        but_sample_open.clicked.connect(self.open_sample)
+        but_sample_new.clicked.connect(self.new_session)
+        but_sample_open.clicked.connect(self.open_session)
         but_config_new.clicked.connect(self.new_method)
         but_config_open.clicked.connect(self.open_method)
 
@@ -90,7 +89,7 @@ class WindowWelcome(QMainWindow):
         # add sample buttons into 2nd layout, wrap them in groupbox that labels them both
         layout_sample.addWidget(but_sample_new)
         layout_sample.addWidget(but_sample_open)
-        groupbox_sample = QGroupBox(l.menu_sample[g.L])
+        groupbox_sample = QGroupBox('Lab session')
         groupbox_sample.setLayout(layout_sample)
 
         # add config buttons into 3nd layout, wrap them in groupbox that labels them both
@@ -137,14 +136,45 @@ class WindowWelcome(QMainWindow):
         self.children[-1].show()
         return self.children[-1]
 
-    def new_sample(self):
+    def new_session(self):
+        title = 'New lab session'
+        text = 'Lab session name:'
+        text, ok = QInputDialog.getText(self, title, text)
+
+        if ok:
+            try:
+                path = self.save_new_session(text)
+                if path:
+                    self.open_session(path=path)
+            except Exception as e:
+                print(e)
+
+    def save_new_session(self, name):
+        data = {g.S_NAME: name,
+                g.S_DATE_ENTERED: QDateTime.currentDateTime().toString(g.DATETIME_STORAGE_FORMAT)}
+        for key in g.S_BLANK_ARRAYS:
+            data[key] = []
+        initial_name = guess_filename(name)
+        path = QFileDialog.getSaveFileName(self, 'Save lab session', initial_name, g.SAMPLE_FILE_TYPES)[0]
+        if path:
+            write_status = write_data_to_file(path, data)
+            if write_status:
+                return path
+            else:
+                show_alert(self, 'Alert!', 'There was an error saving the new lab session.')
+        return False
         
-        self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_NEW))
                 
-    def open_sample(self, path=False):
+                
+        
+        
+        
+        
+                
+    def open_session(self, path=False):
         try:
             if not path:                # if no path is passed, ask the user to pick a file path
-                path = get_path_from_user(self, 'sample')
+                path = get_path_from_user(self, 'session')
             if path:                    # if the path is passed or if the user selected a valid path:
                 self.new_win_one_with_value(WindowMain(self, path), 'path', path)
             # if user didn't select a path, do nothing

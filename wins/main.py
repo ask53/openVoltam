@@ -32,13 +32,14 @@ from time import sleep
 # import PyQt6/PySide6 stuff
 from PyQt6.QtTest import QTest
 from PyQt6.QtGui import QAction, QFont, QIcon
-from PyQt6.QtCore import QDate, Qt, QProcess, QSize
+from PyQt6.QtCore import QDate, Qt, QProcess, QSize, QMargins
 from PyQt6.QtWidgets import (
     QMainWindow,
     QPushButton,
     QVBoxLayout,
     QHBoxLayout,
     QGridLayout,
+    QStackedLayout,
     QTableWidget,
     QWidget,
     QLabel,
@@ -51,7 +52,12 @@ from PyQt6.QtWidgets import (
     QMenu,
     QInputDialog,
     QProgressBar,
-    QMessageBox
+    QMessageBox,
+    QLineEdit,
+    QTabWidget,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QAbstractItemView
 )
 
 #######
@@ -72,6 +78,10 @@ class WindowMain(QMainWindow):
         self.children = []
         self.setObjectName('window-sample')
         self.layout = {}                  # for storing an outline of runs and reps and which are selected
+        self.layout_old = {}
+        self.tabs = None
+        self.tab_ids = []
+        self.current_tab = 0
         self.select_all_prog_check_flag = False
         self.save_error_flag = False
         self.read_error_flag = False
@@ -93,64 +103,64 @@ class WindowMain(QMainWindow):
 
         #####################
         #                   #
-        #   begin data read #
-        #                   #
-        ##################### 
-        self.start_async_read()
-
-        #####################
-        #                   #
         #   menu bar        #
         #                   #
         #####################
         menu = self.menuBar()
 
-        # add labels ("actions") for menu bar
-        action_sample_new = QAction(l.new_sample[g.L], self)
-        action_sample_open = QAction(l.open_sample[g.L], self)
-        action_sample_close = QAction('Close', self)
+        # Lab session menu
+        action_session_new = QAction('New session', self)
+        action_session_open = QAction('Open session', self)
+        action_session_close = QAction('Close', self)
+
+        action_session_new.triggered.connect(parent.new_session)
+        action_session_open.triggered.connect(parent.open_session)
+        action_session_close.triggered.connect(self.close)
         
+        # Method menu
         action_method_new = QAction(l.new_config[g.L], self)
         action_method_open = QAction(l.open_config[g.L], self)
-        action_method_run_view = QAction('View run method', self)
         action_method_run_edit = QAction('Edit run method', self)
-
-        action_run_new = QAction('New run', self)
-        action_run_new_from = QAction('New run from config', self)
-        action_run_view = QAction('View info', self)
-        action_run_edit = QAction('Edit info', self)
-        action_run_export = QAction('Export as CSV', self)
-        action_run_delete = QAction('Delete', self)
-
-        action_rep_edit = QAction('Edit note', self)
-        action_rep_export = QAction('Export as CSV', self)
-        action_rep_delete = QAction('Delete', self)
-
-        action_analyze_peaks = QAction('Analyze', self)
-        action_analyze_calculate = QAction('Calculate', self)
-        action_analyze_results = QAction('Results', self)
-        
-        # connect menu bar labels with slots 
-        action_sample_new.triggered.connect(parent.new_sample)                      # this first group of menu functions come from the home window (parent)
-        action_sample_open.triggered.connect(parent.open_sample)
-        action_sample_close.triggered.connect(self.close)
 
         action_method_new.triggered.connect(parent.new_method)
         action_method_open.triggered.connect(parent.open_method)
-        action_method_run_view.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
         action_method_run_edit.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_WITH_MINOR_EDITS))
 
+        # Sample menu
+        action_sample_new = QAction(l.new_sample[g.L], self)
+        action_sample_edit = QAction('Edit sample info', self)
+        action_sample_del = QAction('Delete sample', self)
+
+        action_sample_new.triggered.connect(self.new_sample)
+        action_sample_edit.triggered.connect(self.edit_sample)
+        action_sample_del.triggered.connect(self.delete_sample)
+
+        # Run menu
+        action_run_new = QAction('New run', self)
+        action_run_new_from = QAction('New run from config', self)
+        action_run_redo = QAction('Rerun', self)
+        action_run_view = QAction('Run info', self)
+        action_method_run_view = QAction('Method info', self)
+        action_rep_edit = QAction('Edit rep note', self)
+        action_run_export = QAction('Export', self)
+        action_run_delete = QAction('Delete', self)
+        
+        
         action_run_new.triggered.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
         action_run_new_from.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
+        action_run_redo.triggered.connect(self.redo_run)
         action_run_view.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
-        action_run_edit.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_EDIT))
-        action_run_export.triggered.connect(self.export_selected_reps_as_csv)
-        action_run_delete.triggered.connect(self.delete_runs)
-
+        action_method_run_view.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
         action_rep_edit.triggered.connect(self.edit_rep_note)
-        action_rep_export.triggered.connect(self.export_selected_reps_as_csv)
-        action_rep_delete.triggered.connect(self.delete_reps)
+        action_run_export.triggered.connect(self.export_selected_reps_as_csv)
+        action_run_delete.triggered.connect(self.delete_reps)
 
+        action_graph = QAction('Graph', self)
+        action_analyze_peaks = QAction('Analyze', self)
+        action_analyze_calculate = QAction('Calculate', self)
+        action_analyze_results = QAction('Results', self)
+
+        action_graph.triggered.connect(self.view_data_selected_reps)
         action_analyze_peaks.triggered.connect(self.anayze_data_selected_reps)
         action_analyze_calculate.triggered.connect(partial(self.new_win_calculator, g.WIN_MODE_NEW))
         action_analyze_results.triggered.connect(partial(self.new_win_calculator, g.WIN_MODE_RIGHT))
@@ -158,57 +168,59 @@ class WindowMain(QMainWindow):
         
 
         # Add menu top labels then populate the menus with the above slotted labels
-        file_menu = menu.addMenu(l.menu_sample[g.L])
-        file_menu.addAction(action_sample_new)
-        file_menu.addAction(action_sample_open)
-        file_menu.addSeparator()
-        file_menu.addAction(action_sample_close)
+        m = menu.addMenu('Lab session')
+        m.addAction(action_session_new)
+        m.addAction(action_session_open)
+        m.addSeparator()
+        m.addAction(action_session_close)
         
-        file_menu = menu.addMenu(l.menu_config[g.L])      
-        file_menu.addAction(action_method_new)
-        file_menu.addAction(action_method_open)
-        file_menu.addSeparator()
-        file_menu.addAction(action_method_run_view)
-        file_menu.addAction(action_method_run_edit)
+        m = menu.addMenu(l.menu_config[g.L])      
+        m.addAction(action_method_new)
+        m.addAction(action_method_open)
+        m.addSeparator()
+        m.addAction(action_method_run_edit)
 
-        file_menu = menu.addMenu(l.menu_run[g.L])
-        file_menu.addAction(action_run_new)
-        file_menu.addAction(action_run_new_from)
-        file_menu.addSeparator()
-        file_menu.addAction(action_run_view)
-        file_menu.addAction(action_run_edit)
-        file_menu.addSeparator()
-        file_menu.addAction(action_method_run_view)
-        file_menu.addAction(action_method_run_edit)
-        file_menu.addSeparator()
-        file_menu.addAction(action_run_export)
-        file_menu.addSeparator()
-        file_menu.addAction(action_run_delete)
+        m = menu.addMenu(l.menu_sample[g.L])
+        m.addAction(action_sample_new)
+        m.addSeparator()
+        m.addAction(action_sample_edit)
+        m.addAction(action_sample_del)
 
-        file_menu = menu.addMenu('Replicate')
-        file_menu.addAction(action_rep_edit)
-        file_menu.addSeparator()
-        file_menu.addAction(action_rep_export)
-        file_menu.addSeparator()
-        file_menu.addAction(action_rep_delete)
+        m = menu.addMenu(l.menu_run[g.L])
+        m.addAction(action_run_new)
+        m.addAction(action_run_new_from)
+        m.addAction(action_run_redo)
+        m.addSeparator()
+        m.addAction(action_run_view)
+        m.addAction(action_method_run_view)
+        m.addSeparator()
+        m.addAction(action_rep_edit)
+        m.addSeparator()
+        m.addAction(action_run_export)
+        m.addSeparator()
+        m.addAction(action_run_delete)
 
-        file_menu = menu.addMenu('Analysis')
-        file_menu.addAction(action_analyze_peaks)
-        file_menu.addAction(action_analyze_calculate)
-        file_menu.addAction(action_analyze_results)
+        m = menu.addMenu('Analysis')
+        m.addAction(action_graph)
+        m.addAction(action_analyze_peaks)
+        m.addSeparator()
+        m.addAction(action_analyze_calculate)
+        m.addAction(action_analyze_results)
 
         self.actions_run_one_only = [action_run_new_from,
+                                     action_run_redo,
                                      action_run_view,
-                                     action_run_edit,
                                      action_method_run_view,
                                      action_method_run_edit]
         self.actions_run_one_plus = [action_run_export,
                                      action_run_delete,
                                      action_analyze_peaks]
         self.actions_rep_one_only = [action_rep_edit]
-        self.actions_rep_one_plus = [action_rep_export,
-                                     action_rep_delete,
+        self.actions_rep_one_plus = [action_graph,
                                      action_analyze_peaks]
+        self.actions_sample_one_plus = [action_run_new,
+                                        action_sample_edit,
+                                        action_sample_del]
         
 
         #####################################
@@ -216,54 +228,44 @@ class WindowMain(QMainWindow):
         #   right-click ("context") menu    #
         #                                   #
         #####################################
+
         
-        self.contextmenu_run = QMenu(self)      # Menu for when run is clicked
-        self.contextmenu_rep = QMenu(self)      # Menu for when rep is clicked
-
-        self.runAction_runAgain = self.contextmenu_run.addAction("New run from config")
-        self.contextmenu_run.addSeparator()
-        self.runAction_viewConfig = self.contextmenu_run.addAction("View run info")
-        self.runAction_editConfig = self.contextmenu_run.addAction("Edit run info")
-        self.contextmenu_run.addSeparator()
-        self.runAction_viewMethod = self.contextmenu_run.addAction("View method")
-        self.runAction_editMethod = self.contextmenu_run.addAction("Edit method")
-        self.contextmenu_run.addSeparator()
-        self.runAction_viewData = self.contextmenu_run.addAction("Graph")
-        self.runAction_analyzeData = self.contextmenu_run.addAction("Analyze")
-        self.runAction_exportData = self.contextmenu_run.addAction("Export")
-        self.contextmenu_run.addSeparator()
-        self.runAction_delete = self.contextmenu_run.addAction("Delete run(s)")
-
-        self.repAction_editNote = self.contextmenu_rep.addAction("Edit replicate note")
-        self.contextmenu_rep.addSeparator()
-        self.repAction_viewData = self.contextmenu_rep.addAction("Graph")
-        self.repAction_analyzeData = self.contextmenu_rep.addAction("Analyze")
-        self.repAction_exportData = self.contextmenu_rep.addAction("Export")
-        self.contextmenu_rep.addSeparator()
-        self.repAction_delete = self.contextmenu_rep.addAction("Delete replicates(s)")
-
-        self.runAction_runAgain.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
-        self.runAction_viewConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
-        self.runAction_editConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_EDIT))
-        self.runAction_viewMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
-        self.runAction_editMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_WITH_MINOR_EDITS))
-        self.runAction_viewData.triggered.connect(self.view_data_selected_reps)
-        self.runAction_analyzeData.triggered.connect(self.anayze_data_selected_reps)
-        self.runAction_exportData.triggered.connect(self.export_selected_reps_as_csv)
-        self.runAction_delete.triggered.connect(self.delete_runs)
+        self.context_menu = QMenu(self)      # Menu for when run is clicked
         
-        self.repAction_editNote.triggered.connect(self.edit_rep_note)
-        self.repAction_viewData.triggered.connect(self.view_data_selected_reps)
-        self.repAction_analyzeData.triggered.connect(self.anayze_data_selected_reps)
-        self.repAction_exportData.triggered.connect(self.export_selected_reps_as_csv)
-        self.repAction_delete.triggered.connect(self.delete_reps)
+        self.a_runAgain = self.context_menu.addAction("New run from config")
+        self.a_runRedo = self.context_menu.addAction("Rerun")
+        self.context_menu.addSeparator()
+        self.a_viewConfig = self.context_menu.addAction("Run info")
+        self.a_viewMethod = self.context_menu.addAction("Method info")
+        self.move_to_menu = QMenu('Move to...')
+        self.move_to_menu_actions = []
+        self.context_menu.addMenu(self.move_to_menu)
+        
+        self.context_menu.addSeparator()
+        self.a_editRepNote = self.context_menu.addAction("Edit rep note")
+        self.context_menu.addSeparator()
+        self.a_graph = self.context_menu.addAction("Graph")
+        self.a_analyze = self.context_menu.addAction("Analyze")
+        self.a_export = self.context_menu.addAction("Export")
+        self.context_menu.addSeparator()
+        self.a_delete = self.context_menu.addAction("Delete")
 
-        self.runActions_oneOnly = [self.runAction_runAgain,
-                                   self.runAction_editConfig,
-                                   self.runAction_viewConfig,
-                                   self.runAction_viewMethod,
-                                   self.runAction_editMethod]
-        self.repActions_oneOnly = [self.repAction_editNote]
+
+        self.a_runAgain.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
+        self.a_runRedo.triggered.connect(self.redo_run)
+        self.a_viewConfig.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
+        self.a_viewMethod.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
+        self.a_editRepNote.triggered.connect(self.edit_rep_note)
+        self.a_graph.triggered.connect(self.view_data_selected_reps)
+        self.a_analyze.triggered.connect(self.anayze_data_selected_reps)
+        self.a_export.triggered.connect(self.export_selected_reps_as_csv)
+        self.a_delete.triggered.connect(self.delete_reps)
+
+        self.run_actions_one = [self.a_runAgain,
+                                self.a_runRedo,
+                                self.a_viewConfig,
+                                self.a_viewMethod]
+        self.rep_actions_one = [self.a_editRepNote]
         
         #####################
         #                   #
@@ -273,96 +275,119 @@ class WindowMain(QMainWindow):
 
         lay = QVBoxLayout()
         
-        but_view = QPushButton('info')
-        but_config = QPushButton('NEW RUN')
+        but_view = QPushButton()
+        but_view.setIcon(QIcon(g.ICON_EDIT))
+        but_samp = QPushButton('New sample')
+        but_config = QPushButton('New run')
         but_calc = QPushButton('Calculate')
         but_res_sample = QPushButton('Results')
-        self.buts = [but_view, but_config, but_calc, but_res_sample]        
+        self.buts = [but_view, but_samp, but_res_sample]
+        self.buts_with_sample_only = [but_config]
         
-        but_view.clicked.connect(self.new_win_sample)
-        but_config.clicked.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
-        but_calc.clicked.connect(partial(self.new_win_calculator, g.WIN_MODE_NEW))
+        but_view.clicked.connect(self.edit_session_name)
+        but_samp.clicked.connect(self.new_sample)
+        but_config.clicked.connect(self.new_run)
+        but_calc.clicked.connect(self.new_calc)
         but_res_sample.clicked.connect(partial(self.new_win_calculator, g.WIN_MODE_RIGHT))
- 
-        vl1 = QVLine()
-        vl2 = QVLine()
-        vl3 = QVLine()
 
         self.lbl_sample_name = TitleLbl("")
+        self.lbl_sample_name.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         
-        l_sample_header = QHBoxLayout()
-        l_sample_header.addWidget(self.lbl_sample_name)
-        l_sample_header.addWidget(but_view)
-        l_sample_header.addWidget(vl1)
-        l_sample_header.addStretch()
-        l_sample_header.addWidget(vl2)
-        l_sample_header.addWidget(but_config)
-        l_sample_header.addWidget(vl3)
-        l_sample_header.addWidget(but_calc)
-        l_sample_header.addWidget(but_res_sample)
+        l_session_header = QHBoxLayout()
+        l_session_header.addWidget(self.lbl_sample_name)
+        l_session_header.addWidget(but_view)
+        l_session_header.addStretch()
+        l_session_header.addWidget(but_samp)
+        l_session_header.addWidget(QVLine())
+        l_session_header.addWidget(but_config)
+        l_session_header.addWidget(QVLine())
+        l_session_header.addWidget(but_calc)
+        l_session_header.addWidget(but_res_sample)
 
-        w_sample_header = QWidget()                         # create a widget to hold the layout (which can be styled)
-        w_sample_header.setLayout(l_sample_header)          # add the layout to the widget
-        w_sample_header.setObjectName("sample-header")      # add a name to target with QSS
+        w_session_header = QWidget()                         # create a widget to hold the layout (which can be styled)
+        w_session_header.setLayout(l_session_header)          # add the layout to the widget
+        w_session_header.setObjectName("session-header")      # add a name to target with QSS
 
-        ###########################################################################################################################
-        #
-        #   Define the second row ("run header")
-        #   (For now, just the "select all" checkbox, might move this later (holdover from when this was a row of buttons...
-        #
- 
-        l_run_header = QHBoxLayout()
-
-        self.cb_all = QCheckBox()
-        lbl_cb_all = QLabel("Select all")
-
-        self.cb_all.stateChanged.connect(partial(self.select_all_toggle, self.cb_all))  # connect checkbox to select_all_toggle function
-        lbl_cb_all.mouseReleaseEvent = self.select_all_lbl_clicked                      # when label is clicked, toggle checkbox
-
-        l_run_header.addWidget(self.cb_all)
-        l_run_header.addWidget(lbl_cb_all)
-
-        l_run_header.addStretch()
-
-        self.w_run_header = QWidget()                    # create a widget to hold the layout (which can be styled)
-        self.w_run_header.setLayout(l_run_header)        # add the layout to the widget
-        self.w_run_header.setObjectName("run-header-row")# add a name to target with QSS
-
-        #
-        #
-        ############################################################################################################################
+        # Create a placeholder widget where the main window will go
+        lay_ph = QVBoxLayout()
+        lay_ph.addWidget(QWidget())
+        lay_ph.addStretch()
+        w_ph = QTabWidget()
+        w_ph.setLayout(lay_ph)
         
-        self.w_run_history_area = QScrollArea()
-        
-        # Add all of these three widgets to our vertical layout
-        lay.addWidget(w_sample_header)
-        lay.addWidget(self.w_run_header)
-        lay.addWidget(self.w_run_history_area)
+        # Add both of these widgets to our vertical layout
+        lay.addWidget(w_session_header)     # add the header
+        lay.addWidget(w_ph)                 # add a placeholder widget for the main area
 
         setWsEnabled(self.buts, False)
+
+        #####################
+        #                   #
+        #   begin data read #
+        #                   #
+        ##################### 
+        self.start_async_read()
         
         # Display! 
         self.w = QWidget()
         self.w.setLayout(lay)
         self.setCentralWidget(self.w)
         
-
     def update_win(self):
         try:
+            self.layout_old = self.layout.copy()                # Store copy of old layout
+            self.layout = {}                                    # Reinit self.layout to be refilled 
             sample_name = self.data[g.S_NAME]
             self.setWindowTitle(sample_name)                                    # Set the sample window title
             self.lbl_sample_name.updateTitleLbl(sample_name)                    # Set the sample name
-            pos = self.w_run_history_area.verticalScrollBar().sliderPosition()  # Get scroll bar slider position
-            self.w_run_history_area.setParent(None)                             # remove run history pane from layout
-            self.widgetize_runs()                                               # get updated run history as a widget    
-            self.centralWidget().layout().addWidget(self.w_run_history_area)    # add the updated run history back to layout
+            self.set_move_to_menu()
+            self.set_main_area()
             self.update_highlights()
             self.update_menu()
-            self.w_run_history_area.verticalScrollBar().setSliderPosition(pos)  # set scrollbar slider to previous position
             self.update_children()
+            
         except Exception as e:
+            print('Error in update_win:')
             print(e)
+
+
+    def set_move_to_menu(self):
         
+        self.move_to_menu.clear()
+        self.move_to_menu_actions = []
+        for i, s in enumerate(self.data[g.S_SAMPLES]):          # Loop thru samples
+            action = self.move_to_menu.addAction(s[g.SA_NAME])  # Add the sample name to the move-to menu
+            action.triggered.connect(partial(self.move_to, i))  # When clicked, run the move_to(i) fn
+            self.move_to_menu_actions.append(action)            # Append the action to a class-wide list for later access
+        if self.data[g.S_SAMPLES]:
+            self.move_to_menu_actions[0].setEnabled(False)          # grey out the default tab in move-to menu to start         
+        
+
+    def move_to(self, i):
+        """moves a selected run (with all its reps) to the sample with index i"""
+        runs = self.get_all_selected_runs()
+        sample_id = self.tab_ids[i]
+        
+        # Check if this will mess with any calculations, confirm whether user wants to continue
+        #   if continuing means archiving all impacted calculations
+        reps = get_all_reps_from_run_id(self.data, runs)
+        continue_action, calcs_to_archive = check_calc_conflict(self.data, reps)
+        if not continue_action:
+            return
+ 
+        # Define callback function
+        cb_calc = partial(self.start_async_save, g.SAVE_TYPE_CALCS_ARCHIVE, [True, calcs_to_archive])
+
+        # Figure out which call to make based on whether or not there are calcs to archive
+        if calcs_to_archive:
+            self.start_async_save(g.SAVE_TYPE_RUN_MOVE, [runs, sample_id], onSuccess=cb_calc)
+        else:
+            self.start_async_save(g.SAVE_TYPE_RUN_MOVE, [runs, sample_id])
+
+
+    def go_to_tab(self, i):
+        """Goes to tab i"""
+        self.tabs.setCurrentIndex(i)
         
     #############################################
     #                                           #
@@ -375,88 +400,268 @@ class WindowMain(QMainWindow):
     #                                           #
     #############################################
 
-    def widgetize_runs(self):
-        layout_old = self.layout.copy()                     # Store copy of old layout
-        self.layout = {}                                    # Reinit self.layout to be refilled 
+    def set_main_area(self):
+        if self.tabs:
+            self.current_tab = self.tabs.currentIndex()     # save current tab
+
+        # If there are samples, create tabbed layout
+        d = self.data
+
         
-        self.grid = QGridLayout()                           # init grid layout (that is inside scroll area)
-        self.grid.setHorizontalSpacing(0)
-        self.grid.setVerticalSpacing(0)
+        for insert_i, w in enumerate(self.centralWidget().children()):
+            if type(w) == type(QTabWidget()):
+                w.setParent(None)
+                break
+        
+        self.tabs = QTabWidget()
+        self.tabs.currentChanged.connect(self.tab_changed)
+        self.tab_ids = []
+
+        # Get list of all samples that already have saved calculations
+        samples_with_calcs = []
+        for calc in d[g.S_PROCESSED]:
+            s_id = calc[g.C_SAMPLE_ID]
+            if not s_id in samples_with_calcs:
+                samples_with_calcs.append(s_id)
+        
+        for i, sample in enumerate(d[g.S_SAMPLES]):
+            # Set up sample header
+            lbl_s_name = QLabel("<div style='font-size: 16pt'>"+sample[g.SA_NAME]+"</div>")
+            lbl_s_name.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            lbl_s_name.setWordWrap(True)
+            desc = self.get_sample_description(sample)
+            lbl_desc = QLabel(desc)
+            lbl_desc.setWordWrap(True)
+            lbl_desc.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+
+            but_edit = QPushButton()
+            but_edit.setIcon(QIcon(g.ICON_EDIT))
+            but_edit.clicked.connect(self.edit_sample)
+            but_del = QPushButton()
+            but_del.setIcon(QIcon(g.ICON_TRASH))
+            but_del.clicked.connect(self.delete_sample)
+
+            v = QVBoxLayout()
+            v.addWidget(lbl_s_name)
+            v.addLayout(horizontalize([but_edit, but_del]))
+            
+            if desc:
+                v.addWidget(lbl_desc)
+
+            s_id = sample[g.R_UID_SELF]
+            if s_id in samples_with_calcs:                                      # if this sample has calculations
+                w_res = WindowCalculate(self, g.WIN_MODE_EMBED, sample_id=s_id) # Add embedded calc results
+                v.addWidget(QHLine())
+                v.addWidget(w_res)
+            v.addStretch()
+            
+            w0 = QWidget()
+            w0.setLayout(v)
+            color_index = i%7
+            w0.setObjectName('sample-'+str(color_index))
+
+            h = QHBoxLayout()
+            h.addWidget(w0)
+            
+            # IF there are runs, setup sample tree
+            runs = get_runs_in_sample(self.data, sample[g.R_UID_SELF])
+            if runs:
+                w_cust=self.widgetize_runs(sample[g.R_UID_SELF])
+                h.addWidget(w_cust)
+            else:                       # if there are not runs
+                #v.addStretch()          # add a stretch to the layout to keep everything nice and tidy
+                h.addStretch()
+
+            
+            w = QWidget()
+            #w.setLayout(v)
+            w.setLayout(h)
+
+            tabname_len = 12
+            fullname = sample[g.SA_NAME]
+            if len(fullname) <= tabname_len:
+                name = fullname
+            else:
+                name = fullname[0:tabname_len]+'...'
+            
+            self.tabs.addTab(w, name)
+            self.tabs.setTabToolTip(i, fullname)
+            self.tab_ids.append(sample[g.R_UID_SELF])
+
+        self.centralWidget().layout().insertWidget(insert_i, self.tabs)  # insert tab widget to same spot previous tab widget was located (this preserves stretches, animationes, etc.)
+        self.tabs.setCurrentIndex(self.current_tab)         # activate tab (this is needed to stay on same tab during ongoing use, rather than jumping to tab 0)
+        applyStyles()
+
+    
+    def get_sample_description(self, s):
+        """Takes in a sample object, s, returns html string of description"""
+        d = ''
+        if s[g.SA_DATE_COLLECTED] and s[g.SA_DATE_COLLECTED] != g.QT_DEFAULT_DATE:
+            d = d + '<b>Date collected</b>: '+s[g.SA_DATE_COLLECTED] + '<br>'
+        if s[g.SA_LOC_COLLECTED] and not self.is_only_whitespace(s[g.SA_LOC_COLLECTED]):
+            d = d + '<b>Location</b>: '+s[g.SA_LOC_COLLECTED] + '<br>'
+        if s[g.SA_COLLECTED_BY] and not self.is_only_whitespace(s[g.SA_COLLECTED_BY]):
+            d = d + '<b>By</b>: '+s[g.SA_COLLECTED_BY] + '<br>'
+        if s[g.SA_NOTES] and not self.is_only_whitespace(s[g.SA_NOTES]):
+            d = d + '<b>Notes</b>: '+s[g.SA_NOTES] + '<br>'
+        d = d[0:-4]                                                             # remove final <br>
+        return d
+
+    def is_only_whitespace(self, s):
+        """returns True is string s is only whitespace (spaces, tabs, returns, etc.)
+        and False otherwise"""
+        if  "".join(s.split()) == "":
+            return True
+        return False
+        
+    def edit_sample(self):
+        try:
+            s_id = self.get_current_sample_id()
+            self.new_win_one_with_value(WindowSample(self, mode=g.WIN_MODE_EDIT, sample_id=s_id), "sample_id", s_id)
+        except Exception as e:
+            print(e)
+
+    def delete_sample(self):
+        s_id = self.get_current_sample_id()
+        s = get_sample_from_file_data(self.data, s_id)
+        s_name = s[g.SA_NAME]
+        if self.confirm_delete_sample(s_name):
+            self.start_async_save(g.SAVE_TYPE_SAMPLE_DELETE, [s_id])
+
+    def get_current_sample_id(self):
+        i = self.tabs.currentIndex()
+        return self.tab_ids[i]
+        
+
+    def new_sample(self):
+        try:
+            self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_NEW))
+        except Exception as e:
+            print(e)
+
+    def new_run(self):
+        sample_id = self.get_current_sample_id()
+        self.new_win_config_run(g.WIN_MODE_NEW, sample_id=sample_id)
+
+    def new_calc(self):
+        try:
+            sample_id = self.get_current_sample_id()
+            self.new_win_calculator(g.WIN_MODE_NEW, sample_id)
+        except Exception as e:
+            print(e)
+
+    def tab_changed(self):
+        if not self.tab_ids:
+            return
+        try:
+            i = self.tabs.currentIndex()
+            sample_id = self.tab_ids[i]
+            for run in self.layout.keys():
+                if self.layout[run]['sample_id'] != sample_id:
+                    self.layout[run]['selected'] = []
+            self.update_highlights()
+            self.scroll_area_resized()
+            for j, action in enumerate(self.move_to_menu_actions):  # adjust move-to submenu
+                if j==i: action.setEnabled(False)
+                else: action.setEnabled(True)
+                                            
+        except Exception as e:
+            print('here in the tab_changed error handler:')
+            print(e)
+
+    def widgetize_runs(self, sample_id):
+        
+        grid = QGridLayout()                           # init grid layout (that is inside scroll area)
+        grid.setHorizontalSpacing(0)
+        grid.setVerticalSpacing(0)
         
         # create column headers and add them to the grid layout
-        headers = ['RUN INFO','REPLICATE', 'STATUS', 'LAST ATTEMPTED', 'NOTES', 'ANALYZED']
+        headers = ['','Replicate', 'Status', 'Datetime', 'Notes', 'Analyzed']
         w_heads = []
         for header in headers:
             w = self.create_w(header, qss_name='run-col-header')
             w_heads.append(w)
 
         row = 0
-        row = self.add_row_to_main(w_heads, row)
+        row = self.add_row_to_main(grid, w_heads, row)
 
         # Loop through all runs in sample's dataset
         for i, run in enumerate(self.data[g.S_RUNS]):
+            if run[g.R_UID_SAMPLE] == sample_id:
+                # For each run, create a row for each replicate and add it to the grid, leaving the first cell of each row blank
+                start_row = row
+                run_id = run[g.R_UID_SELF]
+                self.layout[run_id] = {'sample_id':sample_id,
+                                       'selected':[],
+                                       'reps':[]}                     # initialize holing spot for run data 
+                for j, rep in enumerate(run[g.R_REPLICATES]):
+                    rep_name = l.r_rep_abbrev[g.L] + ' '+rep[g.R_UID_SELF].split('-')[-1]
+                    rep_status = rep[g.R_STATUS]
+                    rep_time = rep[g.R_TIMESTAMP_REP]
+                    rep_notes = rep[g.R_NOTES]
+                    rep_proc = ''
+                    if rep[g.R_ANALYSIS]: rep_proc = g.ICON_CHECK
+                    rep_strs = (rep_name,rep_status,rep_time,rep_notes,rep_proc)
+                    icons = (False, False, False, False, True)
 
-            # For each run, create a row for each replicate and add it to the grid, leaving the first cell of each row blank
-            start_row = row
-            run_id = run[g.R_UID_SELF]
-            self.layout[run_id] = {'selected':[],'reps':[]}                     # initialize holing spot for run data 
-            for j, rep in enumerate(run[g.R_REPLICATES]):
-                rep_name = l.r_rep_abbrev[g.L] + ' '+rep[g.R_UID_SELF].split('-')[-1]
-                rep_status = rep[g.R_STATUS]
-                rep_time = rep[g.R_TIMESTAMP_REP]
-                rep_notes = rep[g.R_NOTES]
-                rep_proc = ''
-                if rep[g.R_ANALYSIS]: rep_proc = g.ICON_CHECK
-                rep_strs = (rep_name,rep_status,rep_time,rep_notes,rep_proc)
-                icons = (False, False, False, False, True)
+                    is_last = False
+                    if j == len(run[g.R_REPLICATES])-1: is_last=True                # figure out if current rep is last of run
 
-                is_last = False
-                if j == len(run[g.R_REPLICATES])-1: is_last=True                # figure out if current rep is last of run
-
-                if (i+j)%2 == 0 and is_last: qss_name = 'run-rep-even-last'     # even rows that are last rep of run
-                elif (i+j)%2 != 0 and is_last: qss_name = 'run-rep-odd-last'    # odd rows that are last rep of run
-                elif (i+j)%2 == 0: qss_name = 'run-rep-even'                    # regular even rows
-                else: qss_name = 'run-rep-odd'                                  # regular odd rows
+                    if j%2 == 0 and is_last: qss_name = 'run-rep-even-last'     # even rows that are last rep of run
+                    elif j%2 != 0 and is_last: qss_name = 'run-rep-odd-last'    # odd rows that are last rep of run
+                    elif j%2 == 0: qss_name = 'run-rep-even'                    # regular even rows
+                    else: qss_name = 'run-rep-odd'                                  # regular odd rows
+                    
+                    rep_id = rep[g.R_UID_SELF]
+                    ws_rep = []
+                    for k,s in enumerate(rep_strs):
+                        if k==len(rep_strs)-1:
+                            qss_name = qss_name + '-right'
+                        w = self.create_w(html_escape(s), qss_name, self.rep_clicked, run_id, rep_id, is_icon=icons[k])
+                        ws_rep.append(w)   
+                    row = self.add_row_to_main(grid, ws_rep, row, h_offset=1)
+                    self.layout[run_id]['reps'].append(rep_id)
                 
-                rep_id = rep[g.R_UID_SELF]
-                ws_rep = []
-                for k,s in enumerate(rep_strs):
-                    w = self.create_w(html_escape(s), qss_name, self.rep_clicked, run_id, rep_id, is_icon=icons[k])
-                    ws_rep.append(w)   
-                row = self.add_row_to_main(ws_rep, row, h_offset=1)
-                self.layout[run_id]['reps'].append(rep_id)
-            
-            # Vertically merge all the first cells for this run's replicates and add run information
-            run_name = 'Run '+run[g.R_UID_SELF].split('-')[-1]
-            run_type = l.rc_types[run[g.R_TYPE]][g.L]
-            method_name = get_method_from_file_data(self.data, run[g.R_UID_METHOD])[g.M_NAME]
-            run_notes = run[g.R_NOTES]
-            run_str = '<u>'+html_escape(run_name)+'</u><br>'
-            run_str = run_str + '<b>'+'Type'+'</b>: '+html_escape(run_type)+'<br>'
-            run_str = run_str + '<b>'+'Method'+'</b>: '+html_escape(method_name)+'<br>'
-            run_str = run_str + '<b>'+'Notes'+'</b>: '+html_escape(run_notes)
+                # Vertically merge all the first cells for this run's replicates and add run information
+                run_name = 'Run '+run[g.R_UID_SELF].split('-')[-1]
+                run_type = l.rc_types[run[g.R_TYPE]][g.L]
+                method_name = get_method_from_file_data(self.data, run[g.R_UID_METHOD])[g.M_NAME]
+                run_notes = run[g.R_NOTES]
+                run_str = '<u>'+html_escape(run_name)+'</u><br>'
+                run_str = run_str + '<b>Type</b>: '+html_escape(run_type)+'<br>'
+                run_str = run_str + '<b>Method</b>: '+html_escape(method_name)+'<br>'
+                if run_notes and not self.is_only_whitespace(run_notes):                # Only show notes if there are any!
+                    run_str = run_str + '<b>Notes</b>: '+html_escape(run_notes)+'<br>'
+                run_str = run_str[0:-4]                                             # strip last <br> from string
 
-            if i%2 == 0: qss_name = 'run-even'
-            else: qss_name = 'run-odd'
+                if i%2 == 0: qss_name = 'run-even'
+                else: qss_name = 'run-odd'
 
-            w = self.create_w(run_str, qss_name, self.run_clicked, run_id)
-            
-            self.add_row_to_main([w], start_row, v_merge=row-start_row)
+                w = self.create_w(run_str, qss_name, self.run_clicked, run_id)
+                
+                self.add_row_to_main(grid, [w], start_row, v_merge=row-start_row)
 
-        self.grid.setColumnStretch(len(headers)-1,1)
+        grid.setColumnStretch(len(headers)-1,1)
 
         # update self.layout to ensure that highlights maintain over update
-        for run in layout_old:
+        for run in self.layout_old:
             if run in self.layout:
-                for rep in layout_old[run]['selected']:
+                for rep in self.layout_old[run]['selected']:
                     if rep in self.layout[run]['reps']:
                         self.layout[run]['selected'].append(rep)
         
-        self.w_run_history_container = QWidget()
-        self.w_run_history_container.setLayout(self.grid)
-        self.w_run_history_container.setObjectName('runs-container')
-        self.w_run_history_area.setWidget(self.w_run_history_container)
+        w_in = QWidget()
+        w_in.setLayout(grid)
+        w_in.setObjectName('runs-container')
+        
+        w = QRunScrollArea(self)
+        w.setWidget(w_in)
 
+        return w
+
+    def sa_resize(self):
+        print('RESIZE DETECTED!')
+ 
     def do_nothing(self, w):
         """This is necessary so that each widget has a callback function if clicked.
         Pls don't delete even tho is looks oh so deleteable!"""
@@ -490,7 +695,7 @@ class WindowMain(QMainWindow):
         w.setProperty('ov-selected-qss-name', 'selected-'+qss_name)
         return w
 
-    def add_row_to_main(self, ws, row, h_offset=0, v_merge=1, h_merge=1):
+    def add_row_to_main(self, grid, ws, row, h_offset=0, v_merge=1, h_merge=1):
         """
         Adds a new row of QWidgets to the self.grid object. Requires there being one self.grid object.
         Arguments:
@@ -504,7 +709,7 @@ class WindowMain(QMainWindow):
             The incremented row index
         """
         for i, w in enumerate(ws):
-            self.grid.addWidget(w, row, i+h_offset, v_merge, h_merge)
+            grid.addWidget(w, row, i+h_offset, v_merge, h_merge)
         return row+1
 
     #############################################
@@ -517,43 +722,46 @@ class WindowMain(QMainWindow):
     #############################################
 
     def rep_clicked(self, w, event):
+    
         keys = QApplication.keyboardModifiers()
         btn = event.button()
         run = w.property('ov-run')
         rep = w.property('ov-rep')
+        try:
+            if btn == Qt.MouseButton.RightButton and keys == Qt.KeyboardModifier.NoModifier:        # regular right click
+                if not self.rep_is_selected(run, rep):                                              # If the clicked rep is not selected
+                    self.clear_selected()                                                           # Make it the only one selected
+                    self.add_rep_to_selected(run, rep)
+                    self.update_highlights()
+                self.open_rightclick_menu(event)                                                    # Open right-click context menu
 
-        if btn == Qt.MouseButton.RightButton and keys == Qt.KeyboardModifier.NoModifier:        # regular right click
-            if not self.rep_is_selected(run, rep):                                              # If the clicked rep is not selected
-                self.clear_selected()                                                           # Make it the only one selected
-                self.add_rep_to_selected(run, rep)
-                self.update_highlights()
-            self.open_rightclick_menu_rep(event)                                                # Open right-click context menu
+            elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.NoModifier:       # regular left click                                                            
+                N = self.N_reps_selected()                                                          # Get # of reps selected
+                rep_is_selected = self.rep_is_selected(run, rep)
+                self.clear_selected()                                                               # Clear all selections
+                if N > 1:                                                                           # If there were multiple selected, 
+                    self.add_rep_to_selected(run, rep)                                              # select the clicked rep (regardless of status)
+                elif not rep_is_selected:                                                           # if 1 or 0 selected, not including clicked one
+                    self.add_rep_to_selected(run, rep)                                              # select clicked rep (if clicked rep is already only selection, this deselects it)
 
-        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.NoModifier:       # regular left click                                                            
-            N = self.N_reps_selected()                                                          # Get # of reps selected
-            rep_is_selected = self.rep_is_selected(run, rep)
-            self.clear_selected()                                                               # Clear all selections
-            if N > 1:                                                                           # If there were multiple selected, 
-                self.add_rep_to_selected(run, rep)                                              # select the clicked rep (regardless of status)
-            elif not rep_is_selected:                                                           # if 1 or 0 selected, not including clicked one
-                self.add_rep_to_selected(run, rep)                                              # select clicked rep (if clicked rep is already only selection, this deselects it)
+            elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ControlModifier:  # ctrl+left click
+                if not self.rep_is_selected(run, rep):                                              # if clicked row not selected
+                    self.add_rep_to_selected(run, rep)                                              # add it to selection
+                else:                                                                               # otherwise,
+                    self.remove_rep_from_selected(run, rep)                                         # remove it from selection
 
-        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ControlModifier:  # ctrl+left click
-            if not self.rep_is_selected(run, rep):                                              # if clicked row not selected
-                self.add_rep_to_selected(run, rep)                                              # add it to selection
-            else:                                                                               # otherwise,
-                self.remove_rep_from_selected(run, rep)                                         # remove it from selection
-
-        elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ShiftModifier:    # shift+left click
-            print('shift+click --- TODO: Add shift+click implemntation!!!')
-            ###################3
-            #
-            #   ADD SHIFT+CLICK IMPLEMENTATION HERE...
-            #
-            ##################
-        self.update_menu()
-        self.update_select_all_checkbox()
-        self.update_highlights()                                                            # update styles to apply hightlighting
+            elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.ShiftModifier:    # shift+left click
+                print('shift+click --- TODO: Add shift+click implemntation!!!')
+                ###################3
+                #
+                #   ADD SHIFT+CLICK IMPLEMENTATION HERE...
+                #
+                ##################
+            self.update_menu()
+            self.update_highlights()                                                            # update styles to apply hightlighting
+        except Exception as e:
+            print('here in the rep_clicked error handler!')
+            print(e)
         
 
 
@@ -562,12 +770,13 @@ class WindowMain(QMainWindow):
         btn = event.button()
         run = w.property('ov-run')
 
+
         if btn == Qt.MouseButton.RightButton and keys == Qt.KeyboardModifier.NoModifier:    # regular right click
             if not self.all_reps_of_run_are_selected(run):
                 self.clear_selected()
                 self.add_run_to_selected(run)
                 self.update_highlights()
-            self.open_rightclick_menu_run(event)
+            self.open_rightclick_menu(event)
 
         elif btn == Qt.MouseButton.LeftButton and keys == Qt.KeyboardModifier.NoModifier:   # regular left click
             this_entire_run_is_only_selection = self.this_entire_run_and_nothing_else_is_selected(run)
@@ -590,7 +799,6 @@ class WindowMain(QMainWindow):
             ##################
 
         self.update_menu()
-        self.update_select_all_checkbox()
         self.update_highlights()
 
     #####################################################
@@ -659,10 +867,10 @@ class WindowMain(QMainWindow):
         return N
 
     def N_runs_selected(self):
-        """ Returns Int, # of runs currently selected"""
+        """ Returns Int, # of runs with any reps currently selected"""
         N = 0
-        for run in self.layout:
-            if self.all_reps_of_run_are_selected(run):
+        for run in self.layout.keys():
+            if self.layout[run]['selected']:
                 N = N + 1
         return N
 
@@ -704,6 +912,18 @@ class WindowMain(QMainWindow):
     def clear_selected(self):
         for run in self.layout:
             self.layout[run]['selected'] = []
+
+    def get_scroll_area(self, i):
+        """Returns the children of the QScrollArea widget in the tab i. If there is no
+        QScrollArea widget found, or if it has no set widget ithin it, returns False."""
+        try: self.tabs.widget(i).children()
+        except: return False
+        
+        for child in self.tabs.widget(i).children():
+            if type(child) == type(QRunScrollArea(self)):
+                return child
+        return False
+        
     
     def update_highlights(self):
         """Using the current state of the self.layout list, modifies the objectName
@@ -719,53 +939,31 @@ class WindowMain(QMainWindow):
         on the selected list, it sets their objectName to their selected name. If they're not
         on the selected list, it sets their objectName to ther NOT selected name.
         """
-        ws = self.w_run_history_container.children()            # grab all table widgets
-        for w in ws:
-            run = w.property('ov-run')
-            rep = w.property('ov-rep')
-            select = False
-            if run:                                             # excludes any non-run or rep widgets (eg. headers)
-                if rep:                                         # For all widgets that are part of a replicate row
-                    if rep in self.layout[run]['selected']:     # set name for selected reps
-                        select = True
-                else:                                           # For all widgets that are part of a run (but not a rep!)
-                    if self.all_reps_of_run_are_selected(run):  # set name for all runs that have all reps selected
-                        select = True
-                if select:
-                    w.setObjectName(w.property('ov-selected-qss-name'))
-                else:
-                    w.setObjectName(w.property('ov-qss-name'))
+        
+        tab_i = self.tabs.currentIndex()
+        sa = self.get_scroll_area(tab_i)
+        ws = False
+        try: ws = sa.widget().children()    # get the children
+        except: pass                        # if no widget set, ignore the error
+
+        if ws:
+            for w in ws:
+                run = w.property('ov-run')
+                rep = w.property('ov-rep')
+                select = False
+                if run:                                             # excludes any non-run or rep widgets (eg. headers)
+                    if rep:                                         # For all widgets that are part of a replicate row
+                        if rep in self.layout[run]['selected']:     # set name for selected reps
+                            select = True
+                    else:                                           # For all widgets that are part of a run (but not a rep!)
+                        if self.all_reps_of_run_are_selected(run):  # set name for all runs that have all reps selected
+                            select = True
+                    if select:
+                        w.setObjectName(w.property('ov-selected-qss-name'))
+                    else:
+                        w.setObjectName(w.property('ov-qss-name'))
         applyStyles()                                           #Grab QSS Stylesheet and apply it, now that names have been changed
-
-    def select_all_lbl_clicked(self, event):        # this exists so that the "select all" label can be clicked
-        self.cb_all.toggle()                        #   as well as the checkbox itself
-
-    def select_all_toggle(self, w):
-        """Click handler for select-all checkbox. This runs when select-all checkbox is checked
-        programatically or by the user. The first step is to filter out programatic changes.
-        Then, if box is check, all replicates are selected. If unchecked, nothing is selected."""
-        if self.select_all_prog_check_flag:         # 1. If this function was triggered programatically
-            self.select_all_prog_check_flag = False # Reset flag and ignore (return)
-            return
-        if w.checkState() == Qt.CheckState.Checked: # 2. if this function was triggered by a user click and the box is now checked
-            self.add_all_to_selected()              # Add all reps to selected
-        else:                                       # If triggered by a user click and box is now unchecked
-            self.clear_selected()                      # Remove all selected
-        self.update_highlights()
-        self.update_menu()
-
-    def update_select_all_checkbox(self):
-        """This function adjusts the state of the select-all checkbox programatically. To indicate that
-        the change was programatic, before making a changes, the self.select_all_prog_check_flag is
-        set. The two conditions that cause action are:
-            1. If all reps are selected but select-all checkobx is not checked, check it!
-            2. If NOT all reps are selected but select-all checkobx is checked, uncheck it!"""
-        if self.all_reps_are_selected() and self.cb_all.checkState() != Qt.CheckState.Checked:
-            self.select_all_prog_check_flag = True
-            self.cb_all.setChecked(True)
-        elif not self.all_reps_are_selected() and self.cb_all.checkState() != Qt.CheckState.Unchecked:
-            self.select_all_prog_check_flag = True
-            self.cb_all.setChecked(False)
+        
 
     def update_menu(self):
         runs = self.N_runs_selected()
@@ -790,10 +988,21 @@ class WindowMain(QMainWindow):
             yes = yes + self.actions_run_one_plus
             no = no + self.actions_run_one_only
 
+        # For samples
+        if len(self.data[g.S_SAMPLES]) > 0:
+            yes = yes + self.actions_sample_one_plus + self.buts_with_sample_only
+        else:
+            no = no + self.actions_sample_one_plus + self.buts_with_sample_only
+
         for action in yes:
             action.setEnabled(True)
         for action in no:
             action.setEnabled(False)
+
+        
+
+        
+        
 
     
 
@@ -802,34 +1011,21 @@ class WindowMain(QMainWindow):
     #                                           #
     # Handlers for right-click "context" menus  #
     #                                           #
-    #   1. open_rightclick_menu_run             #
-    #   2. open_rightclick_menu_rep             #
+    #   1. open_rightclick_menu                 #
     #                                           #
     #############################################
 
-    def open_rightclick_menu_run(self, event):
-        """Opens the right-click context menu for runs. Takes in a mouseclick QEvent object
-        that contains the location of the click. Menu is displayed at that location"""
-        runs_selected = self.N_runs_selected()      # Get count of selected runs
-        is_enabled = False
-        if runs_selected == 1:                      # If just 1 run selected
-            is_enabled = True                       # Enable all menu actions
-        if runs_selected > 0:                       # If any # of runs selected at all
-            for action in self.runActions_oneOnly:  # Setup which actions are enabled
-                action.setEnabled(is_enabled)
-            self.contextmenu_run.exec(event.globalPosition().toPoint())     # And show the menu!
-
-    def open_rightclick_menu_rep(self, event):
-        """Opens the right-click context menu for reps. Takes in a mouseclick QEvent object
-        that contains the location of the click. Menu is displayed at that location"""
-        reps_selected = self.N_reps_selected()      # Get count of selected replicates
-        is_enabled = False
-        if reps_selected == 1:                      # If just 1 rep selected
-            is_enabled = True                       # Enable all menu actions
-        if reps_selected > 0:                       # If any reps at all are selected
-            for action in self.repActions_oneOnly:  # Setup which actions are enabled
-                action.setEnabled(is_enabled)
-            self.contextmenu_rep.exec(event.globalPosition().toPoint())     # And show the menu!
+    def open_rightclick_menu(self, event):
+        reps = self.N_reps_selected()   # Get count of selected replicates
+        runs = self.N_runs_selected()   # get count of all runs with at least one rep selected
+        for action in self.rep_actions_one:
+            if reps == 1: action.setEnabled(True)
+            else: action.setEnabled(False)
+        for action in self.run_actions_one:
+            if runs == 1: action.setEnabled(True)
+            else: action.setEnabled(False)
+        if reps or runs:
+            self.context_menu.exec(event.globalPosition().toPoint())
 
     #############################################
     #                                           #
@@ -845,18 +1041,17 @@ class WindowMain(QMainWindow):
     #   2. open_run_config_with_uid             #
     #   3. open_method_with_uid                 #
     #   4. export_selected_reps_as_csv          #
-    #   5. delete_runs                          #
-    #   6. delete_reps                          #
-    #   7. confirm_delete                       #
+    #   5. delete_reps                          #
+    #   6. confirm_delete                       #
     #                                           #
     #############################################
 
     def get_single_selected_run(self):
         """Loops through layout, returns ID of first selected run.
         If no runs are selected, returns False."""
-        for run in self.layout:                         # Loop thru layout
-            if self.all_reps_of_run_are_selected(run):  # if this run is selected
-                return(run)                             # return unique ID of this run
+        for run in self.layout.keys():              # Loop thru layout
+            if self.layout[run]['selected']:        # if any of the reps of this run are selected
+                return run                          # return unique ID of this run
         return False
 
     def get_single_selected_rep(self):
@@ -869,8 +1064,8 @@ class WindowMain(QMainWindow):
 
     def get_all_selected_runs(self):
         runs = []
-        for run in self.layout:
-            if self.all_reps_of_run_are_selected(run):
+        for run in self.layout.keys():
+            if self.layout[run]['selected']:
                 runs.append(run)
         return runs
 
@@ -961,25 +1156,47 @@ class WindowMain(QMainWindow):
         if dest:
             self.start_async_export(reps, dest)
 
-    def delete_runs(self):
-        runs = self.get_all_selected_runs()                     # Get selected runs (ignore selected reps that aren't part of selected runs)
-        reps = self.get_all_reps_in_runs(runs)                  # Get all reps of selected runs
-        
-        continue_action, calcs_to_archive = check_calc_conflict(self.data, reps)
-        if not continue_action:
-            return
-        if self.confirm_delete():
-            callback = partial(self.start_async_save, g.SAVE_TYPE_CALCS_ARCHIVE, [True, calcs_to_archive])
-            self.start_async_save(g.SAVE_TYPE_REP_DELETE, [reps], onSuccess=callback)
+    def redo_run(self):
+        msg_box = QMessageBox()    
+        msg_box.setWindowTitle("Just checking...") 
+        msg_box.setText('This modifies a previous run.\nAll data and analysis for this run will be lost.\nAre you sure you want to rerun?\n\n(To create a *new run* with this run\'s configuration,  select "New run from config".)')
+        msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+
+        # customize button language text for multi-language support
+        but_save = msg_box.button(QMessageBox.StandardButton.Ok)
+        but_save.setText('Rerun')
+        but_canc = msg_box.button(QMessageBox.StandardButton.Cancel)
+        but_canc.setText('Cancel')
+
+        resp = msg_box.exec()
+
+        if resp == QMessageBox.StandardButton.Ok:
+            reps = self.get_all_selected_reps()
+            self.new_win_view_run(reps)
 
     def delete_reps(self):
-        if self.confirm_delete():
-            reps = self.get_all_selected_reps()                     # Get all selected reps
-            self.start_async_save(g.SAVE_TYPE_REP_DELETE, [reps])
+        reps = self.get_all_selected_reps()                                             # Get selected reps
+        continue_action, calcs_to_archive = check_calc_conflict(self.data, reps)        # Confirm whether user wants to continue, given this impacts calcs
+        if not continue_action:                                                         
+            return
+        if self.confirm_delete_reps():                                                       # Confirm user wants to delete
+            callback = partial(self.start_async_save, g.SAVE_TYPE_CALCS_ARCHIVE, [True, calcs_to_archive])  # Define callback fn to archive impacted calcs
+            self.start_async_save(g.SAVE_TYPE_REP_DELETE, [reps], onSuccess=callback)   # Delete selected reps (and maybe their parent runs and connected methods) from file
 
-    def confirm_delete(self):
+   
+    def confirm_delete_reps(self):
         title = 'Confirm delete'
         text = 'This will permanently delete all configurations and data associated with the selected runs or replicates.\n\nIf you are sure you want to delete, type DELETE below.'
+        text, ok = QInputDialog.getText(self, title, text)
+
+        if ok:
+            if text == 'DELETE':
+                return True
+        return False
+
+    def confirm_delete_sample(self, sample_name):
+        title = 'Confirm delete: '+sample_name
+        text = 'This will permanently delete all runs, reps, analysis, calculations, and results associated with sample '+sample_name+'.\n\nIf you are sure you want to delete, type DELETE below.'
         text, ok = QInputDialog.getText(self, title, text)
 
         if ok:
@@ -1004,7 +1221,7 @@ class WindowMain(QMainWindow):
     #                                           #
     #   Functions for opening new windows       #
     #                                           #
-    #   1. new_win_sample                       #
+    #   1. edit_session_name                       #
     #   2. new_win_config_run                   #
     #   3. new_win_view_run                     #
     #   4. new_win_method_by_id                 #
@@ -1021,11 +1238,27 @@ class WindowMain(QMainWindow):
     #                                           #
     #############################################
 
-    def new_win_sample(self):
-        self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_VIEW_ONLY))
+    def edit_session_name(self, oldname):
+        try:
+            title = 'Edit lab session name'
+            text = 'Lab session name:'
+            oldname = self.data[g.S_NAME]
+            newname, ok = QInputDialog().getText(self, title, text, text=oldname)
+            print(ok)
+            print(newname)
+            if ok and newname != oldname:
+                self.start_async_save(g.SAVE_TYPE_EDIT_SESH_NAME, [newname])
+        except Exception as e:
+            print(e)
+            
+        
 
-    def new_win_config_run(self, mode, run_id=False):
-        self.new_win_one_of_type(WindowRunConfig(self, mode, run_id))
+
+        
+        #self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_VIEW_ONLY))
+
+    def new_win_config_run(self, mode, run_id=False, sample_id=False):
+        self.new_win_one_of_type(WindowRunConfig(self, mode, run_id, sample_id))
 
     def new_win_view_run(self, tasks):
         self.new_win_one_of_type(WindowRunView(self, tasks))
@@ -1042,15 +1275,18 @@ class WindowMain(QMainWindow):
     def new_win_analysis(self, tasks):
         self.new_win_one_of_type(WindowAnalyze(self, tasks))
         
-    def new_win_calculator(self, mode):
+    def new_win_calculator(self, mode, sample_id):
         tasks = None
         if mode == g.WIN_MODE_NEW:                  # if we want a new calculation
             tasks = self.get_all_selected_reps()    #   grab all selected reps and try
             if not tasks: tasks = None              #   to start the calc with them
         try:
-            self.new_win_one_of_type(WindowCalculate(self, mode, suggestion=tasks))
+            self.new_win_one_of_type(WindowCalculate(self, mode, sample_id=sample_id, suggestion=tasks))
         except Exception as e:
             print(e)
+
+    def new_win_open_calc(self, calc_id):
+        self.new_win_one_of_type(WindowCalculate(self, g.WIN_MODE_VIEW_ONLY, calc_id=calc_id))
             
     def new_win_one_of_type(self, obj):
         """Takes in a new object to create as child window of self.
@@ -1139,6 +1375,7 @@ class WindowMain(QMainWindow):
         for out in outs:
             if out:
                 self.export_success.append(out)
+        
 
     def handle_export_stderr(self):
         print('error msg:')
@@ -1307,7 +1544,6 @@ class WindowMain(QMainWindow):
         self.save_error_flag = True
 
     def handle_finished_save(self, onSuccess, onError):
-        #print('here in finished handler!')
         try:
             self.progress_bar.setVisible(False)                                             # Rehide the progress bar
             self.process = None                                                             # Wipe the process from memory
@@ -1335,6 +1571,36 @@ class WindowMain(QMainWindow):
     def set_enabled_children(self, enabled=True):
         for win in self.children:
             win.setEnabled(enabled)
+
+    #############################################
+    #                                           #
+    #   Window resize event handler             #
+    #                                           #
+    #############################################
+
+    def scroll_area_resized(self):
+        if not self.tabs:
+            return
+        try:
+            i = self.tabs.currentIndex()
+            sa = self.get_scroll_area(i)
+            if sa:
+                w = False
+                try: w = sa.widget()
+                except: pass
+                if w:
+                    wid_sa = sa.width()
+                    wid_win = self.width()
+                    sa_border_wid = 1
+                    wid = wid_sa - sa_border_wid                  #   match our width to the qscrollarea width (minus any border width)
+                    sbar = sa.verticalScrollBar()
+                    if sbar.isVisible():                # if the scrollbar is visible
+                        wid = wid - sbar.width()    # adjust our width accordingly
+                    w.setMinimumWidth(wid)
+                    w.setMaximumWidth(wid)
+        except Exception as e:
+            print('window resize handler:')
+            print(e)
 
     #############################################
     #                                           #
@@ -1384,6 +1650,15 @@ class TitleLbl(QLabel):
     def updateTitleLbl(self, new_name):
         self.setText(new_name)
 
+
+class QRunScrollArea(QScrollArea):
+    def __init__(self, parent):
+        super(QScrollArea, self).__init__()
+        self.parent = parent
+
+    def resizeEvent(self, event):
+        self.parent.scroll_area_resized()
+        
 
         
         

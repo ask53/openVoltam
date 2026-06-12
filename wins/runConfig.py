@@ -41,13 +41,14 @@ import sys, os
 #####################################
 
 class WindowRunConfig(QMainWindow):
-    def __init__(self, parent, mode, run_id=False):
+    def __init__(self, parent, mode, run_id=False, sample_id=False):
         super().__init__()
 
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.parent = parent
         self.mode = mode
         self.run_id = run_id
+        self.sample_id = sample_id
      
         self.saved = True
         self.close_on_save = False
@@ -58,6 +59,14 @@ class WindowRunConfig(QMainWindow):
         h1 = QHBoxLayout()
         v2 = QVBoxLayout()
         v3 = QVBoxLayout()
+
+        sample_lbl = QLabel("Sample")
+        self.sample = QComboBox()
+        self.sample.setPlaceholderText(l.rc_select[g.L])
+        for sample in self.parent.data[g.S_SAMPLES]:
+            self.sample.addItem(sample[g.SA_NAME], sample[g.R_UID_SELF])
+        self.sample.currentIndexChanged.connect(self.sample_changed)
+    
 
         method_lbl = QLabel("Method")
         self.method = QComboBox()
@@ -76,7 +85,7 @@ class WindowRunConfig(QMainWindow):
         self.device.setPlaceholderText(l.rc_select[g.L])
         for dev in devices:
             self.device.addItem(dev['name'], dev)
-        self.device.currentIndexChanged.connect(self.device_changed)
+        self.device.currentIndexChanged.connect(self.value_changed)
             
         run_type_lbl = QLabel("Run type")
         #####################
@@ -159,13 +168,15 @@ class WindowRunConfig(QMainWindow):
         
         self.buts = [self.but_new, self.but_edit, self.but_view]
 
-        # Define which buttons are enabled on which modes
+        # Define which widgets are enabled on which modes
         self.ws_for_new = [self.method, but_m_load, self.device, self.replicates]
-        self.ws_for_edit = [self.run_type, self.w_sample_sample_vol, self.w_sample_total_vol,
+        self.ws_for_edit = [self.sample, self.run_type, self.w_sample_sample_vol, self.w_sample_total_vol,
                              self.w_stdadd_vol_std, self.w_stdadd_conc_std, self.notes]
         self.ws_for_view = [but_view_method]
       
-        # add widgets to layouts 
+        # add widgets to layouts
+        v1.addWidget(sample_lbl)
+        v1.addWidget(self.sample)
         v1.addWidget(method_lbl)
         v1.addLayout(horizontalize([self.method, but_m_load]))
         v1.addWidget(device_lbl)
@@ -188,7 +199,7 @@ class WindowRunConfig(QMainWindow):
         self.setCentralWidget(w)
 
         # If there is a specific run selected, fill out the form with that run's details
-        if run_id:                  
+        if run_id or sample_id:                  
             self.set_form()
 
         if self.mode == g.WIN_MODE_NEW:
@@ -214,6 +225,7 @@ class WindowRunConfig(QMainWindow):
     ######################################### 
 
     def reset_form(self):                                           # resets Run Config window to all blank values
+        self.sample.setCurrentIndex(g.QT_NOTHING_SELECTED_INDEX)
         self.method.setCurrentIndex(g.QT_NOTHING_SELECTED_INDEX)    # set dropdowns to 'nothing selected'
         self.device.setCurrentIndex(g.QT_NOTHING_SELECTED_INDEX)
         self.run_type.setCurrentIndex(g.QT_NOTHING_SELECTED_INDEX)
@@ -257,6 +269,12 @@ class WindowRunConfig(QMainWindow):
                     self.w_stdadd_vol_std.setValue(convert_vol_from_file_unit(run[g.R_STD_ADDED_VOL], 'uL'))
                     self.w_stdadd_conc_std.setValue(convert_conc_from_file_unit(run[g.R_STD_CONC], method_unit))
             self.refresh_graph()                                    # refresh the graph pane
+            self.sample_id = run[g.R_UID_SAMPLE]                    # grab the uid of the corresponding sample
+        if self.sample_id:
+            for i in range(0, self.sample.count()):
+                if self.sample.itemData(i) == self.sample_id:
+                    self.sample.setCurrentIndex(i)
+                    break
 
     def refresh_graph(self):
         reps = int(self.replicates.value())
@@ -283,35 +301,34 @@ class WindowRunConfig(QMainWindow):
     #   Handlers for changed widgets        #
     #                                       #
     #   1. method_changed                   #
-    #   2. device_changed                   #
-    #   3. run_type_changed                 #
-    #   4. reps_changed                     #
-    #   5. value_changed                    #
+    #   2. run_type_changed                 #
+    #   3. reps_changed                     #
+    #   4. value_changed                    #
     #                                       #
     #########################################
 
+    def sample_changed(self):
+        self.value_changed()
+        tab_i = self.sample.currentIndex()
+        self.parent.tabs.setCurrentIndex(tab_i)
+        
     def method_changed(self, i):
         """Resets flag to indicate that the run config has been modified from
         saved version and refreshes graph."""
-        self.saved = False
+        self.value_changed()
         self.refresh_graph()
         self.update_std_add_vol()
-
-    def device_changed(self):
-        """Resets flag to indicate that the run config has been modified from
-        saved version."""
-        self.saved = False
 
     def run_type_changed(self, i):
         """Resets flag to indicate that the run config has been modified from
         saved version and toggles stacked layout to appropriate stack."""
-        self.saved = False
+        self.value_changed()
         self.type_stack.setCurrentIndex(i)
 
     def reps_changed(self):
         """Resets flag to indicate that the run config has been modified from
         saved version and refreshes graph."""
-        self.saved = False
+        self.value_changed()
         self.refresh_graph()
 
     def value_changed(self):
@@ -387,10 +404,14 @@ class WindowRunConfig(QMainWindow):
         not met, an alert is shown to the user and returns False. Thus it only alerts
         user to first criterion that is not met. 
         If all criteria are met, returns True."""
-        
+
         # Make sure all drop down menus have something selected
+        if self.sample.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:
+            show_alert(self, l.alert_header[g.L], 'please select a sample to proceed.')
+            return False
+        
         if self.method.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:
-            show_alert(self, l.alert_header[g.L], 'please select a sweep profile to proceed.')
+            show_alert(self, l.alert_header[g.L], 'please select a method to proceed.')
             return False
 
         elif self.device.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:
@@ -580,6 +601,7 @@ class WindowRunConfig(QMainWindow):
             run[g.R_UID_SELF] = self.run_id
             if self.mode == g.WIN_MODE_NEW:                 # only store time created if this is a new config
                 run[g.R_TIMESTAMP] = QDateTime.currentDateTime().toString(g.DATETIME_STORAGE_FORMAT)
+            run[g.R_UID_SAMPLE] = self.sample.currentData()
             run[g.R_UID_METHOD] = self.method_id
             run[g.R_DEVICE] = self.device.currentText()
             run[g.R_NOTES] = self.notes.text()              

@@ -36,16 +36,17 @@ from PyQt6.QtWidgets import (
 )
 
 class WindowCalculate(QMainWindow):
-    def __init__(self, parent, mode, calc_id=None, suggestion=None):  
+    def __init__(self, parent, mode, calc_id=None, sample_id=None, suggestion=None):  
         super().__init__()                          # if path, load sample deets, else load empty edit window for new sample
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.parent = parent
         self.mode = mode
         self.calc_id = calc_id
+        self.sample_id = sample_id
         self.suggestion = suggestion
         self.mode_prev = None
+        self.initializing = True
         
-
         self.reset_globals()
 
         # Status Bar and Progress Bar
@@ -60,6 +61,7 @@ class WindowCalculate(QMainWindow):
         # Set the layout programatically
         self.adjust_suggestion()
         self.set_layout()
+        self.initializing = False
         
     def reset_globals(self):
         self.method = None
@@ -96,44 +98,53 @@ class WindowCalculate(QMainWindow):
         self.calc_list.setSpacing(2)
         self.calc_list.itemSelectionChanged.connect(self.update_right_buttons)
         self.calc_list.itemDoubleClicked.connect(self.view_calc)
+
         
-        b_new = QPushButton()
-        b_edit = QPushButton()
-        b_dup = QPushButton()
-        b_del = QPushButton()
 
-        b_new.setIcon(QIcon(g.ICON_PLUS))
-        b_edit.setIcon(QIcon(g.ICON_EDIT))
-        b_dup.setIcon(QIcon(g.ICON_DUP))
-        b_del.setIcon(QIcon(g.ICON_TRASH))
-
-        b_new.clicked.connect(partial(self.go_to_mode, g.WIN_MODE_NEW))
-        b_edit.clicked.connect(self.edit_from_right)
-        b_dup.clicked.connect(self.duplicate)
-        b_del.clicked.connect(self.delete)
-
-        b_new.setToolTip('New')
-        b_edit.setToolTip('Edit')
-        b_dup.setToolTip('Duplicate')
-        b_del.setToolTip('Delete')
-
-        self.right_buttons_one_only = [b_edit]
-        self.right_buttons_one_plus = [b_dup, b_del]
-
-        lbl = QLabel("<i>double-click a <b>result</b> to view.</i>")
-        lbl.setWordWrap(True)
-        lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        v = QVBoxLayout()                               # Create vertical layout
+        v.addWidget(title)                              # Add title to layout
+        v.addWidget(self.calc_list)                     # Add list to layout
         
-        h2 = QHBoxLayout()
-        for b in (b_new, b_edit, b_dup, b_del):
-            h2.addWidget(b)
-        
-        v = QVBoxLayout()
-        v.addWidget(title)
-        v.addWidget(self.calc_list)
-        v.addLayout(h2)
-        v.addWidget(lbl)
 
+        if self.mode != g.WIN_MODE_EMBED:
+        
+            b_new = QPushButton()
+            b_edit = QPushButton()
+            b_dup = QPushButton()
+            b_del = QPushButton()
+
+            b_new.setIcon(QIcon(g.ICON_PLUS))
+            b_edit.setIcon(QIcon(g.ICON_EDIT))
+            b_dup.setIcon(QIcon(g.ICON_DUP))
+            b_del.setIcon(QIcon(g.ICON_TRASH))
+
+            b_new.clicked.connect(partial(self.go_to_mode, g.WIN_MODE_NEW))
+            b_edit.clicked.connect(self.edit_from_right)
+            b_dup.clicked.connect(self.duplicate)
+            b_del.clicked.connect(self.delete)
+
+            b_new.setToolTip('New')
+            b_edit.setToolTip('Edit')
+            b_dup.setToolTip('Duplicate')
+            b_del.setToolTip('Delete')
+
+            self.right_buttons_one_only = [b_edit]
+            self.right_buttons_one_plus = [b_dup, b_del]
+
+            h2 = QHBoxLayout()
+            for b in (b_new, b_edit, b_dup, b_del):
+                h2.addWidget(b)
+
+            lbl = QLabel("<i>double-click a <b>result</b> to view.</i>")
+            lbl.setWordWrap(True)
+            lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        
+            v.addLayout(h2)                                 # Add buttons to layout
+            v.addWidget(lbl)                                # Add label to layout
+
+        else:
+            self.right_buttons_one_only, self.right_buttons_one_plus = ([],[])  # set these as placeholders for embed (no buttons on embed)
+            
         self.update_calc_list()
         self.update_right_buttons()
         return v
@@ -141,32 +152,27 @@ class WindowCalculate(QMainWindow):
     def update_calc_list(self):
         self.calc_list.clear()
         for calc in self.parent.data[g.S_PROCESSED]:
-            
-            # get unique runs in calc
-            runs = []
-            for point in calc[g.C_POINTS]:
-                for rep in point:
-                    run_id = rep[g.C_RUN_ID]
-                    if not run_id in runs:
-                        runs.append(run_id)
-                        
-            # Set text for the list label
-            runtxt = ''
-            for run in runs:
-                runtxt = runtxt + str(run) + ' | '
-            runtxt = runtxt[0:-3]                   # remove the pipe from the last entry
-            txt = calc[g.R_UID_SELF] + ' ('+calc[g.C_TYPE] +', '+calc[g.C_REG_TYPE]+')\n'
-            if calc[g.C_ARCHIVED]: txt = '[ARCHIVED] '+txt
-            txt = txt + runtxt + '\n'
-            main_result = self.format_result_as_string(calc)[0]
-            txt = txt + main_result
-            if calc[g.C_NOTE]:
-                txt = txt + '\nNote: '+str(calc[g.C_NOTE])
-            
-            # Create the list element and attach it to the list
-            calcitem = QListWidgetItem(self.calc_list)
-            calcitem.setText(txt)
-            calcitem.setData(Qt.ItemDataRole.UserRole, calc)
+
+            if self.mode == g.WIN_MODE_EMBED and self.sample_id != calc[g.C_SAMPLE_ID]:
+                pass
+            else:     
+                # Set text for the list label
+                s_id = calc[g.C_SAMPLE_ID]
+                s = get_sample_from_file_data(self.parent.data, s_id)
+                if self.mode == g.WIN_MODE_EMBED:
+                    txt = ''
+                else:
+                    txt = s[g.SA_NAME] + '\n'
+                if calc[g.C_ARCHIVED]: txt = '[ARCHIVED] '+txt
+                main_result = self.format_result_as_string(calc)[0]
+                txt = txt + main_result
+                if calc[g.C_NOTE]:
+                    txt = txt + '\nNote: '+str(calc[g.C_NOTE])
+                
+                # Create the list element and attach it to the list
+                calcitem = QListWidgetItem(self.calc_list)
+                calcitem.setText(txt)
+                calcitem.setData(Qt.ItemDataRole.UserRole, calc)
 
     #################################
     #                               #
@@ -180,8 +186,14 @@ class WindowCalculate(QMainWindow):
     #################################
 
     def view_calc(self, item):
-        calc_id = item.data(Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
-        self.go_to_mode(g.WIN_MODE_VIEW_ONLY, calc_id)
+        try:
+            calc_id = item.data(Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
+            if self.mode == g.WIN_MODE_EMBED:
+                self.parent.new_win_open_calc(calc_id)
+            else:
+                self.go_to_mode(g.WIN_MODE_VIEW_ONLY, calc_id)
+        except Exception as e:
+            print(e)
 
     def edit_from_right(self):
         item = self.calc_list.currentItem()
@@ -207,6 +219,7 @@ class WindowCalculate(QMainWindow):
         self.mode_prev = self.mode
         self.mode = mode_new
         self.suggestion = None
+        self.sample_id = None
         self.set_layout()
 
     def continue_action(self, mode_new, calc_id):
@@ -280,6 +293,13 @@ class WindowCalculate(QMainWindow):
         h0.addWidget(but_close)
         
         # far left column
+        samp_lbl = QLabel("Sample")
+        self.sample = QComboBox()
+        self.sample.setPlaceholderText('Select')
+        for i, sample in enumerate(self.parent.data[g.S_SAMPLES]):
+            self.sample.addItem(sample[g.SA_NAME], userData=sample)
+        self.sample.currentIndexChanged.connect(self.sample_changed)
+        
         type_lbl = QLabel("Calculation type")
         self.type = QComboBox()
         self.type.setPlaceholderText('Select')
@@ -311,6 +331,8 @@ class WindowCalculate(QMainWindow):
         self.results_stack.addWidget(self.results)
 
         v0 = QVBoxLayout()
+        v0.addWidget(samp_lbl)
+        v0.addWidget(self.sample)	
         v0.addWidget(type_lbl)
         v0.addWidget(self.type)
         v0.addWidget(reg_type_lbl)
@@ -366,7 +388,8 @@ class WindowCalculate(QMainWindow):
         v2.addLayout(h2)
 
         if self.mode == g.WIN_MODE_VIEW_ONLY:
-            calc = self.get_calc_from_id(self.calc_id)
+            calc = self.get_calc_from_id(self.calc_id)              # grab calc data
+            #self.sample_id = calc[g.C_SAMPLE_ID]                    # save sample id global 
             if calc[g.C_ARCHIVED]:
                 v2.addWidget(archived_txt)
             else:
@@ -375,10 +398,13 @@ class WindowCalculate(QMainWindow):
             v2.addWidget(but_save)
 
         if self.mode == g.WIN_MODE_VIEW_ONLY:                       # if view only, make a bunch of elements view_only
+            self.sample.setEnabled(False)
             self.type.setEnabled(False)
             self.reg_type.setEnabled(False)
             self.notes.setEnabled(False)
             self.graph.set_view_only()
+        '''# Set sample
+        self.set_sample_id()'''
 
         self.update_reg_type_on_graph()     # make sure graph has correct starting regression type 
             
@@ -514,7 +540,7 @@ class WindowCalculate(QMainWindow):
 
     def get_full_layout(self):
         right = self.get_right_layout()
-        if self.mode == g.WIN_MODE_RIGHT:
+        if self.mode == g.WIN_MODE_RIGHT or self.mode == g.WIN_MODE_EMBED:
             lay = right
         else:
             left = self.get_left_layout()
@@ -548,8 +574,9 @@ class WindowCalculate(QMainWindow):
             for stdadd in stdadds:
                 sample_found = False
                 method = stdadd[g.R_UID_METHOD]
+                sample_id = stdadd[g.R_UID_SAMPLE]
                 for run in self.parent.data[g.S_RUNS]:
-                    if run[g.R_UID_METHOD] == method:
+                    if run[g.R_UID_METHOD] == method and run[g.R_UID_SAMPLE] == sample_id:
                         replist = get_all_reps_from_run_id(self.parent.data, run[g.R_UID_SELF])
                         sample_found = True
                         break
@@ -586,6 +613,7 @@ class WindowCalculate(QMainWindow):
 
         # Fill in the actual values to the form
         try:
+            self.set_sample()
             self.preset_runs()
             self.set_values()
             self.set_selector_indices()
@@ -600,6 +628,7 @@ class WindowCalculate(QMainWindow):
     def set_values(self):
         if not self.mode in (g.WIN_MODE_EDIT, g.WIN_MODE_VIEW_ONLY):
             return
+                                                                    # If opening a saved calc
         calc = self.get_calc_from_id(self.calc_id)                  # get calc data
         type_index = g.C_TYPES.index(calc[g.C_TYPE])
         reg_type_index = g.C_REG_TYPES.index(calc[g.C_REG_TYPE])
@@ -611,8 +640,23 @@ class WindowCalculate(QMainWindow):
             self.set_view_only_points(calc)
             if calc[g.C_ARCHIVED]:
                 self.graph.update_archived(calc)
-                
-        
+                    
+    def set_sample(self):
+        """Sets the selection of the sample QComboBox (dropdown) to the sample
+        stored in self.sample_id"""
+        if self.mode in (g.WIN_MODE_RIGHT, g.WIN_MODE_EMBED):
+            return
+        if not self.sample_id and not self.calc_id: # if no sample id (new calc from main) and no calc (opening saved calc)
+            return                                  #   do nothing
+     
+        if self.calc_id:                            # if we are opening a saved calc
+            c = self.get_calc_from_id(self.calc_id) #   get the calculation data
+            self.sample_id = c[g.C_SAMPLE_ID]       #   get the sample id from that calc
+                                  
+        for i in range(0, self.sample.count()):                         # Loop thru all samples in dropdown
+            if self.sample.itemData(i)[g.R_UID_SELF] == self.sample_id: # For the first one with a matching sample id
+                self.sample.setCurrentIndex(i)                          # select it! 
+                break                                                   # (and then break)
 
     def set_selector_indices(self):
         if self.mode == g.WIN_MODE_VIEW_ONLY:
@@ -622,6 +666,7 @@ class WindowCalculate(QMainWindow):
                 stack.setCurrentIndex(g.C_STACK_VIEW_TEXT)
 
     def set_view_only_points(self, calc): 
+        self.points = calc[g.C_POINTS]
         for i, pt in enumerate(calc[g.C_POINTS]):
             
             if i==0: txt = self.sample_txt
@@ -705,9 +750,9 @@ class WindowCalculate(QMainWindow):
         # If any elements in run list, remove them all
         self.remove_all(run_list)
                     
-        # Add back in all runs with type == sample
+        # Add back in all runs with type == sample and who are of sample=self.sample_id
         for run in self.parent.data[g.S_RUNS]:          
-            if run[g.R_TYPE] == g.R_TYPE_SAMPLE:
+            if run[g.R_TYPE] == g.R_TYPE_SAMPLE and run[g.R_UID_SAMPLE] == self.sample_id:
                 method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])
                 self.add_run_to_tree(run_list, run, method=method)
 
@@ -784,12 +829,13 @@ class WindowCalculate(QMainWindow):
         selected_runs = self.get_all_selected_runs()
         
         runs_added = 0                                          
-        for run in self.parent.data[g.S_RUNS]:                  # Add run to this stdadd selector IF:   
-            if run[g.R_TYPE] == g.R_TYPE_STDADD:                #   - It is a standard addition type run
-                if run[g.R_UID_METHOD] == self.method:          #   - It's method matches the selected sample method
-                    if not run[g.R_UID_SELF] in selected_runs:  #   - It's not selected in any other standard addition selector
-                        self.add_run_to_tree(tree, run)
-                        runs_added = runs_added + 1
+        for run in self.parent.data[g.S_RUNS]:                      # Add run to this stdadd selector IF:   
+            if run[g.R_TYPE] == g.R_TYPE_STDADD:                    #   - It is a standard addition type run
+                if run[g.R_UID_METHOD] == self.method:              #   - It's method matches the selected sample method
+                    if run[g.R_UID_SAMPLE] == self.sample_id:       #   - It is from the selected sample
+                        if not run[g.R_UID_SELF] in selected_runs:  #   - It's not selected in any other standard addition selector
+                            self.add_run_to_tree(tree, run)
+                            runs_added = runs_added + 1
 
         if runs_added == 0:
             self.stdadd_selectors[i]['layout'].setCurrentIndex(g.C_STACK_INDEX_ERROR)
@@ -811,7 +857,8 @@ class WindowCalculate(QMainWindow):
                 # loop backwards thru runs. If run doesn't match selected method, take it from list
                 all_items = [run_list.topLevelItem(x) for x in range(run_list.topLevelItemCount())]
                 for i,item in reversed(list(enumerate(all_items))):
-                    if item.data(0, Qt.ItemDataRole.UserRole)[g.R_UID_METHOD] != self.method:
+                    itemdata=item.data(0, Qt.ItemDataRole.UserRole)
+                    if itemdata[g.R_UID_METHOD] != self.method or itemdata[g.R_UID_SAMPLE] != self.sample_id:
                         run_list.takeTopLevelItem(i)
                 
                 # for each selected run, show all reps and select them, for deselected runs, remove children
@@ -889,7 +936,7 @@ class WindowCalculate(QMainWindow):
                     erase = True
             else:                   # erase data in all higher points
                 self.points[i] = []
-
+        
     def show_reps_from_runs(self, tree, point_index):
         all_items = [tree.topLevelItem(x) for x in range(tree.topLevelItemCount())]
         for item in all_items:
@@ -1047,6 +1094,35 @@ class WindowCalculate(QMainWindow):
             for col in range(0, tree.columnCount()):
                 runitem.setToolTip(col, "Please analyze to proceed")
 
+    def sample_changed(self):
+        try:
+            print('sample has been changed!')
+            self.something_has_been_updated()
+            self.results_stack.setCurrentIndex(0)
+            self.sample_id = self.sample.currentData()[g.R_UID_SELF]
+            print(self.sample_id)
+            print()
+            if not self.initializing:
+                self.suggestion = None
+            try:
+                self.update_sample_runs(self.sample_tree, 0)
+            except Exception as e:
+                print('the error is here!')
+                print(e)
+
+            
+            
+
+        #####################
+        #
+        #   UPDATE THE WHOLE WINDOW GIVEN THE SAMPLE HAS BEEN CHANGED HEREEEEEE
+        #
+        ##########################
+        except Exception as e:
+            print('error here!')
+            print(e)
+        
+        
     def type_changed(self):
         self.something_has_been_updated()
         self.results_stack.setCurrentIndex(0)
@@ -1086,6 +1162,7 @@ class WindowCalculate(QMainWindow):
                     run_id = r[g.C_POINTS][0][0][g.C_RUN_ID]
                     method_id = get_run_from_file_data(self.parent.data, run_id)[g.R_UID_METHOD]
                     calc_method_settings_holder = get_method_from_file_data(self.parent.data, method_id)    # grab calc method settings from method
+                    
 
                 for key in (g.M_UNIT, g.M_CONF, g.M_DETECTION_LIMIT):
                     r[key] = calc_method_settings_holder[key]
@@ -1212,7 +1289,9 @@ class WindowCalculate(QMainWindow):
                 self.calc_id = get_next_id(ids, g.C_UID_PREFIX)
                 r[g.R_UID_SELF] = self.calc_id
                 
-            r[g.C_NOTE] = self.notes.toPlainText()
+            r[g.C_NOTE] = self.notes.toPlainText()                      # append the note and sample id to the calculation dict to save
+            r[g.C_SAMPLE_ID] = self.sample.currentData()[g.R_UID_SELF]
+
 
             self.progress_bar.setVisible(True)
             if not self.on_save_mode:
@@ -1251,6 +1330,9 @@ class WindowCalculate(QMainWindow):
         return
 
     def showEvent(self, event):
+        if self.mode == g.WIN_MODE_EMBED:
+            return
+        
         self.parent.setEnabled(False)
         self.parent.set_enabled_children(False)
         self.setEnabled(True)
