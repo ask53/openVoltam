@@ -321,7 +321,7 @@ class WindowMethod(QMainWindow):
             # Step-specific inputs
             step_name_lbl = QLabel('Step name')
             self.step_name = QLineEdit()
-            self.step_name.setMaxLength(8)
+            self.step_name.setMaxLength(24)
 
             data_collect_lbl = QLabel('On this step collect:')
             self.data_collect = QComboBox()
