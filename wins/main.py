@@ -522,13 +522,11 @@ class WindowMain(QMainWindow):
             print(e)
 
     def delete_sample(self):
-        #############################################################################################
-        #
-        #   HERE HERE HERE
-        #
-        ########################################################################################################################################################################################
-        print('deleting sample...')
-        return
+        s_id = self.get_current_sample_id()
+        s = get_sample_from_file_data(self.data, s_id)
+        s_name = s[g.SA_NAME]
+        if self.confirm_delete_sample(s_name):
+            self.start_async_save(g.SAVE_TYPE_SAMPLE_DELETE, [s_id])
 
     def get_current_sample_id(self):
         i = self.tabs.currentIndex()
@@ -1181,14 +1179,24 @@ class WindowMain(QMainWindow):
         continue_action, calcs_to_archive = check_calc_conflict(self.data, reps)        # Confirm whether user wants to continue, given this impacts calcs
         if not continue_action:                                                         
             return
-        if self.confirm_delete():                                                       # Confirm user wants to delete
+        if self.confirm_delete_reps():                                                       # Confirm user wants to delete
             callback = partial(self.start_async_save, g.SAVE_TYPE_CALCS_ARCHIVE, [True, calcs_to_archive])  # Define callback fn to archive impacted calcs
             self.start_async_save(g.SAVE_TYPE_REP_DELETE, [reps], onSuccess=callback)   # Delete selected reps (and maybe their parent runs and connected methods) from file
 
    
-    def confirm_delete(self):
+    def confirm_delete_reps(self):
         title = 'Confirm delete'
         text = 'This will permanently delete all configurations and data associated with the selected runs or replicates.\n\nIf you are sure you want to delete, type DELETE below.'
+        text, ok = QInputDialog.getText(self, title, text)
+
+        if ok:
+            if text == 'DELETE':
+                return True
+        return False
+
+    def confirm_delete_sample(self, sample_name):
+        title = 'Confirm delete: '+sample_name
+        text = 'This will permanently delete all runs, reps, analysis, calculations, and results associated with sample '+sample_name+'.\n\nIf you are sure you want to delete, type DELETE below.'
         text, ok = QInputDialog.getText(self, title, text)
 
         if ok:

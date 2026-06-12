@@ -175,6 +175,49 @@ def save_edit_sample(data, params):
             sample[key] = newSamp[key]
     return data
 
+def save_delete_sample(data, params):
+    """Takes in the id of a sample to delete.
+    Algorithm:
+    1. Finds a list of all runs linked to that sample
+    2. Finds a list of all calcs linked to that sample
+    3. Deletes all runs from #1
+    4. Deletes all calcs from #2
+    5. Deletes sample"""
+    s_id = params[0]
+    replist = []
+    calclist = []
+
+    for run in data[g.S_RUNS]:                  # get list of all reps of runs from this sample
+        if run[g.R_UID_SAMPLE] == s_id:
+            for rep in run[g.R_REPLICATES]:
+                replist.append((run[g.R_UID_SELF], rep[g.R_UID_SELF]))
+
+    for calc in data[g.S_PROCESSED]:            # get list of calculations from this sample
+        if calc[g.C_SAMPLE_ID] == s_id:
+            calclist.append(calc[g.R_UID_SELF])
+
+    if replist:
+        data = save_delete_rep(data, [replist])     # delete reps, runs, and -- if applicable -- methods                  
+        
+    if calclist:
+        data = save_delete_calc(data, [calclist])   # delete calcs
+
+    
+    found = False                                   # remove sample with s_id as ID from data
+    for i, s in enumerate(data[g.S_SAMPLES]):
+        if s[g.R_UID_SELF] == s_id:
+            found = True
+            break
+    if found:
+        data[g.S_SAMPLES].pop(i)
+
+    return data
+
+    
+
+    
+    
+
 
 def save_add_new_run(data, params):
     newRun = params[0]               
@@ -392,6 +435,8 @@ def save():
             data=save_new_sample(data, params)
         elif saveType == g.SAVE_TYPE_SAMPLE_EDIT:
             data=save_edit_sample(data, params)
+        elif saveType == g.SAVE_TYPE_SAMPLE_DELETE:
+            data=save_delete_sample(data, params)
         elif saveType == g.SAVE_TYPE_RUN_NEW:
             data=save_add_new_run(data, params)
         elif saveType == g.SAVE_TYPE_REP_DELETE:
