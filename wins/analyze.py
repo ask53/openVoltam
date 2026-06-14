@@ -141,8 +141,11 @@ class WindowAnalyze(QMainWindow):
 
     
     def next_click(self):
-        self.store_results()
-        self.process_next()
+        try:
+            self.store_results()
+            self.process_next()
+        except Exception as e:
+            print(e)
 
     def get_results(self):
         i = self.stack.currentIndex()

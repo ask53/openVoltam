@@ -483,14 +483,13 @@ class VoltamogramPlot(QMainWindow):
         x1i = np.where(self.x==x1)[0][0]
         peakxi = np.where(self.x==self.peak_x)[0][0]
 
-        x_left = self.x[x0i:peakxi]
-        y_left = self.y[x0i:peakxi]
-        x_right = self.x[peakxi:x1i]
-        y_right = self.y[peakxi:x1i]
+        x_left = self.x[x0i:peakxi+1]
+        y_left = self.y[x0i:peakxi+1]
+        x_right = self.x[peakxi:x1i+1]
+        y_right = self.y[peakxi:x1i+1]
 
         d_left = np.gradient(y_left, x_left)
         d_right = np.gradient(y_right, x_right)
-
         l_max = abs(float(max(d_left)))
         r_max = abs(float(min(d_right)))
         mean_max = (l_max + r_max) / 2.

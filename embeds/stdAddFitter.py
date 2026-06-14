@@ -239,18 +239,18 @@ class StdAddFitterPlot(QMainWindow):
             y_reg = self.plot_regression_line(x_avg, m, b, color)       #Add regression model to plot
                                                                         # Set up regression label
             self.label_regression_line(x_avg, y_reg, m, b, r_value*r_value, color)
-            
-            intervals = self.get_confidence_intervals(x_reg, y, m, b)
+
+            dilution_factor = float(v_tot / v_sam)
+            intervals = self.get_confidence_intervals(x_reg, y, m, b, dilution_factor)
             
             # Store calculated values on the self variable
-            
             self.eqn = f'y = {round(m,4)} * x + {round(b,4)}'
             self.slope = float(m)
             self.intercept = float(b)
             self.c_sample = float(b/m)
             self.r2 = float(r_value*r_value)
             self.stderr = float(std_err)
-            self.c_pre_dilution = float(self.c_sample * v_tot / v_sam)
+            self.c_pre_dilution = float(self.c_sample * dilution_factor)
             self.intervals = intervals
             self.results = True
                    
@@ -283,9 +283,10 @@ class StdAddFitterPlot(QMainWindow):
                                   rotation=angle_deg, rotation_mode='anchor', color=color,
                                   transform_rotates_text=True)
 
-    def get_confidence_intervals(self, x_array, y_array, m, b):
-        """Returns the 95% and 99% confidence interval +/- ranges for the x intercept
-        of the regression line y = m * x + b, taking in the following arguments:
+    def get_confidence_intervals(self, x_array, y_array, m, b, dilution_factor):
+        """Returns the confidence interval +/- ranges for the x intercept (at the user-
+        specified confidence level of the regression line y = m * x + b, taking in the
+        following arguments:
             - x_array   a numpy array of the x data to which the regression was fitted
             - y_array   a numpy array of the y data to which the regression was fitted
             - m   slope of the fit
@@ -319,7 +320,7 @@ class StdAddFitterPlot(QMainWindow):
         for i, conf in enumerate(g.M_CONFS_DATA):
             t_val = t.ppf((1+conf)/2, df)
             margin_of_error = float(t_val * s_x)
-            confs[g.M_CONFS[i]] = margin_of_error
+            confs[g.M_CONFS[i]] = margin_of_error * dilution_factor
 
         return confs
 
