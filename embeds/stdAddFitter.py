@@ -232,17 +232,14 @@ class StdAddFitterPlot(QMainWindow):
                 color = self.color_rep
             elif self.reg_type == g.C_REG_TYPE_AVG:             # if regression type is "average" than average all points for each sample and regress on averages only
                 x_reg, y_reg = (x_avg, y_avg)      
-                color = self.color_avg
-            print('1')     
+                color = self.color_avg    
             m, b, r_value, p_value, std_err = linregress(x_reg, y_reg)  # Calculate the regression!
 
             y_model = self.plot_regression_line(x_avg, m, b, color)       #Add regression model to plot
                                                                         # Set up regression label
             self.label_regression_line(x_avg, y_model, m, b, r_value*r_value, color)
-            print('2')
             dilution_factor = float(v_tot / v_sam)
             intervals = self.get_confidence_intervals(x_reg, y_reg, m, b, dilution_factor)
-            print('3')
             # Store calculated values on the self variable
             self.eqn = f'y = {round(m,4)} * x + {round(b,4)}'
             self.slope = float(m)
@@ -253,7 +250,6 @@ class StdAddFitterPlot(QMainWindow):
             self.c_pre_dilution = float(self.c_sample * dilution_factor)
             self.intervals = intervals
             self.results = True
-            print('4')
                    
         self.canvas.draw()
 

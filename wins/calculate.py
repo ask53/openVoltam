@@ -1130,15 +1130,10 @@ class WindowCalculate(QMainWindow):
         self.graph.update_type(calc_type)
 
     def reg_type_changed(self):
-        try:
-            self.something_has_been_updated()
-            print('a')
-            self.results_stack.setCurrentIndex(0)
-            print('b')
-            self.update_reg_type_on_graph()
-        except Exception as e:
-            print('here i am erroring!')
-            print(e)
+        self.something_has_been_updated()
+        self.results_stack.setCurrentIndex(0)
+        self.update_reg_type_on_graph()
+
 
     def update_reg_type_on_graph(self):
         reg_type = self.reg_type.currentData()
