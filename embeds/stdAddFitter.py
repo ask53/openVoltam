@@ -295,8 +295,8 @@ class StdAddFitterPlot(QMainWindow):
         n = x_array.size
         ssr = 0
         for i,y in enumerate(y_array):
-            y_reg = m * x_array[i] + b
-            sr_i = (y-y_reg)*(y-y_reg)
+            y_model = m * x_array[i] + b
+            sr_i = (y-y_model)*(y-y_model)
             ssr = ssr + sr_i
         df = n - 2
         s_y = sqrt(ssr / df)
