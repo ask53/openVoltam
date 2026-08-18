@@ -1416,7 +1416,7 @@ class WindowMethod(QMainWindow):
         print('got here!')
         
         if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
-            self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_OVERWRITE, self.path, str(toWrite)])
+            self.process.start(g.PROC_PYTHON_CMD, [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_OVERWRITE, self.path, str(toWrite)])
         else:
             self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_OVERWRITE, self.path, str(toWrite)])
 

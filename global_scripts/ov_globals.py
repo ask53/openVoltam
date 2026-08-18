@@ -221,6 +221,7 @@ PROC_SCRIPT = 'external/process.exe'
 PROC_SCRIPT_PYTHON = 'processes/process.py'
 PROC_RUN_FROM_PYTHON = 'python'
 PROC_RUN_FROM_EXE = 'exe'
+PROC_PYTHON_CMD = 'py'
 
 ### CHANGE THIS TO MODIFY HOW PROGRAM RUNS PROCESSES
 #

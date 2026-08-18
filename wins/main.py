@@ -1363,7 +1363,7 @@ class WindowMain(QMainWindow):
             self.status.showMessage("Exporting...")
             self.progress_bar.setVisible(True)
             if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
-                self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_EXPORT, self.path, destPath, str(reps)])
+                self.process.start(g.PROC_PYTHON_CMD, [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_EXPORT, self.path, destPath, str(reps)])
             else:
                 self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_EXPORT, self.path, destPath, str(reps)])            
 
@@ -1461,7 +1461,7 @@ class WindowMain(QMainWindow):
             
             
             if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
-                self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_READ, self.path])
+                self.process.start(g.PROC_PYTHON_CMD, [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_READ, self.path])
             else:
                 self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_READ, self.path])
 
@@ -1519,7 +1519,7 @@ class WindowMain(QMainWindow):
         self.progress_bar.setVisible(True)
 
         if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
-            self.process.start('python', [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_SAVE, self.path, saveType, str(params)])
+            self.process.start(g.PROC_PYTHON_CMD, [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_SAVE, self.path, saveType, str(params)])
         else:
             self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_SAVE, self.path, saveType, str(params)])
 
