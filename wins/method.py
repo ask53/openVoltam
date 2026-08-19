@@ -1484,7 +1484,7 @@ class WindowMethod(QMainWindow):
             show_alert(self, 'Error!', 'Please add at least one step to the method.')
             return False
         if "" in self.relays:
-            show_alert(self, 'Error!', 'Please entere a device name for all external devices/relays.')
+            show_alert(self, 'Error!', 'Please enter a device name for all external devices/relays.')
             return False
         signal_steps = []
         background_steps = []
