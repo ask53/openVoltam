@@ -10,7 +10,7 @@ This software is licensed for two main reasons:
 1. To protect us from the situation in which a large corporation steals it, copyrights it, and then sues us; and
 2. To keep it open source, accessible, modifyable, and sharable.
 
-To these ends, OpenVoltam is licensed under the [GNU General Public License version 3.0](https://github.com/ask53/openVoltam/blob/main/LICENSE). 
+We believe that everyone on this planet should have access to the tools to understand what is in the water that they drink. This software is our teeny, tiny contribution. To these ends, OpenVoltam is licensed under the [GNU General Public License version 3.0](https://github.com/ask53/openVoltam/blob/main/LICENSE). 
 
 ## Download 
 All releases compatible with **Windows 10** and **Windows 11**. *If you **need** access on a different operating system, please contact us*.
