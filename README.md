@@ -9,6 +9,7 @@ Open source software, compatible only with Windows 10 and 11. For running voltam
 This software is licensed for two main reasons:
 1. To protect us from the situation in which a large corporation steals it, copyrights it, and then sues us; and
 2. To keep it open source, accessible, modifyable, and sharable.
+
 To these ends, OpenVoltam is licensed under the [GNU General Public License version 3.0](https://github.com/ask53/openVoltam/blob/main/LICENSE). 
 
 ## Installation (for now)
