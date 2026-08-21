@@ -1,14 +1,11 @@
 # openVoltam
--- THIS IS IN PROGRESS AND DOES NOT YET WORK TO RUN A COMPLETE ANALYSIS.--
+-- THIS IS IN PROGRESS--
 -- USE AT YOUR OWN RISK -- 
 
-Open source software for running voltammetric tests and analyzing their results. Designed to work with the RodeoStat from IO Rodeo, https://iorodeo.com/pages/rodeostat
+Open source software, compatible only with Windows 10 and 11. For running voltammetric tests and analyzing their results. Designed to work with the RodeoStat from IO Rodeo, https://iorodeo.com/pages/rodeostat
 
 ## Installation (for now)
-To run the most up to date version of OpenVoltam follow these steps:
-1. Download the zip file.
-2. Unzip it
-3. Once unzipped, run OpenVoltam.exe from inside the resulting folder.
+- [Version 0.1](https://drive.google.com/file/d/1nNlRlT18m9fjE4lZMUhPBckaFG3FSlIe/view?usp=sharing) (for alpha testing, please let us know if you find bugs!) [Windows 10 & 11]  
 
 ## Notes for contributors
 This project uses a version of IO Rodeo's potentiostat library that is not yet available on PyPi. (See local link in requirements.txt file). 
