@@ -15,6 +15,8 @@ This project uses a version of IO Rodeo's potentiostat library that is not yet a
 The potentiostat library is only necessary for actually sending instructions to and receiving data from a device, not for running the rest of the GUI, you are welcome to install the version on PyPi ('pip install iorodeo-potentiostat') and roll with that, although you may not be able to actually connect to a device. If you do want to install the same version of the potentiostat library that this project currently using to actually work with a rodeostat device, you can clone the IO Rodeo repository [https://github.com/iorodeo/potentiostat] to a local machine, switch from 'master' to 'develop' branch, and install locally (cd into .../potentiostat/software/python/potentiostat then use 'pip install .' if working with pip). Good luck!
 
 ## Building from repository --> Windows executable --> Windows Installer
+Follow these instructions if you want to build this python code into a Windows .exe file (uses PyInstaller to build .exe files for both the main process and the asynchronous processes) and step 8 to use InstallForce create a Microsoft Installer file that can be distributed.
+
 ### Create executable for async processes
 1. Use PyInstaller to convert process.py into executable (cd into processes, run: py -m PyInstaller process.spec)
 2. Move process.exe into 'external' folder
