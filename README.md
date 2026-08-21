@@ -12,7 +12,11 @@ This software is licensed for two main reasons:
 
 To these ends, OpenVoltam is licensed under the [GNU General Public License version 3.0](https://github.com/ask53/openVoltam/blob/main/LICENSE). 
 
-## Installation (for now)
+## Download Windows Installer
+### Stable releases
+Come back later once things stabilize a bit!
+
+### Test releases
 - [Version 0.1](https://drive.google.com/file/d/1nNlRlT18m9fjE4lZMUhPBckaFG3FSlIe/view?usp=sharing) (for alpha testing, please let us know if you find bugs!) [Windows 10 & 11]  
 
 ## Notes for contributors
