@@ -16,7 +16,7 @@ To these ends, OpenVoltam is licensed under the [GNU General Public License vers
 All releases compatible with **Windows 10** and **Windows 11**. *If you **need** access on a different operating system, please contact us*.
 
 ### Stable releases
-*We are working out both features and bugs in our first stable release. We aim to have it up by the middle of 2027. Please check back!*
+*We are still working on the features in our first stable release (and finding safe new homes for the many bugs whenver they show up). We aim to have it up by the middle of 2027. Please check back!*
 
 ### Test releases
 - [Version 0.1](https://drive.google.com/file/d/1nNlRlT18m9fjE4lZMUhPBckaFG3FSlIe/view?usp=sharing) (for alpha testing, please let us know if you find bugs!) [Windows 10 & 11]  
