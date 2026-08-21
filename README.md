@@ -3,7 +3,7 @@
 
 -- USE AT YOUR OWN RISK -- 
 
-Open source software, compatible only with Windows 10 and 11. For running voltammetric tests and analyzing their results. Designed to work with the [RodeoStat from IO Rodeo](https://iorodeo.com/pages/rodeostat)
+Open source software, compatible only with Windows 10 and 11. For running voltammetric tests and analyzing their results. Designed to work with the [RodeoStat from IO Rodeo](https://iorodeo.com/pages/rodeostat).
 
 ## License
 This software is licensed for two main reasons:
