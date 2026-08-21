@@ -1,4 +1,4 @@
-# openVoltam
+# OpenVoltam
 -- THIS IS IN PROGRESS--
 
 -- USE AT YOUR OWN RISK -- 
