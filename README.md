@@ -5,6 +5,12 @@
 
 Open source software, compatible only with Windows 10 and 11. For running voltammetric tests and analyzing their results. Designed to work with the RodeoStat from IO Rodeo, https://iorodeo.com/pages/rodeostat
 
+## License
+This software is licensed for two main reasons:
+1. To protect us from the situation in which a large corporation steals it, copyrights it, and then sues us; and
+2. To keep it open source, accessible, modifyable, and sharable.
+To these ends, OpenVoltam is licensed under the [GNU General Public License version 3.0](https://github.com/ask53/openVoltam/blob/main/LICENSE). 
+
 ## Installation (for now)
 - [Version 0.1](https://drive.google.com/file/d/1nNlRlT18m9fjE4lZMUhPBckaFG3FSlIe/view?usp=sharing) (for alpha testing, please let us know if you find bugs!) [Windows 10 & 11]  
 
