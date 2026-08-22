@@ -1,20 +1,33 @@
-# openVoltam
--- THIS IS IN PROGRESS AND DOES NOT YET WORK TO RUN A COMPLETE ANALYSIS.--
+# OpenVoltam
+-- THIS IS IN PROGRESS--
+
 -- USE AT YOUR OWN RISK -- 
 
-Open source software for running voltammetric tests and analyzing their results. Designed to work with the RodeoStat from IO Rodeo, https://iorodeo.com/pages/rodeostat
+Open source software, compatible only with Windows 10 and 11. For running voltammetric tests and analyzing their results. Designed to work with the [RodeoStat from IO Rodeo](https://iorodeo.com/pages/rodeostat).
 
-## Installation (for now)
-To run the most up to date version of OpenVoltam follow these steps:
-1. Download the zip file.
-2. Unzip it
-3. Once unzipped, run OpenVoltam.exe from inside the resulting folder.
+## License
+This software is licensed for two main reasons:
+1. To protect us from the situation in which a large corporation steals it, copyrights it, and then sues us; and
+2. To keep it open source, accessible, modifyable, and sharable.
+
+We believe that everyone on this planet should have access to the tools to understand what is in the water that they drink. This software is our teeny, tiny contribution. To these ends, OpenVoltam is licensed under the [GNU General Public License version 3.0](https://github.com/ask53/openVoltam/blob/main/LICENSE). 
+
+## Download 
+All releases compatible with **Windows 10** and **Windows 11**. *If you **need** access on a different operating system, please contact us*.
+
+### Stable releases
+*We are still working on the features in our first stable release (and finding safe new homes for the many bugs whenver they show up). We aim to have it up by the middle of 2027. Please check back!*
+
+### Test releases
+- [Version 0.1](https://drive.google.com/file/d/1nNlRlT18m9fjE4lZMUhPBckaFG3FSlIe/view?usp=sharing) (for alpha testing, please let us know if you find bugs!) [Windows 10 & 11]  
 
 ## Notes for contributors
 This project uses a version of IO Rodeo's potentiostat library that is not yet available on PyPi. (See local link in requirements.txt file). 
-The potentiostat library is only necessary for actually sending instructions to and receiving data from a device, not for running the rest of the GUI, you are welcome to install the version on PyPi ('pip install iorodeo-potentiostat') and roll with that, although you may not be able to actually connect to a device. If you do want to install the same version of the potentiostat library that this project currently using to actually work with a rodeostat device, you can clone the IO Rodeo repository [https://github.com/iorodeo/potentiostat] to a local machine, switch from 'master' to 'develop' branch, and install locally (cd into .../potentiostat/software/python/potentiostat then use 'pip install .' if working with pip). Good luck!
+The potentiostat library is only necessary for actually sending instructions to and receiving data from a device, not for running the rest of the GUI, you are welcome to install the version on PyPi ('pip install iorodeo-potentiostat') and roll with that, although you may not be able to actually connect to a device. If you do want to install the same version of the potentiostat library that this project currently using to actually work with a rodeostat device, you can clone the [IO Rodeo repository](https://github.com/iorodeo/potentiostat) to a local machine, switch from 'master' to 'develop' branch, and install locally (cd into .../potentiostat/software/python/potentiostat then use 'pip install .' if working with pip). Good luck!
 
 ## Building from repository --> Windows executable --> Windows Installer
+Follow these instructions if you want to build this python code into a Windows .exe file (uses PyInstaller to build .exe files for both the main process and the asynchronous processes) and step 8 to use InstallForce create a Microsoft Installer file that can be distributed.
+
 ### Create executable for async processes
 1. Use PyInstaller to convert process.py into executable (cd into processes, run: py -m PyInstaller process.spec)
 2. Move process.exe into 'external' folder
