@@ -162,14 +162,7 @@ class WindowWelcome(QMainWindow):
                 return path
             else:
                 show_alert(self, 'Alert!', 'There was an error saving the new lab session.')
-        return False
-        
-                
-                
-        
-        
-        
-        
+        return False      
                 
     def open_session(self, path=False):
         try:

@@ -1,6 +1,7 @@
 # ov_functions.py
 #		
 
+import os
 from tabularjson import parse, stringify, StringifyOptions, is_homogeneous
 from re import sub
 
@@ -30,6 +31,26 @@ def decodeCustomName(encoded_name):
 
 def custText(arr):
     return arr[g.L]
+    
+def confirmPathExists(path):
+    """Takes in a path in the system. If the path exists, returns True. Else False."""
+    if os.path.exists(path):
+        return True
+    return False
+    
+def reopenSession(main, self=None):
+    """Takes in a main window object and an optional current window option. Only pass a
+    current window object. Pass a current window object if the reopen request is coming
+    from a window other than a main win. 
+    Asks the user to select a path to the file they want to open. Once they do, shuts 
+    down the current main window and all associated windows  and opens the newly 
+    selected file."""
+    self.close()
+    print('reopening lab session from new path...')
+    main.parent.open_session()
+    main.close()
+    
+    
 
 def horizontalize(widgetlist, stretch=False):
     """
@@ -185,7 +206,7 @@ def get_row_ws(w_parent, i):
 #
 #
 #
-def scroll_area_resized(outer, inner, event):
+'''def scroll_area_resized(outer, inner, event):
     print('---')
     print('HERE!')
     QScrollArea.resizeEvent(outer, event)   # Because this fn intercepts the resizeEvent, call the actual resizeEvent
@@ -198,7 +219,7 @@ def scroll_area_resized(outer, inner, event):
         v_bar_width = v_bar.width()         #   account for its width
     inner.setFixedWidth(outer_width-g.PADDING-v_bar_width)
     print(outer_width)
-    print(inner.width())
+    print(inner.width())'''
 #
 #
 ###########################################################3

@@ -1609,7 +1609,9 @@ class WindowMain(QMainWindow):
     #############################################
 
     def closeEvent(self, event):
+        print('here in the close handler!')
         if self.children:                       # if there are child windows open, confirm user wants all windows to close
+            print(self.children)
             msg_box = QMessageBox()    
             msg_box.setWindowTitle("Are you sure?") 
             msg_box.setText('This will close this sample and all associated windows including active runs, run configurations, and analysis.\n\nAre you sure you want to close?\n')

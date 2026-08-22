@@ -42,5 +42,6 @@ class WindowResultsView(QMainWindow):
         self.accept_close(event)
 
     def accept_close(self, closeEvent):
-        self.parent.children.remove(self)
+        if self in self.parent.children:
+            self.parent.children.remove(self)
         closeEvent.accept()

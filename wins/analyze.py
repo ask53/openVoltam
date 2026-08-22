@@ -21,7 +21,7 @@ from embeds.voltamOGram import VoltamogramPlot
 from functools import partial
 from time import sleep
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QEvent
 from PyQt6.QtWidgets import (
     QMainWindow,
     QLabel,
@@ -267,6 +267,28 @@ class WindowAnalyze(QMainWindow):
     def update_win(self):
         return
         # update window widgets here
+    
+    def event(self, event):                                 # General purpose event handler
+        if event.type() == QEvent.Type.ActivationChange:    # Check if the event is changing the activation status of the window
+            if self.isActiveWindow():                       #   Check whether the event *activated* the window
+                #########################################################################################################################################3
+                #
+                #       HERE HERE HERE HERE HERE
+                #  
+                #   Code here, then move it to the global scripts file
+                #
+                #   Check whether file still exists.
+                #       If not: prompt to reopen it and close all windows
+                #      
+                #       If so: check to make sure update timestamps match
+                #           If not: let user know that the file has been updated, ask if they want to reload or close. 
+                
+                
+                #
+                print()
+                print('¡¡¡WINDOW ACTIVATED!!!!')
+        
+        return QMainWindow.event(self, event)
 
     def showEvent(self, event):
         self.parent.setEnabled(False)
@@ -275,6 +297,7 @@ class WindowAnalyze(QMainWindow):
         event.accept()      
     
     def closeEvent(self, event):
+        print('closing!')
         """Event handler for close event."""
         if not self.saved:
             confirm = saveMessageBox()
