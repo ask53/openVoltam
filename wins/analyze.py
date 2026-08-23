@@ -282,7 +282,6 @@ class WindowAnalyze(QMainWindow):
         event.accept()      
     
     def closeEvent(self, event):
-        print('closing!')
         """Event handler for close event."""
         if not self.saved:
             confirm = saveMessageBox()

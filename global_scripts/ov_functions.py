@@ -32,43 +32,94 @@ def decodeCustomName(encoded_name):
 def custText(arr):
     return arr[g.L]
     
-def fileOkRoutine(main, self):
-    if not exists(main.path):   # If we CANNOT find the path, ask user to reopen
-        #######################################################################################3
-        #
-        #       ADD DIALOG HERE ABOUT WHETHER OR NOT TO LOCATE LAB SESSION FILE
-        #       OR CLOSE
-        #
-        ############################################################################
-        reopenSession(main, self)
-        return False
-    else:                       # If we CAN find the file
-        if main.last_modified and main.last_modified != getmtime(main.path):  # If the file is not latest
-        #######################################################################################3
-        #
-        #       ADD DIALOG HERE ABOUT WHETHER OR TO RELOAD LAB SESSION FROM FILE
-        #
-        #           ALSO
-        #
-        #       DEBUG WHY THIS DOESNT WORK IN ANALYZE WINDOW, BUT WORKS FINE IN MAIN WINDOW
-        #
-        ############################################################################
-            reopenSession(main, self, main.path)
-            return False
-        else:                                           # If file NOT corrupted
-            return True                                 # We're good to go! 
+#########################################
+#                                       #
+#   Fns for checking file integrity     #
+#                                       #
+#   1. fileOkRoutine                    #
+#   2. handleMissingFile                #
+#   3. handleChangedFile                #
+#   4. reopenSession                    #
+#   5. closeSession                     #
+#                                       #
+#########################################
     
-def reopenSession(main, self, path=False):
+def fileOkRoutine(welcome, main, self):
+    """Takes in two pyqt QMainWindow objects: the Main Lab Session window for this
+    sample (main) and the current window that has triggered the file check (self). 
+    Performs the following two checks:
+    1. Does the file still exist? (This will be True unless the file's name has been
+        changed, it has been moved to a different directory, or it has been deleted).
+    2. If 1, Are we still working with the most updated version of the file? This 
+        will be True unless a user has manually changed the file or if the file is 
+        simultaneously open in multiple instances of OpenVoltam (whyyyyyy i don't know
+        but anything is possible!).
+    Then it takes the following steps:
+        - In either case: sets a flag on the main window object that indicates that
+            it is actively dealing with a file issue (this allows it to ignore subsequent
+            calls until it has resolved the issue)
+        - In the case of 1: Allows the user to choose between immediately closing vs.
+            providing a new path to the file (reloating it).
+        - In the case of 2: Allows the user to reload the file or close it.
+    
+    Returns:
+        True    -- If there is no error (neither 1 or 2)
+        False   -- If either condition 1 or 2 is found"""
+        
+    if main.dealing_with_file_issue:    # Do not continue if an issue is currently being processed
+        return
+    if not exists(main.path):           # If we CANNOT find the file, ask user to reopen
+        handleMissingFile(welcome, main, self)
+        return False
+    else:                               # If we CAN find the file
+        if main.last_modified and main.last_modified != getmtime(main.path):  # If the file has been changed by another program
+            handleChangedFile(welcome, main, self)
+            return False
+        else:                           # If file NOT corrupted
+            return True                 # We're good to go! 
+            
+def handleMissingFile(welcome, main, self):
+    main.dealing_with_file_issue = True
+    title = 'File issue'
+    msg = 'The file may have been renamed or moved.'
+    confirm = locateFileMessageBox(title, msg)
+    resp = confirm.exec()
+    if resp == QMessageBox.StandardButton.Cancel:
+        closeSession(main, self)
+    else:
+        reopenSession(welcome, main, self)
+    main.dealing_with_file_issue = False
+    
+def handleChangedFile(welcome, main, self):
+    main.dealing_with_file_issue = True
+    title = 'File issue'
+    msg = 'The file contains updates not reflected in OpenVoltam.'
+    confirm = reloadMessageBox(title, msg)
+    resp = confirm.exec()
+    if resp == QMessageBox.StandardButton.Cancel:
+        closeSession(main, self)
+    else:
+        reopenSession(welcome, main, self, main.path)     
+    main.dealing_with_file_issue = False    
+    
+def reopenSession(welcome, main, self, path=False):
     """Takes in a main window object and an optional current window option. Only pass a
     current window object. Pass a current window object if the reopen request is coming
     from a window other than a main win. 
     Asks the user to select a path to the file they want to open. Once they do, shuts 
     down the current main window and all associated windows  and opens the newly 
     selected file."""
+    if path: path = ''.join(path)   # Copy entire path (in case pointer gets destroyed in close)
+    closeSession(main, self)        # Close the existing session
+    welcome.open_session(path)      # Open new session from same path
+    
+def closeSession(main, self):
     if (not self in main.children) and (self != main):
-        self.close()
-    main.parent.open_session(path)
-    main.close()
+        self.close()    # If current window triggered this while openeing, it might not yet be in main.children
+    main.close()        #   If not, close it first. Then close main (which also closes all listed children)
+    
+    
+    
     
     
     
@@ -580,6 +631,7 @@ class confirmMessageBox(QMessageBox):
         but_ok.setText('Continue (and archive calculations)')
         but_canc = self.button(QMessageBox.StandardButton.Cancel)
         but_canc.setText(l.s_edit_cancel[g.L])
+        
 class warningMessageBox(QMessageBox):
     def __init__(self, title, msg):
         super().__init__()
@@ -592,6 +644,33 @@ class warningMessageBox(QMessageBox):
         but_save.setText("I'll fix this")
         but_canc = self.button(QMessageBox.StandardButton.Cancel)
         but_canc.setText("Continue as is")
+        
+class reloadMessageBox(QMessageBox):
+    def __init__(self, title, msg):
+        super().__init__()
+        self.setWindowTitle(title) 
+        self.setText(msg)
+        self.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+
+        # customize button language text for multi-language support
+        but_ok = self.button(QMessageBox.StandardButton.Ok)
+        but_ok.setText("Reload")
+        but_canc = self.button(QMessageBox.StandardButton.Cancel)
+        but_canc.setText("Close")
+
+class locateFileMessageBox(QMessageBox):
+    def __init__(self, title, msg):
+        super().__init__()
+        self.setWindowTitle(title) 
+        self.setText(msg)
+        self.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+
+        # customize button language text for multi-language support
+        but_ok = self.button(QMessageBox.StandardButton.Ok)
+        but_ok.setText("Locate file")
+        but_canc = self.button(QMessageBox.StandardButton.Cancel)
+        but_canc.setText("Close")       
+
 
         
     

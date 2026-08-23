@@ -90,7 +90,8 @@ class WindowMain(QMainWindow):
         self.status = self.statusBar()
         self.progress_bar = QProgressBar()
         self.process = None
-        self.last_modified = None
+        self.last_modified = None               # Stores timestamp of last time OV modified the file
+        self.dealing_with_file_issue = False    # Flag for whether a file issue (not located, corrupted, etc.) is being actively handled
 
         #####################
         #                   #
@@ -1621,11 +1622,10 @@ class WindowMain(QMainWindow):
     def event(self, event):                                 # General purpose event handler
         if event.type() == QEvent.Type.ActivationChange:    # Check if the event is changing the activation status of the window
             if self.isActiveWindow():                       #   Check whether the event *activated* the window
-                fileOkRoutine(self, self)                   # Run routine to check if file is okay
-                
+                if not fileOkRoutine(self.parent, self, self):      # Run routine to check if file is okay
+                    return True
         return QMainWindow.event(self, event)               # Forward all events to appropriate QMainWindow event handler
-
-
+        
     def closeEvent(self, event):
         print('here in the close handler!')
         if self.children:                       # if there are child windows open, confirm user wants all windows to close
