@@ -588,7 +588,7 @@ class WindowRunView(QMainWindow):
             except Exception as e:
                 print(e)
 
-            write_data_to_file(self.parent.path, data)
+            write_data_to_file(self.parent.path, data, main=self.parent)
             self.update_voltamogram(task)
             data = remove_data_from_layout(data)
             self.parent.data = data

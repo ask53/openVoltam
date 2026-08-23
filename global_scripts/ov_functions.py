@@ -65,7 +65,6 @@ def fileOkRoutine(welcome, main, self):
     Returns:
         True    -- If there is no error (neither 1 or 2)
         False   -- If either condition 1 or 2 is found"""
-        
     if main.dealing_with_file_issue:    # Do not continue if an issue is currently being processed
         return
     if not exists(main.path):           # If we CANNOT find the file, ask user to reopen
@@ -192,7 +191,7 @@ def get_data_from_file(path):
         print(e)
         return False
 
-def write_data_to_file(path, data):
+def write_data_to_file(path, data, main=None):
     try:
         with open(path, 'w') as file:                            
             
@@ -206,10 +205,14 @@ def write_data_to_file(path, data):
             #json_to_write = dumps(data, indent=4)
             #file.write(json_to_write)
             file.close()                                                    #   close the file (to avoid taking up too much memory)
+            if main:
+                main.update_file_last_modified()
         return True
     except Exception as e:
         print(e)
         return False
+
+    
 
 def remove_data_from_layout(d):
     for run in d[g.S_RUNS]:                 # For each run in data dict

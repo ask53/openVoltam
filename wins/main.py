@@ -348,7 +348,6 @@ class WindowMain(QMainWindow):
             self.update_highlights()
             self.update_menu()
             self.update_children()
-            self.update_file_last_modified()
             
         except Exception as e:
             print('Error in update_win:')
@@ -1501,6 +1500,7 @@ class WindowMain(QMainWindow):
             self.status.showMessage("Data loaded!", g.SB_DURATION)
             self.update_win()
             setWsEnabled(self.buts, True)                                   #   Enable buttons
+        self.update_file_last_modified()
         self.progress_bar.setVisible(False)
         self.read_error_flag = False
         self.process = None
@@ -1565,6 +1565,7 @@ class WindowMain(QMainWindow):
                     onError()                                                               #   run it! 
             else:                                                                           # If the run succeeded
                 self.status.showMessage("Saved!", g.SB_DURATION)                            #   Show success message
+                self.update_file_last_modified()
                 self.update_win()                                                           #   Update main window with new data
                 if onSuccess:                                                               #   If there is an onSuccess callback fn
                     onSuccess()                                                             #   run it!
@@ -1627,7 +1628,6 @@ class WindowMain(QMainWindow):
         return QMainWindow.event(self, event)               # Forward all events to appropriate QMainWindow event handler
         
     def closeEvent(self, event):
-        print('here in the close handler!')
         if self.children:                       # if there are child windows open, confirm user wants all windows to close
             print(self.children)
             msg_box = QMessageBox()    
