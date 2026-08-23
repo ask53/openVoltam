@@ -1,7 +1,7 @@
 # ov_functions.py
 #		
 
-import os
+from os.path import exists, getmtime
 from tabularjson import parse, stringify, StringifyOptions, is_homogeneous
 from re import sub
 
@@ -32,23 +32,44 @@ def decodeCustomName(encoded_name):
 def custText(arr):
     return arr[g.L]
     
-def confirmPathExists(path):
-    """Takes in a path in the system. If the path exists, returns True. Else False."""
-    if os.path.exists(path):
-        return True
-    return False
+def fileOkRoutine(main, self):
+    if not exists(main.path):   # If we CANNOT find the path, ask user to reopen
+        #######################################################################################3
+        #
+        #       ADD DIALOG HERE ABOUT WHETHER OR NOT TO LOCATE LAB SESSION FILE
+        #       OR CLOSE
+        #
+        ############################################################################
+        reopenSession(main, self)
+        return False
+    else:                       # If we CAN find the file
+        if main.last_modified and main.last_modified != getmtime(main.path):  # If the file is not latest
+        #######################################################################################3
+        #
+        #       ADD DIALOG HERE ABOUT WHETHER OR TO RELOAD LAB SESSION FROM FILE
+        #
+        #           ALSO
+        #
+        #       DEBUG WHY THIS DOESNT WORK IN ANALYZE WINDOW, BUT WORKS FINE IN MAIN WINDOW
+        #
+        ############################################################################
+            reopenSession(main, self, main.path)
+            return False
+        else:                                           # If file NOT corrupted
+            return True                                 # We're good to go! 
     
-def reopenSession(main, self=None):
+def reopenSession(main, self, path=False):
     """Takes in a main window object and an optional current window option. Only pass a
     current window object. Pass a current window object if the reopen request is coming
     from a window other than a main win. 
     Asks the user to select a path to the file they want to open. Once they do, shuts 
     down the current main window and all associated windows  and opens the newly 
     selected file."""
-    self.close()
-    print('reopening lab session from new path...')
-    main.parent.open_session()
+    if (not self in main.children) and (self != main):
+        self.close()
+    main.parent.open_session(path)
     main.close()
+    
     
     
 

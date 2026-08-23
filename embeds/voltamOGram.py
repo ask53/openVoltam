@@ -515,9 +515,9 @@ class VoltamogramPlot(QMainWindow):
     def plot_reps(self, reps, subbackground=True, showsmoothed=False, showraw=True, predictpeak=False, color=None, legend=True):
         # 1. Get data from file for specified reps
         path = self.grandparent.path
-        if not confirmPathExists(path):
+        '''if not confirmPathExists(path):
             reopenSession(self.grandparent, self.parent)            
-            return
+            return'''
         
         
         all_data = get_data_from_file(path)     # read file including all raw data

@@ -271,24 +271,9 @@ class WindowAnalyze(QMainWindow):
     def event(self, event):                                 # General purpose event handler
         if event.type() == QEvent.Type.ActivationChange:    # Check if the event is changing the activation status of the window
             if self.isActiveWindow():                       #   Check whether the event *activated* the window
-                #########################################################################################################################################3
-                #
-                #       HERE HERE HERE HERE HERE
-                #  
-                #   Code here, then move it to the global scripts file
-                #
-                #   Check whether file still exists.
-                #       If not: prompt to reopen it and close all windows
-                #      
-                #       If so: check to make sure update timestamps match
-                #           If not: let user know that the file has been updated, ask if they want to reload or close. 
+                fileOkRoutine(self.parent, self)            # Run routine to check if file is okay
                 
-                
-                #
-                print()
-                print('¡¡¡WINDOW ACTIVATED!!!!')
-        
-        return QMainWindow.event(self, event)
+        return QMainWindow.event(self, event)               # Forward all events to appropriate QMainWindow event handler
 
     def showEvent(self, event):
         self.parent.setEnabled(False)

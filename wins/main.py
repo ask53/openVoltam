@@ -24,7 +24,8 @@ from wins.calculate import WindowCalculate
 
 # import other necessary python tools
 from os.path import join as joindir
-from os.path import exists
+from os.path import split as splitdir
+from os.path import exists, getmtime
 from functools import partial
 from ast import literal_eval
 from time import sleep
@@ -32,7 +33,7 @@ from time import sleep
 # import PyQt6/PySide6 stuff
 from PyQt6.QtTest import QTest
 from PyQt6.QtGui import QAction, QFont, QIcon
-from PyQt6.QtCore import QDate, Qt, QProcess, QSize, QMargins
+from PyQt6.QtCore import QDate, Qt, QProcess, QSize, QMargins, QEvent
 from PyQt6.QtWidgets import (
     QMainWindow,
     QPushButton,
@@ -89,6 +90,7 @@ class WindowMain(QMainWindow):
         self.status = self.statusBar()
         self.progress_bar = QProgressBar()
         self.process = None
+        self.last_modified = None
 
         #####################
         #                   #
@@ -345,11 +347,19 @@ class WindowMain(QMainWindow):
             self.update_highlights()
             self.update_menu()
             self.update_children()
+            self.update_file_last_modified()
             
         except Exception as e:
             print('Error in update_win:')
             print(e)
+            
 
+    def update_file_last_modified(self):
+        self.last_modified = getmtime(self.path)
+        print('File last modified:')
+        print(self.last_modified)
+        print()
+        
 
     def set_move_to_menu(self):
         
@@ -1115,7 +1125,7 @@ class WindowMain(QMainWindow):
         except Exception as e:
             print(e)
             exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            fname = splitdir(exc_tb.tb_frame.f_code.co_filename)[1]
             print(exc_type, fname, exc_tb.tb_lineno)
 
     def open_method_with_uid(self, mode):
@@ -1604,9 +1614,17 @@ class WindowMain(QMainWindow):
 
     #############################################
     #                                           #
-    #   Close window event handler              #
+    #   Event handlers                          #
     #                                           #
     #############################################
+    
+    def event(self, event):                                 # General purpose event handler
+        if event.type() == QEvent.Type.ActivationChange:    # Check if the event is changing the activation status of the window
+            if self.isActiveWindow():                       #   Check whether the event *activated* the window
+                fileOkRoutine(self, self)                   # Run routine to check if file is okay
+                
+        return QMainWindow.event(self, event)               # Forward all events to appropriate QMainWindow event handler
+
 
     def closeEvent(self, event):
         print('here in the close handler!')
