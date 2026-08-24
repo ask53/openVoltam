@@ -7,7 +7,7 @@ Open source software, compatible only with Windows 10 and 11. For running voltam
 
 ## License
 This software is licensed for two main reasons:
-1. To protect us from the situation in which a large corporation steals it, copyrights it, and then sues us; and
+1. To protect us from the situation in which a large corporation steals it, copyrights it, and then sues us for distributing it for free; and
 2. To keep it open source, accessible, modifyable, and sharable.
 
 We believe that everyone on this planet should have access to the tools to understand what is in the water that they drink. This software is our teeny, tiny contribution. To these ends, OpenVoltam is licensed under the [GNU General Public License version 3.0](https://github.com/ask53/openVoltam/blob/main/LICENSE). 
@@ -16,10 +16,10 @@ We believe that everyone on this planet should have access to the tools to under
 All releases compatible with **Windows 10** and **Windows 11**. *If you **need** access on a different operating system, please contact us*.
 
 ### Stable releases
-*We are still working on the features in our first stable release (and finding safe new homes for the many bugs whenver they show up). We aim to have it up by the middle of 2027. Please check back!*
+*We are still working on the features in our first stable release (and finding safe new homes for the many bugs that we encounter along the way). We aim to have it up by the middle of 2027. Please check back!*
 
 ### Test releases
-- [Version 0.1](https://drive.google.com/file/d/1nNlRlT18m9fjE4lZMUhPBckaFG3FSlIe/view?usp=sharing) (for alpha testing, please let us know if you find bugs!) [Windows 10 & 11]  
+- [Version 0.1](https://drive.google.com/file/d/1nNlRlT18m9fjE4lZMUhPBckaFG3FSlIe/view?usp=sharing) [Released: April 28, 2026] [Windows 10 & 11]  (for alpha testing, please let us know if you find bugs!)  
 
 ## Notes for contributors
 This project uses a version of IO Rodeo's potentiostat library that is not yet available on PyPi. (Note that there is no "potentiostat" package listed in the  requirements.txt file, even though it IS required to run OpenVoltam). The potentiostat library is only necessary for actually sending instructions to and receiving data from a device, not for running the rest of the GUI. So if you want to develop the interface but don't need to actually run tests, you are welcome to install the version on PyPi ('pip install iorodeo-potentiostat') and roll with that, although you may not be able to actually connect to a potentiostat device. If you do want to install the same version of the potentiostat library that this project uses to actually work with a device, you can clone the [IO Rodeo repository](https://github.com/iorodeo/potentiostat) to a local machine, switch from 'master' to 'develop' branch, and install locally (cd into .../potentiostat/software/python/potentiostat then use 'pip install .' if working with pip). Good luck!
