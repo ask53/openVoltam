@@ -26,6 +26,7 @@ from wins.calculate import WindowCalculate
 from os.path import join as joindir
 from os.path import split as splitdir
 from os.path import exists, getmtime
+from os import getcwd
 from functools import partial
 from ast import literal_eval
 from time import sleep
@@ -92,7 +93,8 @@ class WindowMain(QMainWindow):
         self.process = None
         self.last_modified = None               # Stores timestamp of last time OV modified the file
         self.dealing_with_file_issue = False    # Flag for whether a file issue (not located, corrupted, etc.) is being actively handled
-
+        self.force_close = False                # A flag that indicates whether to skip the close event handler
+        
         #####################
         #                   #
         #   status bar      #
@@ -1472,8 +1474,15 @@ class WindowMain(QMainWindow):
             
             if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
                 self.process.start(g.PROC_PYTHON_CMD, [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_READ, self.path])
+                print('proc cmd: '+g.PROC_PYTHON_CMD)
+                print('proc_script: '+g.PROC_SCRIPT_PYTHON)
+                print('proc type: '+g.PROC_TYPE_READ)
+                print('path: '+self.path)
+                print('cwd: '+getcwd())
             else:
                 self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_READ, self.path])
+            
+            
 
     def handle_read_stdout(self):
         print('load normal msg!')
@@ -1494,6 +1503,7 @@ class WindowMain(QMainWindow):
         self.read_error_flag = True
 
     def handle_finished_read(self):
+        print('finished the read!')
         if self.read_error_flag:
             self.status.showMessage("ERROR: Data read could not complete.", g.SB_DURATION)
         else:
@@ -1628,37 +1638,46 @@ class WindowMain(QMainWindow):
         return QMainWindow.event(self, event)               # Forward all events to appropriate QMainWindow event handler
         
     def closeEvent(self, event):
-        if self.children:                       # if there are child windows open, confirm user wants all windows to close
-            print(self.children)
-            msg_box = QMessageBox()    
-            msg_box.setWindowTitle("Are you sure?") 
-            msg_box.setText('This will close this sample and all associated windows including active runs, run configurations, and analysis.\n\nAre you sure you want to close?\n')
-            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
-
-            # customize button language text for multi-language support
-            but_close = msg_box.button(QMessageBox.StandardButton.Ok)
-            but_close.setText('Close')
-            but_canc = msg_box.button(QMessageBox.StandardButton.Cancel)
-            but_canc.setText('Cancel')
-
-            resp = msg_box.exec()
-        else:                                   # if the main window has no open child windows, don't show warning
-            resp = QMessageBox.StandardButton.Ok
-            
-        if resp == QMessageBox.StandardButton.Ok:
-            current_child = False
-            while self.children:                # loop through children until children is empty
-                if self.children[0] == current_child:   # if we arrive at a child twice (we failed to close it)
-                    event.ignore()                      # stop the close
-                    return                              # and stop trying to close children
-                current_child = self.children[0]
-                self.children[0].close()        # closing the 0th child window (closing pops it from list)
-                
-
+        if self.force_close:
+            print('force closing')
+            self.close_children(event, force=True)
             self.parent.children.remove(self)   # remove reference to this window from parent for memory cleanup
             event.accept()
         else:
-            event.ignore()
+            if self.children:                       # if there are child windows open, confirm user wants all windows to close
+                print(self.children)
+                msg_box = QMessageBox()    
+                msg_box.setWindowTitle("Are you sure?") 
+                msg_box.setText('This will close this sample and all associated windows including active runs, run configurations, and analysis.\n\nAre you sure you want to close?\n')
+                msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+    
+                # customize button language text for multi-language support
+                but_close = msg_box.button(QMessageBox.StandardButton.Ok)
+                but_close.setText('Close')
+                but_canc = msg_box.button(QMessageBox.StandardButton.Cancel)
+                but_canc.setText('Cancel')
+    
+                resp = msg_box.exec()
+            else:                                   # if the main window has no open child windows, don't show warning
+                resp = QMessageBox.StandardButton.Ok
+                
+            if resp == QMessageBox.StandardButton.Ok:
+                self.close_children(event, force=False)
+                self.parent.children.remove(self)   # remove reference to this window from parent for memory cleanup
+                event.accept()
+            else:
+                event.ignore()
+                
+    def close_children(self, event, force):
+        current_child = False
+        while self.children:                # loop through children until children is empty
+            if self.children[0] == current_child:   # if we arrive at a child twice (we failed to close it)
+                event.ignore()                      # stop the close
+                return                              # and stop trying to close children
+            current_child = self.children[0]
+            if force: self.children[0].force_close = True
+            self.children[0].close()        # closing the 0th child window (closing pops it from list)
+        
         
 
 class TitleLbl(QLabel):

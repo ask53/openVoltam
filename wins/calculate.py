@@ -46,6 +46,7 @@ class WindowCalculate(QMainWindow):
         self.suggestion = suggestion
         self.mode_prev = None
         self.initializing = True
+        self.force_close = False
         
         self.reset_globals()
 
@@ -1343,9 +1344,10 @@ class WindowCalculate(QMainWindow):
     def closeEvent(self, event):
         """
         Event handler for close event."""
-        # add close/save logic here
         try:
-            if not self.continue_action(g.WIN_MODE_CLOSED, None):
+            if self.force_close:
+                self.accept_close(event)
+            elif not self.continue_action(g.WIN_MODE_CLOSED, None):
                 event.ignore()
             else:
                 self.accept_close(event)

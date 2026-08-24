@@ -41,6 +41,7 @@ class WindowAnalyze(QMainWindow):
         self.tasks = tasks
         self.saved = False
         self.results = []
+        self.force_close = False
 
         self.setWindowTitle(self.parent.data[g.S_NAME]+' | Analyze')
 
@@ -283,7 +284,9 @@ class WindowAnalyze(QMainWindow):
     
     def closeEvent(self, event):
         """Event handler for close event."""
-        if not self.saved:
+        if self.force_close:
+            self.accept_close(event)
+        elif not self.saved:
             confirm = saveMessageBox()
             resp = confirm.exec()
             if resp == QMessageBox.StandardButton.Save:

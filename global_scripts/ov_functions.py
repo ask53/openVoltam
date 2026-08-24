@@ -83,9 +83,9 @@ def handleMissingFile(welcome, main, self):
     msg = 'The file may have been renamed or moved.'
     confirm = locateFileMessageBox(title, msg)
     resp = confirm.exec()
-    if resp == QMessageBox.StandardButton.Cancel:
+    if resp == QMessageBox.StandardButton.Discard:
         closeSession(main, self)
-    else:
+    elif resp == QMessageBox.StandardButton.Ok:
         reopenSession(welcome, main, self)
     main.dealing_with_file_issue = False
     
@@ -95,9 +95,9 @@ def handleChangedFile(welcome, main, self):
     msg = 'The file contains updates not reflected in OpenVoltam.'
     confirm = reloadMessageBox(title, msg)
     resp = confirm.exec()
-    if resp == QMessageBox.StandardButton.Cancel:
+    if resp == QMessageBox.StandardButton.Discard:
         closeSession(main, self)
-    else:
+    elif resp == QMessageBox.StandardButton.Ok:
         reopenSession(welcome, main, self, main.path)     
     main.dealing_with_file_issue = False    
     
@@ -114,7 +114,9 @@ def reopenSession(welcome, main, self, path=False):
     
 def closeSession(main, self):
     if (not self in main.children) and (self != main):
+        self.force_close = True
         self.close()    # If current window triggered this while openeing, it might not yet be in main.children
+    main.force_close = True
     main.close()        #   If not, close it first. Then close main (which also closes all listed children)
     
     
@@ -653,12 +655,12 @@ class reloadMessageBox(QMessageBox):
         super().__init__()
         self.setWindowTitle(title) 
         self.setText(msg)
-        self.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+        self.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Discard)
 
         # customize button language text for multi-language support
         but_ok = self.button(QMessageBox.StandardButton.Ok)
         but_ok.setText("Reload")
-        but_canc = self.button(QMessageBox.StandardButton.Cancel)
+        but_canc = self.button(QMessageBox.StandardButton.Discard)
         but_canc.setText("Close")
 
 class locateFileMessageBox(QMessageBox):
@@ -666,12 +668,12 @@ class locateFileMessageBox(QMessageBox):
         super().__init__()
         self.setWindowTitle(title) 
         self.setText(msg)
-        self.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+        self.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Discard)
 
         # customize button language text for multi-language support
         but_ok = self.button(QMessageBox.StandardButton.Ok)
         but_ok.setText("Locate file")
-        but_canc = self.button(QMessageBox.StandardButton.Cancel)
+        but_canc = self.button(QMessageBox.StandardButton.Discard)
         but_canc.setText("Close")       
 
 

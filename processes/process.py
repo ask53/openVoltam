@@ -3,6 +3,26 @@
 
 
 import sys
+
+#################################
+#                               #
+#   GENERAL WRITING FUNCTIONS   #
+#                               #
+#################################
+
+def write_data(s):      # Write data to data channel 
+    sys.stdout.write(str(s)+'\n')
+    sys.stdout.flush()
+    
+write_data("000")
+
+def write_error(s):     # Write error to error channel
+    sys.stderr.write(str(s)+'\n')
+    sys.stderr.flush()
+    
+    
+    
+    
 from os import getcwd
 from os.path import exists
 
@@ -24,19 +44,7 @@ import serial.tools.list_ports
 from potentiostat import Potentiostat
 
 
-#################################
-#                               #
-#   GENERAL WRITING FUNCTIONS   #
-#                               #
-#################################
 
-def write_data(s):      # Write data to data channel 
-    sys.stdout.write(str(s)+'\n')
-    sys.stdout.flush()
-
-def write_error(s):     # Write error to error channel
-    sys.stderr.write(str(s)+'\n')
-    sys.stderr.flush()
     
 
 #################################
@@ -479,6 +487,7 @@ def save():
 #################################
 #
 def read():
+    write_data("0123456789")
     path = sys.argv[2]                  #   Get path of file to read from
     data = get_data_from_file(path)     #   Read file from path (returns dict)
     if data:
@@ -728,6 +737,7 @@ def run():
 #################################
 
 try:
+    write_data("aaa")
     processType = sys.argv[1]
     if processType == g.PROC_TYPE_SAVE:
         save()

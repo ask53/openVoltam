@@ -66,6 +66,7 @@ class WindowRunView(QMainWindow):
         self.relays_enabled = True
         self.relays = []
         self.stopped = False
+        self.force_close = False
         self.q = Queue()
         self.status = self.statusBar()
         
@@ -866,7 +867,9 @@ class WindowRunView(QMainWindow):
         event.accept()
         
     def closeEvent(self, event):
-        if self.running_flag:
+        if self.force_close:
+            self.accept_close(event)
+        elif self.running_flag:
             event.ignore()
             show_alert(self, "Alert!", "Sorry, cannot close this window while the run is ongoing. If you need to stop an ongoing run, just unplug the potentiostat!")
         else:

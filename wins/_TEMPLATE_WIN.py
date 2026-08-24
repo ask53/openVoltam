@@ -14,6 +14,7 @@ class WindowName(QMainWindow):
         super().__init__()                          # if path, load sample deets, else load empty edit window for new sample
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.status = self.statusBar()
+        self.force_close = False
 
         # Setup widgets, layout, and (if necessary) mode here
         
@@ -28,9 +29,15 @@ class WindowName(QMainWindow):
     def closeEvent(self, event):
         """
         Event handler for close event."""
+        if self.force_close:
+            self.accept_close(event)
         # add close/save logic here
+        #
         self.accept_close(event)
-                
+        #
+        ###########################
+        
+        
     def accept_close(self, closeEvent):
         """Take in a close event. Removes the reference to itself in the parent's
         self.children list (so reference can be cleared from memory) and accepts

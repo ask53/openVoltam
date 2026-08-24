@@ -52,6 +52,7 @@ class WindowRunConfig(QMainWindow):
      
         self.saved = True
         self.close_on_save = False
+        self.force_close = False
         
         self.status = self.statusBar()
         
@@ -715,7 +716,9 @@ class WindowRunConfig(QMainWindow):
             print(e)
         
     def closeEvent(self, event):
-        if not self.saved and self.mode == g.WIN_MODE_EDIT:
+        if self.force_close:
+            self.accept_close(event)
+        elif not self.saved and self.mode == g.WIN_MODE_EDIT:
             confirm = saveMessageBox(self)
             resp = confirm.exec()
             if resp == QMessageBox.StandardButton.Save:

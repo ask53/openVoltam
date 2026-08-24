@@ -46,6 +46,7 @@ class WindowSample(QMainWindow):
         self.status = self.statusBar()
         self.progress_bar = QProgressBar()
         self.sample_id = sample_id
+        self.force_close = False
 
         #####################
         #                   #
@@ -305,7 +306,9 @@ class WindowSample(QMainWindow):
                 - Discard: The window is closed without saving
                 - Other (Cancel or the x-button): The close action is blocked"""
         try:
-            if self.saved:                      # If all modified content (if any) has been saved
+            if self.force_close:
+                self.accept_close(event)
+            elif self.saved:                      # If all modified content (if any) has been saved
                 self.accept_close(event)        # we don't need to ask about saving, so accept the close action
             else:                                                   # if there is unsaved content:                                    
                 confirm = saveMessageBox()                          #   init a dialog asking the user if they're sure
