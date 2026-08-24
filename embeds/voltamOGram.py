@@ -169,6 +169,8 @@ class VoltamogramPlot(QMainWindow):
                 self.peak_x = peak[0]
                 self.peak_y = peak[1]
                 
+                (x0, y0, x1, y1, m, b) = self.get_baseline_params()
+                
                 ep0, = self.canvas.axes.plot(self.base_x[0], self.base_y[0], 'o',               # set the left baseline endpoint
                                              mfc='#80008033',mec='black', mew=2,
                                              markersize='36', picker=20)
@@ -185,6 +187,17 @@ class VoltamogramPlot(QMainWindow):
                 self.peakpoint, = self.canvas.axes.plot(self.peak_x, self.peak_y, 'o',          # draw the peak marker
                                                         mfc='#013ea833', mec='None',
                                                         markersize='18', picker=18)
+                                                        
+                                                        
+                x_fill, y_base_fill, y_fill = self.resample_for_fill()                                        
+                self.peakfill = self.canvas.axes.fill_between(x_fill, y_base_fill, y_fill, 
+                                                                color='#888888')
+                
+                
+                
+                
+                
+                
                 self.endpoints = (ep0,ep1)                                                      # store the endpoint graphs on self
 
                 self.guess_peak()                                                               # guess the peak between the endpoints
@@ -399,6 +412,7 @@ class VoltamogramPlot(QMainWindow):
         self.baseline.set_ydata(self.base_y)
 
         self.guess_peak()
+        self.calculate_area()
 
         self.canvas.draw_idle()
 
@@ -425,6 +439,27 @@ class VoltamogramPlot(QMainWindow):
             y_max_base = m * x_max + b
 
         self.set_peak(x_max, y_max_base, y_max)
+        
+    def calculate_area(self):
+        print('Plotting area!')
+        x, y_base, y = self.resample_for_fill()
+        #########################################################
+        #
+        #       HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE 
+        #self.peakfill.set(x, y_base, y)
+        #self.canvas.draw_idle()
+        #
+        #
+        #
+        #   FIGURE OUT HOW TO HAVE FILLED POLYGON ADJUST EACH TIME A BASELINE IS MOVED
+        #       THE ABOVE CODE ISN'T IT...
+        #
+        ########################################################################################
+        
+        
+        
+        
+        print('calculating area!')
 
     def drag_peak(self, i):
         """Drags the peak to the selected location, within the bounds
@@ -501,6 +536,16 @@ class VoltamogramPlot(QMainWindow):
             self.parent.vgram_updated()
         except:
             pass
+    
+    def resample_for_fill(self):
+        (x0, y0, x1, y1, m, b) = self.get_baseline_params()
+        lim0 = np.where(self.x == x0)[0][0]
+        lim1 = np.where(self.x == x1)[0][0]+1
+        x = self.x[lim0:lim1]
+        y = self.y[lim0:lim1]
+        y_base = m*x+b
+        
+        return x, y_base, y
         
 
     #####################################
