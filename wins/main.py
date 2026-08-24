@@ -334,21 +334,17 @@ class WindowMain(QMainWindow):
         self.start_async_read()
         
         # Display! 
-        print('a')
         self.w = QWidget()
-        print('b')
         self.w.setLayout(lay)
-        print('c')
         self.setCentralWidget(self.w)
-        print('d')
         
     def update_win(self):
         try:
             self.layout_old = self.layout.copy()                # Store copy of old layout
             self.layout = {}                                    # Reinit self.layout to be refilled 
-            sample_name = self.data[g.S_NAME]
-            self.setWindowTitle(sample_name)                                    # Set the sample window title
-            self.lbl_sample_name.updateTitleLbl(sample_name)                    # Set the sample name
+            session_name = self.data[g.S_NAME]
+            self.setWindowTitle(session_name)                   # Set the session name as the window title
+            self.lbl_sample_name.updateTitleLbl(session_name)   # Set the session name
             self.set_move_to_menu()
             self.set_main_area()
             self.update_highlights()
@@ -516,6 +512,8 @@ class WindowMain(QMainWindow):
             d = d + '<b>Date collected</b>: '+s[g.SA_DATE_COLLECTED] + '<br>'
         if s[g.SA_LOC_COLLECTED] and not self.is_only_whitespace(s[g.SA_LOC_COLLECTED]):
             d = d + '<b>Location</b>: '+s[g.SA_LOC_COLLECTED] + '<br>'
+        if s[g.SA_CONTACT] and not self.is_only_whitespace(s[g.SA_CONTACT]):
+            d = d + '<b>Contact</b>: '+s[g.SA_CONTACT] + '<br>'
         if s[g.SA_COLLECTED_BY] and not self.is_only_whitespace(s[g.SA_COLLECTED_BY]):
             d = d + '<b>By</b>: '+s[g.SA_COLLECTED_BY] + '<br>'
         if s[g.SA_NOTES] and not self.is_only_whitespace(s[g.SA_NOTES]):
