@@ -30,8 +30,9 @@ Follow these instructions if you want to build this python code into a Windows .
 ### Create executable for async processes
 1. Use PyInstaller to convert process.py into executable (cd into processes, run: py -m PyInstaller process.spec)
 2. Move process.exe into 'external' folder
-3. In global_scripts > ov_globals.py ajust to make sure async processes are running thru process.exe
-4. Run OpenVoltam.py, check async process. If they work, continue. Otherwise, adjust.
+3. In global_scripts > ov_globals.py ajust to make sure async processes are running thru process.exe (comment out PROC_RUN_FROM = PROC_RUN_FROM_PYTHON and uncomment
+PROC_RUN_FROM = PROC_RUN_FROM_EXE)
+4. Run OpenVoltam.py, check async processes. If they work, continue. Otherwise, debug.
 
 ### Create executable to launch OpenVoltam
 5. Use PyInstaller to convert OpenVoltam.py into executable (py -m PyInstaller OpenVoltam.spec)
