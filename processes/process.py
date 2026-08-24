@@ -1,6 +1,12 @@
 #process.py
 #
-
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='processlog.log', level=logging.INFO)
+logger.info('')
+logger.info('')
+logger.info('')
+logger.info(' ---Started---')
 
 import sys
 
@@ -11,10 +17,15 @@ import sys
 #################################
 
 def write_data(s):      # Write data to data channel 
-    sys.stdout.write(str(s)+'\n')
-    sys.stdout.flush()
+    try:
+        sys.stdout.write(str(s)+'\n')
+        sys.stdout.flush()
+        logger.info(' successful write: '+str(s))
+    except:
+        logger.info(' ErR0r on write: '+str(s))
     
-write_data("000")
+    
+write_data("zzz")
 
 def write_error(s):     # Write error to error channel
     sys.stderr.write(str(s)+'\n')
@@ -45,7 +56,7 @@ from potentiostat import Potentiostat
 
 
 
-    
+logger.info(' Completed all imports')
 
 #################################
 #                               #
@@ -487,15 +498,19 @@ def save():
 #################################
 #
 def read():
+    logger.info(' Arrived at read')
     write_data("0123456789")
     path = sys.argv[2]                  #   Get path of file to read from
     data = get_data_from_file(path)     #   Read file from path (returns dict)
     if data:
+        logger.info(' Can read data')
         for run in data[g.S_RUNS]:              #   For each run in data dict
             for rep in run[g.R_REPLICATES]:     #   And for each rep of the run
                 rep.pop(g.R_DATA, None)         #   Remove the raw signal data
                 rep.pop(g.R_BACKGROUND, None)   #   Remove the background data
         write_data(str(data))                   #   Write the data (with raw data stripped) to data channel
+        logger.info(' Data read complete!')
+        logger.info(' -----------------------')
     else:
         raise ValueError('Could not read the file, check to make sure file is not corrupted.')
 

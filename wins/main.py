@@ -334,9 +334,13 @@ class WindowMain(QMainWindow):
         self.start_async_read()
         
         # Display! 
+        print('a')
         self.w = QWidget()
+        print('b')
         self.w.setLayout(lay)
+        print('c')
         self.setCentralWidget(self.w)
+        print('d')
         
     def update_win(self):
         try:
@@ -1456,34 +1460,21 @@ class WindowMain(QMainWindow):
     def start_async_read(self):
         print("hello, i'm an async read!")
 
-        ##############
-        #
-        #   HERE! Sort async process stuff for linux
-        #
-        #
-        #################
-
-        if not self.process:
-            self.process = QProcess()
-            self.process.readyReadStandardOutput.connect(self.handle_read_stdout)
-            self.process.readyReadStandardError.connect(self.handle_read_stderr)
-            self.process.finished.connect(self.handle_finished_read)
-            self.status.showMessage("Loading data...")
-            self.progress_bar.setVisible(True)
+        if self.process:
+            return
             
+        self.process = QProcess()
+        self.process.readyReadStandardOutput.connect(self.handle_read_stdout)
+        self.process.readyReadStandardError.connect(self.handle_read_stderr)
+        self.process.finished.connect(self.handle_finished_read)
+        self.status.showMessage("Loading data...")
+        self.progress_bar.setVisible(True)
+        
+        if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
+            self.process.start(g.PROC_PYTHON_CMD, [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_READ, self.path])
+        else:
+            self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_READ, self.path])
             
-            if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
-                self.process.start(g.PROC_PYTHON_CMD, [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_READ, self.path])
-                print('proc cmd: '+g.PROC_PYTHON_CMD)
-                print('proc_script: '+g.PROC_SCRIPT_PYTHON)
-                print('proc type: '+g.PROC_TYPE_READ)
-                print('path: '+self.path)
-                print('cwd: '+getcwd())
-            else:
-                self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_READ, self.path])
-            
-            
-
     def handle_read_stdout(self):
         print('load normal msg!')
         data = self.process.readAllStandardOutput()
@@ -1641,8 +1632,8 @@ class WindowMain(QMainWindow):
         if self.force_close:
             print('force closing')
             self.close_children(event, force=True)
-            self.parent.children.remove(self)   # remove reference to this window from parent for memory cleanup
-            event.accept()
+            self.accept_close(event)
+            
         else:
             if self.children:                       # if there are child windows open, confirm user wants all windows to close
                 print(self.children)
@@ -1663,8 +1654,7 @@ class WindowMain(QMainWindow):
                 
             if resp == QMessageBox.StandardButton.Ok:
                 self.close_children(event, force=False)
-                self.parent.children.remove(self)   # remove reference to this window from parent for memory cleanup
-                event.accept()
+                self.accept_close(event)
             else:
                 event.ignore()
                 
@@ -1677,6 +1667,11 @@ class WindowMain(QMainWindow):
             current_child = self.children[0]
             if force: self.children[0].force_close = True
             self.children[0].close()        # closing the 0th child window (closing pops it from list)
+        
+    def accept_close(self, closeEvent):
+        if self in self.parent.children:
+            self.parent.children.remove(self)   # remove reference to this window from parent for memory cleanup
+        closeEvent.accept()
         
         
 

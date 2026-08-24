@@ -13,7 +13,7 @@ from embeds.stdAddFitter import StdAddFitterPlot
 
 from functools import partial
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QEvent
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QMainWindow,
@@ -1330,6 +1330,15 @@ class WindowCalculate(QMainWindow):
         Updates this window with new data as needed"""
         self.update_calc_list()
         return
+        
+    def event(self, event):                                 # General purpose event handler
+        if event.type() == QEvent.Type.ActivationChange:    # Check if the event is changing the activation status of the window
+            if self.isActiveWindow():                       #   Check whether the event *activated* the window
+                main = self.parent
+                welcome = main.parent
+                if not fileOkRoutine(welcome, main, self):      # Run routine to check if file is okay
+                    return True
+        return QMainWindow.event(self, event)               # Forward all events to appropriate QMainWindow event handler
 
     def showEvent(self, event):
         if self.mode == g.WIN_MODE_EMBED:
@@ -1360,6 +1369,7 @@ class WindowCalculate(QMainWindow):
         the passed event."""
         self.parent.setEnabled(True)
         self.parent.set_enabled_children(True)
-        self.parent.children.remove(self)
+        if self in self.parent.children:
+            self.parent.children.remove(self)
         closeEvent.accept()
                                         

@@ -33,7 +33,7 @@ from devices.supportedDevices import devices as DEVICES
 from embeds.runPlots import RunPlots
 from embeds.voltamOGram import VoltamogramPlot
 
-from PyQt6.QtCore import QProcess, QDateTime
+from PyQt6.QtCore import QProcess, QEvent, QDateTime
 from PyQt6.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -859,6 +859,15 @@ class WindowRunView(QMainWindow):
         """This is necessary for parent window to call this one to update.
         Please do not delete!"""
         return
+        
+    def event(self, event):                                 # General purpose event handler
+        if event.type() == QEvent.Type.ActivationChange:    # Check if the event is changing the activation status of the window
+            if self.isActiveWindow():                       #   Check whether the event *activated* the window
+                main = self.parent
+                welcome = main.parent
+                if not fileOkRoutine(welcome, main, self):      # Run routine to check if file is okay
+                    return True
+        return QMainWindow.event(self, event)               # Forward all events to appropriate QMainWindow event handler
     
     def showEvent(self, event):
         self.parent.setEnabled(False)
@@ -881,6 +890,7 @@ class WindowRunView(QMainWindow):
         """Take in a close event. Removes the reference to itself in the parent's
         self.children list (so reference can be cleared from memory) and accepts
         the passed event."""
-        self.parent.children.remove(self)
+        if self in self.parent.children:
+            self.parent.children.remove(self)
         closeEvent.accept()
 

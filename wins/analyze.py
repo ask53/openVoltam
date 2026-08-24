@@ -272,7 +272,9 @@ class WindowAnalyze(QMainWindow):
     def event(self, event):                                 # General purpose event handler
         if event.type() == QEvent.Type.ActivationChange:    # Check if the event is changing the activation status of the window
             if self.isActiveWindow():                       #   Check whether the event *activated* the window
-                if not fileOkRoutine(self.parent.parent, self.parent, self):      # Run routine to check if file is okay
+                main = self.parent
+                welcome = main.parent
+                if not fileOkRoutine(welcome, main, self):      # Run routine to check if file is okay
                     return True
         return QMainWindow.event(self, event)               # Forward all events to appropriate QMainWindow event handler
         
@@ -307,7 +309,8 @@ class WindowAnalyze(QMainWindow):
         the passed event."""
         self.parent.setEnabled(True)
         self.parent.set_enabled_children(True)
-        self.parent.children.remove(self)
+        if self in self.parent.children:
+            self.parent.children.remove(self)
         closeEvent.accept()
         
 
