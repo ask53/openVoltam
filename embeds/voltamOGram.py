@@ -191,7 +191,7 @@ class VoltamogramPlot(QMainWindow):
                                                         
                 x_fill, y_base_fill, y_fill = self.resample_for_fill()                                        
                 self.peakfill = self.canvas.axes.fill_between(x_fill, y_base_fill, y_fill, 
-                                                                color='#888888')
+                                                                color='#fcecba55')
                 
                 
                 
@@ -412,7 +412,7 @@ class VoltamogramPlot(QMainWindow):
         self.baseline.set_ydata(self.base_y)
 
         self.guess_peak()
-        self.calculate_area()
+        self.update_area()
 
         self.canvas.draw_idle()
 
@@ -432,7 +432,7 @@ class VoltamogramPlot(QMainWindow):
             x_min_index = np.where(self.x == x0)[0][0]  # get data index of lower bound
             x_max_index = np.where(self.x == x1)[0][0]  # get data index of upper bound
             
-            i_max = np.argmax(self.y[x_min_index:x_max_index]) + x_min_index    # get index of highest point between bounds
+            i_max = np.argmax(self.y[x_min_index:x_max_index+1]) + x_min_index    # get index of highest point between bounds
 
             y_max = self.y[i_max]
             x_max = self.x[i_max]
@@ -440,21 +440,10 @@ class VoltamogramPlot(QMainWindow):
 
         self.set_peak(x_max, y_max_base, y_max)
         
-    def calculate_area(self):
-        print('Plotting area!')
+    def update_area(self):
         x, y_base, y = self.resample_for_fill()
-        #########################################################
-        #
-        #       HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE 
-        #self.peakfill.set(x, y_base, y)
-        #self.canvas.draw_idle()
-        #
-        #
-        #
-        #   FIGURE OUT HOW TO HAVE FILLED POLYGON ADJUST EACH TIME A BASELINE IS MOVED
-        #       THE ABOVE CODE ISN'T IT...
-        #
-        ########################################################################################
+        self.peakfill.set_data(x, y_base, y)
+        self.canvas.draw_idle()
         
         
         
@@ -539,11 +528,79 @@ class VoltamogramPlot(QMainWindow):
     
     def resample_for_fill(self):
         (x0, y0, x1, y1, m, b) = self.get_baseline_params()
-        lim0 = np.where(self.x == x0)[0][0]
-        lim1 = np.where(self.x == x1)[0][0]+1
-        x = self.x[lim0:lim1]
-        y = self.y[lim0:lim1]
-        y_base = m*x+b
+        lim0 = np.where(self.x == x0)[0][0]                                 # start from one above the lower basepoint
+        lim1 = np.where(self.x == x1)[0][0]+1                               # end on the last point below the upper basepoint
+        
+        x = self.x[lim0:lim1]                                               # get x range that matches extent of baseline
+        y = self.y[lim0:lim1]                                               # get y range that matches extent of baseline
+        y_base = m*x+b                                                      # resample baseline to match # of points and values in x array
+       
+
+
+
+
+
+
+
+
+
+
+        ####################################################################33
+        #
+        #   HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE 
+        #
+        #   Sort out the intersection finder, such that:
+        #       1. The first basepoint is always the first intersection
+        #       2. The second basepoint is always the last intersection
+        #       3. Figure out how to draw this if the intersection occurs between two points (see interpolation?)
+        #
+        ###################################################################################################################
+        print()
+        print()
+        print('x:')
+        print(x)
+        print('sign:')
+        print(np.sign(y-y_base))
+        print('diff:')
+        print(np.diff(np.sign(y-y_base)))
+        print('argwhere:')
+        print(np.argwhere(np.diff(np.sign(y-y_base))))
+        print()
+        intersections = np.argwhere(np.diff(np.sign(y-y_base))).flatten()   # find all points at which the baseline crosses the curve
+        print('pre adjustment intersections:')
+        print(intersections)
+        if len(intersections) == 0:
+            intersections = np.array([0, len(x)-1])
+        if int(intersections[0]) != 0:
+            intersections = np.concatenate((np.array([0]), intersections))
+        if int(intersections[-1]) != len(x)-1:
+            intersections = np.concatenate((intersections, np.array([len(x)-1])))
+        print('post-adjustment intersections:')    
+        print(intersections)
+        if self.peak_x == x[0]:             # if peak is at lowest limit of baseline
+            print('peak at lower!')
+            lim0 = 0
+            lim1 = intersections[1]
+        elif self.peak_x == x[-1]:          # if peak is at highest limit of baseline
+            print('peak at upper!')
+            lim0 = intersections[-2]
+            lim1 = intersections[-1]
+        else:                               # if peak is not on an intersection point at all
+            print('peak in the middle!')
+            print(self.peak_x)
+            peak_i = np.where(x==self.peak_x)
+            dif = abs(intersections-peak_i)
+            i = np.argmin(dif)
+            if intersections[i] > peak_i:
+                lim0 = intersections[i-1]
+                lim1 = intersections[i]
+            else:
+                lim0 = intersections[i]
+                lim1 = intersections[i+1]
+        
+        x = x[lim0:lim1]                    # sample all three to the width of the peak
+        y = y[lim0:lim1]
+        y_base = y_base[lim0:lim1]
         
         return x, y_base, y
         
