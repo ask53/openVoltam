@@ -34,6 +34,7 @@ from matplotlib.figure import Figure
 import numpy as np
 import pandas as pd
 from scipy.signal import savgol_filter, butter, filtfilt, argrelextrema
+from math import isclose
 
 from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QWidget
 
@@ -157,7 +158,7 @@ class VoltamogramPlot(QMainWindow):
             # 6. Show smoothed data
             if showsmoothed:
                 self.smoothed, = self.canvas.axes.plot(x, y, color, linestyle=linestyle,
-                                      linewidth=2, label=lbl, picker=2)          
+                                      linewidth=2, label=lbl, picker=2)  
 
             # 7. If predictpeak, show baseline (with adjustable handles) and peak location
             if predictpeak:
@@ -191,6 +192,8 @@ class VoltamogramPlot(QMainWindow):
                                                         
                 x_fill, y_base_fill, y_fill = self.resample_for_fill()                                        
                 self.peakfill = self.canvas.axes.fill_between(x_fill, y_base_fill, y_fill, 
+                                                                where=(y_fill > y_base_fill),
+                                                                interpolate=True,
                                                                 color='#fcecba55')
                 
                 
@@ -442,7 +445,10 @@ class VoltamogramPlot(QMainWindow):
         
     def update_area(self):
         x, y_base, y = self.resample_for_fill()
-        self.peakfill.set_data(x, y_base, y)
+        if self.peak_y > self.peak_y_base:                          # If peak is above baseline
+            self.peakfill.set_data(x, y_base, y, where=(y>y_base))
+        else:                                                       # If peak is below baseline
+            self.peakfill.set_data(x, y_base, y, where=(y<y_base))
         self.canvas.draw_idle()
         
         
@@ -472,6 +478,7 @@ class VoltamogramPlot(QMainWindow):
         up from (x, y0) to (x, y1) and moves peakpoint accordingly."""
         
         self.peak_x = x
+        self.peak_y_base = y0
         self.peak_y = y1
         self.peakline.set_xdata([x,x])
         self.peakline.set_ydata([y0,y1])
@@ -535,74 +542,74 @@ class VoltamogramPlot(QMainWindow):
         y = self.y[lim0:lim1]                                               # get y range that matches extent of baseline
         y_base = m*x+b                                                      # resample baseline to match # of points and values in x array
        
-
-
-
-
-
-
-
-
-
-
-        ####################################################################33
-        #
-        #   HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE 
-        #
-        #   Sort out the intersection finder, such that:
-        #       1. The first basepoint is always the first intersection
-        #       2. The second basepoint is always the last intersection
-        #       3. Figure out how to draw this if the intersection occurs between two points (see interpolation?)
-        #
-        ###################################################################################################################
-        print()
-        print()
-        print('x:')
-        print(x)
-        print('sign:')
-        print(np.sign(y-y_base))
-        print('diff:')
-        print(np.diff(np.sign(y-y_base)))
-        print('argwhere:')
-        print(np.argwhere(np.diff(np.sign(y-y_base))))
-        print()
-        intersections = np.argwhere(np.diff(np.sign(y-y_base))).flatten()   # find all points at which the baseline crosses the curve
-        print('pre adjustment intersections:')
-        print(intersections)
-        if len(intersections) == 0:
-            intersections = np.array([0, len(x)-1])
-        if int(intersections[0]) != 0:
-            intersections = np.concatenate((np.array([0]), intersections))
-        if int(intersections[-1]) != len(x)-1:
-            intersections = np.concatenate((intersections, np.array([len(x)-1])))
-        print('post-adjustment intersections:')    
-        print(intersections)
+        ints = self.get_intersections(x, y, y_base)
+         
         if self.peak_x == x[0]:             # if peak is at lowest limit of baseline
             print('peak at lower!')
             lim0 = 0
-            lim1 = intersections[1]
+            lim1 = ints[1]
         elif self.peak_x == x[-1]:          # if peak is at highest limit of baseline
             print('peak at upper!')
-            lim0 = intersections[-2]
-            lim1 = intersections[-1]
+            lim0 = ints[-2]
+            lim1 = ints[-1]
         else:                               # if peak is not on an intersection point at all
             print('peak in the middle!')
-            print(self.peak_x)
-            peak_i = np.where(x==self.peak_x)
-            dif = abs(intersections-peak_i)
-            i = np.argmin(dif)
-            if intersections[i] > peak_i:
-                lim0 = intersections[i-1]
-                lim1 = intersections[i]
+            peak_i = np.where(x==self.peak_x)[0]
+            dif = abs(np.array(ints)-peak_i)
+            i = int(np.argmin(dif))
+            if ints[i] > peak_i:
+                lim0 = ints[i-1]
+                lim1 = ints[i]
             else:
-                lim0 = intersections[i]
-                lim1 = intersections[i+1]
+                lim0 = ints[i]
+                lim1 = ints[i+1]
+            
+        # If an intersection is between points, change the index to the outer point
+        if lim0%1 != 0:
+            lim0 = int(lim0-0.5)
+        if lim1%1 != 0:
+            lim1 = int(lim1+0.5)
+        lim1 = lim1+1           # Add 1 to use for indexing (lim1 is first point NOT included)
         
         x = x[lim0:lim1]                    # sample all three to the width of the peak
         y = y[lim0:lim1]
         y_base = y_base[lim0:lim1]
-        
+         
         return x, y_base, y
+        
+    def get_intersections(self, x, y1, y2):
+        """Takes in three numpy arrays, x, y1, and y2. y1 and y2 are functions of x
+        such that they can be plotted y1 v. x and y2 v. x. Thus all three arrays must
+        be the same length. We assume that each array may contain floats of maximum 
+        length. Returns the indices of all intersections between curves y1 and y2. If
+        a point on the discrete curves is a "perfect" intersection (or at least a close
+        approximation of a perfect intersection using the math.isclose method to smooth
+        out issues with storing floats) the index of the intersection is returned. If 
+        the curves cross between points a and a+1, then the value a+0.5 is stored, to 
+        indicate that the intersection is somewhere between x=a and x=a+1 (it does NOT
+        indicate that the intersection is exactly at x=a+0.5!) 
+        Returns:
+            List of indices of intersections"""
+        ints = []
+        '''#FOR TESTING:
+        print('LEFT:')
+        print('y1: ('+str(float(x[0]))+', '+str(float(y1[0]))+')')
+        print('y2: ('+str(float(x[0]))+', '+str(float(y2[0]))+')')
+                          
+        print('RIGHT:')   
+        print('y1: ('+str(float(x[-1]))+', '+str(float(y1[-1]))+')')
+        print('y2: ('+str(float(x[-1]))+', '+str(float(y2[-1]))+')')
+        print()'''
+        for i in range(0, int(len(x))-1):
+            if isclose(y1[i], y2[i]):
+                ints.append(i)
+            elif isclose(y1[i+1], y2[i+1]):
+                pass
+            elif (y2[i]-y1[i])*(y2[i+1]-y1[i+1]) < 0:
+                ints.append(i+0.5)               
+        if isclose(y1[-1], y2[-1]): 
+            ints.append(int(len(x))-1)     # Include last point as intersection if the curves touch
+        return ints
         
 
     #####################################
@@ -808,8 +815,7 @@ class VoltamogramPlot(QMainWindow):
         
     def get_analysis_results(self):
         (x0, y0, x1, y1, m, b) = self.get_baseline_params()
-        y_base = m*self.peak_x+b
-        ht = self.peak_y-y_base
+        ht = self.peak_y-self.peak_y_base
         deriv_l, deriv_r, deriv_avg = self.get_derivs()
         
         return {g.A_PEAK_X: float(self.peak_x),
