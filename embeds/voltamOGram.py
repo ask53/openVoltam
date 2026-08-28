@@ -154,6 +154,8 @@ class VoltamogramPlot(QMainWindow):
             # 5. If predictpeak, guess baseline and peak locations, store as vars in self
             if predictpeak:
                 peak, base = self.get_predicted_basepoints(x, y, method)
+                print('predicted peak at:')
+                print(str(peak))
             
             # 6. Show smoothed data
             if showsmoothed:
@@ -189,7 +191,6 @@ class VoltamogramPlot(QMainWindow):
                                                         mfc='#013ea833', mec='None',
                                                         markersize='18', picker=18)
                                                         
-                                                        
                 x_fill, y_base_fill, y_fill = self.resample_for_fill()                                        
                 self.peakfill = self.canvas.axes.fill_between(x_fill, y_base_fill, y_fill, 
                                                                 where=(y_fill > y_base_fill),
@@ -201,10 +202,12 @@ class VoltamogramPlot(QMainWindow):
                 
                 
                 
-                self.endpoints = (ep0,ep1)                                                      # store the endpoint graphs on self
-
-                self.guess_peak()                                                               # guess the peak between the endpoints
-
+                
+                self.endpoints = (ep0,ep1)          # store the endpoints on self
+                                                    
+                self.guess_peak()                   # guess the peak between the endpoints
+                self.update_area()                  # update the plotted area based on guessed peak
+                
                 # Connect callback handlers for picking the graph, clicking the graph, and moving the mouse
                 self.canvas.callbacks.connect('pick_event', self.on_pick)
                 self.canvas.mpl_connect('button_release_event', self.on_but_release)
@@ -290,6 +293,8 @@ class VoltamogramPlot(QMainWindow):
         peaks_x, peaks_y = self.get_x_y_values(x, y, maxes0_i)   # get x and y vaules of the local maxes of y
 
         if len(peaks_x) == 0:                               # no peaks id'd, set baseline endpoints to end of run values
+            i = np.argmax(y)
+            peak = (x[i], y[i])
             return peak, base 
                                                     
         vmin = method[g.M_PEAK_V_MIN]                       # if there is at least 1 identified peak    
@@ -405,6 +410,11 @@ class VoltamogramPlot(QMainWindow):
     def move_endpoint(self, i, x, y):
         """moves baseline endpoint with index i to position (x,y).
         Updates peakline position to match adjusted baseline."""
+        
+        # Prevent both basepoints occupying same space (causes div by 0 errors!):
+        j = 1-i                                         # get the other index
+        if self.base_x[j] == x and self.base_y[j] == y: # if other basepoint is already there
+            return                                      #   return without moving basepoint
         
         self.base_x[i] = x
         self.base_y[i] = y
@@ -541,9 +551,9 @@ class VoltamogramPlot(QMainWindow):
         x = self.x[lim0:lim1]                                               # get x range that matches extent of baseline
         y = self.y[lim0:lim1]                                               # get y range that matches extent of baseline
         y_base = m*x+b                                                      # resample baseline to match # of points and values in x array
-       
+        
         ints = self.get_intersections(x, y, y_base)
-         
+        
         if self.peak_x == x[0]:             # if peak is at lowest limit of baseline
             print('peak at lower!')
             lim0 = 0
@@ -557,6 +567,7 @@ class VoltamogramPlot(QMainWindow):
             peak_i = np.where(x==self.peak_x)[0]
             dif = abs(np.array(ints)-peak_i)
             i = int(np.argmin(dif))
+            
             if ints[i] > peak_i:
                 lim0 = ints[i-1]
                 lim1 = ints[i]
@@ -574,7 +585,7 @@ class VoltamogramPlot(QMainWindow):
         x = x[lim0:lim1]                    # sample all three to the width of the peak
         y = y[lim0:lim1]
         y_base = y_base[lim0:lim1]
-         
+        
         return x, y_base, y
         
     def get_intersections(self, x, y1, y2):
