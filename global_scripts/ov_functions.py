@@ -69,16 +69,13 @@ def fileOkRoutine(welcome, main, self):
     if main.dealing_with_file_issue or main.closed:    # Do not continue if an issue is currently being processed
         return
     if not exists(main.path):           # If we CANNOT find the file, ask user to reopen
-        print('ERROR: FILE MISSING!!!')
         handleMissingFile(welcome, main, self)
         return False
     else:                               # If we CAN find the file
         if main.last_modified and main.last_modified != getmtime(main.path):  # If the file has been changed by another program
-            print('ERROR: FILE MODIFIED')
             handleChangedFile(welcome, main, self)
             return False
         else:                           # If file NOT corrupted
-            print('NO ISSUE')
             return True                 # We're good to go! 
             
 def handleMissingFile(welcome, main, self):
@@ -92,7 +89,6 @@ def handleMissingFile(welcome, main, self):
     elif resp == QMessageBox.StandardButton.Ok:
         reopenSession(welcome, main, self)
     main.dealing_with_file_issue = False
-    print('done handling missing file!')
     
 def handleChangedFile(welcome, main, self):
     main.dealing_with_file_issue = True
@@ -105,7 +101,6 @@ def handleChangedFile(welcome, main, self):
     elif resp == QMessageBox.StandardButton.Ok:
         reopenSession(welcome, main, self, main.path)     
     main.dealing_with_file_issue = False    
-    print('done handling changed file!')
     
 def reopenSession(welcome, main, self, path=False):
     """Takes in a main window object and an optional current window option. Only pass a
@@ -116,14 +111,10 @@ def reopenSession(welcome, main, self, path=False):
     selected file."""
     if path: path = ''.join(path)   # Copy entire path (in case pointer gets destroyed in close)
     welcome.open_session(path)      # Open new session from same path
-    print('after opening new window, welcome children:')
-    print(welcome.children)
     closeSession(main, self)        # Close the existing session
     
     
 def closeSession(main, self):
-    print(self)
-    print(main)
     if (not self in main.children) and (self != main):
         self.force_close = True
         self.close()    # If current window triggered this while openeing, it might not yet be in main.children

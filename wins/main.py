@@ -1623,23 +1623,17 @@ class WindowMain(QMainWindow):
     def event(self, event):                                 # General purpose event handler
         if event.type() == QEvent.Type.ActivationChange:    # Check if the event is changing the activation status of the window
             if self.isActiveWindow():                       #   Check whether the event *activated* the window
-                print('reactivated and checking!')
-                print('handle status: '+str(self.dealing_with_file_issue))
-                print('closed status: '+str(self.closed))
-                print(self)
                 if not fileOkRoutine(self.parent, self, self):      # Run routine to check if file is okay
                     return True
         return QMainWindow.event(self, event)               # Forward all events to appropriate QMainWindow event handler
         
     def closeEvent(self, event):
         if self.force_close:
-            print('force closing')
             self.close_children(event, force=True)
             self.accept_close(event)
             
         else:
             if self.children:                       # if there are child windows open, confirm user wants all windows to close
-                print(self.children)
                 msg_box = QMessageBox()    
                 msg_box.setWindowTitle("Are you sure?") 
                 msg_box.setText('This will close this sample and all associated windows including active runs, run configurations, and analysis.\n\nAre you sure you want to close?\n')
