@@ -94,6 +94,7 @@ class WindowMain(QMainWindow):
         self.last_modified = None               # Stores timestamp of last time OV modified the file
         self.dealing_with_file_issue = False    # Flag for whether a file issue (not located, corrupted, etc.) is being actively handled
         self.force_close = False                # A flag that indicates whether to skip the close event handler
+        self.closed = False                     # Flag that indicates that window has been closed
         
         #####################
         #                   #
@@ -1622,6 +1623,10 @@ class WindowMain(QMainWindow):
     def event(self, event):                                 # General purpose event handler
         if event.type() == QEvent.Type.ActivationChange:    # Check if the event is changing the activation status of the window
             if self.isActiveWindow():                       #   Check whether the event *activated* the window
+                print('reactivated and checking!')
+                print('handle status: '+str(self.dealing_with_file_issue))
+                print('closed status: '+str(self.closed))
+                print(self)
                 if not fileOkRoutine(self.parent, self, self):      # Run routine to check if file is okay
                     return True
         return QMainWindow.event(self, event)               # Forward all events to appropriate QMainWindow event handler
@@ -1669,6 +1674,7 @@ class WindowMain(QMainWindow):
     def accept_close(self, closeEvent):
         if self in self.parent.children:
             self.parent.children.remove(self)   # remove reference to this window from parent for memory cleanup
+        self.closed = True
         closeEvent.accept()
         
         

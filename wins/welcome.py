@@ -49,12 +49,6 @@ class WindowWelcome(QMainWindow):
         # set the window parameters
         self.setWindowTitle(l.window_home[g.L])
         
-        # define possible popup windows (not modals)
-        '''self.w_new_sample = WindowSample(False, self)
-        self.w_edit_config = WindowMethod(False)
-        self.w_samples = []
-        self.ws_view_config = []'''
-        
         # Create the text intro label
         lbl_about = QLabel(l.info_msg[g.L])
         lbl_about.setWordWrap(True)
@@ -195,6 +189,13 @@ class WindowWelcome(QMainWindow):
         except Exception as e:
             print(e)
 
-
+    def closeEvent(self, event):
+        if self.children:       # if there are any sub-windows
+            print('hiding!')
+            self.hide()         # hide the welcome window instead of closing it
+            event.ignore()
+        else:
+            print('closing!')
+            event.accept()      # if no sub windos, close! 
 
 
