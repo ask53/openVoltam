@@ -1636,7 +1636,7 @@ class WindowMain(QMainWindow):
             if self.children:                       # if there are child windows open, confirm user wants all windows to close
                 msg_box = QMessageBox()    
                 msg_box.setWindowTitle("Are you sure?") 
-                msg_box.setText('This will close this sample and all associated windows including active runs, run configurations, and analysis.\n\nAre you sure you want to close?\n')
+                msg_box.setText('This will close this sample and all associated windows including active runs, run configurations, and analysis. Unsaved progress will be lost.\n\nAre you sure you want to close?\n')
                 msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
     
                 # customize button language text for multi-language support
@@ -1650,7 +1650,7 @@ class WindowMain(QMainWindow):
                 resp = QMessageBox.StandardButton.Ok
                 
             if resp == QMessageBox.StandardButton.Ok:
-                self.close_children(event, force=False)
+                self.close_children(event, force=True)
                 self.accept_close(event)
             else:
                 event.ignore()

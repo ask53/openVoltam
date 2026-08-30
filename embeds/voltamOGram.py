@@ -162,8 +162,12 @@ class VoltamogramPlot(QMainWindow):
                 self.smoothed, = self.canvas.axes.plot(x, y, color, linestyle=linestyle,
                                       linewidth=2, label=lbl, picker=2) 
 
-                self.canvas.axes.plot(x, y, 'o')
-
+                # TO SEE ALL POINTS, FOR DEBUGGING: #######
+                #
+                #self.canvas.axes.plot(x, y, 'o')
+                #
+                ###########################################
+                
             # 7. If predictpeak, show baseline (with adjustable handles) and peak location
             if predictpeak:
                 self.x = x      # store x and y for access from mouseclick/move handlers
