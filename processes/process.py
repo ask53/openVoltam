@@ -1,38 +1,15 @@
 #process.py
 #
+'''# Uncomment for logging during async process!
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='processlog.log', level=logging.INFO)
 logger.info('')
 logger.info('')
 logger.info('')
-logger.info(' ---Started---')
+logger.info(' ---Started---')'''
 
-import sys
-
-#################################
-#                               #
-#   GENERAL WRITING FUNCTIONS   #
-#                               #
-#################################
-
-def write_data(s):      # Write data to data channel 
-    try:
-        sys.stdout.write(str(s)+'\n')
-        sys.stdout.flush()
-        logger.info(' successful write: '+str(s))
-    except:
-        logger.info(' ErR0r on write: '+str(s))
-    
-    
-write_data("zzz")
-
-def write_error(s):     # Write error to error channel
-    sys.stderr.write(str(s)+'\n')
-    sys.stderr.flush()
-    
-    
-    
+import sys    
     
 from os import getcwd
 from os.path import exists
@@ -45,19 +22,31 @@ from global_scripts.ov_functions import (get_data_from_file,
                                            remove_data_from_layout,
                                            get_method_from_file_data,
                                            get_run_from_file_data,
+                                           get_sample_from_file_data,
                                            get_rep,
                                            get_v_max_abs)
 
 from ast import literal_eval
-from csv import DictWriter
+from csv import writer, DictWriter
 from re import sub
 import serial.tools.list_ports
 from potentiostat import Potentiostat
 
 
+#################################
+#                               #
+#   GENERAL WRITING FUNCTIONS   #
+#                               #
+#################################
 
-logger.info(' Completed all imports')
+def write_data(s):      # Write data to data channel 
+    sys.stdout.write(str(s)+'\n')
+    sys.stdout.flush()
 
+def write_error(s):     # Write error to error channel
+    sys.stderr.write(str(s)+'\n')
+    sys.stderr.flush()
+    
 #################################
 #                               #
 #       OVERWRITE               #
@@ -82,65 +71,109 @@ def export():
     writepath = sys.argv[3]             # get path of folder to write to
     tasks = literal_eval(sys.argv[4])   # cast sys.argv[4] from string to list of tuples
     data = get_data_from_file(readpath) # read file (returns dict)
-    for task in tasks:
-        try:
-            run_id = task[0]
-            rep_id = task[1]
-            run = next(filter(lambda x: x[g.R_UID_SELF] == run_id, data[g.S_RUNS]), None)
-            rep = next(filter(lambda x: x[g.R_UID_SELF] == rep_id, run[g.R_REPLICATES]), None)
-            repData = rep[g.R_DATA]
-            repBack = rep[g.R_BACKGROUND]
-
-            samplename=readpath.split('/')[-1]              # get filename from path 
-            groups = samplename.split('.')                  # begin removing the extension (split at all periods)
-            samplename = '.'.join(groups[:len(groups)-1])   # finish removing the extension (rejoin all with periods except for last)
-
-            if repData:                
-                filename = samplename+'_'+run_id+'_'+rep_id+'_SIGNAL'      # add on the run and rep IDs
-                path = writepath+'/'+filename                         # append filename to path
-                
-
-                suffix = ''
-                i = 1
-                while exists(path+suffix+'.csv'):          # while the file already exists
-                    suffix = '_COPY'+str(i)                     # tack on a suffix
-                    i = i+1                                     # and increment the counter until we find a filename that is not taken!
-                path = path+suffix+'.csv'                       # generate that novel filename
-
-                keys = list(repData[0].keys())
-                with open(path, 'w', encoding='UTF8', newline='') as f:
-                    writer = DictWriter(f, fieldnames=keys) # Tell the writer we are writing from a dictionary with 'keys' as headers
-                    writer.writeheader()                        # Write the header row
-                    writer.writerows(repData)                   # Write  the data'''
-
-                write_data(str(task))
-            else:
-                write_error(str(task))
-
-            if repBack:
-                filename = samplename+'_'+run_id+'_'+rep_id+'_BACKGROUND'  # add on the run and rep IDs
-                path = writepath+'/'+filename
-
-                suffix = ''
-                i = 1
-                while exists(path+suffix+'.csv'):          # while the file already exists
-                    suffix = '_COPY'+str(i)                     # tack on a suffix
-                    i = i+1                                     # and increment the counter until we find a filename that is not taken!
-                path = path+suffix+'.csv'                       # generate that novel filename
-
-                keys = list(repBack[0].keys())
-                with open(path, 'w', encoding='UTF8', newline='') as f:
-                    writer = DictWriter(f, fieldnames=keys) # Tell the writer we are writing from a dictionary with 'keys' as headers
-                    writer.writeheader()                        # Write the header row
-                    writer.writerows(repBack)                   # Write  the data'''
-                
-                
-        except Exception as e:          # If a specific export task generates an error
-            write_error(str(e))
-            write_error(str(task))
-
-
     
+    filename = 'ov-export'
+    path = writepath+'/'+filename              # append filename to path
+    suffix = ''
+    i = 1
+    while exists(path+suffix+'.csv'):          # while the file already exists
+        suffix = '_'+str(i)                    # tack on a suffix
+        i = i+1                                # and increment the counter until we find a filename that is not taken!
+    path = path+suffix+'.csv'                  # generate that novel filename
+    try:
+        with open(path, 'w', encoding='UTF8', newline='') as f:
+            w = writer(f)
+            w.writerow(['--- ', 'OpenVoltam Export File', ' ---'])
+            write_blank_rows(w, 1)
+            w.writerow(['Lab session', data[g.S_NAME], ''])
+            write_blank_rows(w,3)
+            for task in tasks:
+                run_id = task[0]
+                rep_id = task[1]
+                run = next(filter(lambda x: x[g.R_UID_SELF] == run_id, data[g.S_RUNS]), None)
+                rep = next(filter(lambda x: x[g.R_UID_SELF] == rep_id, run[g.R_REPLICATES]), None)
+                sample = get_sample_from_file_data(data, run[g.R_UID_SAMPLE])
+                
+                # Write sample info
+                w.writerow(['---','Sample info','---'])
+                w.writerow(['Sample name', sample[g.SA_NAME], ''])
+                if sample[g.SA_DATE_COLLECTED] == g.QT_DEFAULT_DATE:   
+                    w.writerow(['Date collected', '', ''])
+                else: 
+                    w.writerow(['Date collected', sample[g.SA_DATE_COLLECTED], ''])
+                w.writerow(['Location', sample[g.SA_LOC_COLLECTED], ''])
+                w.writerow(['Collected by', sample[g.SA_COLLECTED_BY], ''])
+                w.writerow(['Contact', sample[g.SA_CONTACT], ''])
+                w.writerow(['Notes', sample[g.SA_NOTES], ''])
+                write_blank_rows(w,1)
+                
+                # Write run/rep info
+                w.writerow(['---','Run info','---'])
+                w.writerow(['Run ID', run[g.R_UID_SELF], ''])
+                w.writerow(['Rep ID', rep[g.R_UID_SELF], ''])
+                w.writerow(['Device', run[g.R_DEVICE],''])
+                runtype = run[g.R_TYPE]
+                w.writerow(['Type', runtype,''])
+                if runtype == g.R_TYPE_SAMPLE:
+                    w.writerow(['Sample volume ',run[g.R_SAMPLE_VOL],''])
+                    w.writerow(['Total volume ',run[g.R_TOTAL_VOL],''])
+                elif runtype == g.R_TYPE_STDADD:
+                    w.writerow(['Volume standard added',run[g.R_STD_ADDED_VOL],''])
+                    w.writerow(['Standard concentration',run[g.R_STD_CONC],''])
+                w.writerow(['Run notes',run[g.R_NOTES],''])
+                write_blank_rows(w,1)
+                
+                # Write analysis
+                a = rep[g.R_ANALYSIS]
+                w.writerow(['---','Run analysis','---'])
+                if not a:
+                    w.writerow(['NO','DATA','AVAILABLE'])
+                else:
+                    w.writerow(['Peak x',a[g.A_PEAK_X],''])
+                    w.writerow(['Peak y',a[g.A_PEAK_Y],''])
+                    w.writerow(['Peak height over baseline',a[g.A_PEAK_HEIGHT],''])
+                    w.writerow(['Left basepoint x',a[g.A_BASE_0_X],''])
+                    w.writerow(['Left basepoint y',a[g.A_BASE_0_Y],''])
+                    w.writerow(['Right basepoint x',a[g.A_BASE_1_X],''])
+                    w.writerow(['Right basepoint y',a[g.A_BASE_1_Y],''])
+                    w.writerow(['Left max derivative',a[g.A_DERIV_LEFT],''])
+                    w.writerow(['Right max derivative',a[g.A_DERIV_RIGHT],''])
+                    w.writerow(['Mean max derivative',a[g.A_DERIV_MEAN],''])
+                    w.writerow(['Peak area',a[g.A_AREA],''])
+                write_blank_rows(w,1)
+                
+                # Write signal data
+                repData = rep[g.R_DATA]
+                w.writerow(['---','Data: SIGNAL','---'])
+                write_data_for_export(f, w, repData)
+                
+                # Write background data
+                bckData = rep[g.R_BACKGROUND]
+                w.writerow(['---','Data: BACKGROUND','---'])
+                write_data_for_export(f, w, bckData)
+               
+                write_blank_rows(w,3)
+              
+    except Exception as e:          # If a specific export task generates an error
+        write_error(str(e))
+        #write_error(str(task))
+
+def write_blank_rows(w, n):
+    for i in range(0,n):
+        w.writerow(['','',''])
+        
+def write_data_for_export(file, w, data):
+    if not data:
+        w.writerow(['NO','DATA','AVAILABLE'])
+    else:
+        keys = list(data[0].keys())
+        wd = DictWriter(file, fieldnames=keys)  # Tell the writer we are writing from a dictionary with 'keys' as headers
+        wd.writeheader()                        # Write the header row
+        wd.writerows(data)                      # Write  the data
+    write_blank_rows(w,1)
+    
+    
+        
     
 
 
@@ -498,19 +531,14 @@ def save():
 #################################
 #
 def read():
-    logger.info(' Arrived at read')
-    write_data("0123456789")
     path = sys.argv[2]                  #   Get path of file to read from
     data = get_data_from_file(path)     #   Read file from path (returns dict)
     if data:
-        logger.info(' Can read data')
         for run in data[g.S_RUNS]:              #   For each run in data dict
             for rep in run[g.R_REPLICATES]:     #   And for each rep of the run
                 rep.pop(g.R_DATA, None)         #   Remove the raw signal data
                 rep.pop(g.R_BACKGROUND, None)   #   Remove the background data
         write_data(str(data))                   #   Write the data (with raw data stripped) to data channel
-        logger.info(' Data read complete!')
-        logger.info(' -----------------------')
     else:
         raise ValueError('Could not read the file, check to make sure file is not corrupted.')
 
@@ -752,7 +780,6 @@ def run():
 #################################
 
 try:
-    write_data("aaa")
     processType = sys.argv[1]
     if processType == g.PROC_TYPE_SAVE:
         save()

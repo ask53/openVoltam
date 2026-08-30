@@ -124,12 +124,7 @@ def closeSession(main, self):
         self.close()    # If current window triggered this while openeing, it might not yet be in main.children
     main.force_close = True
     main.close()        #   If not, close it first. Then close main (which also closes all listed children)
-    
-    
-    
-    
-    
-    
+
 
 def horizontalize(widgetlist, stretch=False):
     """
