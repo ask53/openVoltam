@@ -569,6 +569,8 @@ def get_analyzed_value(a, atype):
         return a[g.A_DERIV_RIGHT]
     elif atype == g.C_TYPE_SLOPE_AVG:
         return a[g.A_DERIV_MEAN]
+    elif atype == g.C_TYPE_AREA:
+        return a[g.A_AREA]
 
 
 

@@ -304,7 +304,7 @@ class WindowCalculate(QMainWindow):
         type_lbl = QLabel("Calculation type")
         self.type = QComboBox()
         self.type.setPlaceholderText('Select')
-        calc_types = ('Peak height / baseline', 'Peak height', 'Left slope', 'Right slope', 'Mean slope')
+        calc_types = ('Peak height / baseline', 'Peak height', 'Left slope', 'Right slope', 'Mean slope', 'Enclosed area')
         for i, calc_type in enumerate(calc_types):
             self.type.addItem(calc_type, userData=g.C_TYPES[i])
         self.type.currentIndexChanged.connect(self.type_changed)

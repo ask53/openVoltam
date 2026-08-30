@@ -86,7 +86,8 @@ class StdAddFitterPlot(QMainWindow):
                   g.C_TYPE_PEAKZERO: 'Peak height (from zero) [uA]',
                   g.C_TYPE_SLOPE_L: 'Max |slope| on left side of peak [uA/V]',
                   g.C_TYPE_SLOPE_R: 'Max |slope| on right side of peak [uA/V]',
-                  g.C_TYPE_SLOPE_AVG: 'Mean of max |slope| on both sides of peak [uA/V]'}
+                  g.C_TYPE_SLOPE_AVG: 'Mean of max |slope| on both sides of peak [uA/V]',
+                  g.C_TYPE_AREA: 'Area enclosed by curve and baseline [uA*V]'}
         if self.type:
             self.canvas.axes.set_ylabel(y_lbls[self.type])
             self.canvas.axes.yaxis.label.set_color('black')

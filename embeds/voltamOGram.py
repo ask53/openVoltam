@@ -160,7 +160,9 @@ class VoltamogramPlot(QMainWindow):
             # 6. Show smoothed data
             if showsmoothed:
                 self.smoothed, = self.canvas.axes.plot(x, y, color, linestyle=linestyle,
-                                      linewidth=2, label=lbl, picker=2)  
+                                      linewidth=2, label=lbl, picker=2) 
+
+                self.canvas.axes.plot(x, y, 'o')
 
             # 7. If predictpeak, show baseline (with adjustable handles) and peak location
             if predictpeak:
@@ -460,11 +462,6 @@ class VoltamogramPlot(QMainWindow):
         else:                                                       # If peak is below baseline
             self.peakfill.set_data(x, y_base, y, where=(y<y_base))
         self.canvas.draw_idle()
-        
-        
-        
-        
-        print('calculating area!')
 
     def drag_peak(self, i):
         """Drags the peak to the selected location, within the bounds
@@ -528,14 +525,101 @@ class VoltamogramPlot(QMainWindow):
         y_left = self.y[x0i:peakxi+1]
         x_right = self.x[peakxi:x1i+1]
         y_right = self.y[peakxi:x1i+1]
-
-        d_left = np.gradient(y_left, x_left)
-        d_right = np.gradient(y_right, x_right)
-        l_max = abs(float(max(d_left)))
-        r_max = abs(float(min(d_right)))
-        mean_max = (l_max + r_max) / 2.
+        
+        try:                                            # if there is a left slope
+            d_left = np.gradient(y_left, x_left)
+            l_max = abs(float(max(d_left)))
+        except:
+            l_max = 0
+        try:                                            # if there is a right slope
+            d_right = np.gradient(y_right, x_right)
+            r_max = abs(float(min(d_right)))
+        except: 
+            d_right = 0
+        
+        if l_max and r_max:                             # if both slopes exist
+            mean_max = (l_max + r_max) / 2.
+        else:                                           
+            mean_max = l_max + r_max
 
         return l_max, r_max, mean_max
+        
+    def get_area(self):
+        x, y_base, y = self.resample_for_fill()
+        area = 0
+        
+        # Add up areas of all internal trapezoids
+        for i in range(1, len(x)-2):
+            x_pt = (x[i], x[i+1])
+            y_base_pt = (y_base[i], y_base[i+1])
+            y_pt = (y[i], y[i+1])
+            area = area + self.calc_trapezoid_area(x_pt, y_base_pt, y_pt) 
+            
+        # Add area of left triangle
+        x_pt = (x[0], x[1])
+        y_base_pt = (y_base[0], y_base[1])
+        y_pt = (y[0], y[1])
+        area = area + self.calc_triangle_area(x_pt, y_base_pt, y_pt)
+        
+        # Add area of right triangle
+        x_pt = (x[-2], x[-1])
+        y_base_pt = (y_base[-1], y_base[-2])    # flip triangle horizontally so area of interest is on left
+        y_pt = (y[-1], y[-2])                   # flip triangle horizontally so area of interest is on left
+        area = area + self.calc_triangle_area(x_pt, y_base_pt, y_pt)
+        
+        return float(area)
+        
+    def calc_trapezoid_area(self, x, y1, y2):
+        """Calculates the area of a vertical trapezoid with endpoint coordinates:
+        (x0, y10)
+        (x0, y20)
+        (x1, y11)
+        (x1, y21)
+        Using the formula Area = (1/2) * height * (base1 + base 2) where
+        height is the distance between x0 and x1
+        base1 is the distance between y1 and y2 at point x0 and
+        base2 is the distance between y1 and y2 at point x1
+        """ 
+        dx = x[1]-x[0]     
+        d0 = abs(y2[0]-y1[0])
+        d1 = abs(y2[1]-y1[1])
+        return dx * (d0 + d1) / 2       # Area of a trapezoid, A=h(b1+b2)/2
+        
+        
+    def calc_triangle_area(self, x, y1, y2):
+        """Calculates the area of a triangle that extends from some point between
+        (x0, x1) to x1. Follows the following algorithm:
+        1. if y1[0] == y2[0], then the triangle covers the entire range, 
+            returns area
+        2. else:
+            a. Determine the intersection point between x0 and 1
+            b. Return the area based on that inersection point
+        Uses the formula area = (1/2) * base * height where:
+            base is always the distance between y2[1] and y1[1]
+            height is the distance from the starting x (either x0 or x < x1 and x1"""
+        base = abs(y2[1]-y1[1])
+        if isclose(y1[0], y2[0]):       # if the whole area is a triangle
+            height = x[1]-x[0]
+        else:                           # if triangle starts part way across x range
+            m1, b1 = self.get_slope_intercept(x, y1)
+            m2, b2 = self.get_slope_intercept(x, y2)
+            x_int = self.get_intersection_between_lines(m1, b1, m2, b2)
+            height = x[1]-x_int
+        return base * height / 2
+        
+    def get_slope_intercept(self, x, y):
+        """Takes in two points with x coordinates (x0, x1) and y coordinates
+        (y0, y1) and returns the slope and intercept of the line that passes
+        exactly through (x0, y0) and (x1, y1)."""
+        slope = (y[1] - y[0]) / (x[1] - x[0])
+        intercept = y[0] - (slope*x[0])
+        return slope, intercept
+        
+    def get_intersection_between_lines(self, m1, b1, m2, b2):
+        """Takes in the slope (m) and intercept (b) of two lines. Assumes that
+        they are not parallel. Returns the x value of the intersection between
+        the two lines"""
+        return (b1-b2) / (m2-m1)
 
     def tell_parent_plot_updated(self):
         try:
@@ -544,6 +628,15 @@ class VoltamogramPlot(QMainWindow):
             pass
     
     def resample_for_fill(self):
+        """Resamples the baseline so that it has a y_base point for every x point
+        that the main data set has. It then finds all the intersection points where
+        the curve and the baseline cross one another. It finds the two intersection
+        points either exactly on or just outside a point of intersection (the 
+        curves may cross between two discrete points in the numpy arrays). It 
+        truncates x, y, and y_base down to just the points of intersection, erring
+        towards the outside if there isn't a perfect match (to avoid missing some
+        of the enclosed area). 
+        Returns x, y, and y_base, all numpy arrays."""
         (x0, y0, x1, y1, m, b) = self.get_baseline_params()
         lim0 = np.where(self.x == x0)[0][0]                                 # start from one above the lower basepoint
         lim1 = np.where(self.x == x1)[0][0]+1                               # end on the last point below the upper basepoint
@@ -602,15 +695,6 @@ class VoltamogramPlot(QMainWindow):
         Returns:
             List of indices of intersections"""
         ints = []
-        '''#FOR TESTING:
-        print('LEFT:')
-        print('y1: ('+str(float(x[0]))+', '+str(float(y1[0]))+')')
-        print('y2: ('+str(float(x[0]))+', '+str(float(y2[0]))+')')
-                          
-        print('RIGHT:')   
-        print('y1: ('+str(float(x[-1]))+', '+str(float(y1[-1]))+')')
-        print('y2: ('+str(float(x[-1]))+', '+str(float(y2[-1]))+')')
-        print()'''
         for i in range(0, int(len(x))-1):
             if isclose(y1[i], y2[i]):
                 ints.append(i)
@@ -634,11 +718,7 @@ class VoltamogramPlot(QMainWindow):
 
     def plot_reps(self, reps, subbackground=True, showsmoothed=False, showraw=True, predictpeak=False, color=None, legend=True):
         # 1. Get data from file for specified reps
-        path = self.grandparent.path
-        '''if not confirmPathExists(path):
-            reopenSession(self.grandparent, self.parent)            
-            return'''
-        
+        path = self.grandparent.path 
         
         all_data = get_data_from_file(path)     # read file including all raw data
         
@@ -828,6 +908,7 @@ class VoltamogramPlot(QMainWindow):
         (x0, y0, x1, y1, m, b) = self.get_baseline_params()
         ht = self.peak_y-self.peak_y_base
         deriv_l, deriv_r, deriv_avg = self.get_derivs()
+        area = self.get_area()
         
         return {g.A_PEAK_X: float(self.peak_x),
                 g.A_PEAK_Y: float(self.peak_y),
@@ -838,4 +919,5 @@ class VoltamogramPlot(QMainWindow):
                 g.A_BASE_1_Y: float(y1),
                 g.A_DERIV_LEFT: deriv_l,
                 g.A_DERIV_RIGHT: deriv_r,
-                g.A_DERIV_MEAN: deriv_avg}
+                g.A_DERIV_MEAN: deriv_avg,
+                g.A_AREA: area}

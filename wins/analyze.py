@@ -155,7 +155,7 @@ class WindowAnalyze(QMainWindow):
 
     def show_results(self):
         i, r = self.get_results()
-        types_eng = ('Peak ht (from base)', 'Peak ht (from 0)', 'Deriv (L)', 'Derv (R)', 'Deriv (avg)')
+        types_eng = ('Peak ht (from base)', 'Peak ht (from 0)', 'Deriv (L)', 'Derv (R)', 'Deriv (avg)', 'Area')
         msg = ''
         for i, t in enumerate(g.C_TYPES):
             val = str(round(get_analyzed_value(r, t), 4))
