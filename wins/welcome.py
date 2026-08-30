@@ -126,7 +126,9 @@ class WindowWelcome(QMainWindow):
                 if win.__dict__[key] == value:
                     win.activateWindow()
                     return win
+        print(self.children)
         self.children.append(obj)
+        print(self.children)
         self.children[-1].show()
         return self.children[-1]
 

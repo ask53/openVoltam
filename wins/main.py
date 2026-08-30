@@ -94,7 +94,7 @@ class WindowMain(QMainWindow):
         self.last_modified = None               # Stores timestamp of last time OV modified the file
         self.dealing_with_file_issue = False    # Flag for whether a file issue (not located, corrupted, etc.) is being actively handled
         self.force_close = False                # A flag that indicates whether to skip the close event handler
-        self.closed = False                     # Flag that indicates that window has been closed
+        self.closing = False                     # Flag that indicates that window has been closed
         
         #####################
         #                   #
@@ -1668,7 +1668,7 @@ class WindowMain(QMainWindow):
     def accept_close(self, closeEvent):
         if self in self.parent.children:
             self.parent.children.remove(self)   # remove reference to this window from parent for memory cleanup
-        self.closed = True
+        self.closing = True
         closeEvent.accept()
         
         

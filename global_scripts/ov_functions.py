@@ -66,7 +66,7 @@ def fileOkRoutine(welcome, main, self):
         True    -- If there is no error (neither 1 or 2)
         False   -- If either condition 1 or 2 is found"""
     
-    if main.dealing_with_file_issue or main.closed:    # Do not continue if an issue is currently being processed
+    if main.dealing_with_file_issue or main.closing:    # Do not continue if an issue is currently being processed
         return
     if not exists(main.path):           # If we CANNOT find the file, ask user to reopen
         handleMissingFile(welcome, main, self)
@@ -99,6 +99,8 @@ def handleChangedFile(welcome, main, self):
     if resp == QMessageBox.StandardButton.Discard:
         closeSession(main, self)
     elif resp == QMessageBox.StandardButton.Ok:
+        print('reloading...')
+    
         reopenSession(welcome, main, self, main.path)     
     main.dealing_with_file_issue = False    
     
@@ -110,6 +112,8 @@ def reopenSession(welcome, main, self, path=False):
     down the current main window and all associated windows  and opens the newly 
     selected file."""
     if path: path = ''.join(path)   # Copy entire path (in case pointer gets destroyed in close)
+    if main in welcome.children:    # Remove main from welcome.children (because it won't let us 
+        welcome.children.remove(main)   # reload with same path otherwise
     welcome.open_session(path)      # Open new session from same path
     closeSession(main, self)        # Close the existing session
     
