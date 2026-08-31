@@ -443,12 +443,11 @@ class WindowMain(QMainWindow):
             lbl_s_name = QLabel("<div style='font-size: 16pt'>"+sample[g.SA_NAME]+"</div>")
             lbl_s_name.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             lbl_s_name.setWordWrap(True)
-            lbl_s_name.setObjectName('sample-name')
             desc = self.get_sample_description(sample)
             lbl_desc = QLabel(desc)
             lbl_desc.setWordWrap(True)
             lbl_desc.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-
+            
             but_edit = QPushButton()
             but_edit.setIcon(QIcon(g.ICON_EDIT))
             but_edit.clicked.connect(self.edit_sample)
@@ -474,36 +473,22 @@ class WindowMain(QMainWindow):
             w0.setLayout(v)
             color_index = i%7
             w0.setObjectName('sample-'+str(color_index))
-
-
-            
-            #h = QHBoxLayout()
-            #h.addWidget(w0)
             
             # IF there are runs, setup sample tree
             runs = get_runs_in_sample(self.data, sample[g.R_UID_SELF])
             if runs:
                 w_cust=self.widgetize_runs(sample[g.R_UID_SELF])
-                #h.addWidget(w_cust)
                 w = QSplitter()
                 w.setChildrenCollapsible(False)
                 w.setOrientation(Qt.Orientation.Horizontal)
                 w.addWidget(w0)
                 w.addWidget(w_cust)
-                
-                
             else:                       # if there are not runs
-                #v.addStretch()          # add a stretch to the layout to keep everything nice and tidy
                 h = QHBoxLayout()
                 h.addWidget(w0)
                 h.addStretch()
                 w = QWidget()
                 w.setLayout(h)
-
-            
-            #w = QWidget()
-            ##w.setLayout(v)
-            #w.setLayout(h)
 
             tabname_len = 12
             fullname = sample[g.SA_NAME]

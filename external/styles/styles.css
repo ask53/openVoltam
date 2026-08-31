@@ -1,7 +1,7 @@
 /*styles.css*/
 
 QPushButton {
-	background-color: rgba(255,255,255,0.6);
+	background-color: rgba(255,255,255,0.7);
 	color: #080808;
 }
 
@@ -25,67 +25,65 @@ QMainWindow QStatusBar {
 	border-top: 1px solid grey;
 }
 
-WindowMain #session-header {
-	background-color: #fdbfff; 	/* pink */ 
-	border: 1px solid grey;
-}
-
-WindowMain QLabel#sample-name {
+/*QMainWindow TitleLbl {
 	color: #080808;
+}*/
+
+WindowMain #session-header {
+	background-color: rgba(244,2,252,0.3); 	/* pink */ 
+	border: 1px solid grey;
 }
 
 WindowMain QWidget#sample-0{
-	background-color: #bda1ff; /* purple */
+	background-color: rgba(77,2,252,0.22);  /* purple */
 	border: 1px solid grey;
-	color: red;
 }
 
 WindowMain QWidget#sample-1{
-	background-color: #a1bbff; /* blue */
+	background-color: rgba(2,73,252,0.22);  /* blue */
 	border: 1px solid grey;
 }
 
 WindowMain QWidget#sample-2{
-	background-color: #a1f4ff; /* teal */
-	border: 1px solid grey;
-}
-
-WindowMain QWidget#sample-3{
-	background-color: #a1ffba; /* teal-green */
+	background-color: rgba(5,223,252,0.22); /* teal */
+	border: 1px solid grey;                
+}                                          
+										
+WindowMain QWidget#sample-3{               
+	background-color: rgba(2,252,69,0.22);  /* teal-green */
 	border: 1px solid grey;
 }
 
 WindowMain QWidget#sample-4{
-	background-color: #d3ffa1; /* yellow-green */
-	border: 1px solid grey;
-}
-
-WindowMain QWidget#sample-5{
-	background-color: #ffd0a1; /* orange */
+	background-color: rgba(136,252,5,0.22); /* yellow-green */
+	border: 1px solid grey;                 
+}                                           
+											
+WindowMain QWidget#sample-5{                
+	background-color: rgba(252,127,2,0.22); /* orange */
 	border: 1px solid grey;
 }
 
 WindowMain QWidget#sample-6{
-	background-color: #ffa1a1; /* red */
+	background-color: rgba(252,0,0,0.22);   /* red */
 	border: 1px solid grey;
 }
 
 WindowMain QScrollArea {
-	background-color: white;
 	border: 0px solid white;
-	border-left: 1px solid grey;
 	border-top: 1px solid grey;
+	border-bottom: 1px solid grey;
 	padding: 0;
 	margin: 0;
 }	
 
-WindowMain QScrollArea QWidget {
+/*WindowMain QScrollArea QWidget {
 	background-color: white;
-}
+}*/
 	
-WindowMain QScrollArea QScrollBar {
-	background-color: #ececec;
-}
+/*WindowMain QScrollArea QScrollBar {
+	background-color: rgba(0,0,0,0);
+}*/
 
 QWidget#runs-container QLabel, 
 QWidget#steps-container QLabel  {
@@ -97,7 +95,6 @@ QWidget#runs-container QLabel#run-col-header {
 	font-weight: bold;
 }
 
-
 QWidget#runs-container QLabel#run-even, 
 QWidget#runs-container QLabel#run-odd,
 QWidget#runs-container QLabel#run-rep-even, 
@@ -107,26 +104,25 @@ QWidget#runs-container QLabel#run-odd-right,
 QWidget#runs-container QLabel#run-rep-even-right, 
 QWidget#runs-container QLabel#run-rep-even-last-right, 
 QWidget#steps-container QLabel#step-cell-even {
-	background-color: #f4f4f4;
-	border-top: 1px solid black;
+	background-color: rgba(150,150,150,0.1);
+	border-top: 1px solid grey;
 }
 
- 
 QWidget#runs-container QLabel#run-rep-odd, 
 QWidget#runs-container QLabel#run-rep-odd-last,
 QWidget#runs-container QLabel#run-rep-odd-right, 
 QWidget#runs-container QLabel#run-rep-odd-last-right, 
 QWidget#steps-container QLabel#step-cell-odd {
-	background-color: #ececec;
-	border-top: 1px solid black;
+	background-color: rgba(150,150,150,0.2);
+	border-top: 1px solid grey;
 }
 
 QWidget#runs-container QLabel#run-odd, 
 QWidget#runs-container QLabel#run-even,
 QWidget#runs-container QLabel#selected-run-odd, 
 QWidget#runs-container QLabel#selected-run-even {
-	border-left: 1px solid black;
-	border-bottom: 1px solid black;
+	border-left: 1px solid grey;
+	border-bottom: 1px solid grey;
 	border-right: 1px dashed grey;
 	margin-bottom: 10px;
 }
@@ -135,7 +131,7 @@ QWidget#runs-container QLabel#run-rep-odd-last,
 QWidget#runs-container QLabel#run-rep-even-last,
 QWidget#runs-container QLabel#run-rep-odd-last-right, 
 QWidget#runs-container QLabel#run-rep-even-last-right {
-	border-bottom: 1px solid black;
+	border-bottom: 1px solid grey;
 	margin-bottom: 10px;
 }
 
@@ -163,7 +159,7 @@ QWidget#runs-container QLabel#selected-run-rep-odd-right,
 QWidget#runs-container QLabel#selected-run-rep-even-right, 
 QWidget#runs-container QLabel#selected-run-rep-odd-last-right,
 QWidget#runs-container QLabel#selected-run-rep-even-last-right {
-	border-right: 1px solid black;
+	border-right: 1px solid grey;
 }
 
 QWidget#runs-container QLabel#selected-run-rep-odd, 
@@ -182,7 +178,7 @@ QWidget#steps-container QLabel#step-cell-even-selected-right,
 QWidget#steps-container QLabel#step-cell-odd-selected-right,
 QWidget#runs-container QLabel#selected-run-odd-right, 
 QWidget#runs-container QLabel#selected-run-even-right {
-	border-top: 1px solid black;
+	border-top: 1px solid grey;
 }
 
 QWidget#runs-container QLabel#selected-run-rep-odd, 
@@ -193,7 +189,7 @@ QWidget#runs-container QLabel#selected-run-rep-odd-right,
 QWidget#runs-container QLabel#selected-run-rep-even-right, 
 QWidget#runs-container QLabel#selected-run-rep-odd-last-right,
 QWidget#runs-container QLabel#selected-run-rep-even-last-right {
-	background-color: #fffcaa; 	/* paler yellow */
+	background-color: rgba(252, 244, 5, 0.25); 	/* paler yellow */
 }
 
 QWidget#runs-container QLabel#selected-run-odd, 
@@ -202,14 +198,14 @@ QWidget#steps-container QLabel#step-cell-even-selected,
 QWidget#steps-container QLabel#step-cell-odd-selected,
 QWidget#runs-container QLabel#selected-run-odd-right, 
 QWidget#runs-container QLabel#selected-run-even-right {
-	background-color: #fdf873; 	/* brighter yellow */
+	background-color: rgba(252, 244, 5, 0.4); 	/* brighter yellow */
 }
 
 QWidget#runs-container QLabel#selected-run-rep-odd-last,
 QWidget#runs-container QLabel#selected-run-rep-even-last,
 QWidget#runs-container QLabel#selected-run-rep-odd-last-right,
 QWidget#runs-container QLabel#selected-run-rep-even-last-right {
-	border-bottom: 1px solid black;
+	border-bottom: 1px solid grey;
 	margin-bottom: 10px;
 }
 
@@ -231,8 +227,7 @@ WindowRunView QWidget#msg_container QWidget#success {
 
 WindowRunView QSplitter::handle, 
 WindowCalculate QSplitter::handle{
-	background-color: #dddddd;
-	border-right: 2px solid #bbbbbb;
+	background-color: rgba(150,150,150,0.5);
 }
 
 WindowAnalyze QPushButton#task-pending, 
@@ -248,27 +243,25 @@ WindowAnalyze QPushButton#task-selected {
 
 WindowAnalyze QPushButton#task-pending:hover, 
 WindowAnalyze QPushButton#task-complete:hover {
-	background-color: #dddddd;	
-	border-color: #dddddd;
+	background-color: #f4f9b8;	
+	border-color: #f4f9b8;
 }
 
 WindowAnalyze QPushButton#task-pending {
-	background-color: #fcecba;
-	border-color: #fcecba;
+	border-color: rgba(0,0,0,0);
 }
 
 WindowAnalyze QPushButton#task-complete {
-	background-color: #bdfcba;
-	border-color: #bdfcba;
+	background-color: #bbf9b8;		/* pale green */
+	border-color: #bbf9b8;
 }
 
 WindowAnalyze QPushButton#task-selected {
-	background-color: #ecbafc;
-	border-color: purple;
+	background-color: #f4f9b8;	/* pale yellow */
+	border-color: #f4e807; 		/* brighter yellow */
 }
 
 WindowAnalyze QWidget#analysis-title-bar {
-	color: white;
 	background-color: purple;
 }
 
@@ -281,12 +274,30 @@ WindowAnalyze VoltamogramPlot {
 	border: 1px solid #808080;
 }
 
+WindowCalculate QListWidget, WindowCalculate QTreeWidget {
+	outline: none;
+}
+
+WindowCalculate QListWidget::item:hover {
+	background-color: rgba(150, 150, 150, 0.3);		/* pale grey */
+}
+
 WindowCalculate QListWidget::item:selected {
-	background-color: #fcecba;
+	background-color: rgba(254, 252, 193, 0.7);	/* pale yellow */
+	color: black;
+}
+
+WindowCalculate QListWidget::item:selected:hover {
+	background-color: rgba(254, 252, 193, 0.95);	/* pale yellow */
 	color: black;
 }
 
 WindowCalculate QLabel#left-title {
 	font-size: 16pt;
+}
+
+WindowCalculate QTreeWidget::item:hover {
+	background-color: #444444;
+	color: white;
 }
 	
