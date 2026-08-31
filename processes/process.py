@@ -84,9 +84,12 @@ def export():
         with open(path, 'w', encoding='UTF8', newline='') as f:
             w = writer(f)
             w.writerow(['--- ', 'OpenVoltam Export File', ' ---'])
-            write_blank_rows(w, 1)
+            write_n_rows(w,1,'')
             w.writerow(['Lab session', data[g.S_NAME], ''])
-            write_blank_rows(w,3)
+            write_n_rows(w,1,'')
+            write_n_rows(w,3,'---')
+            write_n_rows(w,1,'')
+            
             for task in tasks:
                 run_id = task[0]
                 rep_id = task[1]
@@ -105,7 +108,7 @@ def export():
                 w.writerow(['Collected by', sample[g.SA_COLLECTED_BY], ''])
                 w.writerow(['Contact', sample[g.SA_CONTACT], ''])
                 w.writerow(['Notes', sample[g.SA_NOTES], ''])
-                write_blank_rows(w,1)
+                write_n_rows(w,1,'')
                 
                 # Write run/rep info
                 w.writerow(['---','Run info','---'])
@@ -121,7 +124,7 @@ def export():
                     w.writerow(['Volume standard added',run[g.R_STD_ADDED_VOL],'L'])
                     w.writerow(['Standard concentration',run[g.R_STD_CONC],'mg/L'])
                 w.writerow(['Run notes',run[g.R_NOTES],''])
-                write_blank_rows(w,1)
+                write_n_rows(w,1,'')
                 
                 # Write analysis
                 a = rep[g.R_ANALYSIS]
@@ -140,7 +143,7 @@ def export():
                     w.writerow(['Right max derivative',a[g.A_DERIV_RIGHT],'V/mA'])
                     w.writerow(['Mean max derivative',a[g.A_DERIV_MEAN],'V/mA'])
                     w.writerow(['Peak area',a[g.A_AREA],'mA*V'])
-                write_blank_rows(w,1)
+                write_n_rows(w,1,'')
                 
                 # Write signal data
                 repData = rep[g.R_DATA]
@@ -152,15 +155,16 @@ def export():
                 w.writerow(['---','Data: BACKGROUND','---'])
                 write_data_for_export(f, w, bckData)
                
-                write_blank_rows(w,3)
+                write_n_rows(w,3,'---')
+                write_n_rows(w,1,'')
               
     except Exception as e:          # If a specific export task generates an error
         write_error(str(e))
         #write_error(str(task))
 
-def write_blank_rows(w, n):
+def write_n_rows(w, n, content):
     for i in range(0,n):
-        w.writerow(['','',''])
+        w.writerow([content,content,content])
         
 def write_data_for_export(file, w, data):
     if not data:
@@ -170,7 +174,7 @@ def write_data_for_export(file, w, data):
         wd = DictWriter(file, fieldnames=keys)  # Tell the writer we are writing from a dictionary with 'keys' as headers
         wd.writeheader()                        # Write the header row
         wd.writerows(data)                      # Write  the data
-    write_blank_rows(w,1)
+    write_n_rows(w,1,'')
     
     
         

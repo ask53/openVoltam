@@ -218,9 +218,9 @@ class WindowMain(QMainWindow):
                                      action_run_view,
                                      action_method_run_view,
                                      action_method_run_edit]
-        self.actions_run_one_plus = [action_run_export,
-                                     action_run_delete,
+        self.actions_run_one_plus = [action_run_delete,
                                      action_analyze_peaks]
+                                     
         self.actions_rep_one_only = [action_rep_edit]
         self.actions_rep_one_plus = [action_graph,
                                      action_analyze_peaks]
@@ -1090,6 +1090,15 @@ class WindowMain(QMainWindow):
             for rep in self.layout[run]['selected']:
                 reps.append((run,rep))
         return reps
+        
+    def get_all_reps(self):
+        reps = []
+        for run in self.data[g.S_RUNS]:
+            run_id = run[g.R_UID_SELF]
+            for rep in run[g.R_REPLICATES]:
+                rep_id = rep[g.R_UID_SELF]
+                reps.append((run_id, rep_id))
+        return reps
 
     def get_all_reps_in_runs(self, runs):
         """ Takes in a list of run ids. Returns all reps that correpond to each
@@ -1167,6 +1176,17 @@ class WindowMain(QMainWindow):
 
     def export_selected_reps_as_csv(self):
         reps = self.get_all_selected_reps()
+        if not reps:
+            title = "Confirm export all"
+            msg = 'This will export the entire lab session to one CSV file. To export individual runs, select them before clicking "export".\n\nWould you like to continue with exporting all?'
+            confirm = QMessageBox()
+            confirm.setWindowTitle(title)
+            confirm.setText(msg)
+            confirm.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+            resp = confirm.exec()
+            if resp == QMessageBox.StandardButton.Cancel:
+                return
+            reps = self.get_all_reps()
         dest = get_path_from_user(self, 'folder')
         if dest:
             self.start_async_export(reps, dest)
