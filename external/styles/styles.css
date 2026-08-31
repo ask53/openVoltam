@@ -297,6 +297,19 @@ WindowCalculate QLabel#left-title {
 }
 
 WindowCalculate QTreeWidget::item:hover {
-	background-color: #444444;
-	color: white;
+	background-color: #cccccc;						/* light grey */
+	color: black
+}
+
+WindowCalculate QTreeWidget::item:selected {
+	background-color: rgba(254, 252, 193, 1);		/* pale yellow */
+	color: black;
+}
+
+WindowCalculate QTreeWidget::item:selected:hover {
+	background-color: #f9f45c; 						/* brighter yellow */
+}
+
+WindowCalculate QTreeWidget::item:disabled:hover {
+	background-color: red;
 }
