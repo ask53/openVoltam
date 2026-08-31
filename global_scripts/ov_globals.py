@@ -23,7 +23,7 @@ WIN_MODE_EMBED = 'embedded'
 # Unit conversions
 UNIT_CONV_CONC = {'g/L': 1000,      # multiply by these to convert this unit to g/L
                   'mg/L': 1,        # ALL VOLUMES AND CONCENTRATIONS ARE STORED IN
-                  'ug/L': 0.001,    # THE .ovs FILE IN UNITS OF MILILITERS AND 
+                  'ug/L': 0.001,    # THE .ovs FILE IN UNITS OF LITERS AND 
                   'ng/L': 0.000001} # MILIGRAMS PER LITER RESPECTIVELY (mL and mg/L)
 UNIT_CONV_VOL = {'L': 1,
                  'mL': 0.001,

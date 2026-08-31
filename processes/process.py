@@ -115,11 +115,11 @@ def export():
                 runtype = run[g.R_TYPE]
                 w.writerow(['Type', runtype,''])
                 if runtype == g.R_TYPE_SAMPLE:
-                    w.writerow(['Sample volume ',run[g.R_SAMPLE_VOL],''])
-                    w.writerow(['Total volume ',run[g.R_TOTAL_VOL],''])
+                    w.writerow(['Sample volume ',run[g.R_SAMPLE_VOL],'L'])
+                    w.writerow(['Total volume ',run[g.R_TOTAL_VOL],'L'])
                 elif runtype == g.R_TYPE_STDADD:
-                    w.writerow(['Volume standard added',run[g.R_STD_ADDED_VOL],''])
-                    w.writerow(['Standard concentration',run[g.R_STD_CONC],''])
+                    w.writerow(['Volume standard added',run[g.R_STD_ADDED_VOL],'L'])
+                    w.writerow(['Standard concentration',run[g.R_STD_CONC],'mg/L'])
                 w.writerow(['Run notes',run[g.R_NOTES],''])
                 write_blank_rows(w,1)
                 
@@ -129,17 +129,17 @@ def export():
                 if not a:
                     w.writerow(['NO','DATA','AVAILABLE'])
                 else:
-                    w.writerow(['Peak x',a[g.A_PEAK_X],''])
-                    w.writerow(['Peak y',a[g.A_PEAK_Y],''])
-                    w.writerow(['Peak height over baseline',a[g.A_PEAK_HEIGHT],''])
-                    w.writerow(['Left basepoint x',a[g.A_BASE_0_X],''])
-                    w.writerow(['Left basepoint y',a[g.A_BASE_0_Y],''])
-                    w.writerow(['Right basepoint x',a[g.A_BASE_1_X],''])
-                    w.writerow(['Right basepoint y',a[g.A_BASE_1_Y],''])
-                    w.writerow(['Left max derivative',a[g.A_DERIV_LEFT],''])
-                    w.writerow(['Right max derivative',a[g.A_DERIV_RIGHT],''])
-                    w.writerow(['Mean max derivative',a[g.A_DERIV_MEAN],''])
-                    w.writerow(['Peak area',a[g.A_AREA],''])
+                    w.writerow(['Peak x',a[g.A_PEAK_X],'mA'])
+                    w.writerow(['Peak y',a[g.A_PEAK_Y],'V'])
+                    w.writerow(['Peak height over baseline',a[g.A_PEAK_HEIGHT],'V'])
+                    w.writerow(['Left basepoint x',a[g.A_BASE_0_X],'mA'])
+                    w.writerow(['Left basepoint y',a[g.A_BASE_0_Y],'V'])
+                    w.writerow(['Right basepoint x',a[g.A_BASE_1_X],'mA'])
+                    w.writerow(['Right basepoint y',a[g.A_BASE_1_Y],'mA'])
+                    w.writerow(['Left max derivative',a[g.A_DERIV_LEFT],'V/mA'])
+                    w.writerow(['Right max derivative',a[g.A_DERIV_RIGHT],'V/mA'])
+                    w.writerow(['Mean max derivative',a[g.A_DERIV_MEAN],'V/mA'])
+                    w.writerow(['Peak area',a[g.A_AREA],'mA*V'])
                 write_blank_rows(w,1)
                 
                 # Write signal data
