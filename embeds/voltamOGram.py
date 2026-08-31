@@ -48,6 +48,16 @@ class VoltamogramCanvas(FigureCanvasQTAgg):
         if title:
             fig.suptitle(title)
         self.axes = fig.add_subplot(111)
+        
+        ####### FIGURE OUT PLOTS IN DARK MODE ######
+        #
+        #       HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE 
+        #        
+        #self.axes.set_facecolor('#000000')
+        #fig.patch.set_facecolor('#000000')
+        #
+        ################################################
+        
         super().__init__(fig)
 
 class VoltamogramPlot(QMainWindow):
