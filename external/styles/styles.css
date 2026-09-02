@@ -310,6 +310,12 @@ WindowCalculate QTreeWidget::item:selected:hover {
 	background-color: #f9f45c; 						/* brighter yellow */
 }
 
-WindowCalculate QTreeWidget::item:disabled:hover {
-	background-color: red;
+WindowCalculate QTreeWidget::item:disabled {
+	background-color: #f3f3f3;
 }
+
+
+
+/*WindowCalculate QTreeWidget::branch {
+	background-color: rgba(150,150,150,0.4);
+}*/

@@ -817,7 +817,7 @@ class WindowMethod(QMainWindow):
                 if type(self.vStepRelays.itemAt(i).widget()) != type(None):
                     self.vStepRelays.itemAt(i).widget().setParent(None)
 
-            for relay in self.relays:
+            for i, relay in enumerate(self.relays):
                 fill = get_relay_text(relay, i)                         # Get the value for the textbox
                 step_chk = QCheckBox(fill+' on during step?')           # Add a checkbox to the "Add/Edit Step" pane for this relay
                 self.vStepRelays.insertWidget(self.vStepRelays.count()-1, step_chk)
