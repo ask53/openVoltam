@@ -126,6 +126,13 @@ def closeSession(main, self):
     main.close()        #   If not, close it first. Then close main (which also closes all listed children)
 
 
+
+
+
+
+
+
+
 def horizontalize(widgetlist, stretch=False):
     """
     takes in a list of widgets and adds them all sequentially to a horizontal layout. Returns the layout
@@ -280,27 +287,6 @@ def get_row_ws(w_parent, i):
     except Exception as e:
         print(e)
 
-#### IS THIS NECESSARY??? #####################################################
-#
-#
-#
-'''def scroll_area_resized(outer, inner, event):
-    print('---')
-    print('HERE!')
-    QScrollArea.resizeEvent(outer, event)   # Because this fn intercepts the resizeEvent, call the actual resizeEvent
-                                            # (this checks whether to add/remove scroll bars, etc.
-                                            # Then adjust the inner widget to fit well within the scroll area:
-    outer_width = outer.width()             #   get width of the scroll area
-    v_bar_width = 0 
-    v_bar = outer.verticalScrollBar()       #   get the vertical scrollbar widget
-    if v_bar.isVisible():                   #   if its visible
-        v_bar_width = v_bar.width()         #   account for its width
-    inner.setFixedWidth(outer_width-g.PADDING-v_bar_width)
-    print(outer_width)
-    print(inner.width())'''
-#
-#
-###########################################################3
 
 def get_sample_from_file_data(data, sample_id):
     for sample in data[g.S_SAMPLES]:
@@ -574,7 +560,6 @@ def get_analyzed_value(a, atype):
         return a[g.A_AREA]
 
 
-
 def convert_conc_to_file_unit(conc, unit):
     """converts the value (float) in unit units into grams per liter"""
     return conc * g.UNIT_CONV_CONC[unit]
@@ -590,7 +575,16 @@ def convert_vol_from_file_unit(vol, unit):
     return vol / g.UNIT_CONV_VOL[unit]
 
 
+def round_by_unit(value, unit):
+    return round(value, unit)
 
+    places = 18                         # start with something arbitrarily high
+    for unit in units:
+        if g.SF_UNITS[unit] < places:   # grab minimum value of significant figures 
+            places = g.SF_UNITS[unit]   #   across all provided units
+    return str(round(float(value), places))
+    
+    
 
 
 

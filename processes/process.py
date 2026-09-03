@@ -24,7 +24,8 @@ from global_scripts.ov_functions import (get_data_from_file,
                                            get_run_from_file_data,
                                            get_sample_from_file_data,
                                            get_rep,
-                                           get_v_max_abs)
+                                           get_v_max_abs,
+                                           round_by_unit)
 
 from ast import literal_eval
 from csv import writer, DictWriter
@@ -132,17 +133,21 @@ def export():
                 if not a:
                     w.writerow(['NO','DATA','AVAILABLE'])
                 else:
-                    w.writerow(['Peak x',a[g.A_PEAK_X],'mA'])
-                    w.writerow(['Peak y',a[g.A_PEAK_Y],'V'])
-                    w.writerow(['Peak height over baseline',a[g.A_PEAK_HEIGHT],'V'])
-                    w.writerow(['Left basepoint x',a[g.A_BASE_0_X],'mA'])
-                    w.writerow(['Left basepoint y',a[g.A_BASE_0_Y],'V'])
-                    w.writerow(['Right basepoint x',a[g.A_BASE_1_X],'mA'])
-                    w.writerow(['Right basepoint y',a[g.A_BASE_1_Y],'mA'])
-                    w.writerow(['Left max derivative',a[g.A_DERIV_LEFT],'V/mA'])
-                    w.writerow(['Right max derivative',a[g.A_DERIV_RIGHT],'V/mA'])
-                    w.writerow(['Mean max derivative',a[g.A_DERIV_MEAN],'V/mA'])
-                    w.writerow(['Peak area',a[g.A_AREA],'mA*V'])
+                    try:
+                        w.writerow(['Peak x', round_by_unit(a[g.A_PEAK_X], g.SF_V), 'V'])
+                        w.writerow(['Peak y', round_by_unit(a[g.A_PEAK_Y], g.SF_mA), 'mA'])
+                        w.writerow(['Peak height over baseline',round_by_unit(a[g.A_PEAK_HEIGHT], g.SF_mA), 'mA'])
+                        w.writerow(['Left basepoint x',round_by_unit(a[g.A_BASE_0_X], g.SF_V),'V'])
+                        w.writerow(['Left basepoint y',round_by_unit(a[g.A_BASE_0_Y], g.SF_mA), 'mA'])
+                        w.writerow(['Right basepoint x',round_by_unit(a[g.A_BASE_1_X], g.SF_V),'V'])
+                        w.writerow(['Right basepoint y',round_by_unit(a[g.A_BASE_1_Y], g.SF_mA), 'mA'])
+                        w.writerow(['Left max derivative',round_by_unit(a[g.A_DERIV_LEFT], g.SF_V),'mA/V'])
+                        w.writerow(['Right max derivative', round_by_unit(a[g.A_DERIV_RIGHT], g.SF_V),'mA/V'])
+                        w.writerow(['Mean max derivative', round_by_unit(a[g.A_DERIV_MEAN], g.SF_V),'mA/V'])
+                        w.writerow(['Peak area', round_by_unit(a[g.A_AREA], g.SF_V),'mA*V'])
+                    except Exception as e:
+                        write_data(e)
+                        write_error(e)
                 write_n_rows(w,1,'')
                 
                 # Write signal data

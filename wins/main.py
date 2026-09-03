@@ -1408,7 +1408,9 @@ class WindowMain(QMainWindow):
         stdout = bytes(data).decode("utf8")
         outs = stdout.split('\r\n')
         for out in outs:
+            print(out)
             if out:
+                
                 self.export_success.append(out)
         
 
@@ -1449,6 +1451,7 @@ class WindowMain(QMainWindow):
         if no:
             msg = msg+"\nWarning: Failed to export:\n"
             for rep in no:
+                print(rep)
                 rep = literal_eval(rep)
                 msg = msg+rep[0]+': '+rep[1]+'\n'
         if yes:

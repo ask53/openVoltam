@@ -28,6 +28,9 @@ UNIT_CONV_CONC = {'g/L': 1000,      # multiply by these to convert this unit to 
 UNIT_CONV_VOL = {'L': 1,
                  'mL': 0.001,
                  'uL': 0.000001}
+            
+SF_mA = 6
+SF_V = 3
 
 # Keys for lab session (S) dictionary
 S_NAME = "session_name"
