@@ -652,6 +652,13 @@ class warningMessageBox(QMessageBox):
         but_save.setText("I'll fix this")
         but_canc = self.button(QMessageBox.StandardButton.Cancel)
         but_canc.setText("Continue as is")
+      
+class alertMessageBox(QMessageBox):
+    def __init__(self, title, msg):
+        super().__init__()
+        self.setWindowTitle(title)
+        self.setText(msg)
+        self.setStandardButtons(QMessageBox.StandardButton.Ok)
         
 class reloadMessageBox(QMessageBox):
     def __init__(self, title, msg):

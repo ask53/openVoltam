@@ -143,23 +143,36 @@ class VoltamogramPlot(QMainWindow):
             if showraw:                                 # first, show raw data if requested
                 self.canvas.axes.plot(x, y_raw, 'lightgrey', linestyle=linestyle,
                                       linewidth=1, label='raw data')
-
+                print('raw shown!')
             # 4. If smooth, smooth result
             if showsmoothed:
             
                 method = rep[g.R_UID_METHOD]            # get method from rep
                 window = method[g.M_SG_WINDOW]
                 order = method[g.M_SG_ORDER]
+                
+                try:
 
-                # 4a. If the method calls for smoothing (Savitzky Golay) do it!
-                if method[g.M_SG]:
-                    y = savgol_filter(y, window_length=window,
-                                      polyorder=order, mode='nearest')
+                    # 4a. If the method calls for smoothing (Savitzky Golay) do it!
+                    if method[g.M_SG]:
+                        y = savgol_filter(y, window_length=window,
+                                          polyorder=order, mode='nearest')
+                
+                except Exception as e:
+                    show_alert(self, 'Alert!', 'An error was encountered during the Savitzky-Golay smoothing:\n\n "'+str(e)+'"\n\nAnalysis will continue without smoothing. To correct, adjust smoothing parameters in method.')
+                    showsmoothed = False
+                    y = y_raw
+                      
+                try:
 
-                # 4b. If method calls for low pass filtering, do it!
-                if method[g.M_LP]:
-                    y = self.butter_lowpass_filter(y, method)
-
+                    # 4b. If method calls for low pass filtering, do it!
+                    if method[g.M_LP]:
+                        y = self.butter_lowpass_filter(y, method)
+                        
+                except Exception as e:
+                    show_alert(self, 'Alert!', 'An error was encountered during the Butterworth low-pass filtering:\n\n "'+str(e)+'"\n\nAnalysis will continue without smoothing. To correct, adjust smoothing parameters in method.')
+                    showsmoothed = False
+                    y = y_raw
 
             # 5. If predictpeak, guess baseline and peak locations, store as vars in self
             if predictpeak:
@@ -171,17 +184,19 @@ class VoltamogramPlot(QMainWindow):
             if showsmoothed:
                 self.smoothed, = self.canvas.axes.plot(x, y, color, linestyle=linestyle,
                                       linewidth=2, label=lbl, picker=2) 
+            else: self.smoothed = None
 
                 # TO SEE ALL POINTS, FOR DEBUGGING: #######
                 #
                 #self.canvas.axes.plot(x, y, 'o')
                 #
                 ###########################################
-                
+            print('6')    
             # 7. If predictpeak, show baseline (with adjustable handles) and peak location
             if predictpeak:
-                self.x = x      # store x and y for access from mouseclick/move handlers
-                self.y = y
+                sort_index = x.argsort()            # Sort x and y so that x runs from lowest to highest
+                self.x = x[sort_index]              # store on object for later access by interaction handlers
+                self.y = y[sort_index]
                 self.base_x = np.array(base[0])
                 self.base_y = np.array(base[1])
                 self.active_endpoint = 0
@@ -189,7 +204,7 @@ class VoltamogramPlot(QMainWindow):
                 self.peak_y = peak[1]
                 
                 (x0, y0, x1, y1, m, b) = self.get_baseline_params()
-                
+                print('5')
                 ep0, = self.canvas.axes.plot(self.base_x[0], self.base_y[0], 'o',               # set the left baseline endpoint
                                              mfc='#80008033',mec='black', mew=2,
                                              markersize='36', picker=20)
@@ -197,7 +212,7 @@ class VoltamogramPlot(QMainWindow):
                 ep1, = self.canvas.axes.plot(self.base_x[1], self.base_y[1], 'o',               # set the right baseline endpoint
                                              mfc='#80008033', mec='None', mew=2,
                                              markersize='36', picker=20)
-                
+                print('4')
                 self.baseline, = self.canvas.axes.plot(self.base_x, self.base_y, '-',           # draw the baseline between the endpoints
                                                        color='#800080bb')
 
@@ -206,8 +221,10 @@ class VoltamogramPlot(QMainWindow):
                 self.peakpoint, = self.canvas.axes.plot(self.peak_x, self.peak_y, 'o',          # draw the peak marker
                                                         mfc='#013ea833', mec='None',
                                                         markersize='18', picker=18)
-                                                        
-                x_fill, y_base_fill, y_fill = self.resample_for_fill()                                        
+                print('3')                                        
+                x_fill, y_base_fill, y_fill = self.resample_for_fill() 
+
+                print('2.9')
                 self.peakfill = self.canvas.axes.fill_between(x_fill, y_base_fill, y_fill, 
                                                                 where=(y_fill > y_base_fill),
                                                                 interpolate=True,
@@ -218,7 +235,7 @@ class VoltamogramPlot(QMainWindow):
                 
                 
                 
-                
+                print('2')
                 self.endpoints = (ep0,ep1)          # store the endpoints on self
                                                     
                 self.guess_peak()                   # guess the peak between the endpoints
@@ -229,7 +246,9 @@ class VoltamogramPlot(QMainWindow):
                 self.canvas.mpl_connect('button_release_event', self.on_but_release)
                 self.canvas.mpl_connect('motion_notify_event', self.on_mouse_move)
                 
+                print('1')
             self.canvas.draw()
+            print('0')
 
 
     #####################################################
@@ -540,6 +559,8 @@ class VoltamogramPlot(QMainWindow):
         x_right = self.x[peakxi:x1i+1]
         y_right = self.y[peakxi:x1i+1]
         
+        l_max, r_max = 0, 0                             # set starting max slope values to 0
+        
         try:                                            # if there is a left slope
             d_left = np.gradient(y_left, x_left)
             l_max = abs(float(max(d_left)))
@@ -654,23 +675,17 @@ class VoltamogramPlot(QMainWindow):
         (x0, y0, x1, y1, m, b) = self.get_baseline_params()
         lim0 = np.where(self.x == x0)[0][0]                                 # start from one above the lower basepoint
         lim1 = np.where(self.x == x1)[0][0]+1                               # end on the last point below the upper basepoint
-        
         x = self.x[lim0:lim1]                                               # get x range that matches extent of baseline
         y = self.y[lim0:lim1]                                               # get y range that matches extent of baseline
         y_base = m*x+b                                                      # resample baseline to match # of points and values in x array
-        
         ints = self.get_intersections(x, y, y_base)
-        
         if self.peak_x == x[0]:             # if peak is at lowest limit of baseline
-            print('peak at lower!')
             lim0 = 0
             lim1 = ints[1]
         elif self.peak_x == x[-1]:          # if peak is at highest limit of baseline
-            print('peak at upper!')
             lim0 = ints[-2]
             lim1 = ints[-1]
         else:                               # if peak is not on an intersection point at all
-            print('peak in the middle!')
             peak_i = np.where(x==self.peak_x)[0]
             dif = abs(np.array(ints)-peak_i)
             i = int(np.argmin(dif))
@@ -681,18 +696,15 @@ class VoltamogramPlot(QMainWindow):
             else:
                 lim0 = ints[i]
                 lim1 = ints[i+1]
-            
         # If an intersection is between points, change the index to the outer point
         if lim0%1 != 0:
             lim0 = int(lim0-0.5)
         if lim1%1 != 0:
             lim1 = int(lim1+0.5)
         lim1 = lim1+1           # Add 1 to use for indexing (lim1 is first point NOT included)
-        
         x = x[lim0:lim1]                    # sample all three to the width of the peak
         y = y[lim0:lim1]
         y_base = y_base[lim0:lim1]
-        
         return x, y_base, y
         
     def get_intersections(self, x, y1, y2):
