@@ -143,7 +143,7 @@ class VoltamogramPlot(QMainWindow):
             if showraw:                                 # first, show raw data if requested
                 self.canvas.axes.plot(x, y_raw, 'lightgrey', linestyle=linestyle,
                                       linewidth=1, label='raw data')
-                print('raw shown!')
+                
             # 4. If smooth, smooth result
             if showsmoothed:
             
@@ -177,9 +177,7 @@ class VoltamogramPlot(QMainWindow):
             # 5. If predictpeak, guess baseline and peak locations, store as vars in self
             if predictpeak:
                 peak, base = self.get_predicted_basepoints(x, y, method)
-                print('predicted peak at:')
-                print(str(peak))
-            
+                
             # 6. Show smoothed data
             if showsmoothed:
                 self.smoothed, = self.canvas.axes.plot(x, y, color, linestyle=linestyle,
@@ -191,7 +189,6 @@ class VoltamogramPlot(QMainWindow):
                 #self.canvas.axes.plot(x, y, 'o')
                 #
                 ###########################################
-            print('6')    
             # 7. If predictpeak, show baseline (with adjustable handles) and peak location
             if predictpeak:
                 sort_index = x.argsort()            # Sort x and y so that x runs from lowest to highest
@@ -204,7 +201,6 @@ class VoltamogramPlot(QMainWindow):
                 self.peak_y = peak[1]
                 
                 (x0, y0, x1, y1, m, b) = self.get_baseline_params()
-                print('5')
                 ep0, = self.canvas.axes.plot(self.base_x[0], self.base_y[0], 'o',               # set the left baseline endpoint
                                              mfc='#80008033',mec='black', mew=2,
                                              markersize='36', picker=20)
@@ -212,7 +208,7 @@ class VoltamogramPlot(QMainWindow):
                 ep1, = self.canvas.axes.plot(self.base_x[1], self.base_y[1], 'o',               # set the right baseline endpoint
                                              mfc='#80008033', mec='None', mew=2,
                                              markersize='36', picker=20)
-                print('4')
+            
                 self.baseline, = self.canvas.axes.plot(self.base_x, self.base_y, '-',           # draw the baseline between the endpoints
                                                        color='#800080bb')
 
@@ -221,10 +217,9 @@ class VoltamogramPlot(QMainWindow):
                 self.peakpoint, = self.canvas.axes.plot(self.peak_x, self.peak_y, 'o',          # draw the peak marker
                                                         mfc='#013ea833', mec='None',
                                                         markersize='18', picker=18)
-                print('3')                                        
+                
                 x_fill, y_base_fill, y_fill = self.resample_for_fill() 
 
-                print('2.9')
                 self.peakfill = self.canvas.axes.fill_between(x_fill, y_base_fill, y_fill, 
                                                                 where=(y_fill > y_base_fill),
                                                                 interpolate=True,
@@ -235,7 +230,6 @@ class VoltamogramPlot(QMainWindow):
                 
                 
                 
-                print('2')
                 self.endpoints = (ep0,ep1)          # store the endpoints on self
                                                     
                 self.guess_peak()                   # guess the peak between the endpoints
@@ -246,10 +240,8 @@ class VoltamogramPlot(QMainWindow):
                 self.canvas.mpl_connect('button_release_event', self.on_but_release)
                 self.canvas.mpl_connect('motion_notify_event', self.on_mouse_move)
                 
-                print('1')
             self.canvas.draw()
-            print('0')
-
+            
 
     #####################################################
     #                                                   #
@@ -410,7 +402,11 @@ class VoltamogramPlot(QMainWindow):
         """Handler for when a pick event is registered on plot"""
         
         ind = event.ind
-        if event.artist in self.endpoints:                              # if an endpoint was picked
+        if event.artist == self.peakpoint:
+            print('moving peak!')
+            self.dragging_peak = True
+        elif event.artist in self.endpoints:                              # if an endpoint was picked
+            print(':`(')
             self.dragging_end = True                                        # set dragging flag
             self.drag_index = self.endpoints.index(event.artist)        # get index of picked endpoint
         elif event.artist == self.smoothed:                             # if a point on smoothed data curve picked
@@ -418,8 +414,7 @@ class VoltamogramPlot(QMainWindow):
                 i = (np.abs(self.x - event.mouseevent.xdata)).argmin()  # get index of picked point
                 self.move_endpoint(self.active_endpoint,
                                    self.x[i], self.y[i])                # move the active endpoint to picked point
-        elif event.artist == self.peakpoint:
-            self.dragging_peak = True
+        
         self.tell_parent_plot_updated()
 
     def on_but_release(self, event):
@@ -431,14 +426,14 @@ class VoltamogramPlot(QMainWindow):
     def on_mouse_move(self, event):
         """Handler for every time a mouse-moved event is regisered on plot"""
         
-        if self.dragging_end:
-            if event.xdata:
-                i = (np.abs(self.x - event.xdata)).argmin() # get index
-                self.move_endpoint(self.drag_index, self.x[i], self.y[i])
-        elif self.dragging_peak:
+        if self.dragging_peak:
             if event.xdata:
                 i = (np.abs(self.x - event.xdata)).argmin() # get index
                 self.drag_peak(i)
+        elif self.dragging_end:
+            if event.xdata:
+                i = (np.abs(self.x - event.xdata)).argmin() # get index
+                self.move_endpoint(self.drag_index, self.x[i], self.y[i])
                 
                 
 
@@ -504,7 +499,7 @@ class VoltamogramPlot(QMainWindow):
         auto-snaps the peakline to local maxima, that can be toggled
         on and off from the settings."""
         (x0, y0, x1, y1, m, b) = self.get_baseline_params()
-        if self.x[i] > x0 and self.x[i] < x1:
+        if self.x[i] >= x0 and self.x[i] <= x1:
             x = self.x[i]
             y_base = m*x+b
             y = self.y[i]
