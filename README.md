@@ -19,6 +19,7 @@ All releases compatible with **Windows 10** and **Windows 11**. *If you **need**
 *We are still working on the features in our first stable release (and finding safe new homes for the many bugs that we encounter along the way). We aim to have it up by the middle of 2027. Please check back!*
 
 ### Test releases
+- [Version 0.2](https://drive.google.com/file/d/1FdVPavv_b1hBFR1BqmzhgKYj29sY_EzB/view?usp=sharing) [Released: September 6, 2026] [Windows 10 & 11] (for beta testing)
 - [Version 0.1](https://drive.google.com/file/d/1nNlRlT18m9fjE4lZMUhPBckaFG3FSlIe/view?usp=sharing) [Released: April 28, 2026] [Windows 10 & 11]  (for alpha testing, please let us know if you find bugs!)  
 
 ## Notes for contributors
