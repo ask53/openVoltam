@@ -11,6 +11,7 @@ from wins.main import WindowMain
 # import other necessary python tools
 from os.path import join as joindir
 from functools import partial
+from pathlib import Path
 
 # import necessary tools from PyQt6
 from PyQt6.QtGui import QAction, QPixmap, QIcon
@@ -56,7 +57,13 @@ class WindowWelcome(QMainWindow):
 
         # Create the graphic
         lbl_icon = QLabel()
-        lbl_icon.setPixmap(QPixmap(joindir(g.BASEDIR,"external/icons/logo.png")))
+        #path_pixmap = Path(g.BASEDIR)
+        #print(path_pixmap)
+        path_pixmap = Path(g.BASEDIR) / "external" / "icons" / "logo.png"
+        
+        print(path_pixmap)
+        lbl_icon.setPixmap(QPixmap(str(path_pixmap)))
+        #lbl_icon.setPixmap(QPixmap(joindir(g.BASEDIR,"external/icons/logo.png")))
 
         # Create all buttons
         but_sample_new = QPushButton('New session')
