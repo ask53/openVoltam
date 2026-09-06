@@ -9,7 +9,6 @@ from wins.method import WindowMethod
 from wins.main import WindowMain
 
 # import other necessary python tools
-from os.path import join as joindir
 from functools import partial
 from pathlib import Path
 
@@ -57,14 +56,9 @@ class WindowWelcome(QMainWindow):
 
         # Create the graphic
         lbl_icon = QLabel()
-        #path_pixmap = Path(g.BASEDIR)
-        #print(path_pixmap)
         path_pixmap = Path(g.BASEDIR) / "external" / "icons" / "logo.png"
+        lbl_icon.setPixmap(QPixmap(str(path_pixmap)))           # QPixmap only accepts string paths, not pathlib Path() objects
         
-        print(path_pixmap)
-        lbl_icon.setPixmap(QPixmap(str(path_pixmap)))
-        #lbl_icon.setPixmap(QPixmap(joindir(g.BASEDIR,"external/icons/logo.png")))
-
         # Create all buttons
         but_sample_new = QPushButton('New session')
         but_sample_open = QPushButton('Open session')
@@ -157,9 +151,10 @@ class WindowWelcome(QMainWindow):
                 g.S_DATE_ENTERED: QDateTime.currentDateTime().toString(g.DATETIME_STORAGE_FORMAT)}
         for key in g.S_BLANK_ARRAYS:
             data[key] = []
-        initial_name = guess_filename(name)
+        initial_name = guess_filename(name)+g.SAMPLE_EXT
         path = QFileDialog.getSaveFileName(self, 'Save lab session', initial_name, g.SAMPLE_FILE_TYPES)[0]
         if path:
+            path = Path(path)       # convert string path to pathlib Path() object
             write_status = write_data_to_file(path, data)
             if write_status:
                 return path
