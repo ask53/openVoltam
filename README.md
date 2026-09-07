@@ -29,7 +29,10 @@ This software can be run on any operating system with Python. This is more invol
 3. Get all the files onto your computer:
     - If you use github, clone this repository
     - If not, you can just download this whole repository and unzip it
-4.          
+4. Open up the global_scripts > ov_globals.py file in a text editor and make the following edits:
+    1. Make sure that `PROC_RUN_FROM` is set to `PROC_RUN_FROM_PYTHON`
+    2. Set `PROC_PYTHON_CMD` to whatever command your computer uses to run python.
+5. hi           
 
 ## Notes for contributors
 This project uses a version of IO Rodeo's potentiostat library that is not yet available on PyPi. (Note that there is no "potentiostat" package listed in the  requirements.txt file, even though it IS required to run OpenVoltam). The potentiostat library is only necessary for actually sending instructions to and receiving data from a device, not for running the rest of the GUI. So if you want to develop the interface but don't need to actually run tests, you are welcome to install the version on PyPi ('pip install iorodeo-potentiostat') and roll with that, although you may not be able to actually connect to a potentiostat device. If you do want to install the same version of the potentiostat library that this project uses to actually work with a device, you can clone the [IO Rodeo repository](https://github.com/iorodeo/potentiostat) to a local machine, switch from 'master' to 'develop' branch, and install locally (cd into .../potentiostat/software/python/potentiostat then use 'pip install .' if working with pip). Good luck!
