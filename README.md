@@ -16,7 +16,7 @@ This software is licensed for two main reasons:
 We believe that everyone on this planet should have access to the tools to understand what is in the water that they drink. This software is our teeny, tiny contribution. To these ends, OpenVoltam is licensed under the [GNU General Public License version 3.0](https://github.com/ask53/openVoltam/blob/main/LICENSE). 
 
 ## Download 
-All installers linked here are compatible with **Windows 10** and **Windows 11**. To run on any other operating system with Python 3.12 or above, see the [Runing with Python](https://github.com/ask53/openVoltam/blob/main/README.md#running-with-python) instructions below. 
+All installers linked here are compatible with **Windows 10** and **Windows 11**. To run on any other operating system with python 3.12 or above, see the [Runing with python](https://github.com/ask53/openVoltam/blob/main/README.md#running-with-python) instructions below. 
 
 ### Stable releases
 *We are still working on the features in our first stable release (and finding safe new homes for the many bugs that we encounter along the way). We aim to have it up by the middle of 2027. Please check back!*
