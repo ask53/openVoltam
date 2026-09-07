@@ -24,15 +24,24 @@ All installers linked here are compatible with **Windows 10** and **Windows 11**
 
 ### Running with python
 This software can be run on any operating system with Python. This is more involved than using one of the above Windows installers. It requires python 3.12 or above. To run with python, follow these steps.
-1. Check your system's python version. If below 3.12, install version 3.12 or above.
-2. While you are at it, make sure that your python installation has a method of creating a virtual environment (these instructions use venv but any will do) and a way of installing python packages (we'll use pip here).
-3. Get all the files onto your computer:
+1. Check your system's python version. If below 3.12, install version 3.12 or above. While you're at it:
+    - Make sure that your python installation has a method of creating a virtual environment (these instructions use `venv` but any will do);
+    - And a way of installing python packages (we'll use `pip` here, but its up to you!).
+2. Get all the files onto your computer:
     - If you use github, clone this repository
     - If not, you can just download this whole repository and unzip it
-4. Open up the global_scripts > ov_globals.py file in a text editor and make the following edits:
+3. Open up the `global_scripts > ov_globals.py` file in a text editor and make the following edits:
     1. Make sure that `PROC_RUN_FROM` is set to `PROC_RUN_FROM_PYTHON`
-    2. Set `PROC_PYTHON_CMD` to whatever command your computer uses to run python.
-5. hi           
+    2. Set `PROC_PYTHON_CMD` to whatever command your computer uses to run python
+    3. Save your changes to `ov_globals.py` and close
+4. Create a virtual environment. This is not necessary, but is highly recommended! With `venv` follow these steps:
+    1. In a terminal, navigate to the main OpenVoltam folder (the folder that contains `OpenVoltam.py`)
+    2. run `python -m venv venv`. You may have to replace "python" with whatever command your system uses for pytohn ('py', 'python3', 'python3.v' are all common). This creates a virtual environment in a folder called "venv"
+5. Activate the venv. (Look up how to do this on your operating system. On linux, it is often `source venv/bin/activate`)
+6. Install the relevant python packages
+    1. With the venv activated, install all required packages: `pip install -r requirements.txt` This installs all packages except the potentiostat package from IORodeo.
+    2. To install the potentiostat package:
+       1. 
 
 ## Notes for contributors
 This project uses a version of IO Rodeo's potentiostat library that is not yet available on PyPi. (Note that there is no "potentiostat" package listed in the  requirements.txt file, even though it IS required to run OpenVoltam). The potentiostat library is only necessary for actually sending instructions to and receiving data from a device, not for running the rest of the GUI. So if you want to develop the interface but don't need to actually run tests, you are welcome to install the version on PyPi ('pip install iorodeo-potentiostat') and roll with that, although you may not be able to actually connect to a potentiostat device. If you do want to install the same version of the potentiostat library that this project uses to actually work with a device, you can clone the [IO Rodeo repository](https://github.com/iorodeo/potentiostat) to a local machine, switch from 'master' to 'develop' branch, and install locally (cd into .../potentiostat/software/python/potentiostat then use 'pip install .' if working with pip). Good luck!
