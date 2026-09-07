@@ -1,5 +1,34 @@
 #ov_globals.py
 
+PROC_RUN_FROM_PYTHON = 'python'
+PROC_RUN_FROM_EXE = 'exe'
+
+### UNCOMMENT ONLY ONE LINE BELOW THAT CORRESPONDS TO YOUR 
+#   SYSTEM'S PYTHON COMMAND:
+#
+#
+PROC_PYTHON_CMD = 'py'         # Often: Windows 11
+#PROC_PYTHON_CMD = 'python'     # Windows and Linux
+#PROC_PYTHON_CMD = 'python3'    # Often: Linux
+#PROC_PYTHON_CMD = 'python3.12' # Often: Linux
+#PROC_PYTHON_CMD = 'python3.13' # Often: Linux
+#PROC_PYTHON_CMD = 'python3.14' # Often: Linux
+#PROC_PYTHON_CMD = 'python3.15' # Often: Linux
+#PROC_PYTHON_CMD = 'python3.16' # Often: Linux
+#
+#
+###############################################
+
+### TOGGLE THESE TO RUN ASYNC PROCESSES AS PYTHON OR
+#   EXE SCRIPTS
+#
+#
+PROC_RUN_FROM = PROC_RUN_FROM_PYTHON
+#PROC_RUN_FROM = PROC_RUN_FROM_EXE
+#
+#
+###############################################
+
 CURRENT_RANGES = ('1uA', '10uA', '100uA', '1000uA', '10000uA')
 
 # PyQt globals
@@ -224,18 +253,7 @@ PROC_TYPE_READ = 'read'
 PROC_TYPE_RUN = 'run'
 PROC_SCRIPT = 'external/process.exe'
 PROC_SCRIPT_PYTHON = 'processes/process.py'
-PROC_RUN_FROM_PYTHON = 'python'
-PROC_RUN_FROM_EXE = 'exe'
-PROC_PYTHON_CMD = 'py'
 
-### CHANGE THIS TO MODIFY HOW PROGRAM RUNS PROCESSES
-#
-#
-#PROC_RUN_FROM = PROC_RUN_FROM_PYTHON
-PROC_RUN_FROM = PROC_RUN_FROM_EXE
-#
-#
-###############################################
 
 # Asynchronous save
 SAVE_TYPE_EDIT_SESH_NAME = 'edit-session-name'

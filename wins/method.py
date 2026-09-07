@@ -1304,7 +1304,7 @@ class WindowMethod(QMainWindow):
     
     def method_save_as(self):     
         # get the actual filename and path from user
-        initial_name = guess_filename(self.name.text())
+        initial_name = guess_filename(self.name.text())+g.METHOD_EXT
         self.path = QFileDialog.getSaveFileName(self, 'Save method', initial_name, g.METHOD_FILE_TYPES)[0]
             
         if not self.path or self.path == '':    # if the user didn't select a path

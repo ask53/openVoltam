@@ -127,9 +127,7 @@ class WindowWelcome(QMainWindow):
                 if win.__dict__[key] == value:
                     win.activateWindow()
                     return win
-        print(self.children)
         self.children.append(obj)
-        print(self.children)
         self.children[-1].show()
         return self.children[-1]
 
@@ -195,11 +193,9 @@ class WindowWelcome(QMainWindow):
 
     def closeEvent(self, event):
         if self.children:       # if there are any sub-windows
-            print('hiding!')
             self.hide()         # hide the welcome window instead of closing it
             event.ignore()
         else:
-            print('closing!')
             event.accept()      # if no sub windos, close! 
 
 
