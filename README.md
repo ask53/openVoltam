@@ -27,8 +27,8 @@ This software can be run on any operating system with Python. This is more invol
 1. Check your system's python version. If below 3.12, install version 3.12 or above.
 2. While you are at it, make sure that your python installation has a method of creating a virtual environment (these instructions use venv but any will do) and a way of installing python packages (we'll use pip here).
 3. Get all the files onto your computer:
-    a. If you use github, clone this repository
-    b. If not, you can just download this whole repository and unzip it
+    1. If you use github, clone this repository
+    2. If not, you can just download this whole repository and unzip it
 4.          
 
 ## Notes for contributors
