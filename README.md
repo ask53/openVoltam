@@ -13,14 +13,23 @@ This software is licensed for two main reasons:
 We believe that everyone on this planet should have access to the tools to understand what is in the water that they drink. This software is our teeny, tiny contribution. To these ends, OpenVoltam is licensed under the [GNU General Public License version 3.0](https://github.com/ask53/openVoltam/blob/main/LICENSE). 
 
 ## Download 
-All releases compatible with **Windows 10** and **Windows 11**. *If you **need** access on a different operating system, please contact us*.
+All installers linked here are compatible with **Windows 10** and **Windows 11**. To run on any other operating system with Python 3.12 or above, see the "Runing with Python."
 
 ### Stable releases
 *We are still working on the features in our first stable release (and finding safe new homes for the many bugs that we encounter along the way). We aim to have it up by the middle of 2027. Please check back!*
 
 ### Test releases
 - [Version 0.2](https://drive.google.com/file/d/1FdVPavv_b1hBFR1BqmzhgKYj29sY_EzB/view?usp=sharing) [Released: 06 Sep 2026] [Windows 10 & 11] (for beta testing)
-- [Version 0.1](https://drive.google.com/file/d/1nNlRlT18m9fjE4lZMUhPBckaFG3FSlIe/view?usp=sharing) [Released: 28 Apr 2026] [Windows 10 & 11]  (for alpha testing, please let us know if you find bugs!)  
+- [Version 0.1](https://drive.google.com/file/d/1nNlRlT18m9fjE4lZMUhPBckaFG3FSlIe/view?usp=sharing) [Released: 28 Apr 2026] [Windows 10 & 11]  (for alpha testing, please let us know if you find bugs!)
+
+### Running with python
+This software can be run on any operating system with Python. This is more involved than using one of the above Windows installers. It requires python 3.12 or above. To run with python, follow these steps.
+1. Check your system's python version. If below 3.12, install version 3.12 or above.
+2. While you are at it, make sure that your python installation has a method of creating a virtual environment (these instructions use venv but any will do) and a way of installing python packages (we'll use pip here).
+3. Get all the files onto your computer:
+   a. If you use github, clone this repository
+   b. If not, you can just download this whole repository and unzip it
+4.          
 
 ## Notes for contributors
 This project uses a version of IO Rodeo's potentiostat library that is not yet available on PyPi. (Note that there is no "potentiostat" package listed in the  requirements.txt file, even though it IS required to run OpenVoltam). The potentiostat library is only necessary for actually sending instructions to and receiving data from a device, not for running the rest of the GUI. So if you want to develop the interface but don't need to actually run tests, you are welcome to install the version on PyPi ('pip install iorodeo-potentiostat') and roll with that, although you may not be able to actually connect to a potentiostat device. If you do want to install the same version of the potentiostat library that this project uses to actually work with a device, you can clone the [IO Rodeo repository](https://github.com/iorodeo/potentiostat) to a local machine, switch from 'master' to 'develop' branch, and install locally (cd into .../potentiostat/software/python/potentiostat then use 'pip install .' if working with pip). Good luck!
