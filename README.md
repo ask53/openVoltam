@@ -41,7 +41,19 @@ This software can be run on any operating system with Python. This is more invol
 6. Install the relevant python packages
     1. With the venv activated, install all required packages: `pip install -r requirements.txt` This installs all packages except the potentiostat package from IORodeo.
     2. To install the potentiostat package:
-       1. 
+        1. Navigate to the [potentiostat github repository](https://github.com/iorodeo/potentiostat)
+        2. Get the code onto your machine:
+            - If using github:
+               1. Clone the repository
+               2. Toggle into the `develop` branch
+            - If not using github:
+               1. Go to the linked repository above in a browser
+               2. Switch the branch to `develop` (not `main`!)
+               3. Download the files from github
+               4. Unzip on your computer
+         3. In a terminal, navigate into the `potentiostat > software > python > potentiostat` folder
+         4. Make sure your virtual environment is still active and install as python package `pip install .`
+7. 
 
 ## Notes for contributors
 This project uses a version of IO Rodeo's potentiostat library that is not yet available on PyPi. (Note that there is no "potentiostat" package listed in the  requirements.txt file, even though it IS required to run OpenVoltam). The potentiostat library is only necessary for actually sending instructions to and receiving data from a device, not for running the rest of the GUI. So if you want to develop the interface but don't need to actually run tests, you are welcome to install the version on PyPi ('pip install iorodeo-potentiostat') and roll with that, although you may not be able to actually connect to a potentiostat device. If you do want to install the same version of the potentiostat library that this project uses to actually work with a device, you can clone the [IO Rodeo repository](https://github.com/iorodeo/potentiostat) to a local machine, switch from 'master' to 'develop' branch, and install locally (cd into .../potentiostat/software/python/potentiostat then use 'pip install .' if working with pip). Good luck!
