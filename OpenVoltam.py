@@ -5,7 +5,7 @@ from global_scripts.ov_functions import *
 
 # import other python functions (be as specific as possible to keep filesize down)
 from os.path import dirname
-from os.path import join as joindir     #   many seconds depending on caches
+from pathlib import Path
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import QApplication, QSplashScreen
 
@@ -13,7 +13,8 @@ from PyQt6.QtWidgets import QApplication, QSplashScreen
 g.BASEDIR = dirname(__file__) # by setting location to joindir(basedir, [relative path from base directory])
 
 g.APP = QApplication([])                                                        # create a PyQt app
-splash = QSplashScreen(QPixmap(joindir(g.BASEDIR,'external/icons/splash.png')))   # create splash screen
+splash_path = Path(g.BASEDIR) / "external" / "icons" / "splash.png"
+splash = QSplashScreen(QPixmap(str(splash_path)))   # create splash screen
 splash.show()                                                                   # show splash screen
 g.APP.processEvents()
 
@@ -32,10 +33,13 @@ except ImportError:
 # Set the display language
 g.L = g.ENG
 
-g.APP.setWindowIcon(QIcon(joindir(g.BASEDIR,'external/icons/icon.png')))      # set the display icon for the app
+icon_path = Path(g.BASEDIR) / "external" / "icons" / "icon.png"
+g.APP.setWindowIcon(QIcon(str(icon_path)))      # set the display icon for the app
 
-with open(joindir(g.BASEDIR,"external/styles/styles.css"), "r") as file:    # open the stylesheet
+styles_path = Path(g.BASEDIR) / "external" / "styles" / "styles.css"
+with open(styles_path, "r") as file:    # open the stylesheet
     g.STYLES = file.read()
+    
 applyStyles()                       # and set it as the app's stylesheet
 window = WindowWelcome()            # create a new welcome window object
 window.show()                       # show the welcome window (when the app is run)

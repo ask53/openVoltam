@@ -13,6 +13,7 @@ class WindowName(QMainWindow):
     def __init__(self, parent, *args):  
         super().__init__()                          # if path, load sample deets, else load empty edit window for new sample
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.parent = parent
         self.status = self.statusBar()
         self.force_close = False
 

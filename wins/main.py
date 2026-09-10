@@ -118,10 +118,12 @@ class WindowMain(QMainWindow):
         # Lab session menu
         action_session_new = QAction('New session', self)
         action_session_open = QAction('Open session', self)
+        action_session_settings = QAction('Settings', self)
         action_session_close = QAction('Close', self)
 
         action_session_new.triggered.connect(parent.new_session)
         action_session_open.triggered.connect(parent.open_session)
+        action_session_settings.triggered.connect(parent.open_settings)
         action_session_close.triggered.connect(self.close)
         
         # Method menu
@@ -178,6 +180,8 @@ class WindowMain(QMainWindow):
         m = menu.addMenu('Lab session')
         m.addAction(action_session_new)
         m.addAction(action_session_open)
+        m.addSeparator()
+        m.addAction(action_session_settings)
         m.addSeparator()
         m.addAction(action_session_close)
         

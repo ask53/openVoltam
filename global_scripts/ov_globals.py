@@ -218,13 +218,9 @@ C_SAMPLE_ID = 'sample-id'
 C_X = 'x'
 C_Y = 'y'
 
-# Voltamogram globals
-'''VOG_RESIZE = 500        # number of points to resize data to for analysis
-VOG_SG_WINDOW_LEN = 25  # Window lenght property for Savitzky-Golay filtering
-VOG_SG_POLYORDER = 3    # Polyorder property for Savitzky-Golay filtering
-VOG_LP_FS = 100         # Butterworth lopass filter signal frequency
-VOG_LP_CUTOFF = 2       # Butterworth lopass filter cutoff frequency
-VOG_LP_ORDER = 5        # Butterworth lopass filter order'''
+# Settings window
+SET_FILE = 'settings.txt'
+SET_LANG = 'language'
 
 # Icon URLs 
 ICON_PLUS = 'external/icons/add.png'
@@ -234,6 +230,7 @@ ICON_EDIT = 'external/icons/edit.png'
 ICON_DUP = 'external/icons/duplicate.png'
 ICON_TRASH = 'external/icons/trash.png'
 ICON_X = 'external/icons/x.png'
+ICON_SET = 'external/icons/gear.png'
 ICON_RELAY = ['external/icons/relay1.png',
               'external/icons/relay2.png',
               'external/icons/relay3.png',
@@ -286,8 +283,10 @@ M_SAMPLE_FREQ_MAX = 1000         # 86,400,000 miliseconds in a day
 M_RELAY_MAX = 6
 
 # Language globals 
+LANGS = ('English', 'Español', 'Aha!')
 ENG = 0
 ESP = 1
+
 
 HEADER_DIVIDER = ' | '
 CUSTOM_NAME_FLAG = 'ov_'

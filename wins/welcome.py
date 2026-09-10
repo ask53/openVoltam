@@ -7,6 +7,7 @@ from global_scripts.ov_functions import *
 from wins.sample import WindowSample
 from wins.method import WindowMethod
 from wins.main import WindowMain
+from wins.settings import WindowSettings
 
 # import other necessary python tools
 from functools import partial
@@ -49,6 +50,11 @@ class WindowWelcome(QMainWindow):
         # set the window parameters
         self.setWindowTitle(l.window_home[g.L])
         
+        # Create the settings button
+        but_set = QPushButton()
+        but_set.setIcon(QIcon(g.ICON_SET))
+        but_set.clicked.connect(self.open_settings)
+        
         # Create the text intro label
         lbl_about = QLabel(l.info_msg[g.L])
         lbl_about.setWordWrap(True)
@@ -70,36 +76,43 @@ class WindowWelcome(QMainWindow):
         but_sample_open.clicked.connect(self.open_session)
         but_config_new.clicked.connect(self.new_method)
         but_config_open.clicked.connect(self.open_method)
-
-        # layout screen into three horizontal layouts grouped together vertically
-        layout_pane = QVBoxLayout()
-        layout_top = QHBoxLayout()
-        layout_sample = QHBoxLayout()
-        layout_config = QHBoxLayout()
         
-        # add icon and intro text message into 1st layout
-        layout_top.addWidget(lbl_icon)
-        layout_top.addWidget(lbl_about)
+        
+        h1 = QHBoxLayout()      # Horizontal layout for settings button
+        h1.addStretch()
+        h1.addWidget(but_set)
+        
+        v1 = QVBoxLayout()      # Settings button and main text
+        v1.addLayout(h1)
+        v1.addWidget(lbl_about)
+        
+        
+        h2 = QHBoxLayout()      # Upper half (icon, text, settings)
+        h2.addWidget(lbl_icon)
+        h2.addLayout(v1)
 
         # add sample buttons into 2nd layout, wrap them in groupbox that labels them both
-        layout_sample.addWidget(but_sample_new)
-        layout_sample.addWidget(but_sample_open)
-        groupbox_sample = QGroupBox('Lab session')
-        groupbox_sample.setLayout(layout_sample)
+        h3 = QHBoxLayout()
+        h3.addWidget(but_sample_new)
+        h3.addWidget(but_sample_open)
+        g1 = QGroupBox('Lab session')
+        g1.setLayout(h3)
 
         # add config buttons into 3nd layout, wrap them in groupbox that labels them both
-        layout_config.addWidget(but_config_new)
-        layout_config.addWidget(but_config_open)
-        groupbox_config = QGroupBox(l.menu_config[g.L])
-        groupbox_config.setLayout(layout_config)
+        h4 = QHBoxLayout()
+        h4.addWidget(but_config_new)
+        h4.addWidget(but_config_open)
+        g2 = QGroupBox(l.menu_config[g.L])
+        g2.setLayout(h4)
 
         # add all three horizontal layouts to the vertical layout
-        layout_pane.addLayout(layout_top)
-        layout_pane.addWidget(groupbox_sample)
-        layout_pane.addWidget(groupbox_config)
+        v2 = QVBoxLayout()
+        v2.addLayout(h2)
+        v2.addWidget(g1)
+        v2.addWidget(g2)
 
         w = QWidget()
-        w.setLayout(layout_pane)
+        w.setLayout(v2)
         self.setCentralWidget(w)
 
     def new_win_one_of_type(self, obj):
@@ -190,6 +203,9 @@ class WindowWelcome(QMainWindow):
                 self.new_win_one_with_value(WindowMethod(self, g.WIN_MODE_EDIT, path), 'path', path)
         except Exception as e:
             print(e)
+            
+    def open_settings(self):
+        self.new_win_one_of_type(WindowSettings(self))
 
     def closeEvent(self, event):
         if self.children:       # if there are any sub-windows

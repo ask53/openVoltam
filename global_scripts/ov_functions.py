@@ -212,8 +212,6 @@ def write_data_to_file(path, data, main=None):
                 }
             tab_json_to_write = stringify(data, options)       #   convert dictionary to json string
             file.write(tab_json_to_write)                                       #   write json string to file
-            #json_to_write = dumps(data, indent=4)
-            #file.write(json_to_write)
             file.close()                                                    #   close the file (to avoid taking up too much memory)
             if main:
                 main.update_file_last_modified()

@@ -5,6 +5,10 @@ QPushButton {
 	color: #080808;
 }
 
+QPushButton:hover {
+	background-color: rgba(255,255,255, 0.95);
+}
+
 QLineEdit#ov_sample_name, 
 QLineEdit#ov-method-name {
 	font-size: 18pt;
