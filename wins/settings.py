@@ -68,8 +68,31 @@ class WindowSettings(QMainWindow):
         #
         ###########################################################################3
         
-        
+        # 1. Save settings
+        # 2. Set text on Welcome window (self.parent)
+        # 3. Loop thru all children of Welcome window. (for child in self.parent.children)
+        #   a. Set text for that window (child.set_text())
+        #   b. If window has children (if child.children exists):
+        #       i. Loop thru all children of main (for grandchild in child.children())
+        #       ii. Set text for that window (grandchild.set_text())
+        #        ^--- this can be done recursively woahhhhhhh a realworld applicaiton of recursionnnnn
+        #
+        # Proposed code
+        #
+        # self.save_settings()
+        # self.set_text(self.parent)
+        #
+        #
+         
         self.update_requires_reload()
+        
+    '''def set_text(self, win):
+        win.set_text()                      # set text on that window
+        If win has children:                # FIGURE OUT HOW TO CHECK THIS
+            for each child:                 # REWRITE WITH REAL CODE
+                self.set_text(child)        # CREATE A self.set_text() METHOD FOR EACH WINDOW AND ADD TO TEMPLATE
+    '''    
+        
         
     def update_requires_reload(self):
         if self.loading:
