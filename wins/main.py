@@ -1640,6 +1640,9 @@ class WindowMain(QMainWindow):
         except Exception as e:
             print('window resize handler:')
             print(e)
+            
+    def set_text(self, lang):
+        print('setting text on MAIN')
 
     #############################################
     #                                           #

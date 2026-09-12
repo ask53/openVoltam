@@ -47,8 +47,9 @@ class WindowWelcome(QMainWindow):
         self.data = {}
         self.children = []
         
-        # set the window parameters
-        self.setWindowTitle(l.window_home[g.L])
+        # Load system-wide OV settings (settable by user)
+        self.settings_path = Path(g.BASEDIR) / "external" / g.SET_FILE
+        self.settings = get_data_from_file(self.settings_path)
         
         # Create the settings button
         but_set = QPushButton()
@@ -56,9 +57,9 @@ class WindowWelcome(QMainWindow):
         but_set.clicked.connect(self.open_settings)
         
         # Create the text intro label
-        lbl_about = QLabel(l.info_msg[g.L])
-        lbl_about.setWordWrap(True)
-        lbl_about.setOpenExternalLinks(True)
+        self.lbl_about = QLabel()
+        self.lbl_about.setWordWrap(True)
+        self.lbl_about.setOpenExternalLinks(True)
 
         # Create the graphic
         lbl_icon = QLabel()
@@ -66,16 +67,16 @@ class WindowWelcome(QMainWindow):
         lbl_icon.setPixmap(QPixmap(str(path_pixmap)))           # QPixmap only accepts string paths, not pathlib Path() objects
         
         # Create all buttons
-        but_sample_new = QPushButton('New session')
-        but_sample_open = QPushButton('Open session')
-        but_config_new = QPushButton(l.new_config[g.L])
-        but_config_open = QPushButton(l.open_config[g.L])
-
+        self.but_sample_new = QPushButton()
+        self.but_sample_open = QPushButton()
+        self.but_config_new = QPushButton()
+        self.but_config_open = QPushButton()
+        
         # Connect relevant button signals to functions ("slots")
-        but_sample_new.clicked.connect(self.new_session)
-        but_sample_open.clicked.connect(self.open_session)
-        but_config_new.clicked.connect(self.new_method)
-        but_config_open.clicked.connect(self.open_method)
+        self.but_sample_new.clicked.connect(self.new_session)
+        self.but_sample_open.clicked.connect(self.open_session)
+        self.but_config_new.clicked.connect(self.new_method)
+        self.but_config_open.clicked.connect(self.open_method)
         
         
         h1 = QHBoxLayout()      # Horizontal layout for settings button
@@ -84,7 +85,7 @@ class WindowWelcome(QMainWindow):
         
         v1 = QVBoxLayout()      # Settings button and main text
         v1.addLayout(h1)
-        v1.addWidget(lbl_about)
+        v1.addWidget(self.lbl_about)
         
         
         h2 = QHBoxLayout()      # Upper half (icon, text, settings)
@@ -93,26 +94,31 @@ class WindowWelcome(QMainWindow):
 
         # add sample buttons into 2nd layout, wrap them in groupbox that labels them both
         h3 = QHBoxLayout()
-        h3.addWidget(but_sample_new)
-        h3.addWidget(but_sample_open)
-        g1 = QGroupBox('Lab session')
-        g1.setLayout(h3)
+        h3.addWidget(self.but_sample_new)
+        h3.addWidget(self.but_sample_open)
+        self.g1 = QGroupBox()
+        self.g1.setLayout(h3)
 
         # add config buttons into 3nd layout, wrap them in groupbox that labels them both
         h4 = QHBoxLayout()
-        h4.addWidget(but_config_new)
-        h4.addWidget(but_config_open)
-        g2 = QGroupBox(l.menu_config[g.L])
-        g2.setLayout(h4)
+        h4.addWidget(self.but_config_new)
+        h4.addWidget(self.but_config_open)
+        self.g2 = QGroupBox()
+        self.g2.setLayout(h4)
 
         # add all three horizontal layouts to the vertical layout
         v2 = QVBoxLayout()
         v2.addLayout(h2)
-        v2.addWidget(g1)
-        v2.addWidget(g2)
+        v2.addWidget(self.g1)
+        v2.addWidget(self.g2)
 
         w = QWidget()
         w.setLayout(v2)
+        
+        self.set_text(self.settings[g.SET_LANG])
+        
+        
+        
         self.setCentralWidget(w)
 
     def new_win_one_of_type(self, obj):
@@ -206,6 +212,17 @@ class WindowWelcome(QMainWindow):
             
     def open_settings(self):
         self.new_win_one_of_type(WindowSettings(self))
+     
+    def set_text(self, lang):
+        print('setting text on WELCOME')
+        self.setWindowTitle(l.WEL_TITLE[lang])                 # Title of window (on header bar)
+        txt(self.lbl_about, l.WEL_INFO, lang)                  # Info text with links, version, release, etc.
+        self.g1.setTitle(l.WEL_SESH[lang])                     # Upper groupbox (lab session)
+        txt(self.but_sample_new, l.WEL_NEW_SESH, lang)         # New lab session
+        txt(self.but_sample_open, l.WEL_OPN_SESH, lang)        # Open lab session
+        self.g2.setTitle(l.WEL_METH[lang])                     # Lower groupbox (Method)
+        txt(self.but_config_new, l.WEL_NEW_METH, lang)         # New method
+        txt(self.but_config_open, l.WEL_OPN_METH, lang)        # Open method
 
     def closeEvent(self, event):
         if self.children:       # if there are any sub-windows

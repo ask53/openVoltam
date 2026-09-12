@@ -1,20 +1,53 @@
 #lang.py
 from global_scripts import ov_globals as g
 
+# Window: SETTINGS
+SET_WIN_TITLE = {'eng': 'OpenVoltam | Settings',
+                'esp': 'OpenVoltam | Ajustes'}
+SET_TITLE = {'eng': '<b>Settings</b>',
+            'esp': '<b>Ajustes</b>'}
+SET_LANG = {'eng': 'Language',
+            'esp': 'Idioma'}
+            
+# Window: WELCOME
+VERSION = "0.2"
+RELEASE = {'eng': "September 5, 2026",
+           'esp': '5 septiembre 2026'}
+WEL_TITLE = {'eng': 'OpenVoltam',
+            'esp': 'OpenVoltam'}
+WEL_INFO = {'eng': "Welcome to <a href='https://github.com/ask53/openVoltam'>OpenVoltam</a>!<br><br>An open source project by <a href='https://www.caminosdeagua.org'>Caminos de Agua</a> and <a href='https://www.iorodeo.com'>IO Rodeo</a><br><br>Version: "+VERSION+"<br>Release: "+RELEASE['eng'],
+            'esp': "Bienvenidx a <a href='https://github.com/ask53/openVoltam'>OpenVoltam</a>!<br><br>Un proyecto de fuente abierta por <a href='https://www.caminosdeagua.org'>Caminos de Agua</a> y <a href='https://www.iorodeo.com'>IO Rodeo</a><br><br>Versión: "+VERSION+"<br>Emitida: "+RELEASE['esp']}
+WEL_SESH = {'eng': 'Lab session',
+            'esp': 'Sesión de laboratorio'}
+WEL_NEW_SESH = {'eng': 'New session',
+            'esp': 'Sesión nueva'}
+WEL_OPN_SESH = {'eng': 'Open session',
+            'esp': 'Abrir sesión'}
+WEL_METH = {'eng': 'Method',
+            'esp': 'Ajustes de voltametría'}
+WEL_NEW_METH = {'eng': 'New method',
+            'esp': 'Método nuevo'}
+WEL_OPN_METH = {'eng': 'Open method',
+            'esp': 'Abrir método'}
+            
+
+# Window: MAIN
+
+# 
+
+
+
 # Window: Home
-new_sample = ['New sample', 'Muestra nueva']
-open_sample = ['Open sample', 'Abrir muestra']
-edit_sample = ['Edit sample', 'Modificar muestra']
-view_sample = ['View sample', 'Ver muestra']
-new_config = ['New method', 'Método nueva']
-open_config = ['Open method', 'Abrir config']
-edit_config = ['Edit method','Modificar config']
-new_config_full = ['New method','Ajuste de voltametría nueva']
-view_config_full = ['View method','Revisar ajustes de voltametría']
-version = "0.2"
-release = "September 5, 2026"
-info_msg = ["Welcome to <a href='https://github.com/ask53/openVoltam'>OpenVoltam</a>!<br><br>An open source project by <a href='https://www.caminosdeagua.org'>Caminos de Agua</a> and <a href='https://www.iorodeo.com'>IO Rodeo</a><br><br>Version: "+version+"<br>Release: "+release,"Bienvenidx a <a href='https://github.com/ask53/openVoltam'>OpenVoltam</a>!<br><br>Un proyecto de fuente abierta por <a href='https://www.caminosdeagua.org'>Caminos de Agua</a> y <a href='https://www.iorodeo.com'>IO Rodeo</a><br><br>Version: "+version+"<br>Release: "+release]
-window_home = ['OpenVoltam','OpenVoltam']
+#new_sample = ['New sample', 'Muestra nueva']
+#open_sample = ['Open sample', 'Abrir muestra']
+#edit_sample = ['Edit sample', 'Modificar muestra']
+#view_sample = ['View sample', 'Ver muestra']
+#new_config = ['New method', 'Método nueva']
+#open_config = ['Open method', 'Abrir config']
+#edit_config = ['Edit method','Modificar config']
+#new_config_full = ['New method','Ajuste de voltametría nueva']
+#view_config_full = ['View method','Revisar ajustes de voltametría']
+#window_home = ['OpenVoltam','OpenVoltam']
 
 # Menus
 menu_sample = ['Sample','Muestra']

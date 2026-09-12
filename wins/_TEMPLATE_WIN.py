@@ -25,6 +25,10 @@ class WindowName(QMainWindow):
         Updates this window with new data as needed"""
         data = self.parent.data
         # update window widgets here
+        
+    def set_text(self, lang):
+        print('setting text on TEMPLATE window in '+lang)
+        # Set text here
             
     def event(self, event):                                 # General purpose event handler
         if event.type() == QEvent.Type.ActivationChange:    # Check if the event is changing the activation status of the window

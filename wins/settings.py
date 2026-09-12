@@ -27,18 +27,18 @@ class WindowSettings(QMainWindow):
         self.force_close = False
         self.reload_required = False
         self.loading = True
-        self.path = Path(g.BASEDIR) / "external" / g.SET_FILE
+        self.path = self.parent.settings_path
+        self.data = None
         
         # Titles
-        title = QLabel('<b>Settings</b>')
-        self.setWindowTitle('OpenVoltam | Settings')
+        self.lbl_title = QLabel('...')
         
         #Language
-        lang_lbl = QLabel('Language')
+        self.lbl_lang = QLabel('...')
         self.lang = QComboBox()
         self.lang.currentIndexChanged.connect(self.language_changed)
-        for i, lang in enumerate(g.LANGS):
-            self.lang.addItem(lang, i)
+        for key in g.LANGS.keys():
+            self.lang.addItem(key, g.LANGS[key])
         self.lang.model().sort(self.lang.modelColumn())                     # Sort A-Z
         
         
@@ -47,62 +47,41 @@ class WindowSettings(QMainWindow):
         
         # Set layout
         v1 = QVBoxLayout()
-        v1.addWidget(title)
-        v1.addLayout(horizontalize([lang_lbl, self.lang]))
+        v1.addWidget(self.lbl_title)
+        v1.addLayout(horizontalize([self.lbl_lang, self.lang]))
         
         w = QWidget()
         w.setLayout(v1)
         self.setCentralWidget(w)
         
         self.load_settings()
+        self.set_text(self.data[g.SET_LANG])
         self.loading = False                                                # Shut off loading flag to enable changes!
         
     def language_changed(self):
-        ##############################################################3
-        #
-        #   HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE 
-        #
-        #   DO STUFF TO CHANGE THE LANGUAGE AS SOON AS NEW LANGUAGE IS SELECTED!
-        #
-        #
-        #
-        ###########################################################################3
-        
-        # 1. Save settings
-        # 2. Set text on Welcome window (self.parent)
-        # 3. Loop thru all children of Welcome window. (for child in self.parent.children)
-        #   a. Set text for that window (child.set_text())
-        #   b. If window has children (if child.children exists):
-        #       i. Loop thru all children of main (for grandchild in child.children())
-        #       ii. Set text for that window (grandchild.set_text())
-        #        ^--- this can be done recursively woahhhhhhh a realworld applicaiton of recursionnnnn
-        #
-        # Proposed code
-        #
-        # self.save_settings()
-        # self.set_text(self.parent)
-        #
-        #
-         
-        self.update_requires_reload()
-        
-    '''def set_text(self, win):
-        win.set_text()                      # set text on that window
-        If win has children:                # FIGURE OUT HOW TO CHECK THIS
-            for each child:                 # REWRITE WITH REAL CODE
-                self.set_text(child)        # CREATE A self.set_text() METHOD FOR EACH WINDOW AND ADD TO TEMPLATE
-    '''    
-        
-        
-    def update_requires_reload(self):
         if self.loading:
             return
-        reload_required = True
-        self.save_settings()
+        self.save_settings()                            # save all the settings
+        self.set_text_all_descendants_from(self.parent) # update text on parent (welcome) and all its descendants
+                                                        #   based on selected language (updates all windows)
+        
+    def set_text_all_descendants_from(self, win):
+        """Takes in a starting window. Calls the that window's set_text method,
+        win.set_text(). Then recursively calls the set_text method on all descendents
+        of that starting window"""
+        lang = self.data[g.SET_LANG]
+        win.set_text(lang)                  # set text on that window
+        try:
+            win.children                    # if that window has children
+        except:
+            pass
+        else:
+            for child in win.children:      # loop thru all children
+                child.set_text(lang)        # set text on each one
         
     def load_settings(self):
-        data = get_data_from_file(self.path)
-        lang = g.LANGS[int(data[g.SET_LANG])]
+        self.data = self.parent.settings
+        lang = list(g.LANGS.keys())[list(g.LANGS.values()).index(self.data[g.SET_LANG])]
         self.lang.setCurrentText(lang)
         
         
@@ -111,11 +90,13 @@ class WindowSettings(QMainWindow):
             return
 
         # Bundle the data into a dictionary
-        data = {}
-        data[g.SET_LANG] = str(self.lang.itemData(self.lang.currentIndex()))
+        self.data = {}
+        self.data[g.SET_LANG] = str(self.lang.itemData(self.lang.currentIndex()))
         
-        # Write the settings file
-        write_data_to_file(self.path, data)
+        # Write!
+        self.parent.settings = self.data            # update the settings on Welcome win
+        write_data_to_file(self.path, self.data)    # Save settings to file 
+        
         
         
         
@@ -123,19 +104,16 @@ class WindowSettings(QMainWindow):
         """Designed to be called when parent's data has been reloaded.
         Updates this window with new data as needed"""
         data = self.parent.data
-        # update window widgets here
+        
+    def set_text(self, lang):
+        """ Sets all text in window to label in the provided language, lang"""
+        self.setWindowTitle(l.SET_WIN_TITLE[lang])              # Title of window (on header bar)
+        txt(self.lbl_title, l.SET_TITLE, lang)                  # In-window title
+        txt(self.lbl_lang, l.SET_LANG, lang)                    # Language label
             
     
     def closeEvent(self, event):
-        """
-        Event handler for close event."""
-        if self.force_close:
-            self.accept_close(event)
-        # add close/save logic here
-        #
         self.accept_close(event)
-        #
-        ###########################
         
         
     def accept_close(self, closeEvent):

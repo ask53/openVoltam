@@ -189,6 +189,14 @@ def get_path_from_user(win, pathtype):
     except Exception as e:
         print(e)
         
+        
+        
+        
+def txt(lbl, strings_dict, lang):
+    lbl.setText(strings_dict[lang])
+    
+    
+        
     
 
 def get_data_from_file(path):

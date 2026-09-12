@@ -283,7 +283,9 @@ M_SAMPLE_FREQ_MAX = 1000         # 86,400,000 miliseconds in a day
 M_RELAY_MAX = 6
 
 # Language globals 
-LANGS = ('English', 'Español', 'Aha!')
+LANGS = {'English': 'eng',
+        'Español': 'esp', 
+        'Aha!': 'aha'}
 ENG = 0
 ESP = 1
 
