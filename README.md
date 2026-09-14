@@ -29,7 +29,7 @@ All installers linked here are compatible with **Windows 10** and **Windows 11**
 This software ought to be able to be run on any operating system with python (although we haven't tested them all, so fair warning, there may be bugs!). It requires python 3.12 or above. We recommend avoiding virtual machines to avoid headaches with USB and port communications. But this software is free to use, so you are welcome to make your own decisions :) To run with python, follow these steps:
 1. Check your system's python version. If below 3.12, install version 3.12 or above. While you're at it:
     - Make sure that your python installation has a method of creating a virtual environment (these instructions use `venv` but any will do);
-    - And a way of installing python packages (we'll use `pip` here, but its up to you!).
+    - And a way of installing/managing python packages (we'll use `pip` here, but its up to you!).
 2. Get all the files onto your computer:
     - If you use github, clone this repository
     - If not, you can just download this whole repository and unzip it
