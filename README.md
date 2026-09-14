@@ -39,7 +39,7 @@ This software ought to be able to be run on any operating system with python (al
     3. Save your changes to `ov_globals.py` and close
 4. Create a virtual environment. This is not necessary, but is highly recommended! If you are using `venv` (which may need to be installed if you don't have it on your system already) follow these steps:
     1. In a terminal, navigate (`cd`) to the main OpenVoltam folder (the folder that contains `OpenVoltam.py`)
-    2. run `python -m venv venv`. You may have to replace "python" with whatever command your system uses for pytohn ('py', 'python3', 'python3.v' are all common). This creates a virtual environment in a folder called "venv"
+    2. run `python -m venv venv`. You may have to replace "python" with whatever command your system uses for pytohn ('py', 'python3', 'python3.12', 'python3.13', etc. are all common). This creates a virtual environment in a folder called "venv"
 5. Activate the venv. (Look up how to do this on your operating system. On linux, it is often `source venv/bin/activate`)
 6. Install the relevant python packages
     1. With the venv activated, install all required packages: `pip install -r requirements.txt` This installs all packages except the potentiostat package from IORodeo.
