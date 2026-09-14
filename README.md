@@ -57,9 +57,9 @@ This software ought to be able to be run on any operating system with python (al
          3. In a terminal, navigate (`cd`) into the `potentiostat > software > python > potentiostat` folder
          4. Make sure your virtual environment is still active and install as python package `pip install .`
 7. Now that you have all the python packages downloaded and the code configured to your system's python installation, its time to launch OpenVoltam:
-    a. In a terminal, navigate (`cd`) to the main OpenVoltam folder (the folder that contains `OpenVoltam.py`)
-    b. Ensure that the virtual environment is active (`source venv/bin/activate`)
-    c. Launch OpenVoltam! `python -m OpenVoltam`
+    1. In a terminal, navigate (`cd`) to the main OpenVoltam folder (the folder that contains `OpenVoltam.py`)
+    2. Ensure that the virtual environment is active (`source venv/bin/activate`)
+    3. Launch OpenVoltam! `python -m OpenVoltam`
    
 
 ## Notes for contributors
