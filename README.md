@@ -58,7 +58,7 @@ This software ought to be able to be run on any operating system with python (al
          4. Make sure your virtual environment is still active and install as python package `pip install .`
 7. Now that you have all the python packages downloaded and the code configured to your system's python installation, its time to launch OpenVoltam:
     1. In a terminal, navigate (`cd`) to the main OpenVoltam folder (the folder that contains `OpenVoltam.py`)
-    2. Ensure that the virtual environment is active (`source venv/bin/activate`)
+    2. Ensure that the virtual environment is active (linux: `source venv/bin/activate`)
     3. Launch OpenVoltam! `python -m OpenVoltam`
    
 
