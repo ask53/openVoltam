@@ -88,7 +88,7 @@ class WindowSettings(QMainWindow):
     def save_settings(self):
         if self.loading:
             return
-
+        self.status.showMessage("Saving...")
         # Bundle the data into a dictionary
         self.data = {}
         self.data[g.SET_LANG] = str(self.lang.itemData(self.lang.currentIndex()))
@@ -96,6 +96,7 @@ class WindowSettings(QMainWindow):
         # Write!
         self.parent.settings = self.data            # update the settings on Welcome win
         write_data_to_file(self.path, self.data)    # Save settings to file 
+        self.status.showMessage("Saved.", g.SB_DURATION)
         
         
         

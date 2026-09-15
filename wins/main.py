@@ -96,6 +96,7 @@ class WindowMain(QMainWindow):
         self.dealing_with_file_issue = False    # Flag for whether a file issue (not located, corrupted, etc.) is being actively handled
         self.force_close = False                # A flag that indicates whether to skip the close event handler
         self.closing = False                     # Flag that indicates that window has been closed
+        self.settings = self.parent.settings
         
         #####################
         #                   #
@@ -113,125 +114,126 @@ class WindowMain(QMainWindow):
         #   menu bar        #
         #                   #
         #####################
-        menu = self.menuBar()
+        menu_bar = self.menuBar()
 
         # Lab session menu
-        action_session_new = QAction('New session', self)
-        action_session_open = QAction('Open session', self)
-        action_session_settings = QAction('Settings', self)
-        action_session_close = QAction('Close', self)
-
-        action_session_new.triggered.connect(parent.new_session)
-        action_session_open.triggered.connect(parent.open_session)
-        action_session_settings.triggered.connect(parent.open_settings)
-        action_session_close.triggered.connect(self.close)
+        self.action_session_new = QAction('', self)
+        self.action_session_open = QAction('', self)
+        self.action_session_settings = QAction('', self)
+        self.action_session_close = QAction('', self)
+        
+        self.action_session_new.triggered.connect(parent.new_session)
+        self.action_session_open.triggered.connect(parent.open_session)
+        self.action_session_settings.triggered.connect(parent.open_settings)
+        self.action_session_close.triggered.connect(self.close)
         
         # Method menu
-        action_method_new = QAction(l.new_config[g.L], self)
-        action_method_open = QAction(l.open_config[g.L], self)
-        action_method_run_edit = QAction('Edit run method', self)
-
-        action_method_new.triggered.connect(parent.new_method)
-        action_method_open.triggered.connect(parent.open_method)
-        action_method_run_edit.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_WITH_MINOR_EDITS))
-
+        self.action_method_new = QAction('', self)
+        self.action_method_open = QAction('', self)
+        self.action_method_run_edit = QAction('', self)
+        
+        self.action_method_new.triggered.connect(parent.new_method)
+        self.action_method_open.triggered.connect(parent.open_method)
+        self.action_method_run_edit.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_WITH_MINOR_EDITS))
+        
         # Sample menu
-        action_sample_new = QAction(l.new_sample[g.L], self)
-        action_sample_edit = QAction('Edit sample info', self)
-        action_sample_del = QAction('Delete sample', self)
-
-        action_sample_new.triggered.connect(self.new_sample)
-        action_sample_edit.triggered.connect(self.edit_sample)
-        action_sample_del.triggered.connect(self.delete_sample)
-
+        self.action_sample_new = QAction('', self)
+        self.action_sample_edit = QAction('', self)
+        self.action_sample_del = QAction('', self)
+        
+        self.action_sample_new.triggered.connect(self.new_sample)
+        self.action_sample_edit.triggered.connect(self.edit_sample)
+        self.action_sample_del.triggered.connect(self.delete_sample)
+        
         # Run menu
-        action_run_new = QAction('New run', self)
-        action_run_new_from = QAction('New run from config', self)
-        action_run_redo = QAction('Rerun', self)
-        action_run_view = QAction('Run info', self)
-        action_method_run_view = QAction('Method info', self)
-        action_rep_edit = QAction('Edit rep note', self)
-        action_run_export = QAction('Export', self)
-        action_run_delete = QAction('Delete', self)
+        self.action_run_new = QAction('', self)
+        self.action_run_new_from = QAction('', self)
+        self.action_run_redo = QAction('', self)
+        self.action_run_view = QAction('', self)
+        self.action_method_run_view = QAction('', self)
+        self.action_rep_edit = QAction('', self)
+        self.action_run_export = QAction('', self)
+        self.action_run_delete = QAction('', self)
         
         
-        action_run_new.triggered.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
-        action_run_new_from.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
-        action_run_redo.triggered.connect(self.redo_run)
-        action_run_view.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
-        action_method_run_view.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
-        action_rep_edit.triggered.connect(self.edit_rep_note)
-        action_run_export.triggered.connect(self.export_selected_reps_as_csv)
-        action_run_delete.triggered.connect(self.delete_reps)
-
-        action_graph = QAction('Graph', self)
-        action_analyze_peaks = QAction('Analyze', self)
-        action_analyze_calculate = QAction('Calculate', self)
-        action_analyze_results = QAction('Results', self)
-
-        action_graph.triggered.connect(self.view_data_selected_reps)
-        action_analyze_peaks.triggered.connect(self.anayze_data_selected_reps)
-        action_analyze_calculate.triggered.connect(partial(self.new_win_calculator, g.WIN_MODE_NEW))
-        action_analyze_results.triggered.connect(partial(self.new_win_calculator, g.WIN_MODE_RIGHT))
+        self.action_run_new.triggered.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
+        self.action_run_new_from.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
+        self.action_run_redo.triggered.connect(self.redo_run)
+        self.action_run_view.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_VIEW_ONLY))
+        self.action_method_run_view.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_ONLY))
+        self.action_rep_edit.triggered.connect(self.edit_rep_note)
+        self.action_run_export.triggered.connect(self.export_selected_reps_as_csv)
+        self.action_run_delete.triggered.connect(self.delete_reps)
+        
+        # Analyze menu
+        self.action_graph = QAction('', self)
+        self.action_analyze_peaks = QAction('', self)
+        self.action_analyze_calculate = QAction('', self)
+        self.action_analyze_results = QAction('', self)
+        
+        self.action_graph.triggered.connect(self.view_data_selected_reps)
+        self.action_analyze_peaks.triggered.connect(self.anayze_data_selected_reps)
+        self.action_analyze_calculate.triggered.connect(partial(self.new_win_calculator, g.WIN_MODE_NEW))
+        self.action_analyze_results.triggered.connect(partial(self.new_win_calculator, g.WIN_MODE_RIGHT))
         
         
 
         # Add menu top labels then populate the menus with the above slotted labels
-        m = menu.addMenu('Lab session')
-        m.addAction(action_session_new)
-        m.addAction(action_session_open)
-        m.addSeparator()
-        m.addAction(action_session_settings)
-        m.addSeparator()
-        m.addAction(action_session_close)
+        self.m_session = menu_bar.addMenu('Lab session')
+        self.m_session.addAction(self.action_session_new)
+        self.m_session.addAction(self.action_session_open)
+        self.m_session.addSeparator()
+        self.m_session.addAction(self.action_session_settings)
+        self.m_session.addSeparator()
+        self.m_session.addAction(self.action_session_close)
         
-        m = menu.addMenu(l.menu_config[g.L])      
-        m.addAction(action_method_new)
-        m.addAction(action_method_open)
-        m.addSeparator()
-        m.addAction(action_method_run_edit)
+        self.m_method = menu_bar.addMenu(l.menu_config[g.L])      
+        self.m_method.addAction(self.action_method_new)
+        self.m_method.addAction(self.action_method_open)
+        self.m_method.addSeparator()
+        self.m_method.addAction(self.action_method_run_edit)
 
-        m = menu.addMenu(l.menu_sample[g.L])
-        m.addAction(action_sample_new)
-        m.addSeparator()
-        m.addAction(action_sample_edit)
-        m.addAction(action_sample_del)
+        self.m_sample = menu_bar.addMenu(l.menu_sample[g.L])
+        self.m_sample.addAction(self.action_sample_new)
+        self.m_sample.addSeparator()
+        self.m_sample.addAction(self.action_sample_edit)
+        self.m_sample.addAction(self.action_sample_del)
 
-        m = menu.addMenu(l.menu_run[g.L])
-        m.addAction(action_run_new)
-        m.addAction(action_run_new_from)
-        m.addAction(action_run_redo)
-        m.addSeparator()
-        m.addAction(action_run_view)
-        m.addAction(action_method_run_view)
-        m.addSeparator()
-        m.addAction(action_rep_edit)
-        m.addSeparator()
-        m.addAction(action_run_export)
-        m.addSeparator()
-        m.addAction(action_run_delete)
+        self.m_run = menu_bar.addMenu(l.menu_run[g.L])
+        self.m_run.addAction(self.action_run_new)
+        self.m_run.addAction(self.action_run_new_from)
+        self.m_run.addAction(self.action_run_redo)
+        self.m_run.addSeparator()
+        self.m_run.addAction(self.action_run_view)
+        self.m_run.addAction(self.action_method_run_view)
+        self.m_run.addSeparator()
+        self.m_run.addAction(self.action_rep_edit)
+        self.m_run.addSeparator()
+        self.m_run.addAction(self.action_run_export)
+        self.m_run.addSeparator()
+        self.m_run.addAction(self.action_run_delete)
 
-        m = menu.addMenu('Analysis')
-        m.addAction(action_graph)
-        m.addAction(action_analyze_peaks)
-        m.addSeparator()
-        m.addAction(action_analyze_calculate)
-        m.addAction(action_analyze_results)
+        self.m_analysis = menu_bar.addMenu('Analysis')
+        self.m_analysis.addAction(self.action_graph)
+        self.m_analysis.addAction(self.action_analyze_peaks)
+        self.m_analysis.addSeparator()
+        self.m_analysis.addAction(self.action_analyze_calculate)
+        self.m_analysis.addAction(self.action_analyze_results)
 
-        self.actions_run_one_only = [action_run_new_from,
-                                     action_run_redo,
-                                     action_run_view,
-                                     action_method_run_view,
-                                     action_method_run_edit]
-        self.actions_run_one_plus = [action_run_delete,
-                                     action_analyze_peaks]
+        self.actions_run_one_only = [self.action_run_new_from,
+                                     self.action_run_redo,
+                                     self.action_run_view,
+                                     self.action_method_run_view,
+                                     self.action_method_run_edit]
+        self.actions_run_one_plus = [self.action_run_delete,
+                                     self.action_analyze_peaks]
                                      
-        self.actions_rep_one_only = [action_rep_edit]
-        self.actions_rep_one_plus = [action_graph,
-                                     action_analyze_peaks]
-        self.actions_sample_one_plus = [action_run_new,
-                                        action_sample_edit,
-                                        action_sample_del]
+        self.actions_rep_one_only = [self.action_rep_edit]
+        self.actions_rep_one_plus = [self.action_graph,
+                                     self.action_analyze_peaks]
+        self.actions_sample_one_plus = [self.action_run_new,
+                                        self.action_sample_edit,
+                                        self.action_sample_del]
         
 
         #####################################
@@ -340,6 +342,7 @@ class WindowMain(QMainWindow):
         self.start_async_read()
         
         # Display! 
+        self.set_text(self.settings[g.SET_LANG])
         self.w = QWidget()
         self.w.setLayout(lay)
         self.setCentralWidget(self.w)
@@ -1642,6 +1645,40 @@ class WindowMain(QMainWindow):
             print(e)
             
     def set_text(self, lang):
+        txt(self.m_session, l.MAI_MENU_TOP_SESH, lang)
+        txt(self.m_method, l.MAI_MENU_TOP_METH, lang)
+        txt(self.m_sample, l.MAI_MENU_TOP_SAMP, lang)
+        txt(self.m_run, l.MAI_MENU_TOP_RUN, lang)
+        txt(self.m_analysis, l.MAI_MENU_TOP_ANA, lang)
+        
+        txt(self.action_session_new, l.MAI_MENU_SESH_NEW, lang)
+        txt(self.action_session_open, l.MAI_MENU_SESH_OPN, lang)
+        txt(self.action_session_settings, l.MAI_MENU_SESH_SET, lang)
+        txt(self.action_session_close, l.MAI_MENU_SESH_CLO, lang)
+        txt(self.action_method_new, l.MAI_MENU_METH_NEW, lang)
+        txt(self.action_method_open, l.MAI_MENU_METH_OPN, lang)
+        txt(self.action_method_run_edit, l.MAI_MENU_METH_RUN, lang)
+        txt(self.action_sample_new, l.MAI_MENU_SAMP_NEW, lang)
+        txt(self.action_sample_edit, l.MAI_MENU_SAMP_EDI, lang)
+        txt(self.action_sample_del, l.MAI_MENU_SAMP_DEL, lang)
+        txt(self.action_run_new, l.MAI_MENU_RUN_NEW, lang)
+        txt(self.action_run_new_from, l.MAI_MENU_RUN_FRO, lang)
+        txt(self.action_run_redo, l.MAI_MENU_RUN_RED, lang)
+        txt(self.action_run_view, l.MAI_MENU_RUN_VIE, lang)
+        txt(self.action_method_run_view, l.MAI_MENU_RUN_INF, lang)
+        txt(self.action_rep_edit, l.MAI_MENU_RUN_NOT, lang)
+        txt(self.action_run_export, l.MAI_MENU_RUN_EXP, lang)
+        txt(self.action_run_delete, l.MAI_MENU_RUN_DEL, lang)
+        txt(self.action_graph, l.MAI_MENU_ANA_GRA, lang)
+        txt(self.action_analyze_peaks, l.MAI_MENU_ANA_ANA, lang)
+        txt(self.action_analyze_calculate, l.MAI_MENU_ANA_CAL, lang)
+        txt(self.action_analyze_results, l.MAI_MENU_ANA_RES, lang)
+        
+        
+        
+        
+        
+        
         print('setting text on MAIN')
 
     #############################################

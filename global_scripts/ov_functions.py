@@ -11,9 +11,12 @@ from global_scripts import ov_globals as g
 from global_scripts import ov_lang as l
 
 from PyQt6.QtCore import Qt 
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
+    QMenu,
+    QPushButton,
     QMessageBox,
     QScrollArea,
     QFrame,
@@ -192,11 +195,27 @@ def get_path_from_user(win, pathtype):
         
         
         
-def txt(lbl, strings_dict, lang):
-    lbl.setText(strings_dict[lang])
+def txt(obj, strings_dict, lang):
+    """Takes in a PyQt object (QLabel, QAction, etc.) that has a setText() method.
+    sets the text of the object to the provided text in the provided language"""
     
+    s = strings_dict[lang]
+    t = str(type(obj))
+    objs_w_set_text = (str(type(QLabel())), 
+                       str(type(QAction())), 
+                       str(type(QPushButton())))
+    objs_w_set_title = (str(type(QMenu())))
     
-        
+    if t in objs_w_set_text:
+        obj.setText(s)
+    elif t in objs_w_set_title:     
+        obj.setTitle(s)             
+                                    
+                                    
+                                    
+                                    
+                                    
+                                    
     
 
 def get_data_from_file(path):

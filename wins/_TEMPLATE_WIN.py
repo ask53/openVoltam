@@ -16,6 +16,9 @@ class WindowName(QMainWindow):
         self.parent = parent
         self.status = self.statusBar()
         self.force_close = False
+        
+        self.settings = self.parent.parent.settings
+        self.set_text(self.settings[g.SET_LANG])
 
         # Setup widgets, layout, and (if necessary) mode here
         
