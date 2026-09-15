@@ -16,6 +16,10 @@ QLineEdit#ov-method-name {
 	background-color: rgba(0,0,0,0);
 }
 
+WindowWelcome {
+	background-color: pink;
+}
+
 QLabel#ov_session_name {
 	font-size: 18pt;
 	padding-right: 2px;
