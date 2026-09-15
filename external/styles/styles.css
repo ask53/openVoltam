@@ -1,5 +1,26 @@
 /*styles.css*/
 
+
+
+
+
+
+/* For dev branch only, remove 
+for merging back into main! */
+
+QMainWindow {
+	background-color: pink;
+}
+
+/****************************/
+
+
+
+
+
+
+
+
 QPushButton {
 	background-color: rgba(255,255,255,0.7);
 	color: #080808;
@@ -14,10 +35,6 @@ QLineEdit#ov-method-name {
 	font-size: 18pt;
 	border: 0;
 	background-color: rgba(0,0,0,0);
-}
-
-WindowWelcome {
-	background-color: pink;
 }
 
 QLabel#ov_session_name {

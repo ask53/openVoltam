@@ -194,12 +194,15 @@ def get_path_from_user(win, pathtype):
         
         
         
-        
+def get_text(strs, lang):
+    """Takes in a dict and a key. Returns dict[key]"""
+    return strs[lang]
+    
 def txt(obj, strings_dict, lang):
     """Takes in a PyQt object (QLabel, QAction, etc.) that has a setText() method.
     sets the text of the object to the provided text in the provided language"""
     
-    s = strings_dict[lang]
+    s = get_text(strings_dict, lang)
     t = str(type(obj))
     objs_w_set_text = (str(type(QLabel())), 
                        str(type(QAction())), 
@@ -212,7 +215,7 @@ def txt(obj, strings_dict, lang):
         obj.setTitle(s)             
                                     
                                     
-                                    
+                                   
                                     
                                     
                                     

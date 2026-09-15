@@ -117,10 +117,10 @@ class WindowMain(QMainWindow):
         menu_bar = self.menuBar()
 
         # Lab session menu
-        self.action_session_new = QAction('', self)
-        self.action_session_open = QAction('', self)
-        self.action_session_settings = QAction('', self)
-        self.action_session_close = QAction('', self)
+        self.action_session_new = QAction('', self)         # New lab session
+        self.action_session_open = QAction('', self)        # Open existing lab session
+        self.action_session_settings = QAction('', self)    # Settings (opens system-wide settings pane)
+        self.action_session_close = QAction('', self)       # Close this session
         
         self.action_session_new.triggered.connect(parent.new_session)
         self.action_session_open.triggered.connect(parent.open_session)
@@ -128,32 +128,32 @@ class WindowMain(QMainWindow):
         self.action_session_close.triggered.connect(self.close)
         
         # Method menu
-        self.action_method_new = QAction('', self)
-        self.action_method_open = QAction('', self)
-        self.action_method_run_edit = QAction('', self)
+        self.action_method_new = QAction('', self)          # New method        
+        self.action_method_open = QAction('', self)         # Open method
+        self.action_method_run_edit = QAction('', self)     # View method used in run
         
         self.action_method_new.triggered.connect(parent.new_method)
         self.action_method_open.triggered.connect(parent.open_method)
         self.action_method_run_edit.triggered.connect(partial(self.open_method_with_uid, g.WIN_MODE_VIEW_WITH_MINOR_EDITS))
         
         # Sample menu
-        self.action_sample_new = QAction('', self)
-        self.action_sample_edit = QAction('', self)
-        self.action_sample_del = QAction('', self)
+        self.action_sample_new = QAction('', self)          # New sample
+        self.action_sample_edit = QAction('', self)         # Edit current sample
+        self.action_sample_del = QAction('', self)          # Delete current sample
         
         self.action_sample_new.triggered.connect(self.new_sample)
         self.action_sample_edit.triggered.connect(self.edit_sample)
         self.action_sample_del.triggered.connect(self.delete_sample)
         
         # Run menu
-        self.action_run_new = QAction('', self)
-        self.action_run_new_from = QAction('', self)
-        self.action_run_redo = QAction('', self)
-        self.action_run_view = QAction('', self)
-        self.action_method_run_view = QAction('', self)
-        self.action_rep_edit = QAction('', self)
-        self.action_run_export = QAction('', self)
-        self.action_run_delete = QAction('', self)
+        self.action_run_new = QAction('', self)             # New blank run
+        self.action_run_new_from = QAction('', self)        # New run from config
+        self.action_run_redo = QAction('', self)            # Redo run
+        self.action_run_view = QAction('', self)            # View run details
+        self.action_method_run_view = QAction('', self)     # View run's method details
+        self.action_rep_edit = QAction('', self)            # Edit replicate note
+        self.action_run_export = QAction('', self)          # Export run data and analysis
+        self.action_run_delete = QAction('', self)          # Delete run/rep
         
         
         self.action_run_new.triggered.connect(partial(self.new_win_config_run, g.WIN_MODE_NEW))
@@ -166,10 +166,10 @@ class WindowMain(QMainWindow):
         self.action_run_delete.triggered.connect(self.delete_reps)
         
         # Analyze menu
-        self.action_graph = QAction('', self)
-        self.action_analyze_peaks = QAction('', self)
-        self.action_analyze_calculate = QAction('', self)
-        self.action_analyze_results = QAction('', self)
+        self.action_graph = QAction('', self)               # View result(s) on graph
+        self.action_analyze_peaks = QAction('', self)       # Analyze result(s)
+        self.action_analyze_calculate = QAction('', self)   # Calculate
+        self.action_analyze_results = QAction('', self)     # View/modify results
         
         self.action_graph.triggered.connect(self.view_data_selected_reps)
         self.action_analyze_peaks.triggered.connect(self.anayze_data_selected_reps)
@@ -220,18 +220,20 @@ class WindowMain(QMainWindow):
         self.m_analysis.addAction(self.action_analyze_calculate)
         self.m_analysis.addAction(self.action_analyze_results)
 
-        self.actions_run_one_only = [self.action_run_new_from,
-                                     self.action_run_redo,
-                                     self.action_run_view,
+        self.actions_run_one_only = [self.action_run_new_from,      # These menu items only
+                                     self.action_run_redo,          #   active when only a 
+                                     self.action_run_view,          #   single run is selected
                                      self.action_method_run_view,
                                      self.action_method_run_edit]
-        self.actions_run_one_plus = [self.action_run_delete,
+        self.actions_run_one_plus = [self.action_run_delete,        # These menu items active when
+                                     self.action_analyze_peaks]     #   AT LEAST 1 run selected
+                                     
+        self.actions_rep_one_only = [self.action_rep_edit]          # Active when ONLY 1 rep selected
+        
+        self.actions_rep_one_plus = [self.action_graph,             # Active when AT LEAST 1 rep selected
                                      self.action_analyze_peaks]
                                      
-        self.actions_rep_one_only = [self.action_rep_edit]
-        self.actions_rep_one_plus = [self.action_graph,
-                                     self.action_analyze_peaks]
-        self.actions_sample_one_plus = [self.action_run_new,
+        self.actions_sample_one_plus = [self.action_run_new,        # Active when AT LEAST 1 sample exists
                                         self.action_sample_edit,
                                         self.action_sample_del]
         
@@ -245,23 +247,23 @@ class WindowMain(QMainWindow):
         
         self.context_menu = QMenu(self)      # Menu for when run is clicked
         
-        self.a_runAgain = self.context_menu.addAction("New run from config")
-        self.a_runRedo = self.context_menu.addAction("Rerun")
+        self.a_runAgain = self.context_menu.addAction('')       # new run from config
+        self.a_runRedo = self.context_menu.addAction('')        # redo same run (overwrite)
         self.context_menu.addSeparator()
-        self.a_viewConfig = self.context_menu.addAction("Run info")
-        self.a_viewMethod = self.context_menu.addAction("Method info")
-        self.move_to_menu = QMenu('Move to...')
+        self.a_viewConfig = self.context_menu.addAction('')     # View run info
+        self.a_viewMethod = self.context_menu.addAction('')     # View method
+        self.move_to_menu = QMenu('')
         self.move_to_menu_actions = []
-        self.context_menu.addMenu(self.move_to_menu)
+        self.context_menu.addMenu(self.move_to_menu)            # move to...
         
         self.context_menu.addSeparator()
-        self.a_editRepNote = self.context_menu.addAction("Edit rep note")
+        self.a_editRepNote = self.context_menu.addAction('')    # Edit rep note
         self.context_menu.addSeparator()
-        self.a_graph = self.context_menu.addAction("Graph")
-        self.a_analyze = self.context_menu.addAction("Analyze")
-        self.a_export = self.context_menu.addAction("Export")
+        self.a_graph = self.context_menu.addAction('')          # View result(s) as graph
+        self.a_analyze = self.context_menu.addAction('')        # Analyze results
+        self.a_export = self.context_menu.addAction('')         # Export results and analysis
         self.context_menu.addSeparator()
-        self.a_delete = self.context_menu.addAction("Delete")
+        self.a_delete = self.context_menu.addAction('')         # Delete
 
 
         self.a_runAgain.triggered.connect(partial(self.open_run_config_with_uid, g.WIN_MODE_NEW))
@@ -290,18 +292,18 @@ class WindowMain(QMainWindow):
         
         but_view = QPushButton()
         but_view.setIcon(QIcon(g.ICON_EDIT))
-        but_samp = QPushButton('New sample')
-        but_config = QPushButton('New run')
-        but_calc = QPushButton('Calculate')
-        but_res_sample = QPushButton('Results')
-        self.buts = [but_view, but_samp, but_res_sample]
-        self.buts_with_sample_only = [but_config]
+        self.but_samp = QPushButton('New sample')       # Button: New sample
+        self.but_config = QPushButton('New run')        # Button: New run
+        self.but_calc = QPushButton('Calculate')        # Button: Calculate
+        self.but_res_sample = QPushButton('Results')    # Button: Results
+        self.buts = [but_view, self.but_samp, self.but_res_sample] # Always active 
+        self.buts_with_sample_only = [self.but_config]  # Only activate if there is AT LEAST 1 sample
         
         but_view.clicked.connect(self.edit_session_name)
-        but_samp.clicked.connect(self.new_sample)
-        but_config.clicked.connect(self.new_run)
-        but_calc.clicked.connect(self.new_calc)
-        but_res_sample.clicked.connect(partial(self.new_win_calculator, g.WIN_MODE_RIGHT))
+        self.but_samp.clicked.connect(self.new_sample)
+        self.but_config.clicked.connect(self.new_run)
+        self.but_calc.clicked.connect(self.new_calc)
+        self.but_res_sample.clicked.connect(partial(self.new_win_calculator, g.WIN_MODE_RIGHT))
 
         self.lbl_sample_name = TitleLbl("")
         self.lbl_sample_name.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -310,12 +312,12 @@ class WindowMain(QMainWindow):
         l_session_header.addWidget(self.lbl_sample_name)
         l_session_header.addWidget(but_view)
         l_session_header.addStretch()
-        l_session_header.addWidget(but_samp)
+        l_session_header.addWidget(self.but_samp)
         l_session_header.addWidget(QVLine())
-        l_session_header.addWidget(but_config)
+        l_session_header.addWidget(self.but_config)
         l_session_header.addWidget(QVLine())
-        l_session_header.addWidget(but_calc)
-        l_session_header.addWidget(but_res_sample)
+        l_session_header.addWidget(self.but_calc)
+        l_session_header.addWidget(self.but_res_sample)
 
         w_session_header = QWidget()                         # create a widget to hold the layout (which can be styled)
         w_session_header.setLayout(l_session_header)          # add the layout to the widget
@@ -450,7 +452,9 @@ class WindowMain(QMainWindow):
             lbl_s_name = QLabel("<div style='font-size: 16pt'>"+sample[g.SA_NAME]+"</div>")
             lbl_s_name.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             lbl_s_name.setWordWrap(True)
+            print('a')
             desc = self.get_sample_description(sample)
+            print('b')
             lbl_desc = QLabel(desc)
             lbl_desc.setWordWrap(True)
             lbl_desc.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -515,9 +519,24 @@ class WindowMain(QMainWindow):
     
     def get_sample_description(self, s):
         """Takes in a sample object, s, returns html string of description"""
+        ##################################3
+        #
+        #   HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE 
+        #
+        #   Two issues:
+        #   1. Error when running update_win ('Error in update_win: 'session_name' on
+        #       first run when main first loads
+        #   2. When running update-win after language change, the text within the 
+        #       tabbed area doesnt update.
+        #
+        ###
+        ###########
+        #############################################################################################################
+        
         d = ''
+        lang = self.settings[g.SET_LANG]
         if s[g.SA_DATE_COLLECTED] and s[g.SA_DATE_COLLECTED] != g.QT_DEFAULT_DATE:
-            d = d + '<b>Date collected</b>: '+s[g.SA_DATE_COLLECTED] + '<br>'
+            d = d + '<b>'+get_text(l.MAI_TAB_DATE, lang)+'</b>: '+s[g.SA_DATE_COLLECTED] + '<br>'
         if s[g.SA_LOC_COLLECTED] and not self.is_only_whitespace(s[g.SA_LOC_COLLECTED]):
             d = d + '<b>Location</b>: '+s[g.SA_LOC_COLLECTED] + '<br>'
         if s[g.SA_CONTACT] and not self.is_only_whitespace(s[g.SA_CONTACT]):
@@ -1645,12 +1664,15 @@ class WindowMain(QMainWindow):
             print(e)
             
     def set_text(self, lang):
+        
+        # Menu-bar headers
         txt(self.m_session, l.MAI_MENU_TOP_SESH, lang)
         txt(self.m_method, l.MAI_MENU_TOP_METH, lang)
         txt(self.m_sample, l.MAI_MENU_TOP_SAMP, lang)
         txt(self.m_run, l.MAI_MENU_TOP_RUN, lang)
         txt(self.m_analysis, l.MAI_MENU_TOP_ANA, lang)
         
+        # Menu options
         txt(self.action_session_new, l.MAI_MENU_SESH_NEW, lang)
         txt(self.action_session_open, l.MAI_MENU_SESH_OPN, lang)
         txt(self.action_session_settings, l.MAI_MENU_SESH_SET, lang)
@@ -1674,7 +1696,25 @@ class WindowMain(QMainWindow):
         txt(self.action_analyze_calculate, l.MAI_MENU_ANA_CAL, lang)
         txt(self.action_analyze_results, l.MAI_MENU_ANA_RES, lang)
         
+        # Right-click menu options
+        txt(self.a_runAgain, l.MAI_MENU_RUN_FRO, lang)
+        txt(self.a_runRedo, l.MAI_MENU_RUN_RED, lang)
+        txt(self.a_viewConfig, l.MAI_MENU_RUN_VIE, lang)
+        txt(self.a_viewMethod, l.MAI_MENU_RUN_INF, lang)
+        txt(self.move_to_menu, l.MAI_MENU_MOVE_TO, lang)
+        txt(self.a_editRepNote, l.MAI_MENU_RUN_NOT, lang)
+        txt(self.a_graph, l.MAI_MENU_ANA_GRA, lang)
+        txt(self.a_analyze, l.MAI_MENU_ANA_ANA, lang)
+        txt(self.a_export, l.MAI_MENU_RUN_EXP, lang)
+        txt(self.a_delete, l.MAI_MENU_RUN_DEL, lang)
         
+        # Top bar buttons
+        txt(self.but_samp, l.MAI_BUT_SAMP, lang)
+        txt(self.but_config, l.MAI_BUT_RUN, lang)
+        txt(self.but_calc, l.MAI_BUT_CALC, lang)
+        txt(self.but_res_sample, l.MAI_BUT_RESU, lang)
+        
+        self.update_win() # this updates tab area including text
         
         
         

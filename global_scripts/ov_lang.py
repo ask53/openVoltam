@@ -54,6 +54,7 @@ WEL_OPN_METH = {'eng': 'Open method',
 #                               #
 #################################
 
+# Menu bar: Lab session
 MAI_MENU_TOP_SESH = {'eng': 'Lab session',
                      'esp': 'Sesión del lab'}
 MAI_MENU_SESH_NEW = {'eng': 'New session',
@@ -65,6 +66,7 @@ MAI_MENU_SESH_SET = {'eng': 'Settings',
 MAI_MENU_SESH_CLO = {'eng': 'Close',
                     'esp': 'Cerrar'}
 
+# Menu bar: Method
 MAI_MENU_TOP_METH = {'eng': 'Method',
                      'esp': 'Método'}
 MAI_MENU_METH_NEW = {'eng': 'New method',
@@ -74,15 +76,17 @@ MAI_MENU_METH_OPN = {'eng': 'Open method',
 MAI_MENU_METH_RUN = {'eng': 'Edit run method',
                     'esp': 'Editar método usado'}
 
+# Menu bar: Sample
 MAI_MENU_TOP_SAMP = {'eng': 'Sample',
                      'esp': 'Muestra'}
 MAI_MENU_SAMP_NEW = {'eng': 'New sample',
                     'esp': 'Muestra nueva'}
 MAI_MENU_SAMP_EDI = {'eng': 'Edit sample info',
-                    'esp': 'Editar detalles'}
+                    'esp': 'Editar muestra'}
 MAI_MENU_SAMP_DEL = {'eng': 'Delete sample',
                     'esp': 'Borrar muestra'}
 
+# Menu bar: Run
 MAI_MENU_TOP_RUN = {'eng': 'Run',
                     'esp': 'Medición'}
 MAI_MENU_RUN_NEW = {'eng': 'New run',
@@ -102,6 +106,7 @@ MAI_MENU_RUN_EXP = {'eng': 'Export',
 MAI_MENU_RUN_DEL = {'eng': 'Delete',
                     'esp': 'Borrar'}
 
+# Menu bar: Analysis
 MAI_MENU_TOP_ANA = {'eng': 'Analysis',
                      'esp': 'Analizar'}
 MAI_MENU_ANA_GRA = {'eng': 'Graph',
@@ -112,6 +117,34 @@ MAI_MENU_ANA_CAL = {'eng': 'Calculate',
                     'esp': 'Calcular'}
 MAI_MENU_ANA_RES = {'eng': 'Results',
                     'esp': 'Resultados'}
+     
+# Right-click menu (only options not also available thru menu bar     
+MAI_MENU_MOVE_TO = {'eng': 'Move to',
+                    'esp': 'Mover a'}
+                    
+# Main window header buttons
+MAI_BUT_SAMP = {'eng': 'New sample',
+                'esp': 'Muestra nueva'}
+MAI_BUT_RUN = {'eng': 'New run',
+                'esp': 'Medición nueva'}                    
+MAI_BUT_CALC = {'eng': 'Calculate',
+                'esp': 'Calcular'}                    
+MAI_BUT_RESU = {'eng': 'Results',
+                'esp': 'Resultados'}
+
+# Main window within tab-view: sample info pane
+MAI_TAB_DATE = {'eng': 'Date collected',
+                'esp': 'Fecha recolectada'}
+MAI_TAB_LOCA = {'eng': 'Location',
+                'esp': 'Ubicación'}
+MAI_TAB_CONT = {'eng': 'Contact',
+                'esp': 'Contacto'}
+MAI_TAB_CLTR = {'eng': 'By',
+                'esp': 'Por'}
+MAI_TAB_NOTE = {'eng': 'Notes',
+                'esp': 'Notas'}
+
+                   
 
 
 
