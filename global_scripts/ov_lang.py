@@ -41,7 +41,7 @@ WEL_NEW_SESH = {'eng': 'New session',
 WEL_OPN_SESH = {'eng': 'Open session',
             'esp': 'Abrir sesión'}
 WEL_METH = {'eng': 'Method',
-            'esp': 'Ajustes de voltametría'}
+            'esp': 'Método de voltametría'}
 WEL_NEW_METH = {'eng': 'New method',
             'esp': 'Método nuevo'}
 WEL_OPN_METH = {'eng': 'Open method',
@@ -132,7 +132,7 @@ window_home = ['OpenVoltam','OpenVoltam']
 
 # Menus
 menu_sample = ['Sample','Muestra']
-menu_config = ['Method','Ajustes de voltametría']
+menu_config = ['Method','Método de voltametría']
 menu_run = ['Run','??????']
 
 # Window: edit sample
