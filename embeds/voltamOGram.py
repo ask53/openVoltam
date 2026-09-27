@@ -61,7 +61,7 @@ class VoltamogramCanvas(FigureCanvasQTAgg):
         super().__init__(fig)
 
 class VoltamogramPlot(QMainWindow):
-    def __init__(self, parent, title=False):
+    def __init__(self, parent, settings, title=False):
 
         super().__init__()
         
@@ -70,6 +70,7 @@ class VoltamogramPlot(QMainWindow):
         self.dragging_end = False
         self.dragging_peak = False
         self.drag_index = 0
+        self.settings = settings
             
         size_mm = g.APP.primaryScreen().physicalSize()
         width_in = size_mm.width() * g.MM2IN
@@ -79,7 +80,7 @@ class VoltamogramPlot(QMainWindow):
                                             height=height_in, dpi=100, title=title)    
         toolbar = SubsetToolbar(self.canvas, self)                                          # set canvas toolbar
 
-        self.set_axis_labels()
+        #self.set_axis_labels()
         self.axes = self.canvas.axes
 
         self.colors = ['deeppink','limegreen','chocolate','mediumturquoise','gold','purple','red','blue']
@@ -91,13 +92,16 @@ class VoltamogramPlot(QMainWindow):
 
         widget = QWidget()              # Add layout to central widget of QMainWindow and show!
         widget.setLayout(layout)
+        
+        self.set_text(self.settings[g.SET_LANG])
+        
         self.setCentralWidget(widget)
         self.show()
 
 
-    def set_axis_labels(self):
+        '''def set_axis_labels(self):
         self.canvas.axes.set_xlabel('Voltage [V]')
-        self.canvas.axes.set_ylabel('Current [uA]')
+        self.canvas.axes.set_ylabel('Current [uA]')'''
 
     def plot_rep(self, rep, subbackground=True, showsmoothed=False, showraw=True, predictpeak=False, color='black', linestyle='solid', lbl=''):
         if rep[g.R_DATA]:
@@ -805,8 +809,13 @@ class VoltamogramPlot(QMainWindow):
             if indexer in runs_displayed:
                 lbl = ''
             else:
-                if onerun: lbl = rep['run_uid']+', '+rep['rep_uid']
-                else: lbl = rep['run_uid']
+                lang = self.settings[g.SET_LANG]
+                run_num = get_run_num(rep['run_uid'])  
+                lbl = get_text(l.VGM_RUN_ABRV, lang) + run_num                
+                if onerun: 
+                    rep_num = get_rep_num(rep['rep_uid'])
+                    lbl = lbl +', ' + get_text(l.VGM_REP_ABRV, lang) + rep_num
+
 
             if color:
                 lcolor=color
@@ -942,3 +951,11 @@ class VoltamogramPlot(QMainWindow):
                 g.A_DERIV_RIGHT: deriv_r,
                 g.A_DERIV_MEAN: deriv_avg,
                 g.A_AREA: area}
+                
+    def set_text(self, lang):
+        print('setting text on VOLTAM-O-GRAM embed in '+lang)
+        
+        self.canvas.axes.set_xlabel(get_text(l.VGM_XLBL, lang))
+        self.canvas.axes.set_ylabel(get_text(l.VGM_YLBL, lang))
+        self.canvas.draw_idle()
+        

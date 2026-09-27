@@ -37,8 +37,8 @@ class WindowSettings(QMainWindow):
         self.lbl_lang = QLabel('...')
         self.lang = QComboBox()
         self.lang.currentIndexChanged.connect(self.language_changed)
-        for key in g.LANGS.keys():
-            self.lang.addItem(key, g.LANGS[key])
+        for key in l.LANGS.keys():
+            self.lang.addItem(key, l.LANGS[key])
         self.lang.model().sort(self.lang.modelColumn())                     # Sort A-Z
         
         
@@ -62,26 +62,24 @@ class WindowSettings(QMainWindow):
         if self.loading:
             return
         self.save_settings()                            # save all the settings
-        self.set_text_all_descendants_from(self.parent) # update text on parent (welcome) and all its descendants
+        lang = self.data[g.SET_LANG]
+        self.set_text_all_descendants_from(self.parent, lang) # update text on parent (welcome) and all its descendants
                                                         #   based on selected language (updates all windows)
         
-    def set_text_all_descendants_from(self, win):
+    def set_text_all_descendants_from(self, win, lang):
         """Takes in a starting window. Calls the that window's set_text method,
         win.set_text(). Then recursively calls the set_text method on all descendents
         of that starting window"""
-        lang = self.data[g.SET_LANG]
+        print(win)
         win.set_text(lang)                  # set text on that window
-        try:
-            win.children                    # if that window has children
-        except:
-            pass
-        else:
-            for child in win.children:      # loop thru all children
-                child.set_text(lang)        # set text on each one
+        
+        if type(win.children) == type([]):                      # If window hsa children
+            for child in win.children:                          # loop thru all children               
+                self.set_text_all_descendants_from(child, lang) # Call this same method for each child
         
     def load_settings(self):
         self.data = self.parent.settings
-        lang = list(g.LANGS.keys())[list(g.LANGS.values()).index(self.data[g.SET_LANG])]
+        lang = list(l.LANGS.keys())[list(l.LANGS.values()).index(self.data[g.SET_LANG])]
         self.lang.setCurrentText(lang)
         
         
@@ -108,7 +106,7 @@ class WindowSettings(QMainWindow):
         
     def set_text(self, lang):
         """ Sets all text in window to label in the provided language, lang"""
-        self.setWindowTitle(l.SET_WIN_TITLE[lang])              # Title of window (on header bar)
+        self.setWindowTitle(get_text(l.SET_WIN_TITLE, lang))              # Title of window (on header bar)
         txt(self.lbl_title, l.SET_TITLE, lang)                  # In-window title
         txt(self.lbl_lang, l.SET_LANG, lang)                    # Language label
             

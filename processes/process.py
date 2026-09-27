@@ -483,7 +483,7 @@ def save_update_calcs_method_settings(data, params):
             
                     
 
-def save():    
+def save(): 
     try:
         path = sys.argv[2]                  # get path of file to read from
         saveType = sys.argv[3]              # get save type

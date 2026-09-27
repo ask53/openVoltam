@@ -42,9 +42,9 @@ class WindowAnalyze(QMainWindow):
         self.saved = False
         self.results = []
         self.force_close = False
-
-        self.setWindowTitle(self.parent.data[g.S_NAME]+' | Analyze')
-
+        self.settings = None
+        self.update_settings()
+        
         # Load previous analysis
         for i, task in enumerate(self.tasks):               # for each task
             prev_a = get_analysis(self.parent.data, task)
@@ -55,13 +55,16 @@ class WindowAnalyze(QMainWindow):
 
         self.stack = QStackedLayout()
         self.voltamograms = []
+        self.titles = []
 
         #Create pane in stack for each task
         for task in self.tasks:
 
-            title = QLabel('<b>'+task[0]+'  |  '+task[1]+'</b>')
+            #title = QLabel('<b>'+task[0]+'  |  '+task[1]+'</b>')
+            title = QLabel('')
             title.setObjectName('analysis-title-txt')
-            vgram = VoltamogramPlot(self)
+            vgram = VoltamogramPlot(self, self.settings)
+            self.titles.append(title)
             self.voltamograms.append(vgram)
 
             h = QHBoxLayout()
@@ -91,20 +94,20 @@ class WindowAnalyze(QMainWindow):
             self.buts.append(but)
 
         # Do rest of flat (not stacked) layout
-        prog_lbl = QLabel('<b>Runs to analyze:</b>')
+        self.prog_lbl = QLabel('')
         v1 = QVBoxLayout()
-        v1.addWidget(prog_lbl)
+        v1.addWidget(self.prog_lbl)
         for but in self.buts:
             v1.addWidget(but)
         v1.addStretch()
 
-        helptext = QLabel("Press 'z' on the keyboard to toggle between baseline endpoints.")
+        self.helptext = QLabel('')
         h0 = QHBoxLayout()
         h0.addStretch()
-        h0.addWidget(helptext)
+        h0.addWidget(self.helptext)
         h0.addStretch()
 
-        self.but_results = QPushButton('Show results')
+        self.but_results = QPushButton('')
         self.but_results.clicked.connect(self.show_results)
         self.but_next = QPushButton()
         self.but_next.clicked.connect(self.next_click)
@@ -130,6 +133,9 @@ class WindowAnalyze(QMainWindow):
         self.update_buttons(starting_index)
         self.refresh_progress(starting_index)
         self.set_graph(starting_index)
+        
+        # Set all text
+        self.set_text(self.settings[g.SET_LANG])
 
         w = QWidget()
         w.setLayout(h2)
@@ -155,11 +161,12 @@ class WindowAnalyze(QMainWindow):
 
     def show_results(self):
         i, r = self.get_results()
-        types_eng = ('Peak ht (from base)', 'Peak ht (from 0)', 'Deriv (L)', 'Derv (R)', 'Deriv (avg)', 'Area')
+        lang = self.settings[g.SET_LANG]
+        #types_eng = ('Peak ht (from base)', 'Peak ht (from 0)', 'Deriv (L)', 'Derv (R)', 'Deriv (avg)', 'Area')
         msg = ''
         for i, t in enumerate(g.C_TYPES):
             val = str(round(get_analyzed_value(r, t), 4))
-            msg = msg + types_eng[i] + ' = ' + val + ' |  '
+            msg = msg + get_text(l.ANA_C_TYPES[t], lang) + ' = ' + val + ' |  '
             if i == len(g.C_TYPES)-1:
                 msg = msg[0:-3]                 # remove end separator from last value
         self.status.showMessage(msg)
@@ -207,13 +214,14 @@ class WindowAnalyze(QMainWindow):
         
 
     def update_buttons(self, i):
+        lang = self.settings[g.SET_LANG]
         if i == len(self.tasks)-1:  # if we are on the final task
-            self.but_next.setText('Save all')
+            txt(self.but_next, l.ANA_BUT_SAVE, lang)
         else:                       # if we are on any other task
-            self.but_next.setText('Accept && next')
-            
+            txt(self.but_next, l.ANA_BUT_NEXT, lang)
         
     def refresh_progress(self, i):
+        lang = self.settings[g.SET_LANG]
         for j,but in enumerate(self.buts):
             # set progress pane element color/border
             if j==i: but.setObjectName('task-selected') 
@@ -221,9 +229,12 @@ class WindowAnalyze(QMainWindow):
             else: but.setObjectName('task-pending')
 
             # Set progress pane element text
-            (run_id, rep_id) = self.tasks[j]
-            if self.results[j]: but.setText(run_id+', '+rep_id+'  |  Complete')
-            else: but.setText(run_id+', '+rep_id)       
+            run_id, rep_id = self.tasks[j]
+            run_n, rep_n = get_run_num(run_id), get_rep_num(rep_id)
+            run_s, rep_s = get_text(l.ANA_RUN_ABRV, lang)+run_n, get_text(l.ANA_REP_ABRV, lang)+rep_n
+            s = run_s + ', ' + rep_s
+            if self.results[j]: but.setText(s+'  |  '+ get_text(l.ANA_CPLT, lang))
+            else: but.setText(s)       
         applyStyles()
 
     def keyPressEvent(self, event):
@@ -245,7 +256,8 @@ class WindowAnalyze(QMainWindow):
             to_write.append(rep)   
 
         # 2. run async save
-        self.status.showMessage("Saving...")
+        lang = self.settings[g.SET_LANG]
+        self.status.showMessage(get_text(l.SB_SAVE_STRT, lang))
 
         cb_suc = self.save_success          # callback on success of final async save
         cb_err = self.save_error            # callback on error of any async save
@@ -255,14 +267,49 @@ class WindowAnalyze(QMainWindow):
             
 
     def save_success(self, event=False):
-        self.status.showMessage("Saved!")
+        lang = self.settings[g.SET_LANG]
+        self.status.showMessage(get_text(l.SB_SAVE_GOOD, lang))
         self.saved = True
         self.close()
 
     def save_error(self, event=False):
-        self.status.showMessage("ERROR: Save could not complete.", g.SB_DURATION)
-
+        lang = self.settings[g.SET_LANG]
+        self.status.showMessage(get_text(l.SB_SAVE_ERRR, lang), g.SB_DURATION)
+        
             
+    def set_text(self, lang):
+        self.update_settings()
+        
+        self.setWindowTitle(self.parent.data[g.S_NAME]+' | '+get_text(l.ANA_HEAD, lang))
+        for i, title in enumerate(self.titles):             # for each rep
+            run, rep = self.tasks[i]
+            run_n = get_run_num(run)
+            rep_n = get_rep_num(rep)
+            run_s = get_text(l.ANA_RUN_ABRV, lang)+run_n
+            rep_s = get_text(l.ANA_REP_ABRV, lang)+rep_n
+            txt(title, s='<b>'+run_s+'  |  '+rep_s+'</b>')  # Set title 
+            self.voltamograms[i].set_text(lang)             # Set voltamogram text
+            
+        i = self.stack.currentIndex()
+        self.update_buttons(i)                              # Updates text on next/save button
+        self.refresh_progress(i)                            # Updates text on sidebar task buttons
+        
+        txt(self.prog_lbl, '<b>'+get_text(l.ANA_TITL, lang)+'</b>')
+        txt(self.helptext, l.ANA_HELP, lang)
+        txt(self.but_results, l.ANA_RLTS, lang)
+        
+    def update_settings(self):
+        self.settings = self.parent.parent.settings
+
+
+
+
+
+
+
+
+
+
 
 
     def update_win(self):
@@ -289,7 +336,8 @@ class WindowAnalyze(QMainWindow):
         if self.force_close:
             self.accept_close(event)
         elif not self.saved:
-            confirm = saveMessageBox()
+            lang = self.settings[g.SET_LANG]
+            confirm = saveMessageBox(lang)
             resp = confirm.exec()
             if resp == QMessageBox.StandardButton.Save:
                 event.ignore()

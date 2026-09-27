@@ -179,7 +179,7 @@ class WindowMain(QMainWindow):
         
 
         # Add menu top labels then populate the menus with the above slotted labels
-        self.m_session = menu_bar.addMenu('Lab session')
+        self.m_session = menu_bar.addMenu('')
         self.m_session.addAction(self.action_session_new)
         self.m_session.addAction(self.action_session_open)
         self.m_session.addSeparator()
@@ -187,19 +187,19 @@ class WindowMain(QMainWindow):
         self.m_session.addSeparator()
         self.m_session.addAction(self.action_session_close)
         
-        self.m_method = menu_bar.addMenu(l.menu_config[g.L])      
+        self.m_method = menu_bar.addMenu('')      
         self.m_method.addAction(self.action_method_new)
         self.m_method.addAction(self.action_method_open)
         self.m_method.addSeparator()
         self.m_method.addAction(self.action_method_run_edit)
 
-        self.m_sample = menu_bar.addMenu(l.menu_sample[g.L])
+        self.m_sample = menu_bar.addMenu('')
         self.m_sample.addAction(self.action_sample_new)
         self.m_sample.addSeparator()
         self.m_sample.addAction(self.action_sample_edit)
         self.m_sample.addAction(self.action_sample_del)
 
-        self.m_run = menu_bar.addMenu(l.menu_run[g.L])
+        self.m_run = menu_bar.addMenu('')
         self.m_run.addAction(self.action_run_new)
         self.m_run.addAction(self.action_run_new_from)
         self.m_run.addAction(self.action_run_redo)
@@ -213,7 +213,7 @@ class WindowMain(QMainWindow):
         self.m_run.addSeparator()
         self.m_run.addAction(self.action_run_delete)
 
-        self.m_analysis = menu_bar.addMenu('Analysis')
+        self.m_analysis = menu_bar.addMenu('')
         self.m_analysis.addAction(self.action_graph)
         self.m_analysis.addAction(self.action_analyze_peaks)
         self.m_analysis.addSeparator()
@@ -344,7 +344,7 @@ class WindowMain(QMainWindow):
         self.start_async_read()
         
         # Display! 
-        self.set_text(self.settings[g.SET_LANG])
+        
         self.w = QWidget()
         self.w.setLayout(lay)
         self.setCentralWidget(self.w)
@@ -369,9 +369,6 @@ class WindowMain(QMainWindow):
 
     def update_file_last_modified(self):
         self.last_modified = getmtime(self.path)
-        print('File last modified:')
-        print(self.last_modified)
-        print()
         
 
     def set_move_to_menu(self):
@@ -439,7 +436,7 @@ class WindowMain(QMainWindow):
         self.tabs = QTabWidget()
         self.tabs.currentChanged.connect(self.tab_changed)
         self.tab_ids = []
-
+            
         # Get list of all samples that already have saved calculations
         samples_with_calcs = []
         for calc in d[g.S_PROCESSED]:
@@ -452,9 +449,7 @@ class WindowMain(QMainWindow):
             lbl_s_name = QLabel("<div style='font-size: 16pt'>"+sample[g.SA_NAME]+"</div>")
             lbl_s_name.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             lbl_s_name.setWordWrap(True)
-            print('a')
             desc = self.get_sample_description(sample)
-            print('b')
             lbl_desc = QLabel(desc)
             lbl_desc.setWordWrap(True)
             lbl_desc.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -486,9 +481,9 @@ class WindowMain(QMainWindow):
             w0.setObjectName('sample-'+str(color_index))
             
             # IF there are runs, setup sample tree
-            runs = get_runs_in_sample(self.data, sample[g.R_UID_SELF])
+            runs = get_runs_in_sample(self.data, s_id)
             if runs:
-                w_cust=self.widgetize_runs(sample[g.R_UID_SELF])
+                w_cust=self.widgetize_runs(s_id)
                 w = QSplitter()
                 w.setChildrenCollapsible(False)
                 w.setOrientation(Qt.Orientation.Horizontal)
@@ -511,40 +506,28 @@ class WindowMain(QMainWindow):
             self.tabs.addTab(w, name)
             self.tabs.setTabToolTip(i, fullname)
             self.tab_ids.append(sample[g.R_UID_SELF])
-
+        
         self.centralWidget().layout().insertWidget(insert_i, self.tabs)  # insert tab widget to same spot previous tab widget was located (this preserves stretches, animationes, etc.)
         self.tabs.setCurrentIndex(self.current_tab)         # activate tab (this is needed to stay on same tab during ongoing use, rather than jumping to tab 0)
         applyStyles()
-
+     
     
     def get_sample_description(self, s):
         """Takes in a sample object, s, returns html string of description"""
-        ##################################3
-        #
-        #   HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE 
-        #
-        #   Two issues:
-        #   1. Error when running update_win ('Error in update_win: 'session_name' on
-        #       first run when main first loads
-        #   2. When running update-win after language change, the text within the 
-        #       tabbed area doesnt update.
-        #
-        ###
-        ###########
-        #############################################################################################################
         
         d = ''
         lang = self.settings[g.SET_LANG]
+        
         if s[g.SA_DATE_COLLECTED] and s[g.SA_DATE_COLLECTED] != g.QT_DEFAULT_DATE:
             d = d + '<b>'+get_text(l.MAI_TAB_DATE, lang)+'</b>: '+s[g.SA_DATE_COLLECTED] + '<br>'
         if s[g.SA_LOC_COLLECTED] and not self.is_only_whitespace(s[g.SA_LOC_COLLECTED]):
-            d = d + '<b>Location</b>: '+s[g.SA_LOC_COLLECTED] + '<br>'
+            d = d + '<b>'+get_text(l.MAI_TAB_LOCA, lang)+'</b>: '+s[g.SA_LOC_COLLECTED] + '<br>'
         if s[g.SA_CONTACT] and not self.is_only_whitespace(s[g.SA_CONTACT]):
-            d = d + '<b>Contact</b>: '+s[g.SA_CONTACT] + '<br>'
+            d = d + '<b>'+get_text(l.MAI_TAB_CONT, lang)+'</b>: '+s[g.SA_CONTACT] + '<br>'
         if s[g.SA_COLLECTED_BY] and not self.is_only_whitespace(s[g.SA_COLLECTED_BY]):
-            d = d + '<b>By</b>: '+s[g.SA_COLLECTED_BY] + '<br>'
+            d = d + '<b>'+get_text(l.MAI_TAB_CLTR, lang)+'</b>: '+s[g.SA_COLLECTED_BY] + '<br>'
         if s[g.SA_NOTES] and not self.is_only_whitespace(s[g.SA_NOTES]):
-            d = d + '<b>Notes</b>: '+s[g.SA_NOTES] + '<br>'
+            d = d + '<b>'+get_text(l.MAI_TAB_NOTE, lang)+'</b>: '+s[g.SA_NOTES] + '<br>'
         d = d[0:-4]                                                             # remove final <br>
         return d
 
@@ -617,7 +600,14 @@ class WindowMain(QMainWindow):
         grid.setVerticalSpacing(0)
         
         # create column headers and add them to the grid layout
-        headers = ['','Replicate', 'Status', 'Datetime', 'Notes', 'Analyzed']
+        lang = self.settings[g.SET_LANG]
+        
+        headers = ['',
+                  get_text(l.MAI_TAB_COL_REPL, lang), 
+                  get_text(l.MAI_TAB_COL_STAT, lang), 
+                  get_text(l.MAI_TAB_COL_DATE, lang), 
+                  get_text(l.MAI_TAB_COL_NOTE, lang), 
+                  get_text(l.MAI_TAB_COL_ANAL, lang)]
         w_heads = []
         for header in headers:
             w = self.create_w(header, qss_name='run-col-header')
@@ -636,8 +626,8 @@ class WindowMain(QMainWindow):
                                        'selected':[],
                                        'reps':[]}                     # initialize holing spot for run data 
                 for j, rep in enumerate(run[g.R_REPLICATES]):
-                    rep_name = l.r_rep_abbrev[g.L] + ' '+rep[g.R_UID_SELF].split('-')[-1]
-                    rep_status = rep[g.R_STATUS]
+                    rep_name = get_text(l.MAI_TAB_REP_HEAD, lang)+' '+get_rep_num(rep[g.R_UID_SELF])
+                    rep_status = get_text(l.MAI_TAB_REP_STAT[rep[g.R_STATUS]], lang)
                     rep_time = rep[g.R_TIMESTAMP_REP]
                     rep_notes = rep[g.R_NOTES]
                     rep_proc = ''
@@ -664,15 +654,15 @@ class WindowMain(QMainWindow):
                     self.layout[run_id]['reps'].append(rep_id)
                 
                 # Vertically merge all the first cells for this run's replicates and add run information
-                run_name = 'Run '+run[g.R_UID_SELF].split('-')[-1]
-                run_type = l.rc_types[run[g.R_TYPE]][g.L]
+                run_name = get_text(l.MAI_TAB_RUN_HEAD, lang)+' '+get_run_num(run[g.R_UID_SELF])
+                run_type = get_text(l.RUN_TYPES[run[g.R_TYPE]], lang)
                 method_name = get_method_from_file_data(self.data, run[g.R_UID_METHOD])[g.M_NAME]
                 run_notes = run[g.R_NOTES]
                 run_str = '<u>'+html_escape(run_name)+'</u><br>'
-                run_str = run_str + '<b>Type</b>: '+html_escape(run_type)+'<br>'
-                run_str = run_str + '<b>Method</b>: '+html_escape(method_name)+'<br>'
+                run_str = run_str + '<b>'+get_text(l.MAI_TAB_RUN_TYPE, lang)+'</b>: '+html_escape(run_type)+'<br>'
+                run_str = run_str + '<b>'+get_text(l.MAI_TAB_RUN_METH, lang)+'</b>: '+html_escape(method_name)+'<br>'
                 if run_notes and not self.is_only_whitespace(run_notes):                # Only show notes if there are any!
-                    run_str = run_str + '<b>Notes</b>: '+html_escape(run_notes)+'<br>'
+                    run_str = run_str + '<b>'+get_text(l.MAI_TAB_RUN_NOTE, lang)+'</b>: '+html_escape(run_notes)+'<br>'
                 run_str = run_str[0:-4]                                             # strip last <br> from string
 
                 if i%2 == 0: qss_name = 'run-even'
@@ -685,11 +675,14 @@ class WindowMain(QMainWindow):
         grid.setColumnStretch(len(headers)-1,1)
 
         # update self.layout to ensure that highlights maintain over update
+
+        
         for run in self.layout_old:
             if run in self.layout:
-                for rep in self.layout_old[run]['selected']:
-                    if rep in self.layout[run]['reps']:
-                        self.layout[run]['selected'].append(rep)
+                if self.layout_old[run]['sample_id'] == sample_id:
+                    for rep in self.layout_old[run]['selected']:
+                        if rep in self.layout[run]['reps']:
+                            self.layout[run]['selected'].append(rep)
         
         w_in = QWidget()
         w_in.setLayout(grid)
@@ -700,8 +693,8 @@ class WindowMain(QMainWindow):
 
         return w
 
-    def sa_resize(self):
-        print('RESIZE DETECTED!')
+    '''def sa_resize(self):
+        print('RESIZE DETECTED!')'''
  
     def do_nothing(self, w):
         """This is necessary so that each widget has a callback function if clicked.
@@ -1003,6 +996,7 @@ class WindowMain(QMainWindow):
                         w.setObjectName(w.property('ov-selected-qss-name'))
                     else:
                         w.setObjectName(w.property('ov-qss-name'))
+             
         applyStyles()                                           #Grab QSS Stylesheet and apply it, now that names have been changed
         
 
@@ -1151,7 +1145,6 @@ class WindowMain(QMainWindow):
         if ok:
             if rep[g.R_NOTES] != input_text:
                 rep[g.R_NOTES] = input_text
-                print(rep)
                 self.start_async_save(g.SAVE_TYPE_REP_MOD, [[(run_id, rep_id)], [rep]])
 
     def open_run_config_with_uid(self, mode):
@@ -1305,8 +1298,6 @@ class WindowMain(QMainWindow):
             text = 'Lab session name:'
             oldname = self.data[g.S_NAME]
             newname, ok = QInputDialog().getText(self, title, text, text=oldname)
-            print(ok)
-            print(newname)
             if ok and newname != oldname:
                 self.start_async_save(g.SAVE_TYPE_EDIT_SESH_NAME, [newname])
         except Exception as e:
@@ -1413,20 +1404,22 @@ class WindowMain(QMainWindow):
     #############################################
 
     def start_async_export(self, reps, destPath):
-        if not self.process:
-            self.export_success = []
-            self.export_fail = []
-            self.export_error_msg = ''
-            self.process = QProcess()
-            self.process.readyReadStandardOutput.connect(self.handle_export_stdout)
-            self.process.readyReadStandardError.connect(self.handle_export_stderr)
-            self.process.finished.connect(self.handle_finished_export)
-            self.status.showMessage("Exporting...")
-            self.progress_bar.setVisible(True)
-            if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
-                self.process.start(g.PROC_PYTHON_CMD, [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_EXPORT, self.path, destPath, str(reps)])
-            else:
-                self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_EXPORT, self.path, destPath, str(reps)])            
+        if self.process:
+            return
+        lang = self.settings[g.SET_LANG]
+        self.export_success = []
+        self.export_fail = []
+        self.export_error_msg = ''
+        self.process = QProcess()
+        self.process.readyReadStandardOutput.connect(self.handle_export_stdout)
+        self.process.readyReadStandardError.connect(self.handle_export_stderr)
+        self.process.finished.connect(self.handle_finished_export)
+        self.status.showMessage(get_text(l.SB_EXPORT_STRT, lang))
+        self.progress_bar.setVisible(True)
+        if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
+            self.process.start(g.PROC_PYTHON_CMD, [g.PROC_SCRIPT_PYTHON, g.PROC_TYPE_EXPORT, self.path, destPath, str(reps)])
+        else:
+            self.process.start(g.PROC_SCRIPT, [g.PROC_TYPE_EXPORT, self.path, destPath, str(reps)])            
 
     def handle_export_stdout(self):
         print('normal msg!')
@@ -1456,38 +1449,39 @@ class WindowMain(QMainWindow):
                     print(err)                      
 
     def handle_finished_export(self):
+        lang = self.settings[g.SET_LANG]
         if not self.export_fail and not self.export_error_msg:     # complete success!   
-            self.status.showMessage("Export complete", g.SB_DURATION)
+            self.status.showMessage(get_text(l.SB_EXPORT_GOOD, lang), g.SB_DURATION)
         elif not self.export_error_msg:                            # some reps w no data didn't export
-            self.status.showMessage("WARNING: Some reps could not be exported.", g.SB_DURATION_ERROR)
+            self.status.showMessage(get_text(l.SB_EXPORT_WARN, lang), g.SB_DURATION_ERROR)
             
         else:                                                       # error message from export process
-            self.status.showMessage("ERROR: Export could not complete.", g.SB_DURATION_ERROR)
+            self.status.showMessage(get_text(l.SB_EXPORT_ERRR, lang), g.SB_DURATION_ERROR)
         self.show_export_results_dialog(self.export_success, self.export_fail, self.export_error_msg)
         self.progress_bar.setVisible(False)
         self.export_error_flag = False
         self.process = None
 
     def show_export_results_dialog(self, yes, no, error=False):
-        title = "Export complete."
-        msg = "Export complete.\n"
+        lang = self.settings[g.SET_LANG]
+        title = get_text(l.MAI_POP_EXP_TITL, lang)
+        msg = get_text(l.MAI_POP_EXP_TITL, lang)+".\n"
         if error:
-            msg = "ERROR MESSAGE:\n"
+            msg = get_text(l.MAI_POP_EXP_ERRR, lang)+":\n"
             msg = msg+error+'\n'
         if no:
-            msg = msg+"\nWarning: Failed to export:\n"
+            msg = msg+"\n"+get_text(l.MAI_POP_EXP_MWRN, lang)+":\n"
             for rep in no:
-                print(rep)
                 rep = literal_eval(rep)
                 msg = msg+rep[0]+': '+rep[1]+'\n'
         if yes:
-            msg = msg + "\nSuccessully exported:\n"
+            msg = msg + "\n"+get_text(l.MAI_POP_EXP_SUCS, lang)+":\n"
             for rep in yes:
                 rep = literal_eval(rep)
                 msg = msg+rep[0]+': '+rep[1]+'\n'
 
-        if no: title = "Warning: some replicates failed to export"
-        if error: title = "ERROR on export"
+        if no: title = get_text(l.MAI_POP_EXP_TWRN, lang)
+        if error: title = get_text(l.MAI_POP_EXP_TERR, lang)
         show_alert(self, title, msg)
         
         
@@ -1506,16 +1500,14 @@ class WindowMain(QMainWindow):
     #############################################
 
     def start_async_read(self):
-        print("hello, i'm an async read!")
-
         if self.process:
             return
-            
+        lang = self.settings[g.SET_LANG]    
         self.process = QProcess()
         self.process.readyReadStandardOutput.connect(self.handle_read_stdout)
         self.process.readyReadStandardError.connect(self.handle_read_stderr)
         self.process.finished.connect(self.handle_finished_read)
-        self.status.showMessage("Loading data...")
+        self.status.showMessage(get_text(l.SB_LOAD_STRT, lang))
         self.progress_bar.setVisible(True)
         
         if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
@@ -1542,12 +1534,12 @@ class WindowMain(QMainWindow):
         self.read_error_flag = True
 
     def handle_finished_read(self):
-        print('finished the read!')
+        lang = self.settings[g.SET_LANG]
         if self.read_error_flag:
-            self.status.showMessage("ERROR: Data read could not complete.", g.SB_DURATION)
+            self.status.showMessage(get_text(l.SB_LOAD_ERRR, lang), g.SB_DURATION)
         else:
-            self.status.showMessage("Data loaded!", g.SB_DURATION)
-            self.update_win()
+            self.status.showMessage(get_text(l.SB_LOAD_GOOD, lang), g.SB_DURATION)
+            self.set_text(self.settings[g.SET_LANG])                # sets text and updates window
             setWsEnabled(self.buts, True)                                   #   Enable buttons
         self.update_file_last_modified()
         self.progress_bar.setVisible(False)
@@ -1570,12 +1562,12 @@ class WindowMain(QMainWindow):
     def start_async_save(self, saveType, params, onSuccess=False, onError=False):
         if self.process:        # if there is alreayd a process running
             return              # don't start another one! 
-        
+        lang = self.settings[g.SET_LANG]
         self.process = QProcess()
         self.process.readyReadStandardOutput.connect(self.handle_save_stdout)
         self.process.readyReadStandardError.connect(self.handle_save_stderr)
         self.process.finished.connect(partial(self.handle_finished_save, onSuccess, onError))
-        self.status.showMessage("Saving...")
+        self.status.showMessage(get_text(l.SB_SAVE_STRT, lang))
         self.progress_bar.setVisible(True)
 
         if g.PROC_RUN_FROM == g.PROC_RUN_FROM_PYTHON:
@@ -1604,16 +1596,17 @@ class WindowMain(QMainWindow):
         self.save_error_flag = True
 
     def handle_finished_save(self, onSuccess, onError):
+        lang = self.settings[g.SET_LANG]
         try:
             self.progress_bar.setVisible(False)                                             # Rehide the progress bar
             self.process = None                                                             # Wipe the process from memory
             if self.save_error_flag:                                                        # If run errored
                 self.save_error_flag = False                                                #   Reset flag
-                self.status.showMessage("ERROR: Save could not complete.", g.SB_DURATION)   #   Show error message
+                self.status.showMessage(get_text(l.SB_SAVE_ERRR, lang), g.SB_DURATION)   #   Show error message
                 if onError:                                                                 #   If there is an onError callback fn
                     onError()                                                               #   run it! 
             else:                                                                           # If the run succeeded
-                self.status.showMessage("Saved!", g.SB_DURATION)                            #   Show success message
+                self.status.showMessage(get_text(l.SB_SAVE_GOOD, lang), g.SB_DURATION)                            #   Show success message
                 self.update_file_last_modified()
                 self.update_win()                                                           #   Update main window with new data
                 if onSuccess:                                                               #   If there is an onSuccess callback fn
@@ -1660,10 +1653,13 @@ class WindowMain(QMainWindow):
                     w.setMinimumWidth(wid)
                     w.setMaximumWidth(wid)
         except Exception as e:
-            print('window resize handler:')
+            print('ERROR in window resize handler:')
             print(e)
             
     def set_text(self, lang):
+        print(self.children)
+        
+        self.settings = self.parent.settings
         
         # Menu-bar headers
         txt(self.m_session, l.MAI_MENU_TOP_SESH, lang)
@@ -1715,11 +1711,7 @@ class WindowMain(QMainWindow):
         txt(self.but_res_sample, l.MAI_BUT_RESU, lang)
         
         self.update_win() # this updates tab area including text
-        
-        
-        
-        
-        print('setting text on MAIN')
+
 
     #############################################
     #                                           #
@@ -1741,16 +1733,18 @@ class WindowMain(QMainWindow):
             
         else:
             if self.children:                       # if there are child windows open, confirm user wants all windows to close
+                lang = self.settings[g.SET_LANG]
+                
                 msg_box = QMessageBox()    
-                msg_box.setWindowTitle("Are you sure?") 
-                msg_box.setText('This will close this sample and all associated windows including active runs, run configurations, and analysis. Unsaved progress will be lost.\n\nAre you sure you want to close?\n')
+                msg_box.setWindowTitle(get_text(l.MAI_POP_CLO_TIT, lang)) 
+                msg_box.setText(get_text(l.MAI_POP_CLO_MSG, lang))
                 msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
     
                 # customize button language text for multi-language support
                 but_close = msg_box.button(QMessageBox.StandardButton.Ok)
-                but_close.setText('Close')
+                but_close.setText(get_text(l.MAI_POP_BUT_CLO, lang))
                 but_canc = msg_box.button(QMessageBox.StandardButton.Cancel)
-                but_canc.setText('Cancel')
+                but_canc.setText(get_text(l.MAI_POP_BUT_CAN, lang))
     
                 resp = msg_box.exec()
             else:                                   # if the main window has no open child windows, don't show warning

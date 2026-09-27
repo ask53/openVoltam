@@ -1,5 +1,23 @@
 #ov_globals.py
+############## DELETE THIS ###############################################################################3
+#
+#
+L = 0
+#
+#
+######################################33333333333333334444444444443333333333333#############3
 
+### UPDATE BEFORE LAUNCHING NEW RELEASES
+#
+#
+VERSION = "0.2"
+RELEASE = "2026-09-05"
+#
+#
+#############################################
+
+
+           
 PROC_RUN_FROM_PYTHON = 'python'
 PROC_RUN_FROM_EXE = 'exe'
 
@@ -283,11 +301,9 @@ M_SAMPLE_FREQ_MAX = 1000         # 86,400,000 miliseconds in a day
 M_RELAY_MAX = 6
 
 # Language globals 
-LANGS = {'English': 'eng',
-        'Español': 'esp', 
-        'Aha!': 'aha'}
-ENG = 0
-ESP = 1
+
+'''ENG = 0
+ESP = 1'''
 
 
 HEADER_DIVIDER = ' | '
@@ -321,7 +337,7 @@ MM2IN = 1. / 25.4   # milimeters to inches
 S2MS = 1000         # seconds to miliseconds
 
 # Globals changed by program
-L = ENG  				# default lang, changed by program
+#L = ENG  				# default lang, changed by program
 BASEDIR = ''			# stores base directory for application executable file
 HOME = False			# will hold the object of the homescreen at any given time
 STYLES = False                  # will hold all the QSS for updating

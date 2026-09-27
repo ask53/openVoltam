@@ -1,0 +1,26 @@
+self.sample_lbl = QLabel("Sample")
+self.method_lbl = QLabel("Method")
+self.but_m_load = QPushButton('load from file')
+self.device_lbl = QLabel("Device")
+self.run_type_lbl = QLabel("Run type")
+RUN TYPE MENUUUUUU
+self.replicates_lbl = QLabel("Repeats")
+self.but_view_method = QPushButton('View method details')
+self.notes_lbl = QLabel("Notes")
+self.w_sample_sample_vol_lbl = QLabel('Sample volume [mL]')
+self.w_sample_total_vol_lbl = QLabel('Total volume [mL]')
+    self.g_sample = QGroupBox("Sample parameters")       
+self.w_stdadd_vol_std_lbl = QLabel('Volume standard added [uL]')
+STANDARD ADDED CONC UNITSSSS
+self.g_stdadd = QGroupBox("Standard addition parameters")
+self.but_new = QPushButton('Ready to run!')
+self.but_edit = QPushButton('Save changes')
+self.but_view = QPushButton('Edit configs')
+
+
+
+
+self.sample.setPlaceholderText(l.rc_select[g.L])
+self.method.setPlaceholderText(l.rc_select[g.L])
+self.device.setPlaceholderText(l.rc_select[g.L])
+        

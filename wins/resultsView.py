@@ -20,10 +20,9 @@ class WindowResultsView(QMainWindow):
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.parent = parent
         self.tasks = tasks
+        self.settings = self.parent.parent.settings
         
-        self.setWindowTitle(self.parent.data[g.S_NAME]+' | Results Viewer')
-
-        self.voltamogram = VoltamogramPlot(self)
+        self.voltamogram = VoltamogramPlot(self, self.settings)
 
         showraw = True
         if len(tasks) > 1:
@@ -33,12 +32,21 @@ class WindowResultsView(QMainWindow):
         except Exception as e:
             print('error here in resulltsView win!')
             print(e)
+            
+            
         
+        self.set_text(self.settings[g.SET_LANG])
+       
         self.setCentralWidget(self.voltamogram)   
 
     def update_win(self):
         data = self.parent.data
-    
+        
+    def set_text(self, lang):
+        print('setting text on GRAPHER window in '+lang)
+        self.setWindowTitle(self.parent.data[g.S_NAME]+' | '+get_text(l.RVW_HEAD, lang))
+        self.voltamogram.set_text(lang)
+        
     def event(self, event):                                 # General purpose event handler
         if event.type() == QEvent.Type.ActivationChange:    # Check if the event is changing the activation status of the window
             if self.isActiveWindow():                       #   Check whether the event *activated* the window

@@ -47,6 +47,7 @@ class WindowSample(QMainWindow):
         self.progress_bar = QProgressBar()
         self.sample_id = sample_id
         self.force_close = False
+        self.settings = self.parent.parent.settings # Get settings from welcome window
 
         #####################
         #                   #
@@ -70,55 +71,53 @@ class WindowSample(QMainWindow):
         self.w_name.textEdited.connect(self.update_edited_status)
 
         # the date collected field 
-        w_lbl_date_collected = QLabel(l.s_edit_date_c[g.L])                                 # init label with text
+        self.w_lbl_date_collected = QLabel('')                                 # init label with text
         self.w_date_collected = QDateEdit()                                                 # init input
         self.w_date_collected.setDisplayFormat(g.DATE_DISPLAY_FORMAT)                       # set input properties
         self.w_date_collected.setCalendarPopup(True)                                
         self.w_date_collected.setObjectName(encodeCustomName(g.SA_DATE_COLLECTED))           # add name to input for data mgmt
         self.w_date_collected.userDateChanged.connect(self.update_edited_status)
-        layouts.append(horizontalize([w_lbl_date_collected, self.w_date_collected]))   # add horizontal layout of label and input
+        layouts.append(horizontalize([self.w_lbl_date_collected, self.w_date_collected]))   # add horizontal layout of label and input
                                                                                             #   to list of horizontal layouts
         # the location collected field
-        w_lbl_loc = QLabel(l.s_edit_loc[g.L])
+        self.w_lbl_loc = QLabel('')
         self.w_loc = QLineEdit()
         self.w_loc.setMaxLength(63)
         self.w_loc.setObjectName(encodeCustomName(g.SA_LOC_COLLECTED))
         self.w_loc.textEdited.connect(self.update_edited_status)
-        layouts.append(horizontalize([w_lbl_loc, self.w_loc]))
+        layouts.append(horizontalize([self.w_lbl_loc, self.w_loc]))
 
         # the contact info field
-        w_lbl_contact = QLabel(l.s_edit_contact[g.L])
+        self.w_lbl_contact = QLabel('')
         self.w_contact = QLineEdit()
         self.w_contact.setMaxLength(63)
         self.w_contact.setObjectName(encodeCustomName(g.SA_CONTACT))
         self.w_contact.textEdited.connect(self.update_edited_status)
-        layouts.append(horizontalize([w_lbl_contact, self.w_contact]))
+        layouts.append(horizontalize([self.w_lbl_contact, self.w_contact]))
 
         # the collected by field
-        w_lbl_sampler = QLabel(l.s_edit_sampler[g.L])
+        self.w_lbl_sampler = QLabel('')
         self.w_sampler = QLineEdit()
         self.w_sampler.setMaxLength(63)
         self.w_sampler.setObjectName(encodeCustomName(g.SA_COLLECTED_BY))
         self.w_sampler.textEdited.connect(self.update_edited_status)
-        layouts.append(horizontalize([w_lbl_sampler, self.w_sampler]))
+        layouts.append(horizontalize([self.w_lbl_sampler, self.w_sampler]))
 
         # the notes field
-        w_lbl_notes = QLabel(l.s_edit_notes[g.L])
+        self.w_lbl_notes = QLabel('')
         self.w_notes = QPlainTextEdit()
         self.w_notes.setObjectName(encodeCustomName(g.SA_NOTES))
         self.w_notes.textChanged.connect(self.update_edited_status)
-        layouts.append(horizontalize([w_lbl_notes, self.w_notes]))
+        layouts.append(horizontalize([self.w_lbl_notes, self.w_notes]))
 
         # the bottom button row (save, save as, and edit button(s) -- depend on state)
-        self.but_new = QPushButton(l.s_edit_save[g.L])                      # create 'save' button for new samples
-        self.but_existing_edit = QPushButton(l.s_edit_save[g.L])            # create 'save' button for existing samples 
-        self.but_existing_view = QPushButton(l.s_edit_edit[g.L])            # create 'edit' button for existing samples
-
-        self.but_new.clicked.connect(self.start_save_new)
-        self.but_existing_edit.clicked.connect(self.start_save_existing)
-        self.but_existing_view.clicked.connect(self.set_mode_edit)
-
-        self.buts = [self.but_new, self.but_existing_edit, self.but_existing_view]  # list of all buttons
+        self.but_new = QPushButton('')                      # create 'save' button for new samples
+        self.but_existing_edit = QPushButton('')            # create 'save' button for existing samples 
+        
+        self.but_new.clicked.connect(self.start_save)
+        self.but_existing_edit.clicked.connect(self.start_save)
+        
+        self.buts = [self.but_new, self.but_existing_edit]                          # list of all buttons
         self.read_only = [self.w_date_collected,                                    # on read_only, set these to read only = True
                           self.w_notes]
         self.not_enabled = [self.w_name,                                            # on read_only set these to enabled = False
@@ -141,6 +140,8 @@ class WindowSample(QMainWindow):
             self.update_win_from_parent()
 
         self.saved = True               #set this again as the process of setting text may mess with this flag, but no data has changed
+        self.set_text(self.settings[g.SET_LANG])
+        
         self.setCentralWidget(self.w)
 
         # Set the current mode (new sample, edit existing sample, or view existing sample)
@@ -178,24 +179,21 @@ class WindowSample(QMainWindow):
         return
 
     def set_mode_new(self):
-        self.mode = g.WIN_MODE_NEW
-        self.set_elements_editable(True)
-        self.set_button_bar(self.but_new)
-        self.setWindowTitle(l.new_sample[g.L])
-        self.w_name.setPlaceholderText(l.s_edit_name[g.L])
+        self.mode = g.WIN_MODE_NEW                                  # set mode flag
+        self.set_elements_editable(True)                            # enable all elements
+        self.set_button_bar(self.but_new)                           # put appropriate button on bottom
+        lang = self.parent.parent.settings[g.SET_LANG]              # get language
+        self.setWindowTitle(get_text(l.SAM_TITLE[self.mode], lang)) # set window title in lang
         
     def set_mode_edit(self):
         self.mode = g.WIN_MODE_EDIT
         self.set_elements_editable(True)
         self.set_button_bar(self.but_existing_edit)
-        self.setWindowTitle(l.edit_sample[g.L])
+        lang = self.parent.parent.settings[g.SET_LANG]              # get language
+        self.setWindowTitle(get_text(l.SAM_TITLE[self.mode], lang)) # set window title in lang
         
-    def set_mode_view(self):
-        self.mode = g.WIN_MODE_VIEW_ONLY
-        self.set_elements_editable(False)
-        self.set_button_bar(self.but_existing_view)
-        self.setWindowTitle(l.view_sample[g.L])
-        
+       
+    
     def set_button_bar(self, button):
         for but in self.buts:
             #self.centralWidget().layout().replaceWidget(but, button)
@@ -211,23 +209,15 @@ class WindowSample(QMainWindow):
     def set_buttons_enabled(self, enabled):
         for but in self.buts:
             but.setEnabled(enabled)
-
-    def start_save_new(self):
-        self.set_buttons_enabled(False)
-        if self.validate():
-            try:
-                self.saveFile()
-            except Exception as e:
-                print(e)
-        else:
-            self.set_buttons_enabled(True)
             
-    def start_save_existing(self):
+    def start_save(self):
         self.set_buttons_enabled(False)
+        self.set_elements_editable(False)
         if self.validate():
-            self.saveFile()
+            self.save()
         else:
             self.set_buttons_enabled(True)
+            self.set_elements_editable(True)
 
     def validate(self):
         """
@@ -235,24 +225,29 @@ class WindowSample(QMainWindow):
         user that describes the error and the function returns False.
         If no error, returns True
         """
+        lang = self.parent.parent.settings[g.SET_LANG]              # get language
+        
         if len(self.w_name.text()) < g.SAMPLE_NAME_MIN_LENGTH:
-            show_alert(self, l.alert_header[g.L], l.alert_s_edit_name[g.L])
+            title = get_text(l.DIALOG_ALERT_TTL, lang)
+            msg = get_text(l.SAM_VALID_MSG, lang)
+            show_alert(self, title, msg)
             return False
         else:
             return True
     
-    def saveFile(self):
+    def save(self):
         data = self.gather_data()        
 
         # Do actual save!
         if self.mode == g.WIN_MODE_NEW:                         # iF new sample
             savetype = g.SAVE_TYPE_SAMPLE_NEW
-            self.close_on_save = True
+            #self.close_on_save = True
         else:
             savetype = g.SAVE_TYPE_SAMPLE_EDIT
-            self.set_mode_view()
-            
-        self.status.showMessage('Saving...', g.SB_DURATION)
+            # self.set_mode_view()
+        
+        lang = self.parent.parent.settings[g.SET_LANG]              # get language 
+        self.status.showMessage(get_text(l.SB_SAVE_STRT, lang), g.SB_DURATION)
         self.parent.start_async_save(savetype, [data], onSuccess=self.after_save_success, onError=self.after_save_error)
 
 
@@ -276,18 +271,33 @@ class WindowSample(QMainWindow):
                 
     def after_save_success(self):
         self.saved = True
-        self.status.showMessage('Saved!', g.SB_DURATION)
-        self.set_buttons_enabled(True)
-        print(self.mode)
-        if self.mode == g.WIN_MODE_NEW:                                                     # if this was a new sample we just created
-            self.parent.tabs.setCurrentIndex(self.parent.tabs.count()-1)                    # navigate to it in the parent window
-        if self.close_on_save:
-            self.close()
+        self.close()
         
     def after_save_error(self):
-        self.status.showMessage('ERROR: File did not save.', g.SB_DURATION)
+        lang = self.parent.parent.settings[g.SET_LANG]              # get language
+        self.status.showMessage(get_text(l.SB_SAVE_ERRR, lang), g.SB_DURATION)
         self.set_mode_edit()
         self.set_buttons_enabled(True)
+        self.set_elements_editable(True)
+        
+    def set_text(self, lang):
+        self.setWindowTitle(get_text(l.SAM_TITLE[self.mode], lang))
+        self.w_name.setPlaceholderText(get_text(l.SAM_NAM, lang))          #
+        
+        txt(self.w_lbl_date_collected, l.SAM_DAT, lang)
+        txt(self.w_lbl_loc, l.SAM_LOC, lang)
+        txt(self.w_lbl_contact, l.SAM_CON, lang)
+        txt(self.w_lbl_sampler, l.SAM_WHO, lang)
+        txt(self.w_lbl_notes, l.SAM_NOT, lang)
+        txt(self.but_new, l.SAVE, lang)
+        txt(self.but_existing_edit, l.SAVE, lang)
+        
+        
+        
+        
+        
+        
+        # Set text here
         
     def event(self, event):                                 # General purpose event handler
         if event.type() == QEvent.Type.ActivationChange:    # Check if the event is changing the activation status of the window
@@ -319,15 +329,12 @@ class WindowSample(QMainWindow):
             elif self.saved:                      # If all modified content (if any) has been saved
                 self.accept_close(event)        # we don't need to ask about saving, so accept the close action
             else:                                                   # if there is unsaved content:                                    
-                confirm = saveMessageBox()                          #   init a dialog asking the user if they're sure
+                lang = self.parent.parent.settings[g.SET_LANG]      #   get language
+                confirm = saveMessageBox(lang)                      #   init a dialog asking the user if they're sure
                 resp = confirm.exec()                               #   launch the dialog
                 if resp == QMessageBox.StandardButton.Save:         #   if the user selects "Save"
                     event.ignore()                                  #       block the close action
-                    if self.mode == g.WIN_MODE_NEW:                 #       if this is a new sample
-                        self.start_save_new()                       #           save it as a new sample
-                    else:                                           #       otherwise,
-                        self.close_on_save = True                   #           tell window to close after saving 
-                        self.start_save_existing()                  #           and save it as an existing sample
+                    self.start_save()                               #       and start the save!
                 elif resp == QMessageBox.StandardButton.Discard:    #   if the user selects "discard"
                     self.accept_close(event)                        #       allow the close action to complete
                 else:                                               #   if the user selects "cancel" (or anything else)

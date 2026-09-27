@@ -53,6 +53,9 @@ class WindowRunConfig(QMainWindow):
         self.saved = True
         self.close_on_save = False
         self.force_close = False
+        self.settings = None
+        self.get_settings()
+        lang = get_lang(self)
         
         self.status = self.statusBar()
         
@@ -61,34 +64,29 @@ class WindowRunConfig(QMainWindow):
         v2 = QVBoxLayout()
         v3 = QVBoxLayout()
 
-        sample_lbl = QLabel("Sample")
-        self.sample = QComboBox()
-        self.sample.setPlaceholderText(l.rc_select[g.L])
+        self.sample_lbl = QLabel('')
+        self.sample = QComboBox() 
         for sample in self.parent.data[g.S_SAMPLES]:
             self.sample.addItem(sample[g.SA_NAME], sample[g.R_UID_SELF])
         self.sample.currentIndexChanged.connect(self.sample_changed)
-    
 
-        method_lbl = QLabel("Method")
+        self.method_lbl = QLabel('')
         self.method = QComboBox()
-        self.method.setPlaceholderText(l.rc_select[g.L])
-
         for method in self.parent.data[g.S_METHODS]:
             self.method.addItem(method[g.M_NAME], {'type':g.M_FROM_SAMPLE,
                                                    'method': method})
         self.method.currentIndexChanged.connect(self.method_changed)
 
-        but_m_load = QPushButton('load from file')
-        but_m_load.clicked.connect(self.open_method_from_file)
+        self.but_m_load = QPushButton('')
+        self.but_m_load.clicked.connect(self.open_method_from_file)
 
-        device_lbl = QLabel("Device")
+        self.device_lbl = QLabel('')
         self.device = QComboBox()
-        self.device.setPlaceholderText(l.rc_select[g.L])
         for dev in devices:
             self.device.addItem(dev['name'], dev)
         self.device.currentIndexChanged.connect(self.value_changed)
             
-        run_type_lbl = QLabel("Run type")
+        self.run_type_lbl = QLabel('')
         #####################
         # editable!
         self.types = [l.rc_type_blank[g.L], l.rc_type_sample[g.L], l.rc_type_stdadd[g.L]]
@@ -99,10 +97,9 @@ class WindowRunConfig(QMainWindow):
         self.run_type.addItems(self.types)                  # add all text in correct language
         for i in range(0, len(self.types)):                 # for each text item:
             self.run_type.setItemData(i, g.R_TYPES[i])      #   link the corresponding label in English for cross-language data storage
-        
         self.run_type.currentIndexChanged.connect(self.run_type_changed)
 
-        replicates_lbl = QLabel("Repeats")
+        self.replicates_lbl = QLabel('')
         self.replicates = QSpinBox()
         self.replicates.setValue(g.RC_REPS_MIN)
         self.replicates.setMinimum(g.RC_REPS_MIN)
@@ -114,10 +111,10 @@ class WindowRunConfig(QMainWindow):
         graph_area.setObjectName('ov-graph-area')
         graph_area.setWidget(self.graph)
 
-        but_view_method = QPushButton('View method details')
-        but_view_method.clicked.connect(self.view_method)
+        self.but_view_method = QPushButton('')
+        self.but_view_method.clicked.connect(self.view_method)
 
-        notes_lbl = QLabel("Notes")
+        self.notes_lbl = QLabel('')
         self.notes = QLineEdit()
         self.notes.textEdited.connect(self.value_changed)
         
@@ -128,23 +125,23 @@ class WindowRunConfig(QMainWindow):
         v_sample = QVBoxLayout()
         self.w_sample_sample_vol = QDoubleSpinBox()
         self.w_sample_total_vol = QDoubleSpinBox()
-        w_sample_sample_vol_lbl = QLabel('Sample volume [mL]')
-        w_sample_total_vol_lbl = QLabel('Total volume [mL]')
-        v_sample.addLayout(horizontalize([w_sample_sample_vol_lbl, self.w_sample_sample_vol],True))
-        v_sample.addLayout(horizontalize([w_sample_total_vol_lbl, self.w_sample_total_vol], True))
-        g_sample = QGroupBox("Sample parameters")
-        g_sample.setLayout(v_sample)
+        self.w_sample_sample_vol_lbl = QLabel('')
+        self.w_sample_total_vol_lbl = QLabel('')
+        v_sample.addLayout(horizontalize([self.w_sample_sample_vol_lbl, self.w_sample_sample_vol],True))
+        v_sample.addLayout(horizontalize([self.w_sample_total_vol_lbl, self.w_sample_total_vol], True))
+        self.g_sample = QGroupBox('')
+        self.g_sample.setLayout(v_sample)
 
         v_stdadd = QVBoxLayout()
         self.w_stdadd_vol_std = QDoubleSpinBox()
         self.w_stdadd_conc_std = QDoubleSpinBox()
-        w_stdadd_vol_std_lbl = QLabel('Volume standard added [uL]')
+        self.w_stdadd_vol_std_lbl = QLabel('')
         self.stdadd_conc_lbl_pre = 'Standard concentration'
         self.w_stdadd_conc_std_lbl = QLabel(self.stdadd_conc_lbl_pre)
-        v_stdadd.addLayout(horizontalize([w_stdadd_vol_std_lbl, self.w_stdadd_vol_std], True))
+        v_stdadd.addLayout(horizontalize([self.w_stdadd_vol_std_lbl, self.w_stdadd_vol_std], True))
         v_stdadd.addLayout(horizontalize([self.w_stdadd_conc_std_lbl, self.w_stdadd_conc_std], True))
-        g_stdadd = QGroupBox("Standard addition parameters")
-        g_stdadd.setLayout(v_stdadd)
+        self.g_stdadd = QGroupBox('')
+        self.g_stdadd.setLayout(v_stdadd)
 
         ws_in_stack = [self.w_sample_sample_vol,
                        self.w_sample_total_vol,
@@ -156,12 +153,12 @@ class WindowRunConfig(QMainWindow):
             w.setDecimals(3)
                
         self.type_stack.addWidget(w_blank)
-        self.type_stack.addWidget(g_sample)
-        self.type_stack.addWidget(g_stdadd)
+        self.type_stack.addWidget(self.g_sample)
+        self.type_stack.addWidget(self.g_stdadd)
 
-        self.but_new = QPushButton('Ready to run!')
-        self.but_edit = QPushButton('Save changes')
-        self.but_view = QPushButton('Edit configs')
+        self.but_new = QPushButton('')
+        self.but_edit = QPushButton('')
+        self.but_view = QPushButton('')
 
         self.but_new.clicked.connect(self.run_button_clicked)
         self.but_edit.clicked.connect(self.save_changes)
@@ -170,30 +167,32 @@ class WindowRunConfig(QMainWindow):
         self.buts = [self.but_new, self.but_edit, self.but_view]
 
         # Define which widgets are enabled on which modes
-        self.ws_for_new = [self.method, but_m_load, self.device, self.replicates]
+        self.ws_for_new = [self.method, self.but_m_load, self.device, self.replicates]
         self.ws_for_edit = [self.sample, self.run_type, self.w_sample_sample_vol, self.w_sample_total_vol,
                              self.w_stdadd_vol_std, self.w_stdadd_conc_std, self.notes]
-        self.ws_for_view = [but_view_method]
+        self.ws_for_view = [self.but_view_method]
       
         # add widgets to layouts
-        v1.addWidget(sample_lbl)
+        v1.addWidget(self.sample_lbl)
         v1.addWidget(self.sample)
-        v1.addWidget(method_lbl)
-        v1.addLayout(horizontalize([self.method, but_m_load]))
-        v1.addWidget(device_lbl)
+        v1.addWidget(self.method_lbl)
+        v1.addLayout(horizontalize([self.method, self.but_m_load]))
+        v1.addWidget(self.device_lbl)
         v1.addWidget(self.device)
-        v1.addWidget(run_type_lbl)
+        v1.addWidget(self.run_type_lbl)
         v1.addWidget(self.run_type)
         v1.addLayout(self.type_stack)
-        v1.addLayout(horizontalize([replicates_lbl, self.replicates], True))
-        v1.addLayout(horizontalize([notes_lbl, self.notes]))
+        v1.addLayout(horizontalize([self.replicates_lbl, self.replicates], True))
+        v1.addLayout(horizontalize([self.notes_lbl, self.notes]))
         v1.addStretch()
 
         v2.addWidget(graph_area)
-        v2.addWidget(but_view_method)
+        v2.addWidget(self.but_view_method)
 
         h1.addLayout(v2)
         h1.addLayout(v1)
+        
+        self.set_text(lang)
         
         w = QWidget()
         w.setLayout(h1)
@@ -705,6 +704,65 @@ class WindowRunConfig(QMainWindow):
     #   4. accept_close                     #
     #                                       #
     #########################################
+    
+    def get_settings(self):
+        self.settings = self.parent.parent.settings
+        
+    def set_text(self, lang):
+        print('setting text for RUN CONFIG in '+lang)
+        
+        txt(self.sample_lbl, l.RCF_SAMP, lang)
+        txt(self.method_lbl, l.RCF_METH, lang)
+        txt(self.but_m_load, l.RCF_LOAD, lang)
+        txt(self.device_lbl, l.RCF_DEVC, lang)
+        txt(self.run_type_lbl, l.RCF_TYPE, lang)
+        txt(self.replicates_lbl, l.RCF_REPS, lang)
+        txt(self.but_view_method, l.RCF_VMTH, lang)
+        txt(self.notes_lbl, l.RCF_NOTE, lang)
+        txt(self.w_sample_sample_vol_lbl, l.RCF_VSPL, lang)
+        txt(self.w_sample_total_vol_lbl, l.RCF_VTOT, lang)
+        txt(self.g_sample, l.RCF_GSMP, lang)
+        txt(self.w_stdadd_vol_std_lbl, l.RCF_VSTD, lang)
+        txt(self.g_stdadd, l.RCF_GSTD, lang)
+        txt(self.but_new, l.RCF_BNEW, lang)
+        txt(self.but_edit, l.RCF_BEDT, lang)
+        txt(self.but_view, l.RCF_BVIE, lang)
+        
+        for w in (self.sample, self.method, self.device, self.run_type):
+            w.setPlaceholderText(get_text(l.RCF_SLCT, lang))
+        
+        ########################################
+        #
+        #   HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE 
+        #
+        #   1. Type dropdown menu
+        #   2. Standard concentration (with units changed by method)
+        #   
+        #   THEN
+        #
+        #   3. Status bar...
+        #   4. Popups...
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
     
     def event(self, event):                                 # General purpose event handler
         if event.type() == QEvent.Type.ActivationChange:    # Check if the event is changing the activation status of the window

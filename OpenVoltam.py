@@ -30,9 +30,6 @@ try:
 except ImportError:
     pass
 
-# Set the display language
-g.L = g.ENG
-
 icon_path = Path(g.BASEDIR) / "external" / "icons" / "icon.png"
 g.APP.setWindowIcon(QIcon(str(icon_path)))      # set the display icon for the app
 

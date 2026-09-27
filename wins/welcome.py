@@ -214,13 +214,12 @@ class WindowWelcome(QMainWindow):
         self.new_win_one_of_type(WindowSettings(self))
      
     def set_text(self, lang):
-        print('setting text on WELCOME')
         self.setWindowTitle(l.WEL_TITLE[lang])                 # Title of window (on header bar)
         txt(self.lbl_about, l.WEL_INFO, lang)                  # Info text with links, version, release, etc.
-        self.g1.setTitle(l.WEL_SESH[lang])                     # Upper groupbox (lab session)
+        txt(self.g1, l.WEL_SESH, lang)                         # Upper groupbox (lab session)
         txt(self.but_sample_new, l.WEL_NEW_SESH, lang)         # New lab session
         txt(self.but_sample_open, l.WEL_OPN_SESH, lang)        # Open lab session
-        self.g2.setTitle(l.WEL_METH[lang])                     # Lower groupbox (Method)
+        txt(self.g2, l.WEL_METH, lang)                         # Lower groupbox (Method)
         txt(self.but_config_new, l.WEL_NEW_METH, lang)         # New method
         txt(self.but_config_open, l.WEL_OPN_METH, lang)        # Open method
 

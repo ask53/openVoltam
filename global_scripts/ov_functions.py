@@ -20,7 +20,8 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QScrollArea,
     QFrame,
-    QFileDialog
+    QFileDialog,
+    QGroupBox
 )
 
 def encodeCustomName(custom_name):
@@ -198,27 +199,35 @@ def get_text(strs, lang):
     """Takes in a dict and a key. Returns dict[key]"""
     return strs[lang]
     
-def txt(obj, strings_dict, lang):
+def txt(obj, strings_dict=None, lang=None, s=None):
     """Takes in a PyQt object (QLabel, QAction, etc.) that has a setText() method.
     sets the text of the object to the provided text in the provided language"""
     
-    s = get_text(strings_dict, lang)
+    if strings_dict and lang:
+        s = get_text(strings_dict, lang)
+    
     t = str(type(obj))
     objs_w_set_text = (str(type(QLabel())), 
                        str(type(QAction())), 
                        str(type(QPushButton())))
-    objs_w_set_title = (str(type(QMenu())))
+    objs_w_set_title = (str(type(QMenu())),
+                        str(type(QGroupBox())))
     
-    if t in objs_w_set_text:
-        obj.setText(s)
-    elif t in objs_w_set_title:     
-        obj.setTitle(s)             
+    if s:
+        if t in objs_w_set_text:
+            obj.setText(s)
+        elif t in objs_w_set_title:     
+            obj.setTitle(s)             
                                     
                                     
                                    
                                     
                                     
-                                    
+def get_rep_num(rep_id):
+    return rep_id.split(g.R_REPLICATE_UID_PREFIX)[-1]
+
+def get_run_num(run_id):
+    return run_id.split(g.R_RUN_UID_PREFIX)[-1]
     
 
 def get_data_from_file(path):
@@ -613,7 +622,8 @@ def round_by_unit(value, unit):
     return str(round(float(value), places))
     
     
-
+def get_lang(win):
+    return win.settings[g.SET_LANG]
 
 
 
@@ -632,21 +642,21 @@ class QHLine(QFrame):
         self.setFrameShadow(QFrame.Shadow.Sunken)
 
 class saveMessageBox(QMessageBox):
-    def __init__(self):                       
+    def __init__(self, lang):                       
         super().__init__()
 
         # set text for save message
-        self.setWindowTitle(l.s_edit_discard[g.L]) 
-        self.setText('Close without saving?')
+        self.setWindowTitle(get_text(l.DIALOG_DISC_TTL, lang)) 
+        self.setText(get_text(l.DIALOG_DISC_MSG, lang))
         self.setStandardButtons(QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel)
 
         # customize button language text for multi-language support
         but_save = self.button(QMessageBox.StandardButton.Save)
-        but_save.setText(l.s_edit_save[g.L])
+        but_save.setText(get_text(l.DIALOG_DISC_BUT_SAVE, lang))
         but_disc = self.button(QMessageBox.StandardButton.Discard)
-        but_disc.setText(l.s_edit_close_wo_save[g.L])
+        but_disc.setText(get_text(l.DIALOG_DISC_BUT_DISC, lang))
         but_canc = self.button(QMessageBox.StandardButton.Cancel)
-        but_canc.setText(l.s_edit_cancel[g.L])
+        but_canc.setText(get_text(l.DIALOG_DISC_BUT_CNCL, lang))
 
 class confirmMessageBox(QMessageBox):
     def __init__(self, title, body):
