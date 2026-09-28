@@ -292,10 +292,10 @@ class WindowMain(QMainWindow):
         
         but_view = QPushButton()
         but_view.setIcon(QIcon(g.ICON_EDIT))
-        self.but_samp = QPushButton('New sample')       # Button: New sample
-        self.but_config = QPushButton('New run')        # Button: New run
-        self.but_calc = QPushButton('Calculate')        # Button: Calculate
-        self.but_res_sample = QPushButton('Results')    # Button: Results
+        self.but_samp = QPushButton('')         # Button: New sample
+        self.but_config = QPushButton('')       # Button: New run
+        self.but_calc = QPushButton('')         # Button: Calculate
+        self.but_res_sample = QPushButton('')   # Button: Results
         self.buts = [but_view, self.but_samp, self.but_res_sample] # Always active 
         self.buts_with_sample_only = [self.but_config]  # Only activate if there is AT LEAST 1 sample
         

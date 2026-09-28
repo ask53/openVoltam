@@ -27,7 +27,7 @@ LANGS = {'English': 'eng',
 #                               #
 #################################
 
-# Export related text
+# Export
 SB_EXPORT_STRT = {'eng': 'Exporting...',
                   'esp': 'Exportando...'}
 SB_EXPORT_GOOD = {'eng': 'Export complete',
@@ -37,7 +37,7 @@ SB_EXPORT_WARN = {'eng': 'WARNING: Some reps could not be exported',
 SB_EXPORT_ERRR = {'eng': 'ERROR: Export could not complete',
                   'esp': 'FALLO: La exportación no se logró'}
 
-# Loading/reading related text
+# Loading/reading 
 SB_LOAD_STRT = {'eng': 'Loading data...',
                 'esp': 'Cargando datos...'} 
 SB_LOAD_GOOD = {'eng': 'Data loaded',
@@ -45,13 +45,29 @@ SB_LOAD_GOOD = {'eng': 'Data loaded',
 SB_LOAD_ERRR = {'eng': 'ERROR: Data could not be loaded',
                 'esp': 'FALLO: Los datos no se lograron cargar'}
 
-# Saving/writing releated text
+# Saving/writing
 SB_SAVE_STRT = {'eng': 'Saving...',
                 'esp': 'Guardando...'} 
 SB_SAVE_GOOD = {'eng': 'Saved',
                 'esp': 'Guardada'} 
 SB_SAVE_ERRR = {'eng': 'ERROR: Save could not complete',
                 'esp': 'FALLO: No se logró guardar'} 
+                
+# Saving method 
+SB_SAVE_METH_STRT = {'eng': 'Saving method...',
+                     'esp': 'Guardando método...'} 
+SB_SAVE_METH_GOOD = {'eng': 'Method saved',
+                     'esp': 'Método guardado'} 
+SB_SAVE_METH_ERRR = {'eng': 'ERROR: Method save could not complete',
+                     'esp': 'FALLO: No se logró guardar el método'} 
+
+# Saving run configuration
+SB_SAVE_RC_STRT = {'eng': 'Saving run configuration...',
+                   'esp': 'Guardando configuración de la medición...'} 
+SB_SAVE_RC_GOOD = {'eng': 'Run config saved',
+                   'esp': 'Configuración guardado'} 
+SB_SAVE_RC_ERRR = {'eng': 'ERROR: Run config save could not complete',
+                   'esp': 'FALLO: No se logró guardar la configuración'} 
                 
                 
 #################################
@@ -372,6 +388,15 @@ ANA_C_TYPES = {
 #                               #
 #################################
 
+RCF_TITL_BSE = {'eng': 'Run configuration',
+                'esp': 'Configuración de medición'}
+RCF_TITL_NEW = {'eng': 'New',
+                'esp': 'Nueva'}
+RCF_TITL_EDT = {'eng': 'Edit',
+                'esp': 'Editar'}
+RCF_TITL_VIE = {'eng': 'View',
+                'esp': 'Ver'}
+
 RCF_SAMP = {'eng': 'Sample',
             'esp': 'Muestra'}
 RCF_METH = {'eng': 'Method',
@@ -396,6 +421,8 @@ RCF_GSMP = {'eng': 'Sample parameters',
             'esp': 'Parámetros de la muestra'}
 RCF_VSTD = {'eng': 'Volume standard added [uL]',
             'esp': 'Volumen de concentrato agregado [uL]'}
+RCF_CSTD = {'eng': 'Standard concentration',
+            'esp': 'Concentración del concentrato'}
 RCF_GSTD = {'eng': 'Standard addition parameters',
             'esp': 'Parámetros del concentrato agregado '}
 RCF_BNEW = {'eng': 'Ready to run!',
@@ -406,6 +433,41 @@ RCF_BVIE = {'eng': 'Edit configs',
             'esp': 'Editar'}
 RCF_SLCT = {'eng': 'Select...',
             'esp': 'Selecionar...'}
+RCF_TYPE_OPTS = {
+    g.R_TYPE_BLANK: {'eng': 'Blank',
+                     'esp': 'Vacia'}, 
+    g.R_TYPE_SAMPLE: {'eng': 'Sample',
+                     'esp': 'Muestra'}, 
+    g.R_TYPE_STDADD: {'eng': 'Standard addition',
+                     'esp': 'Concentrato agregado'}}   
+                     
+RCF_VLD_TITL = {'eng': 'Alert!',
+                'esp': '¡Alerta!'}
+RCF_VLD_SMPL = {'eng': 'Please select a sample to proceed.',
+                'esp': 'Favor de selecionar una muestra.'}
+RCF_VLD_METH = {'eng': 'Please select a method to proceed.',
+                'esp': 'Favor de seleccionar un método.'}
+RCF_VLD_DEVC = {'eng': 'Please select a device to proceed.',
+                'esp': 'Favor de seleccionar un dispositivo.'}
+RCF_VLD_TYPE = {'eng': 'Please select a run type to proceed.',
+                'esp': 'Favor de seleccionar un tipo de medición.'}
+RCF_VLD_SAM0 = {'eng': 'Neither the sample nor total volume can be 0. Please check the sample parameters.',
+                'esp': 'Ni el volumen de la muestra ni el total pueden ser 0. Favor de revisar los parámetros de la muestra.'}
+RCF_VLD_STOT = {'eng': 'The sample volume cannot be larger than the total volume. Please check the sample parameters.',
+                'esp': 'El volumen de la muestra no puede ser más grande que el volumen total. Favor de revisar los parámetros de la muestra.'}
+RCF_VLD_VCC0 = {'eng': 'You probably added some standard. Please check the standard addition parameters.',
+                'esp': 'A lo mejor usted agregó un concentrato. Favor de revisar los parámetros del concentrato agregado.'}
+RCF_VLD_CCC0 = {'eng': 'The concentration of the standard is probably not 0. Please check the standard addition parameters.',
+                'esp': 'Lo más probable es que la concentración del concentrato no sea 0. Favor de revisar los parámetros del concentrato agregado.'}
+RCF_VLD_GPIO = {'eng': 'This device does not have enough input/output pins to control all the external devices in that method.\nPlease try either another device or another method.',
+                'esp': 'Este dispositivo no tiene los pins necesarios para controlos todos los dispositivos externos en este método.\nFavor de cambiar el dispositivo o el método.'}
+RCF_VLD_IRNG = {'eng': 'The selected device is not compatible with the current range of the selected method.',
+                'esp': 'El dispositivo seleccionado no es compatible con el rango del corriente del método seleccionado.'}
+RCF_VLD_VMAX = {'eng': 'The max voltages in the method are too large for the selected device.',
+                'esp': 'Los voltajes máximos del método son demaciado grandes para el dispositivo seleccionado.'}
+
+
+         
             
             
    

@@ -87,16 +87,11 @@ class WindowRunConfig(QMainWindow):
         self.device.currentIndexChanged.connect(self.value_changed)
             
         self.run_type_lbl = QLabel('')
-        #####################
-        # editable!
-        self.types = [l.rc_type_blank[g.L], l.rc_type_sample[g.L], l.rc_type_stdadd[g.L]]
-        #
-        #####################
-        self.run_type = QComboBox()
-        self.run_type.setPlaceholderText(l.rc_select[g.L])  # set placeholder text
-        self.run_type.addItems(self.types)                  # add all text in correct language
-        for i in range(0, len(self.types)):                 # for each text item:
-            self.run_type.setItemData(i, g.R_TYPES[i])      #   link the corresponding label in English for cross-language data storage
+        self.run_type = QComboBox()     # Elements are added in self.set_text()
+        for i, typ in enumerate(g.R_TYPES):
+            text = get_text(l.RCF_TYPE_OPTS[typ], lang)
+            data = g.R_TYPES[i]
+            self.run_type.addItem(text, data)
         self.run_type.currentIndexChanged.connect(self.run_type_changed)
 
         self.replicates_lbl = QLabel('')
@@ -285,11 +280,14 @@ class WindowRunConfig(QMainWindow):
             relays = self.method.currentData()['method'][g.M_EXT_DEVICES]
         self.graph.update_plot(steps, relays, show_labels=False, reps=reps)
 
-    def update_std_add_vol(self):
+    def update_std_add_vol(self, reset_vol=True):
+        lang = get_lang(self)
         if self.method.currentIndex() != g.QT_NOTHING_SELECTED_INDEX:
             method_unit = str(self.method.currentData()['method'][g.M_UNIT])
-            self.w_stdadd_conc_std_lbl.setText(self.stdadd_conc_lbl_pre + ' [' + method_unit + ']')
-            self.w_stdadd_conc_std.setValue(0)
+            pre_text = get_text(l.RCF_CSTD, lang)
+            self.w_stdadd_conc_std_lbl.setText(pre_text + ' [' + method_unit + ']')
+            if reset_vol:
+                self.w_stdadd_conc_std.setValue(0)
             
 
     def update_win(self):
@@ -404,47 +402,48 @@ class WindowRunConfig(QMainWindow):
         not met, an alert is shown to the user and returns False. Thus it only alerts
         user to first criterion that is not met. 
         If all criteria are met, returns True."""
+        lang = get_lang(self)
 
         # Make sure all drop down menus have something selected
         if self.sample.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:
-            show_alert(self, l.alert_header[g.L], 'please select a sample to proceed.')
+            show_alert(self, get_text(l.RCF_VLD_TITL, lang), get_text(l.RCF_VLD_SMPL, lang))
             return False
         
         if self.method.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:
-            show_alert(self, l.alert_header[g.L], 'please select a method to proceed.')
+            show_alert(self, get_text(l.RCF_VLD_TITL, lang), get_text(l.RCF_VLD_METH, lang))
             return False
 
         elif self.device.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:
-            show_alert(self, l.alert_header[g.L], 'please select a device to proceed.')
+            show_alert(self, get_text(l.RCF_VLD_TITL, lang), get_text(l.RCF_VLD_DEVC, lang))
             return False
 
         if not self.method_and_device_compatible():
             return False
 
         elif self.run_type.currentIndex() == g.QT_NOTHING_SELECTED_INDEX:
-            show_alert(self, l.alert_header[g.L], 'please select a run type to proceed.')
+            show_alert(self, get_text(l.RCF_VLD_TITL, lang), get_text(l.RCF_VLD_TYPE, lang))
             return False
 
         # If relevant, validate the parameters specific to the "sample" type run
-        if self.run_type.currentText() == l.rc_type_sample[g.L]:
+        if self.run_type.currentData() == g.R_TYPE_SAMPLE:
             vol_sample = self.w_sample_sample_vol.value()
             vol_total = self.w_sample_total_vol.value()
             if (vol_sample == float(0) or vol_total == float(0)):
-                show_alert(self, l.alert_header[g.L], 'Neither the sample nor total volume can be 0. Please check the sample parameters.')
+                show_alert(self, get_text(l.RCF_VLD_TITL, lang), get_text(l.RCF_VLD_SAM0, lang))
                 return False
             elif (vol_sample > vol_total):
-                show_alert(self, l.alert_header[g.L], 'The sample volume cannot be larger than the total volume. Please check the sample parameters.')
+                show_alert(self, get_text(l.RCF_VLD_TITL, lang), get_text(l.RCF_VLD_STOT, lang))
                 return False
             
         # If relevant, validate the parameters specific to the "standard-addition" type run
-        if self.run_type.currentText() == l.rc_type_stdadd[g.L]:
+        if self.run_type.currentData() == g.R_TYPE_STDADD:
             vol_add = self.w_stdadd_vol_std.value()
             conc = self.w_stdadd_conc_std.value()
             if vol_add == float(0):
-                show_alert(self, l.alert_header[g.L], 'You probably added some standard. Please check the standard addition parameters.')
+                show_alert(self, get_text(l.RCF_VLD_TITL, lang), get_text(l.RCF_VLD_VCC0, lang))
                 return False
             elif conc == float(0):
-                show_alert(self, l.alert_header[g.L], 'The concentration of the standard is probably not 0. Please check the standard addition parameters.')
+                show_alert(self, get_text(l.RCF_VLD_TITL, lang), get_text(l.RCF_VLD_CCC0, lang))
                 return False
 
         return True
@@ -454,31 +453,34 @@ class WindowRunConfig(QMainWindow):
         selected device (self.device) are compatible. If not, shows an alert and
         returns False. Otherwise, returns True"""
 
+        lang = get_lang(self)
+        
         method = self.method.currentData()['method']
         device = self.device.currentData()
+        
 
         # Check whether selected device has enough general purpose input output pins for this method
         if len(device['gpio']) < len(method[g.M_EXT_DEVICES]):
-            show_alert(self, l.alert_header[g.L], 'This device does not have enough input/output pins to control all the external devices in that method.\nPlease try either another device or another method.')
+            show_alert(self, get_text(l.RCF_VLD_TITL, lang), get_text(l.RCF_VLD_GPIO, lang))
             return False
 
         # Check whether the device is compatible with the method's current range
         if not method[g.M_CURRENT_RANGE] in device['Ires']:
-            show_alert(self, l.alert_header[g.L], 'The selected device is not compatible with the current range of the selected method.')
+            show_alert(self, get_text(l.RCF_VLD_TITL, lang), get_text(l.RCF_VLD_IRNG, lang))
             return False
 
         # Check whether the device can handle voltages as large as those called for in the method
         vmin, vmax = get_method_v_extremes(method[g.M_STEPS])
         vmax_abs = max((abs(vmin), abs(vmax)))
         if vmax_abs > device['maxV']:
-            show_alert(self, l.alert_header[g.L], 'The max voltages in the method are too large for the selected device.')
+            show_alert(self, get_text(l.RCF_VLD_TITL, lang), get_text(l.RCF_VLD_VMAX, lang))
             return False
 
         return True
         
 
     def save_method(self):
-
+        lang = get_lang(self)
         # grab the most up to date version of the sample data 
         data = self.parent.data
         method_new = self.method.currentData()['method']
@@ -487,7 +489,7 @@ class WindowRunConfig(QMainWindow):
         for method in data[g.S_METHODS]:                
             if methods_match(method, method_new):       
                 self.method_id = method[g.R_UID_SELF]   # grab the id of the stored version and return
-                self.status.showMessage('Method saved.', g.SB_DURATION)
+                self.status.showMessage(get_text(l.SB_SAVE_METH_GOOD, lang), g.SB_DURATION)
                 self.save_config()
                 return
 
@@ -498,17 +500,20 @@ class WindowRunConfig(QMainWindow):
         data[g.S_METHODS].append(method_new)                # append the new sweep profile to the old data
         #write_data_to_file(self.parent.path, data)          # write the data back to the file!
 
-        self.status.showMessage('Saving method...')
+        lang = get_lang(self)
+        self.status.showMessage(get_text(l.SB_SAVE_METH_STRT, lang))
         self.parent.start_async_save(g.SAVE_TYPE_METHOD_TO_SAMPLE, [method_new], onSuccess=self.after_save_method_success, onError=self.after_save_method_error)
    
     def after_save_method_success(self):
         print('method save SUCCESS')
-        self.status.showMessage('Method saved.', g.SB_DURATION)
+        lang = get_lang(self)
+        self.status.showMessage(get_text(l.SB_SAVE_METH_GOOD, lang), g.SB_DURATION)
         self.save_config()
         
     def after_save_method_error(self):
         print('method save ERROR')
-        self.status.showMessage('ERROR on method save.', g.SB_DURATION_ERROR)       
+        lang = get_lang(self)
+        self.status.showMessage(get_text(l.SB_SAVE_METH_ERRR, lang), g.SB_DURATION_ERROR)       
 
     def save_config(self):
         self.set_run_id()                       # make sure the correct run id is set 
@@ -518,19 +523,22 @@ class WindowRunConfig(QMainWindow):
 
         print(new_data)
         # Then start the save!   
-        self.status.showMessage('Saving run configuration...')
+        lang = get_lang(self)
+        self.status.showMessage(get_text(l.SB_SAVE_RC_STRT, lang))
         self.parent.start_async_save(g.SAVE_TYPE_RUN_NEW, [new_data], onSuccess=self.after_save_config_success, onError=self.after_save_config_error)
         print('ASYNC SAVER LAUNCHED!')
         
     def after_save_config_success(self):
         print('AFTERSHAVE SUCCESS!')
-        self.status.showMessage('Run configuration saved.', g.SB_DURATION)
+        lang = get_lang(self)
+        self.status.showMessage(get_text(l.SB_SAVE_RC_GOOD, lang), g.SB_DURATION)
         self.saved = True
         self.run_runs()
            
     def after_save_config_error(self):
         print('AFTERSHAVE eRr0rrr!')
-        self.status.showMessage('ERROR: Changes were not saved.', g.SB_DURATION_ERROR)
+        lang = get_lang(self)
+        self.status.showMessage(get_text(l.SB_SAVE_RC_ERRR, lang), g.SB_DURATION_ERROR)
 
     def save_changes(self):
         if self.parent.process:                     # If there is an ongoing parent process (save, load, run, etc.)
@@ -552,11 +560,13 @@ class WindowRunConfig(QMainWindow):
             cb_suc = self.after_save_changes_success
             cb_err = self.after_save_changes_error
             cb_calc = partial(self.parent.start_async_save, g.SAVE_TYPE_CALCS_ARCHIVE, [True, calcs_to_archive], cb_suc, cb_err)     # get callback to update calc archive status
-            self.status.showMessage('Saving run configuration...')                                                                                          #   callback calls run config after save routine on completion
+            lang = get_lang(self)
+            self.status.showMessage(get_text(l.SB_SAVE_RC_STRT, lang))                                                                                          #   callback calls run config after save routine on completion
             self.parent.start_async_save(g.SAVE_TYPE_RUN_MOD, [self.run_id, new_data], onSuccess=cb_calc, onError=cb_err)      # run save with callback
 
     def after_save_changes_success(self):
-        self.status.showMessage('All changes saved.', g.SB_DURATION)
+        lang = get_lang(self)
+        self.status.showMessage(get_text(l.SB_SAVE_GOOD, lang), g.SB_DURATION)
         self.saved = True
         if self.close_on_save:
             self.close()
@@ -564,7 +574,8 @@ class WindowRunConfig(QMainWindow):
             self.set_mode_view()
            
     def after_save_changes_error(self):
-        self.status.showMessage('ERROR: Changes were not saved.', g.SB_DURATION_ERROR)
+        lang = get_lang(self)
+        self.status.showMessage(get_text(l.SB_SAVE_ERRR, lang), g.SB_DURATION_ERROR)
         self.close_on_save = False
 
     def run_runs(self):
@@ -654,22 +665,36 @@ class WindowRunConfig(QMainWindow):
         self.mode = g.WIN_MODE_NEW                      # Set the mode flag
         self.toggle_widget_editability()                # enable the appropriate widgets for this mode
         self.set_button_bar(self.but_new)               # Make sure the button specific to this mode is visible
-        self.setWindowTitle("Run configuration | New")  # Set the window title to indicate current mode
-
+        self.set_title()
+        
     def set_mode_edit(self):
         """Sets window mode to editing the configuration of an already-completed run"""
         self.mode = g.WIN_MODE_EDIT                     
         self.toggle_widget_editability()
         self.set_button_bar(self.but_edit)
-        self.setWindowTitle("Run configuration | Edit")  
+        self.set_title()  
 
     def set_mode_view(self):
         """Sets window mode to viewing the configuration of an already-completed run"""
         self.mode = g.WIN_MODE_VIEW_ONLY
         self.toggle_widget_editability()
         self.set_button_bar(self.but_view)
-        self.setWindowTitle("Run configuration | View")
+        self.set_title()
 
+    def set_title(self):
+        lang = get_lang(self)
+        print('setting titles...')
+        print(lang)
+        
+        title = get_text(l.RCF_TITL_BSE, lang) + ' | '
+        if self.mode == g.WIN_MODE_NEW:
+            title = title + get_text(l.RCF_TITL_NEW, lang)
+        elif self.mode == g.WIN_MODE_EDIT:
+            title = title + get_text(l.RCF_TITL_EDT, lang)
+        elif self.mode == g.WIN_MODE_VIEW_ONLY:
+            title = title + get_text(l.RCF_TITL_VIE, lang)
+        self.setWindowTitle(title)
+            
     def toggle_widget_editability(self):
         """Depending on the current mode, enables/greys-out certain widgets"""
         if self.mode == g.WIN_MODE_NEW:
@@ -709,8 +734,8 @@ class WindowRunConfig(QMainWindow):
         self.settings = self.parent.parent.settings
         
     def set_text(self, lang):
-        print('setting text for RUN CONFIG in '+lang)
-        
+        self.get_settings()
+        self.set_title()
         txt(self.sample_lbl, l.RCF_SAMP, lang)
         txt(self.method_lbl, l.RCF_METH, lang)
         txt(self.but_m_load, l.RCF_LOAD, lang)
@@ -731,19 +756,17 @@ class WindowRunConfig(QMainWindow):
         for w in (self.sample, self.method, self.device, self.run_type):
             w.setPlaceholderText(get_text(l.RCF_SLCT, lang))
         
-        ########################################
-        #
-        #   HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE 
-        #
-        #   1. Type dropdown menu
-        #   2. Standard concentration (with units changed by method)
-        #   
-        #   THEN
-        #
-        #   3. Status bar...
-        #   4. Popups...
+        for i, typ in enumerate(g.R_TYPES):             #Run types
+           text = get_text(l.RCF_TYPE_OPTS[typ], lang)  
+           self.run_type.setItemText(i, text)           # update display text
+       
+        self.update_std_add_vol(reset_vol=False)        
+            
+            
         
+            
         
+    
         
         
         
@@ -787,7 +810,8 @@ class WindowRunConfig(QMainWindow):
         if self.force_close:
             self.accept_close(event)
         elif not self.saved and self.mode == g.WIN_MODE_EDIT:
-            confirm = saveMessageBox(self)
+            lang = get_lang(self)
+            confirm = saveMessageBox(lang)
             resp = confirm.exec()
             if resp == QMessageBox.StandardButton.Save:
                 event.ignore()
