@@ -7,7 +7,8 @@ as well as R^2 value of fit.
 
 """
 from global_scripts import ov_globals as g
-from global_scripts.ov_functions import get_analyzed_value
+from global_scripts import ov_lang as l
+from global_scripts.ov_functions import *
 
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT, FigureCanvasQTAgg
 from matplotlib.figure import Figure
@@ -30,7 +31,7 @@ class StdAddCanvas(FigureCanvasQTAgg):
         super().__init__(fig)
 
 class StdAddFitterPlot(QMainWindow):
-    def __init__(self, parent, title=False):
+    def __init__(self, parent, settings, title=False):
 
         super().__init__()
         
@@ -38,6 +39,7 @@ class StdAddFitterPlot(QMainWindow):
         self.type = None
         self.points = None
         self.results = False
+        self.settings = settings
 
         # Data to return to user 
         self.eqn = None
@@ -74,6 +76,9 @@ class StdAddFitterPlot(QMainWindow):
         widget.setLayout(layout)
         self.setCentralWidget(widget)
         self.show()
+        
+    def update_settings(self):
+        self.settings = self.parent.settings
 
     def set_view_only(self):
         self.color_avg = 'grey'
@@ -81,20 +86,15 @@ class StdAddFitterPlot(QMainWindow):
         
 
     def set_axis_labels(self):
-        self.canvas.axes.set_xlabel('Concentration of added standard [mg/L]')
-        y_lbls = {g.C_TYPE_PEAKBASE: 'Peak height (from baseline) [uA]',
-                  g.C_TYPE_PEAKZERO: 'Peak height (from zero) [uA]',
-                  g.C_TYPE_SLOPE_L: 'Max |slope| on left side of peak [uA/V]',
-                  g.C_TYPE_SLOPE_R: 'Max |slope| on right side of peak [uA/V]',
-                  g.C_TYPE_SLOPE_AVG: 'Mean of max |slope| on both sides of peak [uA/V]',
-                  g.C_TYPE_AREA: 'Area enclosed by curve and baseline [uA*V]'}
-        if self.type:
-            self.canvas.axes.set_ylabel(y_lbls[self.type])
+        lang = get_lang(self)
+        self.canvas.axes.set_xlabel(get_text(l.STD_ADD_X_LBL, lang))
+        if self.type:                                                                   # If calc type has been selected
+            self.canvas.axes.set_ylabel(get_text(l.STD_ADD_Y_LBL[self.type], lang))     # Add appropriate y-label
             self.canvas.axes.yaxis.label.set_color('black')
             
         else:
-            self.canvas.axes.set_ylabel('Please select a calculation type')
-            self.canvas.axes.yaxis.label.set_color('red')
+            self.canvas.axes.set_ylabel(get_text(l.STD_ADD_Y_UNK, lang))                # Otherwise: add y-label message saying no selection
+            self.canvas.axes.yaxis.label.set_color('red')                               # and make the label red
         self.canvas.draw()
         
 

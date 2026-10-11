@@ -69,6 +69,11 @@ SB_SAVE_RC_GOOD = {'eng': 'Run config saved',
 SB_SAVE_RC_ERRR = {'eng': 'ERROR: Run config save could not complete',
                    'esp': 'FALLO: No se logró guardar la configuración'} 
                 
+# Process general
+SB_GNRL_GOOD = {'eng': 'Complete',
+                'esp': 'Completado'}
+SB_GNRL_EROR = {'eng': 'ERROR, operation did not complete',
+                'esp': 'FALLO, la operación no se logró'}
                 
 #################################
 #                               #           
@@ -82,6 +87,14 @@ SAVE_AS = {'eng': 'Save as',
            'esp': 'Guardar como'}
 EDIT = {'eng': 'Edit',
        'esp': 'Editar'}
+TT_NEW = {'eng': 'New',
+          'esp': 'Nuevo'}
+TT_EDT = {'eng': 'Edit',
+          'esp': 'Editar'}
+TT_DUP = {'eng': 'Duplicate',
+          'esp': 'Duplicar'}
+TT_DEL = {'eng': 'Delete',
+          'esp': 'Borrar'}
 
 
 #################################
@@ -411,8 +424,7 @@ RCF_REPS = {'eng': 'Repeats',
             'esp': 'Repeticiones'}
 RCF_VMTH = {'eng': 'View method details',
             'esp': 'Ver detalles del método'}
-RCF_NOTE = {'eng': 'Notes',
-            'esp': 'Notas'}
+RCF_NOTE = SAM_NOT
 RCF_VSPL = {'eng': 'Sample volume [mL]',
             'esp': 'Volumen de la muestra [mL]'}
 RCF_VTOT = {'eng': 'Total volume [mL]',
@@ -467,10 +479,142 @@ RCF_VLD_VMAX = {'eng': 'The max voltages in the method are too large for the sel
                 'esp': 'Los voltajes máximos del método son demaciado grandes para el dispositivo seleccionado.'}
 
 
-         
-            
-            
-   
+#################################
+#                               #           
+#       Window: Calculate       #
+#                               #
+#################################
+# Header
+CLC_HEAD_RES = {'eng': 'Results',
+                'esp': 'Resultados'}
+CLC_HEAD_NEW = {'eng': 'New calculation',
+                'esp': 'Cálculo nuevo'}
+CLC_HEAD_EDT = {'eng': 'Edit calculation',
+                'esp': 'Editar cálculo'}
+CLC_HEAD_VIE = {'eng': 'View calculation',
+                'esp': 'Ver cálculo'}
+                
+# Right / results pane    
+CLC_RGT_TTL = {'eng': 'Results',
+               'esp': 'Resultados'}
+CLC_RGT_HLP = {'eng': '<i>Double-click a <b>result</b> to view.</i>',
+               'esp': '<i>Para ver un <b>resultado</b> hazlo doble-clic.</i>'}
+CLC_RGT_ARC = {'eng': '[ARCHIVED]',
+               'esp': '[ARCHIVADO]'}
+CLC_RGT_NTE = MAI_TAB_NOTE
+
+# Description of actual result (for right pane, embed, and bottom-left results box)
+CLC_RES_ERR = {'eng': 'ERROR',
+               'esp': 'FALLO'}
+CLC_RES_ISF = {'eng': 'INSUFFICIENT DATA',
+               'esp': 'DATOS INSUFICIENTES'}
+CLC_RES_NDT = {'eng': 'NO DETECT',
+               'esp': 'NO DETECTADO'}
+CLC_RES_WRN = {'eng': 'WARNING',
+               'esp': 'AVISO'}
+               
+CLC_RES_NEG = {'eng': 'Results are negative, please check the way the calculation is set up',
+               'esp': 'El resultado es negativo, favor de revisar el cálculo'}
+CLC_RES_VAR = {'eng': 'The data range is quite broad. Try adding additional replicates or standard additions.',
+               'esp': 'El rango es ámplio. Para encogerlo, agrega más repeticiones o concentratos agregados.'}
+CLC_RES_NDL = {'eng': 'No detection limit set in method...examine the margin of error closely before using.',
+               'esp': 'No hay límite de deteción en el método...revisa bien el márgen de error antes de usar los resultados.'}
+CLC_RES_ALT = {'eng': 'Archived calculations cannot be edited. To modify this calculation, duplicate it then edit the resulting copy.',
+               'esp': 'No se pueden editar los cálculos archivados. Para modificarlo, duplícalo y editar la copia.'}
+               
+# Left + center pane title
+CLC_LFT_TTL = {'eng': 'New calculation',
+               'esp': 'Cálculo nuevo'}
+CLC_LFT_ARC = CLC_RGT_ARC
+               
+# Left pane
+CLC_LFT_SLT = RCF_SLCT
+CLC_LFT_SMP = MAI_MENU_TOP_SAMP
+CLC_LFT_TYP = {'eng': 'Calculation type',
+               'esp': 'Tipo de cálculo'}
+CLC_LFT_TPS = {
+    g.C_TYPE_PEAKBASE: {'eng': 'Peak height: Over baseline',
+                         'esp': 'Altura: Sobre linea base'},
+    g.C_TYPE_PEAKZERO: {'eng': 'Peak height: over 0',
+                         'esp': 'Altura: sobre 0'},
+    g.C_TYPE_SLOPE_L: {'eng': 'Slope: Max left',
+                        'esp': 'Pendiente: Izquierda max.'},
+    g.C_TYPE_SLOPE_R: {'eng': 'Slope: Max right',
+                        'esp': 'Pendiente: Derecha max.'},
+    g.C_TYPE_SLOPE_AVG: {'eng': 'Slope: Mean',
+                          'esp': 'Pendiente: Promedia'},
+    g.C_TYPE_AREA: {'eng': 'Area enclosed',
+                     'esp': 'Área encerrada'}}
+CLC_LFT_REG_TYP = {'eng': 'Fit regression to',
+                   'esp': 'Usar para el modelo'}
+CLC_LFT_REG_TPS = {
+    g.C_REG_TYPE_PTS: {'eng': 'All points',
+                       'esp': 'Todos los puntos'},
+    g.C_REG_TYPE_AVG: {'eng': 'Means only',
+                       'esp': 'Solo los promedios'}}   
+CLC_LFT_NOT = SAM_NOT
+CLC_LFT_GRH = {'eng': 'Graph selected',
+               'esp': 'Ver mediciones selecionadas'}                                       
+
+# Results box
+CLC_LFT_RES = {'eng': 'Show results',
+               'esp': 'Mostrar resultados'}
+CLC_RES_NONE = {'eng': 'None',
+                'esp': 'Ninguno'}
+CLC_RES_TITL = {'eng': 'Result',
+                'esp': 'Resultado'}
+CLC_RES_MODL = {'eng': 'Model',
+                'esp': 'Modelo'}
+CLC_RES_R2 = {'eng': 'R^2',
+              'esp': 'R^2'}
+CLC_RES_STDE = {'eng': 'Std. Error',
+                'esp': 'Error estándar'}
+
+# Center pane
+CLC_CTR_SMP = MAI_MENU_TOP_SAMP 
+CLC_CTR_STA = {'eng': 'Standard addition',
+               'esp': 'Concentrato agregado'}
+CLC_CTR_RUN = MAI_MENU_TOP_RUN 
+CLC_CTR_MTH = MAI_MENU_TOP_METH 
+CLC_CTR_NTE = MAI_TAB_NOTE   
+CLC_CTR_MSG_SA1 = {'eng': 'Please select at least one <b>sample</b> run.',
+                   'esp': 'Favor de seleccionar al menos una medición de <b>muestra</b>.'}
+CLC_CTR_MSG_SA2 = {'eng': 'Please select at least one run for <b>standard addition ',
+                   'esp': 'Favor de seleccionar al menos una medición para <b>concentrato agregado '} 
+CLC_CTR_MSG_ERR = {'eng': 'There are no available standard additions with the selected method',
+                   'esp': 'No hay mediciones de concentrato agregado con el método seleccionado'}
+
+CLC_ALERT_1a = {'eng': 'Cannot delete the calculation that is currently being edited (',
+               'esp': 'No se puede borrar el cálculo que se está editando ('}
+CLC_ALERT_1b = {'eng': ').\nPlease make a different selection and try again.',
+               'esp': '.\nFavor de seleccionar otro e intentar de nuevo.'}               
+CLC_ALERT_2 = {'eng': 'Please complete the analysis and try again.',
+               'esp': 'Favor de completar el análisis e intentar de nuevo.'}
+
+
+#################################
+#                               #
+#  Embed: Std. Add Fitter Plot  #
+#                               #
+#################################
+
+STD_ADD_X_LBL = {'eng': 'Concentration of added standard [mg/L]',
+                 'esp': 'Concentración del concentrato agregado [mg/L]'}
+STD_ADD_Y_LBL = {
+    g.C_TYPE_PEAKBASE: {'eng': 'Peak height (from baseline) [uA]',
+                        'esp': 'Altura (de la línea base) [uA]'},
+    g.C_TYPE_PEAKZERO: {'eng': 'Peak height (from zero) [uA]',
+                        'esp': 'Altura (de cero) [uA]'},
+    g.C_TYPE_SLOPE_L: {'eng': 'Max |slope| on left side of peak [uA/V]',
+                       'esp': '|Pediente| máxima del lado izquierdo [uA/V]'},
+    g.C_TYPE_SLOPE_R: {'eng': 'Max |slope| on right side of peak [uA/V]',
+                       'esp': '|Pediente| máxima del lado derecho [uA/V]'},
+    g.C_TYPE_SLOPE_AVG: {'eng': 'Mean of max |slope| on both sides of peak [uA/V]',
+                         'esp': 'Promedio de la |pendiente| máxima de ambos lados [uA/V]'},
+    g.C_TYPE_AREA: {'eng': 'Area enclosed by curve and baseline [uA*V]',
+                    'esp': 'Área encerrada por la curva y la línea base [uA*V]'}}
+STD_ADD_Y_UNK = {'eng': 'Please select a calculation type',
+                 'esp': 'Favor de seleccionar un tipo de cálculo'}
 
 #################################
 #                               #           

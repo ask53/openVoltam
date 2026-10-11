@@ -809,7 +809,7 @@ class VoltamogramPlot(QMainWindow):
             if indexer in runs_displayed:
                 lbl = ''
             else:
-                lang = self.settings[g.SET_LANG]
+                lang = get_lang(self)   #self.settings[g.SET_LANG]
                 run_num = get_run_num(rep['run_uid'])  
                 lbl = get_text(l.VGM_RUN_ABRV, lang) + run_num                
                 if onerun: 

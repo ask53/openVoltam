@@ -7,6 +7,7 @@ species of interest in the original sample.
 """
 
 from global_scripts import ov_globals as g
+from global_scripts import ov_lang as l
 from global_scripts.ov_functions import *
 
 from embeds.stdAddFitter import StdAddFitterPlot
@@ -61,6 +62,7 @@ class WindowCalculate(QMainWindow):
 
         # Set the layout programatically
         self.adjust_suggestion()
+        self.settings = self.parent.parent.settings
         self.set_layout()
         self.initializing = False
         
@@ -90,7 +92,8 @@ class WindowCalculate(QMainWindow):
             self.border_color_error = 'grey'
 
     def get_right_layout(self):
-        title = QLabel("<b>Results</b>")
+        lang = get_lang(self)
+        title = QLabel("<b>"+get_text(l.CLC_RGT_TTL, lang)+"</b>")
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         
         self.calc_list = QListWidget()
@@ -124,10 +127,10 @@ class WindowCalculate(QMainWindow):
             b_dup.clicked.connect(self.duplicate)
             b_del.clicked.connect(self.delete)
 
-            b_new.setToolTip('New')
-            b_edit.setToolTip('Edit')
-            b_dup.setToolTip('Duplicate')
-            b_del.setToolTip('Delete')
+            b_new.setToolTip(get_text(l.TT_NEW, lang))
+            b_edit.setToolTip(get_text(l.TT_EDT, lang))
+            b_dup.setToolTip(get_text(l.TT_DUP, lang))
+            b_del.setToolTip(get_text(l.TT_DEL, lang))
 
             self.right_buttons_one_only = [b_edit]
             self.right_buttons_one_plus = [b_dup, b_del]
@@ -136,7 +139,7 @@ class WindowCalculate(QMainWindow):
             for b in (b_new, b_edit, b_dup, b_del):
                 h2.addWidget(b)
 
-            lbl = QLabel("<i>double-click a <b>result</b> to view.</i>")
+            lbl = QLabel(get_text(l.CLC_RGT_HLP, lang))
             lbl.setWordWrap(True)
             lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         
@@ -157,6 +160,7 @@ class WindowCalculate(QMainWindow):
             if self.mode == g.WIN_MODE_EMBED and self.sample_id != calc[g.C_SAMPLE_ID]:
                 pass
             else:     
+                lang = get_lang(self)
                 # Set text for the list label
                 s_id = calc[g.C_SAMPLE_ID]
                 s = get_sample_from_file_data(self.parent.data, s_id)
@@ -164,11 +168,11 @@ class WindowCalculate(QMainWindow):
                     txt = ''
                 else:
                     txt = s[g.SA_NAME] + '\n'
-                if calc[g.C_ARCHIVED]: txt = '[ARCHIVED] '+txt
+                if calc[g.C_ARCHIVED]: txt = get_text(l.CLC_RGT_ARC, lang)+' '+txt
                 main_result = self.format_result_as_string(calc)[0]
                 txt = txt + main_result
                 if calc[g.C_NOTE]:
-                    txt = txt + '\nNote: '+str(calc[g.C_NOTE])
+                    txt = txt + '\n'+get_text(l.CLC_RGT_NTE, lang)+': '+str(calc[g.C_NOTE])
                 
                 # Create the list element and attach it to the list
                 calcitem = QListWidgetItem(self.calc_list)
@@ -201,7 +205,8 @@ class WindowCalculate(QMainWindow):
         calc_id = item.data(Qt.ItemDataRole.UserRole)[g.R_UID_SELF]
         calc = self.get_calc_from_id(calc_id)
         if calc[g.C_ARCHIVED]:
-            show_alert(self, 'Alert!', 'Archived calculations cannot be edited. To modify this calculation, duplicate it then edit the resulting copy.')
+            lang = get_lang(self)
+            show_alert(self, get_text(l.DIALOG_ALERT_TTL, lang), get_text(l.CLC_RES_ALT, lang))
             return
         self.go_to_mode(g.WIN_MODE_EDIT, calc_id)
 
@@ -238,7 +243,8 @@ class WindowCalculate(QMainWindow):
         continue as requested."""
         
         if not self.saved:
-            resp = saveMessageBox().exec()
+            lang = get_lang(self)
+            resp = saveMessageBox(lang).exec()
             if resp == QMessageBox.StandardButton.Save:         # if the user selects save
                 self.on_save_mode = mode_new                    # tell saver what to do
                 self.on_save_calc = calc_id                     # after save
@@ -271,13 +277,14 @@ class WindowCalculate(QMainWindow):
 
     def get_left_layout(self):
         # header bar
-        txt = 'New calculation'
+        lang = get_lang(self)
+        txt = get_text(l.CLC_LFT_TTL, lang)
         if self.mode in (g.WIN_MODE_EDIT, g.WIN_MODE_VIEW_ONLY):
             txt = self.calc_id
             calc = self.get_calc_from_id(self.calc_id)
             if calc[g.C_ARCHIVED]:
                 self.archived = True
-                txt = '[ARCHIVED] '+txt
+                txt = get_text(l.CLC_LFT_ARC, lang)+' '+txt
         title = QLabel(txt)
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         title.setObjectName('left-title')
@@ -294,37 +301,41 @@ class WindowCalculate(QMainWindow):
         h0.addWidget(but_close)
         
         # far left column
-        samp_lbl = QLabel("Sample")
+        # sample
+        samp_lbl = QLabel(get_text(l.CLC_LFT_SMP, lang))
         self.sample = QComboBox()
-        self.sample.setPlaceholderText('Select')
+        self.sample.setPlaceholderText(get_text(l.CLC_LFT_SLT, lang))
         for i, sample in enumerate(self.parent.data[g.S_SAMPLES]):
             self.sample.addItem(sample[g.SA_NAME], userData=sample)
         self.sample.currentIndexChanged.connect(self.sample_changed)
         
-        type_lbl = QLabel("Calculation type")
+        # calc type
+        type_lbl = QLabel(get_text(l.CLC_LFT_TYP, lang))
         self.type = QComboBox()
-        self.type.setPlaceholderText('Select')
-        calc_types = ('Peak height / baseline', 'Peak height', 'Left slope', 'Right slope', 'Mean slope', 'Enclosed area')
-        for i, calc_type in enumerate(calc_types):
-            self.type.addItem(calc_type, userData=g.C_TYPES[i])
+        self.type.setPlaceholderText(get_text(l.CLC_LFT_SLT, lang))
+        for key in l.CLC_LFT_TPS.keys():
+            self.type.addItem(get_text(l.CLC_LFT_TPS[key], lang), userData=key)
         self.type.currentIndexChanged.connect(self.type_changed)
 
-        reg_type_lbl = QLabel("Fit regression to")
+        # Fit points to:
+        reg_type_lbl = QLabel(get_text(l.CLC_LFT_REG_TYP, lang))
         self.reg_type = QComboBox()
-        reg_types = ('All points', 'Means')
-        for i, reg_type in enumerate(reg_types):
-            self.reg_type.addItem(reg_type, userData=g.C_REG_TYPES[i])
+        for key in l.CLC_LFT_REG_TPS:
+            self.reg_type.addItem(get_text(l.CLC_LFT_REG_TPS[key], lang), userData=key)
         self.reg_type.currentIndexChanged.connect(self.reg_type_changed)
         
-        notes_lbl = QLabel("Notes")
+        # Notes
+        notes_lbl = QLabel(get_text(l.CLC_LFT_NOT, lang))
         self.notes = QTextEdit()
         self.notes.textChanged.connect(self.something_has_been_updated)
 
-        but_graph = QPushButton('Graph selected')
+        # Graph selected button
+        but_graph = QPushButton(get_text(l.CLC_LFT_GRH, lang))
         but_graph.clicked.connect(self.graph_selected)
 
+        # View results
         self.results_stack = QStackedLayout()
-        w1 = QPushButton('Show results')
+        w1 = QPushButton(get_text(l.CLC_LFT_RES, lang))
         w1.clicked.connect(self.get_and_show_results)
         self.results = QTextEdit()
         self.results.setReadOnly(True)
@@ -333,7 +344,7 @@ class WindowCalculate(QMainWindow):
 
         v0 = QVBoxLayout()
         v0.addWidget(samp_lbl)
-        v0.addWidget(self.sample)	
+        v0.addWidget(self.sample)
         v0.addWidget(type_lbl)
         v0.addWidget(self.type)
         v0.addWidget(reg_type_lbl)
@@ -345,8 +356,7 @@ class WindowCalculate(QMainWindow):
         v0.addLayout(self.results_stack)
 
         # center column        
-        self.graph = StdAddFitterPlot(self)#, 'Best-fit calculator') 
-
+        self.graph = StdAddFitterPlot(self, self.settings)
         
         h1 = QHBoxLayout()                            # row of selectors
         try:
@@ -356,14 +366,11 @@ class WindowCalculate(QMainWindow):
         h1.addLayout(l0)
         for i, point in enumerate(self.points):
             if i>0:
-                l = self.get_stdadd_selector_layout(i)
-                h1.addLayout(l)
+                l_sa = self.get_stdadd_selector_layout(i)
+                h1.addLayout(l_sa)
 
         w2 = QWidget()
         w2.setLayout(h1)
-
-        '''but_add_point = QPushButton('+')
-        h1.addWidget(but_add_point)'''
 
         qs = QSplitter()
         qs.setChildrenCollapsible(False)
@@ -376,9 +383,9 @@ class WindowCalculate(QMainWindow):
         h2.addWidget(QVLine())
         h2.addWidget(qs)
 
-        but_save = QPushButton('save')
-        but_edit = QPushButton('edit')
-        archived_txt = QLabel('Archived calculations cannot be edited. To modify this calculation, duplicate it then edit the resulting copy.')
+        but_save = QPushButton(get_text(l.SAVE, lang))
+        but_edit = QPushButton(get_text(l.EDIT, lang))
+        archived_txt = QLabel(get_text(l.CLC_RES_ALT, lang))
         
         but_save.clicked.connect(self.save)
         but_edit.clicked.connect(partial(self.go_to_mode, g.WIN_MODE_EDIT, self.calc_id))
@@ -390,7 +397,7 @@ class WindowCalculate(QMainWindow):
 
         if self.mode == g.WIN_MODE_VIEW_ONLY:
             calc = self.get_calc_from_id(self.calc_id)              # grab calc data
-            #self.sample_id = calc[g.C_SAMPLE_ID]                    # save sample id global 
+            self.sample_id = calc[g.C_SAMPLE_ID]                    # save sample id global 
             if calc[g.C_ARCHIVED]:
                 v2.addWidget(archived_txt)
             else:
@@ -404,21 +411,21 @@ class WindowCalculate(QMainWindow):
             self.reg_type.setEnabled(False)
             self.notes.setEnabled(False)
             self.graph.set_view_only()
-        '''# Set sample
-        self.set_sample_id()'''
 
         self.update_reg_type_on_graph()     # make sure graph has correct starting regression type 
             
         return v2
 
     def get_run_tree_widget(self, with_method=False):
+        lang = get_lang(self)
         tree = QTreeWidget()
+        l_run, l_method, l_note = get_text(l.CLC_CTR_RUN, lang), get_text(l.CLC_CTR_MTH, lang), get_text(l.CLC_CTR_NTE, lang) 
         if with_method:
             tree.setColumnCount(2)
-            tree.setHeaderLabels(('Run', 'Method', 'Note'))
+            tree.setHeaderLabels((l_run, l_method, l_note))
         else:
             tree.setColumnCount(1)
-            tree.setHeaderLabels(('Run','Note'))
+            tree.setHeaderLabels((l_run, l_note))
         tree.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
         tree.setAlternatingRowColors(True)
         self.set_widget_border(tree, self.border_width_active, self.border_color_todo)
@@ -433,7 +440,8 @@ class WindowCalculate(QMainWindow):
         
 
     def get_sample_selector_layout(self):
-        title_str = 'Sample'
+        lang = get_lang(self)
+        title_str = get_text(l.CLC_CTR_SMP, lang)
         t1 = QLabel(title_str)
         t2 = QLabel(title_str)
         t1.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -475,7 +483,8 @@ class WindowCalculate(QMainWindow):
         return self.sample_stack
     
     def get_stdadd_selector_layout(self, i):
-        title_str = 'Standard addition '+str(i)
+        lang = get_lang(self)
+        title_str = get_text(l.CLC_CTR_STA, lang)+' '+str(i)
         t1 = QLabel(title_str)
         t2 = QLabel(title_str)
         t3 = QLabel(title_str)
@@ -485,8 +494,8 @@ class WindowCalculate(QMainWindow):
         t3.setAlignment(Qt.AlignmentFlag.AlignCenter)
         t4.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        if i == 1: msg = "Please select at least one <b>sample</b> run  <-----"
-        else: msg = "Please select at least one run for <b>standard addition "+str(i-1)+'</b>   \n\n<-----'
+        if i == 1: msg = get_text(l.CLC_CTR_MSG_SA1, lang)
+        else: msg = get_text(l.CLC_CTR_MSG_SA2, lang)+str(i-1)+'</b>'
         
         s = QStackedLayout()
         box1 = QTextEdit(msg)
@@ -515,7 +524,7 @@ class WindowCalculate(QMainWindow):
         w3 = QWidget()
         w3.setLayout(v3)
 
-        box4 = QTextEdit('There are no available standard additions with the selected method')
+        box4 = QTextEdit(get_text(l.CLC_CTR_MSG_ERR, lang))
         box4.setEnabled(False)
         self.set_widget_border(box4, self.border_width_active, self.border_color_error)
         v4 = QVBoxLayout()
@@ -589,16 +598,17 @@ class WindowCalculate(QMainWindow):
     def set_layout(self):
         self.reset_globals()            # Reset the globals
 
-        l = self.get_full_layout()      # Get the layout
+        lay = self.get_full_layout()    # Get the layout
         w = QWidget()
-        w.setLayout(l)
+        w.setLayout(lay)
         self.setCentralWidget(w)        # Set it! 
 
         # Set the window title
-        txt = 'Results'
-        if self.mode == g.WIN_MODE_NEW: txt = 'New calculation'
-        elif self.mode == g.WIN_MODE_EDIT: txt = 'Edit calculation'
-        elif self.mode == g.WIN_MODE_VIEW_ONLY: txt = 'View calculation'
+        lang = get_lang(self)
+        txt = get_text(l.CLC_HEAD_RES, lang)
+        if self.mode == g.WIN_MODE_NEW: txt = get_text(l.CLC_HEAD_NEW, lang)
+        elif self.mode == g.WIN_MODE_EDIT: txt = get_text(l.CLC_HEAD_EDT, lang)
+        elif self.mode == g.WIN_MODE_VIEW_ONLY: txt = get_text(l.CLC_HEAD_VIE, lang)
         self.setWindowTitle(self.parent.data[g.S_NAME]+' | '+txt)
 
         # Adjust window size and position now that its been reset
@@ -631,8 +641,8 @@ class WindowCalculate(QMainWindow):
             return
                                                                     # If opening a saved calc
         calc = self.get_calc_from_id(self.calc_id)                  # get calc data
-        type_index = g.C_TYPES.index(calc[g.C_TYPE])
-        reg_type_index = g.C_REG_TYPES.index(calc[g.C_REG_TYPE])
+        type_index = list(l.CLC_LFT_TPS.keys()).index(calc[g.C_TYPE])
+        reg_type_index = list(l.CLC_LFT_REG_TPS.keys()).index(calc[g.C_REG_TYPE])
         txt = calc[g.C_NOTE]
         self.type.setCurrentIndex(type_index)
         self.reg_type.setCurrentIndex(reg_type_index)
@@ -722,7 +732,8 @@ class WindowCalculate(QMainWindow):
             tasks.append(data[g.R_UID_SELF])
 
         if self.mode==g.WIN_MODE_EDIT and self.calc_id in tasks:    # Do not delete if currently edited calc is selected
-            show_alert(self, "Alert!", "Cannot delete the calculation that is currently being edited ("+str(self.calc_id)+").\nPlease make a different selection and try again.")
+            lang = get_lang(self)
+            show_alert(self,  get_text(l.DIALOG_ALERT_TTL, lang), get_text(l.CLC_ALERT_1a, lang)+str(self.calc_id)+get_text(l.CLC_ALERT_1b, lang))
             return
             
         if self.confirm_delete():                                   # Confirm delete w user
@@ -731,6 +742,14 @@ class WindowCalculate(QMainWindow):
 
         
     def confirm_delete(self):
+        ################################################################
+        #
+        #
+        #   HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE 
+        #
+        #
+        #
+        #
         title = 'Confirm delete'
         text = 'This will permanently delete all selected calculations.\n\nIf you are sure you want to delete, type DELETE below.'
         text, ok = QInputDialog.getText(self, title, text)
@@ -740,8 +759,9 @@ class WindowCalculate(QMainWindow):
         return False
 
     def async_success(self):
+        lang = get_lang(self)
         self.progress_bar.setVisible(False)
-        self.status.showMessage("Complete", g.SB_DURATION)
+        self.status.showMessage(get_text(l.SB_GNRL_GOOD, lang), g.SB_DURATION)
         
         
 
@@ -1146,15 +1166,11 @@ class WindowCalculate(QMainWindow):
         self.saved = False
 
     def get_and_show_results(self):
+        lang = get_lang(self)
         try:
-
             r = self.graph.get_results()
-            
-
-
-
             if not r:
-                txt = 'None'
+                txt = get_text(l.CLC_RES_NONE, lang)
             else:
                 # Append run settings from method to dict
                 if self.archived:
@@ -1168,17 +1184,19 @@ class WindowCalculate(QMainWindow):
 
                 for key in (g.M_UNIT, g.M_CONF, g.M_DETECTION_LIMIT):
                     r[key] = calc_method_settings_holder[key]
+                
                 # Get result text to display (as html)
-
                 txt = self.get_result_header(r)
                 results = self.format_result_as_string(r)
+                l_model, l_r2, l_stde = get_text(l.CLC_RES_MODL, lang), get_text(l.CLC_RES_R2, lang), get_text(l.CLC_RES_STDE, lang)
+                
                 for res in results:
                     txt = txt + res + '<br>'
 
                 txt = txt + '------------<br><br>'
-                txt = txt + 'Model: y = '+str(r[g.C_SLOPE])+' * x + '+str(r[g.C_INT])+'<br><br>'
-                txt = txt + 'R^2: '+str(round(float(r[g.C_R2]), 4))+'<br>'
-                txt = txt + 'Standard error: '+str(round(float(r[g.C_STDERR]), 4))
+                txt = txt + l_model +': y = '+str(r[g.C_SLOPE])+' * x + '+str(r[g.C_INT])+'<br><br>'
+                txt = txt + l_r2 + ': '+str(round(float(r[g.C_R2]), 4))+'<br>'
+                txt = txt + l_stde + ': '+str(round(float(r[g.C_STDERR]), 4))
             self.results.setText(txt)
             self.results_stack.setCurrentIndex(1)
             
@@ -1188,14 +1206,14 @@ class WindowCalculate(QMainWindow):
             print(e)
 
     def get_result_header(self, r):
-        '''run_id = r[g.C_POINTS][0][0][g.C_RUN_ID]
-        run = get_run_from_file_data(self.parent.data, run_id)
-        method = get_method_from_file_data(self.parent.data, run[g.R_UID_METHOD])'''
+        lang = get_lang(self)
+        title = get_text(l.CLC_RES_TITL, lang)
         conf_i = g.M_CONFS_DATA.index(r[g.M_CONF])
         conf = g.M_CONFS[conf_i]
-        return "<b>Result</b> (" + conf + "):<br>"
+        return "<b>"+title+"</b> (" + conf + "):<br>"
 
     def format_result_as_string(self, r):
+        lang = get_lang(self)
         conf_i = g.M_CONFS_DATA.index(r[g.M_CONF])
         conf = g.M_CONFS[conf_i]
         unit = r[g.M_UNIT]
@@ -1215,16 +1233,16 @@ class WindowCalculate(QMainWindow):
             if val > dl and not margin_includes_zero:   # return the result!
                 return [res]
             elif 0 > val and not margin_includes_zero:    # return an ERROR msg here, we're getting a confidently negative result.
-                return ['ERROR',  'Results are negative, please check the way the calculation is set up', paren_res]
+                return [get_text(l.CLC_RES_ERR, lang), get_text(l.CLC_RES_NEG, lang), paren_res]
             elif margin_includes_zero and margin > dl:  # display WARNING here, encourage user to add more points or std adds
-                return ['INSUFFICIENT DATA', 'The data range is quite broad. Try adding additional replicates or standard additions to reduce variance', paren_res]
+                return [get_text(l.CLC_RES_ISF, lang), get_text(l.CLC_RES_VAR, lang), paren_res]
             else:                                       # display NO DETECT here
-                return ['NO DETECT', paren_res]
+                return [get_text(l.CLC_RES_NDT, lang), paren_res]
         else:
             if 0 > val and not margin_includes_zero:
-                return ['ERROR',  'Results are negative, please check the way the calculation is set up', paren_res]
+                return [get_text(l.CLC_RES_ERR, lang), get_text(l.CLC_RES_NEG, lang), paren_res]
             else:
-                return ['WARNING', 'No detection limit set in method...examine the margin of error closely before using.', paren_res]
+                return [get_text(l.CLC_RES_WRN, lang), get_text(l.CLC_RES_NDL, lang), paren_res]
                 
         
     def get_result_sig_figs(self, val, margin, unit):
@@ -1279,8 +1297,9 @@ class WindowCalculate(QMainWindow):
 
 
     def save(self):
+        lang = get_lang(self)
         if self.saved:
-            self.status.showMessage("Saved.", g.SB_DURATION)
+            self.status.showMessage(get_text(l.SB_SAVE_GOOD, lang), g.SB_DURATION)
             return
         r = self.get_and_show_results()
         if r:                               # make sure there are some results
@@ -1309,12 +1328,12 @@ class WindowCalculate(QMainWindow):
         else:                               # if no results, show alert
             self.on_save_mode = None
             self.on_save_calc = None
-            show_alert(self, "Alert!", "Please complete the analysis and try again.")
+            show_alert(self,  get_text(l.DIALOG_ALERT_TTL, lang), get_text(l.CLC_ALERT_2, lang))
 
     def save_success(self):
         self.saved = True
         self.progress_bar.setVisible(False)
-        self.status.showMessage("Saved.", g.SB_DURATION)
+        self.status.showMessage(get_text(l.SB_SAVE_GOOD, lang), g.SB_DURATION)
         if self.on_save_mode:
             if self.on_save_mode == g.WIN_MODE_CLOSED:
                 self.close()
@@ -1322,14 +1341,20 @@ class WindowCalculate(QMainWindow):
                 self.go_to_mode(self.on_save_mode, self.on_save_calc)
 
     def async_error(self):
+        lang = get_lang(self)
         self.progress_bar.setVisible(False)
-        self.status.showMessage("ERROR, operation did not complete", g.SB_DURATION_ERROR)
+        self.status.showMessage(get_text(l.SB_GNRL_EROR, lang), g.SB_DURATION_ERROR)
         
     def update_win(self):
         """Designed to be called when parent's data has been reloaded.
         Updates this window with new data as needed"""
         self.update_calc_list()
         return
+        
+    def set_text(self, lang):
+        print('setting text on CALCULATE window in '+lang)
+        self.settings = self.parent.parent.settings
+        self.set_layout()
         
     def event(self, event):                                 # General purpose event handler
         if event.type() == QEvent.Type.ActivationChange:    # Check if the event is changing the activation status of the window
