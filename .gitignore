@@ -60,3 +60,5 @@ env.bak/
 venv.bak/
 .venvdeb
 venvdeb/
+# Windows build output (build it with processes/process.spec, see docs/building-windows.md)
+external/process.exe
