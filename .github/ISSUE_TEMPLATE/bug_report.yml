@@ -1,0 +1,90 @@
+name: Bug report
+description: Something in OpenVoltam doesn't work as expected
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! English or Spanish are both fine.
+        Please check the [existing issues](https://github.com/ask53/openVoltam/issues) first, in case it has already been reported.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect to happen, and what happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Exactly what you did, in order, starting from opening OpenVoltam.
+      placeholder: |
+        1. Open OpenVoltam
+        2. Click "Open session" and choose my_session.ovs
+        3. Click Run → New run
+        4. ...
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: OpenVoltam version
+      description: Shown on the welcome screen. If you run from source, give the branch and commit (`git log -1 --oneline`).
+      placeholder: "0.2"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: run-method
+    attributes:
+      label: How do you run OpenVoltam?
+      options:
+        - Windows installer
+        - From source (Python)
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "Windows 11, Ubuntu 24.04, macOS 15, ..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device
+      options:
+        - No device connected
+        - RodeoStat
+        - RodeoStat HC
+        - Other (describe below)
+    validations:
+      required: true
+
+  - type: input
+    id: python
+    attributes:
+      label: Python and potentiostat library versions (if running from source)
+      description: Output of `python --version` and `pip show iorodeo-potentiostat`.
+      placeholder: "Python 3.12.4, potentiostat 0.0.9 (develop branch)"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error messages
+      description: If you run from source, paste the full output from the terminal, especially anything starting with `Traceback`.
+      render: text
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots, files, or anything else
+      description: Drag in screenshots, or a zipped `.ovs` / `.ovm` file if it helps reproduce the bug (only if it contains nothing private).
