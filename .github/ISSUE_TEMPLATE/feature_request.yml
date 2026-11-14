@@ -1,0 +1,39 @@
+name: Feature request
+description: Suggest an idea or improvement for OpenVoltam
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea! English or Spanish are both fine.
+        For big changes, please discuss here before writing code.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe what you're trying to do in the lab and what makes it hard today.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would you like to happen?
+      description: Your idea for a solution. Sketches or screenshots are welcome.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or workarounds
+      description: Anything you've tried or considered instead.
+
+  - type: dropdown
+    id: contribute
+    attributes:
+      label: Would you like to work on this?
+      options:
+        - "No, just suggesting it"
+        - "Yes, I'd like to help build it"
+        - "Maybe, with some guidance"
