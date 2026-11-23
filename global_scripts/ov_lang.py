@@ -329,6 +329,11 @@ MAI_POP_EXP_TWRN = {'eng': 'Warning: some replicates failed to export',
                     'esp': 'Aviso: no logró exportar todas las mediciones'}
 MAI_POP_EXP_TERR = {'eng': 'ERROR on export',
                     'esp': 'FALLO en exportar'}
+                    
+# Main window popup: Replicate note
+MAI_POP_RNTE_TTL = {'eng': 'Replicate note | ',
+                    'esp': 'Nota sobre la repetición | '}
+                    
 
 
 #################################

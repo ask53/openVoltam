@@ -692,9 +692,6 @@ class WindowMain(QMainWindow):
         w.setWidget(w_in)
 
         return w
-
-    '''def sa_resize(self):
-        print('RESIZE DETECTED!')'''
  
     def do_nothing(self, w):
         """This is necessary so that each widget has a callback function if clicked.
@@ -1134,14 +1131,23 @@ class WindowMain(QMainWindow):
 
     def edit_rep_note(self):
         """Opens a dialog """
+        lang = get_lang(self)
         (run_id, rep_id) = self.get_single_selected_rep()
         rep = get_rep(self.data, (run_id, rep_id))
         note = rep[g.R_NOTES]
-
-        #if note:
-        title = "Replicate Note | "+run_id+': '+rep_id
+        
+        #########################################################
+        #
+        #   HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE 
+        #
+        #   Figure out how to setup a 3-letter code for run- and rep- IDs
+        #       that is multilingual. Perhaps something like get_run_disp_name(run_id, lang)
+        #       and get_rep_disp_name(rep_id, lang).
+        #
+        title = get_text(l.MAI_POP_RNTE_TTL, lang) +run_id+': '+rep_id
         input_text, ok = QInputDialog.getText(self, title, "", text=note)
-
+        #
+        #########################3##############3##############3##############3##############3##############3##############3##############3##############3##############3
         if ok:
             if rep[g.R_NOTES] != input_text:
                 rep[g.R_NOTES] = input_text
