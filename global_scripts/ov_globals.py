@@ -18,9 +18,6 @@ RELEASE = "2026-09-05"
 
 
            
-PROC_RUN_FROM_PYTHON = 'python'
-PROC_RUN_FROM_EXE = 'exe'
-
 ### UNCOMMENT ONLY ONE LINE BELOW THAT CORRESPONDS TO YOUR 
 #   SYSTEM'S PYTHON COMMAND:
 #
@@ -36,6 +33,10 @@ PROC_PYTHON_CMD = 'py'         # Often: Windows 11
 #
 #
 ###############################################
+
+
+PROC_RUN_FROM_PYTHON = 'python'
+PROC_RUN_FROM_EXE = 'exe'
 
 ### TOGGLE THESE TO RUN ASYNC PROCESSES AS PYTHON OR
 #   EXE SCRIPTS
@@ -75,7 +76,8 @@ UNIT_CONV_CONC = {'g/L': 1000,      # multiply by these to convert this unit to 
 UNIT_CONV_VOL = {'L': 1,
                  'mL': 0.001,
                  'uL': 0.000001}
-            
+                 
+# Significant figures (use when rounding/truncating)       
 SF_mA = 6
 SF_V = 3
 
@@ -139,7 +141,6 @@ M_LP_ORDER = 'lowpass-order'
 M_LP_FREQ = 'lowpass-freq'
 M_CONFS = ('66.7%', '95%', '99%', '99.9%')
 M_CONFS_DATA = (0.667, 0.95, 0.99, 0.999)
-
 
 
 # Keys for run (R) dictionary
@@ -300,12 +301,6 @@ M_SAMPLE_FREQ_MIN = 0.01
 M_SAMPLE_FREQ_MAX = 1000         # 86,400,000 miliseconds in a day
 M_RELAY_MAX = 6
 
-# Language globals 
-
-'''ENG = 0
-ESP = 1'''
-
-
 HEADER_DIVIDER = ' | '
 CUSTOM_NAME_FLAG = 'ov_'
 
@@ -337,7 +332,6 @@ MM2IN = 1. / 25.4   # milimeters to inches
 S2MS = 1000         # seconds to miliseconds
 
 # Globals changed by program
-#L = ENG  				# default lang, changed by program
 BASEDIR = ''			# stores base directory for application executable file
 HOME = False			# will hold the object of the homescreen at any given time
 STYLES = False                  # will hold all the QSS for updating

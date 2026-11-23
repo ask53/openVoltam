@@ -516,7 +516,7 @@ class WindowMain(QMainWindow):
         """Takes in a sample object, s, returns html string of description"""
         
         d = ''
-        lang = self.settings[g.SET_LANG]
+        lang = get_lang(self)
         
         if s[g.SA_DATE_COLLECTED] and s[g.SA_DATE_COLLECTED] != g.QT_DEFAULT_DATE:
             d = d + '<b>'+get_text(l.MAI_TAB_DATE, lang)+'</b>: '+s[g.SA_DATE_COLLECTED] + '<br>'
@@ -600,7 +600,7 @@ class WindowMain(QMainWindow):
         grid.setVerticalSpacing(0)
         
         # create column headers and add them to the grid layout
-        lang = self.settings[g.SET_LANG]
+        lang = get_lang(self)
         
         headers = ['',
                   get_text(l.MAI_TAB_COL_REPL, lang), 
@@ -1239,22 +1239,24 @@ class WindowMain(QMainWindow):
 
    
     def confirm_delete_reps(self):
-        title = 'Confirm delete'
-        text = 'This will permanently delete all configurations and data associated with the selected runs or replicates.\n\nIf you are sure you want to delete, type DELETE below.'
-        text, ok = QInputDialog.getText(self, title, text)
+        lang = get_lang(self)
+        title = get_text(l.DIALOG_DEL_TTL, lang)
+        msg = get_text(l.DIALOG_DEL_MAI_REP_MSG, lang)
+        text, ok = QInputDialog.getText(self, title, msg)
 
         if ok:
-            if text == 'DELETE':
+            if text == get_text(l.DIALOG_DEL_KEY, lang):
                 return True
         return False
 
     def confirm_delete_sample(self, sample_name):
-        title = 'Confirm delete: '+sample_name
-        text = 'This will permanently delete all runs, reps, analysis, calculations, and results associated with sample '+sample_name+'.\n\nIf you are sure you want to delete, type DELETE below.'
-        text, ok = QInputDialog.getText(self, title, text)
+        lang = get_lang(self)
+        title = get_text(l.DIALOG_DEL_MAI_TTL, lang)+sample_name
+        msg = get_text(l.DIALOG_DEL_MAI_MSG, lang) + sample_name + get_text(l.DIALOG_DEL_MAI_MSG_END, lang)
+        text, ok = QInputDialog.getText(self, title, msg)
 
         if ok:
-            if text == 'DELETE':
+            if text == get_text(l.DIALOG_DEL_KEY, lang):
                 return True
         return False
         
@@ -1275,7 +1277,7 @@ class WindowMain(QMainWindow):
     #                                           #
     #   Functions for opening new windows       #
     #                                           #
-    #   1. edit_session_name                       #
+    #   1. edit_session_name                    #
     #   2. new_win_config_run                   #
     #   3. new_win_view_run                     #
     #   4. new_win_method_by_id                 #
@@ -1283,9 +1285,6 @@ class WindowMain(QMainWindow):
     #   6. new_win_results_view                 #
     #   7. new_win_analysis                     #
     #   8. new_win_calculator                   #
-    #
-    #
-    #
     #   9. new_win_one_of_type                  #
     #   10. new_win_one_with_value              #
     #   11. update_children                     #
@@ -1406,7 +1405,7 @@ class WindowMain(QMainWindow):
     def start_async_export(self, reps, destPath):
         if self.process:
             return
-        lang = self.settings[g.SET_LANG]
+        lang = get_lang(self)
         self.export_success = []
         self.export_fail = []
         self.export_error_msg = ''
@@ -1449,7 +1448,7 @@ class WindowMain(QMainWindow):
                     print(err)                      
 
     def handle_finished_export(self):
-        lang = self.settings[g.SET_LANG]
+        lang = get_lang(self)
         if not self.export_fail and not self.export_error_msg:     # complete success!   
             self.status.showMessage(get_text(l.SB_EXPORT_GOOD, lang), g.SB_DURATION)
         elif not self.export_error_msg:                            # some reps w no data didn't export
@@ -1463,7 +1462,7 @@ class WindowMain(QMainWindow):
         self.process = None
 
     def show_export_results_dialog(self, yes, no, error=False):
-        lang = self.settings[g.SET_LANG]
+        lang = get_lang(self)
         title = get_text(l.MAI_POP_EXP_TITL, lang)
         msg = get_text(l.MAI_POP_EXP_TITL, lang)+".\n"
         if error:
@@ -1502,7 +1501,7 @@ class WindowMain(QMainWindow):
     def start_async_read(self):
         if self.process:
             return
-        lang = self.settings[g.SET_LANG]    
+        lang = get_lang(self)    
         self.process = QProcess()
         self.process.readyReadStandardOutput.connect(self.handle_read_stdout)
         self.process.readyReadStandardError.connect(self.handle_read_stderr)
@@ -1534,7 +1533,7 @@ class WindowMain(QMainWindow):
         self.read_error_flag = True
 
     def handle_finished_read(self):
-        lang = self.settings[g.SET_LANG]
+        lang = get_lang(self)
         if self.read_error_flag:
             self.status.showMessage(get_text(l.SB_LOAD_ERRR, lang), g.SB_DURATION)
         else:
@@ -1562,7 +1561,7 @@ class WindowMain(QMainWindow):
     def start_async_save(self, saveType, params, onSuccess=False, onError=False):
         if self.process:        # if there is alreayd a process running
             return              # don't start another one! 
-        lang = self.settings[g.SET_LANG]
+        lang = get_lang(self)
         self.process = QProcess()
         self.process.readyReadStandardOutput.connect(self.handle_save_stdout)
         self.process.readyReadStandardError.connect(self.handle_save_stderr)
@@ -1596,7 +1595,7 @@ class WindowMain(QMainWindow):
         self.save_error_flag = True
 
     def handle_finished_save(self, onSuccess, onError):
-        lang = self.settings[g.SET_LANG]
+        lang = get_lang(self)
         try:
             self.progress_bar.setVisible(False)                                             # Rehide the progress bar
             self.process = None                                                             # Wipe the process from memory
@@ -1733,7 +1732,7 @@ class WindowMain(QMainWindow):
             
         else:
             if self.children:                       # if there are child windows open, confirm user wants all windows to close
-                lang = self.settings[g.SET_LANG]
+                lang = get_lang(self)
                 
                 msg_box = QMessageBox()    
                 msg_box.setWindowTitle(get_text(l.MAI_POP_CLO_TIT, lang)) 

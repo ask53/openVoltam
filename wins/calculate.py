@@ -470,7 +470,7 @@ class WindowCalculate(QMainWindow):
         w2.setLayout(v2)
     
         self.sample_stack = QStackedLayout()
-        self.sample_stack.addWidget(QWidget()) # Placeholder widget          
+        self.sample_stack.addWidget(QWidget()) # Placeholder widget
         self.sample_stack.addWidget(w1)
         self.sample_stack.addWidget(w2)
 
@@ -495,7 +495,7 @@ class WindowCalculate(QMainWindow):
         t4.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         if i == 1: msg = get_text(l.CLC_CTR_MSG_SA1, lang)
-        else: msg = get_text(l.CLC_CTR_MSG_SA2, lang)+str(i-1)+'</b>'
+        else: msg = get_text(l.CLC_CTR_MSG_SA2, lang)+str(i-1)+get_text(l.CLC_CTR_MSG_SA_END, lang)
         
         s = QStackedLayout()
         box1 = QTextEdit(msg)
@@ -631,7 +631,6 @@ class WindowCalculate(QMainWindow):
             self.to_preset = False      # Once we have finished presetting, we are no longer presetting
             self.suggestion = None      # Once we have finished suggesting, we are no longer suggesting
             self.saved = True           # Right when we have finished presetting and suggesting, we have nothing to save
-            #self.updating_runs = False  # And we are no longer updating runs
         except Exception as e:
             print('here i am being an error!')
             print(e)
@@ -701,6 +700,7 @@ class WindowCalculate(QMainWindow):
                     
     def duplicate(self):
         """Duplicates all selected calculations"""
+        lang = get_lang(self)
         items = self.calc_list.selectedItems()
         data = []
         
@@ -711,7 +711,9 @@ class WindowCalculate(QMainWindow):
         ids = get_ids(self.parent.data, g.S_PROCESSED)
         for datum in data:  
             note = datum[g.C_NOTE]                          # Add [COPY OF calc-id] to new calc's note
-            lbl = '[COPY OF '+str(datum[g.R_UID_SELF])+']'
+            s_id = datum[g.C_SAMPLE_ID]
+            s_name = get_sample_from_file_data(self.parent.data, s_id)[g.SA_NAME]
+            lbl = get_text(l.CLC_RGT_CPY, lang)+s_name+get_text(l.CLC_RGT_CPY_END, lang)
             if note: datum[g.C_NOTE] =  lbl+' '+note
             else: datum[g.C_NOTE] = lbl
             datum[g.C_ARCHIVED] = False                     # Whether or not original was archived, new one will not be, even if incomplete.
@@ -742,19 +744,12 @@ class WindowCalculate(QMainWindow):
 
         
     def confirm_delete(self):
-        ################################################################
-        #
-        #
-        #   HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE 
-        #
-        #
-        #
-        #
-        title = 'Confirm delete'
-        text = 'This will permanently delete all selected calculations.\n\nIf you are sure you want to delete, type DELETE below.'
-        text, ok = QInputDialog.getText(self, title, text)
+        lang = get_lang(self)
+        title = get_text(l.DIALOG_DEL_TTL, lang)
+        msg = get_text(l.DIALOG_DEL_CLC_MSG, lang)
+        text, ok = QInputDialog.getText(self, title, msg)
         if ok:
-            if text == 'DELETE':
+            if text == get_text(l.DIALOG_DEL_KEY, lang):
                 return True
         return False
 
@@ -1095,6 +1090,7 @@ class WindowCalculate(QMainWindow):
             tree.takeTopLevelItem(i)
 
     def add_run_to_tree(self, tree, run, method=False):
+        lang = get_lang(self)
         analyzed = 0
         for rep in run[g.R_REPLICATES]:
             if rep[g.R_ANALYSIS]:
@@ -1113,11 +1109,10 @@ class WindowCalculate(QMainWindow):
         if analyzed == 0:
             runitem.setDisabled(True)
             for col in range(0, tree.columnCount()):
-                runitem.setToolTip(col, "Please analyze to proceed")
+                runitem.setToolTip(col, get_text(l.CLC_TTIP_GREY_REP, lang))
 
     def sample_changed(self):
         try:
-            print('sample has been changed!')
             self.something_has_been_updated()
             self.results_stack.setCurrentIndex(0)
             self.sample_id = self.sample.currentData()[g.R_UID_SELF]
@@ -1130,15 +1125,6 @@ class WindowCalculate(QMainWindow):
             except Exception as e:
                 print('the error is here!')
                 print(e)
-
-            
-            
-
-        #####################
-        #
-        #   UPDATE THE WHOLE WINDOW GIVEN THE SAMPLE HAS BEEN CHANGED HEREEEEEE
-        #
-        ##########################
         except Exception as e:
             print('error here!')
             print(e)
@@ -1155,13 +1141,10 @@ class WindowCalculate(QMainWindow):
         self.results_stack.setCurrentIndex(0)
         self.update_reg_type_on_graph()
 
-
     def update_reg_type_on_graph(self):
         reg_type = self.reg_type.currentData()
         self.graph.update_reg_type(reg_type)
         
-        
-
     def something_has_been_updated(self):
         self.saved = False
 

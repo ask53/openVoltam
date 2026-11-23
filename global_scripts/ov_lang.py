@@ -118,6 +118,24 @@ DIALOG_DISC_BUT_DISC = {'eng': 'Close without saving',
 DIALOG_DISC_BUT_CNCL = {'eng': 'Canceñ',
                         'esp': 'Cancelar'}
 
+# Popup dialog: Delete                        
+DIALOG_DEL_TTL = {'eng': 'Confirm delete',
+                      'esp': 'Confirmar borrar'}
+DIALOG_DEL_CLC_MSG = {'eng': 'This will permanently delete all selected calculations.\n\nIf you are sure you want to delete, type DELETE below.',
+                      'esp': 'Esto borrará todos los cálculos de manera permanente.\n\nPara confirmar, favor de teclear BORRAR aquí.'}
+DIALOG_DEL_MAI_TTL = {'eng': 'Confirm delete: ',
+                      'esp': 'Confirmar borrar: '}
+DIALOG_DEL_MAI_REP_MSG = {'eng': 'This will permanently delete all configurations and data associated with the selected runs or replicates.\n\nIf you are sure you want to delete, type DELETE below.',
+                          'esp': 'Esto borrará todos los datos vinculados con las mediciones o replicaciones seleccionadsas.\n\nPara confirmar, favor de teclear BORRAR aquí.'}
+DIALOG_DEL_MAI_MSG = {'eng': 'This will permanently delete all runs, reps, analysis, calculations, and results associated with sample ',
+                      'esp': 'Esto borrará todas lás mediciones, las repeticiones, los cálculos y los resultados de la muestra '}
+DIALOG_DEL_MAI_MSG_END = {'eng': '.\n\nIf you are sure, type DELETE below.',
+                          'esp': '.\n\nPara confirmarlo, teclear BORRAR aquí.'}
+
+DIALOG_DEL_KEY = {'eng': 'DELETE',  # List of delete key for each language
+                  'esp': 'BORRAR'}
+
+
 
 
 #################################
@@ -502,6 +520,10 @@ CLC_RGT_HLP = {'eng': '<i>Double-click a <b>result</b> to view.</i>',
 CLC_RGT_ARC = {'eng': '[ARCHIVED]',
                'esp': '[ARCHIVADO]'}
 CLC_RGT_NTE = MAI_TAB_NOTE
+CLC_RGT_CPY = {'eng': "[COPY of calculation for sample: '",
+               'esp': "[COPIA DE cálculo para la muestra: '"}
+CLC_RGT_CPY_END = {'eng': "']",
+                   'esp': "']"}
 
 # Description of actual result (for right pane, embed, and bottom-left results box)
 CLC_RES_ERR = {'eng': 'ERROR',
@@ -581,6 +603,8 @@ CLC_CTR_MSG_SA1 = {'eng': 'Please select at least one <b>sample</b> run.',
                    'esp': 'Favor de seleccionar al menos una medición de <b>muestra</b>.'}
 CLC_CTR_MSG_SA2 = {'eng': 'Please select at least one run for <b>standard addition ',
                    'esp': 'Favor de seleccionar al menos una medición para <b>concentrato agregado '} 
+CLC_CTR_MSG_SA_END = {'eng': '</b>.',
+                      'esp': '</b>.'} 
 CLC_CTR_MSG_ERR = {'eng': 'There are no available standard additions with the selected method',
                    'esp': 'No hay mediciones de concentrato agregado con el método seleccionado'}
 
@@ -591,7 +615,8 @@ CLC_ALERT_1b = {'eng': ').\nPlease make a different selection and try again.',
 CLC_ALERT_2 = {'eng': 'Please complete the analysis and try again.',
                'esp': 'Favor de completar el análisis e intentar de nuevo.'}
 
-
+CLC_TTIP_GREY_REP = {'eng': 'Analyze to proceed',
+                     'esp': 'Favor de analizar'}
 #################################
 #                               #
 #  Embed: Std. Add Fitter Plot  #
