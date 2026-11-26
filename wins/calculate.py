@@ -954,18 +954,20 @@ class WindowCalculate(QMainWindow):
                 self.points[i] = []
         
     def show_reps_from_runs(self, tree, point_index):
+        lang = get_lang(self)
         all_items = [tree.topLevelItem(x) for x in range(tree.topLevelItemCount())]
         for item in all_items:
             if item.isSelected() and item.childCount() == 0:        # If item is newly selected, show all children and select!
                 for rep in item.data(0, Qt.ItemDataRole.UserRole)[g.R_REPLICATES]:
                     subitem = QTreeWidgetItem(item)
                     subitem.setData(0, Qt.ItemDataRole.UserRole, rep)
-                    subitem.setText(0, rep[g.R_UID_SELF])
+                    rep_num = get_rep_num(rep[g.R_UID_SELF])
+                    subitem.setText(0, get_text(l.CLC_REP_ABRV, lang)+rep_num)
                     subitem.setText(2, rep[g.R_NOTES])
                     if not rep[g.R_ANALYSIS]:
                         subitem.setDisabled(True)
                         for col in range(0, tree.columnCount()):
-                            subitem.setToolTip(col, "Please analyze to proceed")
+                            subitem.setToolTip(col, get_text(l.CLC_TTIP_GREY_REP, lang))
                     else: subitem.setSelected(True)
                     self.set_widget_border(tree, self.border_width_active, self.border_color_good)
                 item.setExpanded(True)
@@ -1095,7 +1097,8 @@ class WindowCalculate(QMainWindow):
         for rep in run[g.R_REPLICATES]:
             if rep[g.R_ANALYSIS]:
                 analyzed = analyzed+1
-        name_lbl = run[g.R_UID_SELF] + ' (' + str(analyzed) + '/'+str(len(run[g.R_REPLICATES]))+')'
+        run_num = get_run_num(run[g.R_UID_SELF])
+        name_lbl = get_text(l.CLC_RUN_ABRV, lang)+run_num+' (' + str(analyzed) + '/'+str(len(run[g.R_REPLICATES]))+')'
         note_lbl = run[g.R_NOTES]
         runitem = QTreeWidgetItem(tree)
         runitem.setText(0, name_lbl)

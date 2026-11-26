@@ -1136,18 +1136,11 @@ class WindowMain(QMainWindow):
         rep = get_rep(self.data, (run_id, rep_id))
         note = rep[g.R_NOTES]
         
-        #########################################################
-        #
-        #   HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE 
-        #
-        #   Figure out how to setup a 3-letter code for run- and rep- IDs
-        #       that is multilingual. Perhaps something like get_run_disp_name(run_id, lang)
-        #       and get_rep_disp_name(rep_id, lang).
-        #
-        title = get_text(l.MAI_POP_RNTE_TTL, lang) +run_id+': '+rep_id
+        run_num = get_run_num(run_id)
+        rep_num = get_rep_num(rep_id)
+        title = get_text(l.MAI_POP_RNTE_TTL, lang)+get_text(l.MAI_TAB_RUN_ABRV, lang)+run_num+', '+get_text(l.MAI_TAB_REP_ABRV, lang)+rep_num
         input_text, ok = QInputDialog.getText(self, title, "", text=note)
-        #
-        #########################3##############3##############3##############3##############3##############3##############3##############3##############3##############3
+        
         if ok:
             if rep[g.R_NOTES] != input_text:
                 rep[g.R_NOTES] = input_text
@@ -1186,6 +1179,7 @@ class WindowMain(QMainWindow):
         self.new_win_results_view(reps)
 
     def anayze_data_selected_reps(self):
+        lang = get_lang(self)
         reps = self.get_all_selected_reps()
 
         # Check which reps actually have data
@@ -1195,15 +1189,18 @@ class WindowMain(QMainWindow):
             if not full_rep[g.R_DATA]:
                 reps.pop(i)
         if not reps:                        # If none of the selected reps have data, alert the user
-            show_alert(self, "Alert", "None of the selected runs have data, please collect some data and try again.")
+            title = get_text(l.DIALOG_ALERT_TTL, lang)
+            msg = get_text(l.MAI_POP_ANA_NAN, lang)
+            show_alert(self, title, msg)
         else:                               # IF at least one has data, analyze that data!
             self.new_win_analysis(reps)
 
     def export_selected_reps_as_csv(self):
+        lang = get_lang(self)
         reps = self.get_all_selected_reps()
         if not reps:
-            title = "Confirm export all"
-            msg = 'This will export the entire lab session to one CSV file. To export individual runs, select them before clicking "export".\n\nWould you like to continue with exporting all?'
+            title = get_text(l.DIALOG_CONFIRM, lang)
+            msg = get_text(l.MAI_POP_EXPORT_ALL, lang)
             confirm = QMessageBox()
             confirm.setWindowTitle(title)
             confirm.setText(msg)
@@ -1217,16 +1214,19 @@ class WindowMain(QMainWindow):
             self.start_async_export(reps, dest)
 
     def redo_run(self):
+        lang = get_lang(self)
         msg_box = QMessageBox()    
-        msg_box.setWindowTitle("Just checking...") 
-        msg_box.setText('This modifies a previous run.\nAll data and analysis for this run will be lost.\nAre you sure you want to rerun?\n\n(To create a *new run* with this run\'s configuration,  select "New run from config".)')
+        title = get_text(l.DIALOG_CONFIRM, lang)
+        msg = get_text(l.MAI_POP_RERUN, lang)
+        msg_box.setWindowTitle(title) 
+        msg_box.setText(msg)
         msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
 
         # customize button language text for multi-language support
         but_save = msg_box.button(QMessageBox.StandardButton.Ok)
-        but_save.setText('Rerun')
+        but_save.setText(get_text(l.MAI_POP_RERUN_YES, lang))
         but_canc = msg_box.button(QMessageBox.StandardButton.Cancel)
-        but_canc.setText('Cancel')
+        but_canc.setText(get_text(l.DIALOG_DISC_BUT_CNCL, lang))
 
         resp = msg_box.exec()
 
@@ -1299,20 +1299,25 @@ class WindowMain(QMainWindow):
 
     def edit_session_name(self, oldname):
         try:
-            title = 'Edit lab session name'
-            text = 'Lab session name:'
+            namer = QInputDialog()
+            lang = get_lang(self)
+            title = get_text(l.MAI_POP_EDIT_LSSH_TTL, lang)
+            text = get_text(l.MAI_POP_EDIT_LSSH, lang)
             oldname = self.data[g.S_NAME]
-            newname, ok = QInputDialog().getText(self, title, text, text=oldname)
+            
+            namer.setInputMode(QInputDialog.InputMode.TextInput)
+            namer.setWindowTitle(title)
+            namer.setLabelText(text)
+            namer.setTextValue(oldname)
+            namer.setCancelButtonText(get_text(l.DIALOG_DISC_BUT_CNCL, lang))
+            namer.setOkButtonText(get_text(l.DIALOG_OK, lang))
+            ok = namer.exec()
+            newname = namer.textValue()
+          
             if ok and newname != oldname:
                 self.start_async_save(g.SAVE_TYPE_EDIT_SESH_NAME, [newname])
         except Exception as e:
             print(e)
-            
-        
-
-
-        
-        #self.new_win_one_of_type(WindowSample(self, g.WIN_MODE_VIEW_ONLY))
 
     def new_win_config_run(self, mode, run_id=False, sample_id=False):
         self.new_win_one_of_type(WindowRunConfig(self, mode, run_id, sample_id))
@@ -1434,7 +1439,6 @@ class WindowMain(QMainWindow):
         for out in outs:
             print(out)
             if out:
-                
                 self.export_success.append(out)
         
 

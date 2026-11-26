@@ -115,7 +115,7 @@ DIALOG_DISC_MSG = {'eng': 'Close without saving?',
 DIALOG_DISC_BUT_SAVE = SAVE
 DIALOG_DISC_BUT_DISC = {'eng': 'Close without saving',
                         'esp': 'Cerrar sin guardar'}
-DIALOG_DISC_BUT_CNCL = {'eng': 'Canceñ',
+DIALOG_DISC_BUT_CNCL = {'eng': 'Cancel',
                         'esp': 'Cancelar'}
 
 # Popup dialog: Delete                        
@@ -134,6 +134,12 @@ DIALOG_DEL_MAI_MSG_END = {'eng': '.\n\nIf you are sure, type DELETE below.',
 
 DIALOG_DEL_KEY = {'eng': 'DELETE',  # List of delete key for each language
                   'esp': 'BORRAR'}
+                  
+# Popup dialog: General
+DIALOG_CONFIRM = {'eng': 'Confirm',
+                  'esp': 'Confirmar'}
+DIALOG_OK = {'eng': 'Ok',
+             'esp': 'Aceptar'}
 
 
 
@@ -300,6 +306,12 @@ RUN_TYPES = {
 # Main window within tab-view: rep rows
 MAI_TAB_REP_HEAD = {'eng': 'Rep.',
                     'esp': 'Rep.'}
+                    
+MAI_TAB_RUN_ABRV = {'eng': 'Run-',
+                    'esp': 'Med-'}
+MAI_TAB_REP_ABRV = {'eng': 'Rep-',
+                    'esp': 'Rep-'}
+
 MAI_TAB_REP_STAT = {
     g.R_STATUS_PENDING: {'eng': 'Pending',
                          'esp': 'Pendiente'},
@@ -334,8 +346,26 @@ MAI_POP_EXP_TERR = {'eng': 'ERROR on export',
 MAI_POP_RNTE_TTL = {'eng': 'Replicate note | ',
                     'esp': 'Nota sobre la repetición | '}
                     
+# Main window popup: None of the selected reps have data to analyze
+MAI_POP_ANA_NAN = {'eng': 'None of the selected runs have data, please collect some data and try again.',
+                   'esp': 'Ninguna de las repeticiones selecionadas contienen datos. Favor de recolectar datos e intentar de nuevo.'}
+                    
+# Main window popup: confirm export ALL
+MAI_POP_EXPORT_ALL = {'eng': 'This will export the entire lab session to one CSV file. To export individual runs, select them before clicking "export".\n\nWould you like to continue with exporting all?',
+                      'esp': 'Esto exportará la sesión completa a un archivo de CSV. Para exportar mediciones individuales, selecciónalas antes de hacer clíc en "exportar".\n\n¿Quiere seguir exportando la sessión completa?'}
 
-
+# Main window popup: Redo run confirmation
+MAI_POP_RERUN = {'eng': 'This modifies a previous run.\nAll data and analysis for this run will be lost.\nAre you sure you want to rerun?\n\n(To create a *new run* with this run\'s configuration,  select "New run from config".)',
+                 'esp': 'Esto modificará una medición anterior.\nSe perderán todos los datos y análisis.\nFavor de confirmar.\n\n(Para crear una *medición nueva* con una configuración igual a esta medición, selecciona "Medición nueva de anterior".)'}
+MAI_POP_RERUN_YES = {'eng': 'Rerun',
+                     'esp': 'Medir de nuevo'}
+                     
+# Main window popup: Edit lab session name
+MAI_POP_EDIT_LSSH_TTL = {'eng': 'Edit lab session name',
+                         'esp': 'Editar nombre de la sesión'}
+MAI_POP_EDIT_LSSH = {'eng': 'Lab session name:',
+                     'esp': 'Nombre de la sesión'}
+                     
 #################################
 #                               #           
 #       Window: SAMPLE          #
@@ -393,10 +423,8 @@ ANA_RLTS =  {'eng': 'Show results',
 ANA_CPLT =  {'eng': 'Complete',
              'esp': 'Hecho'}
        
-ANA_RUN_ABRV = {'eng': 'Run-',
-                'esp': 'Med-'}
-ANA_REP_ABRV = {'eng': 'Rep-',
-                'esp': 'Rep-'}
+ANA_RUN_ABRV = MAI_TAB_RUN_ABRV
+ANA_REP_ABRV = MAI_TAB_REP_ABRV
 
 ANA_BUT_NEXT = {'eng': 'Accept && next',
                 'esp': 'Aceptar y seguir'}
@@ -622,6 +650,9 @@ CLC_ALERT_2 = {'eng': 'Please complete the analysis and try again.',
 
 CLC_TTIP_GREY_REP = {'eng': 'Analyze to proceed',
                      'esp': 'Favor de analizar'}
+                     
+CLC_RUN_ABRV = MAI_TAB_RUN_ABRV
+CLC_REP_ABRV = MAI_TAB_REP_ABRV
 #################################
 #                               #
 #  Embed: Std. Add Fitter Plot  #
@@ -656,8 +687,8 @@ VGM_XLBL = {'eng': 'Voltage [V]',
             'esp': 'Voltaje [V]'}
 VGM_YLBL = {'eng': 'Current [uA]',
             'esp': 'Corriente [uA]'}
-VGM_RUN_ABRV = ANA_RUN_ABRV
-VGM_REP_ABRV = ANA_REP_ABRV
+VGM_RUN_ABRV = MAI_TAB_RUN_ABRV
+VGM_REP_ABRV = MAI_TAB_REP_ABRV
 
  
            

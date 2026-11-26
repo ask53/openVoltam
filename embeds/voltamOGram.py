@@ -98,11 +98,6 @@ class VoltamogramPlot(QMainWindow):
         self.setCentralWidget(widget)
         self.show()
 
-
-        '''def set_axis_labels(self):
-        self.canvas.axes.set_xlabel('Voltage [V]')
-        self.canvas.axes.set_ylabel('Current [uA]')'''
-
     def plot_rep(self, rep, subbackground=True, showsmoothed=False, showraw=True, predictpeak=False, color='black', linestyle='solid', lbl=''):
         if rep[g.R_DATA]:
             # 1. Convert rep signal and background data to 1D numpy arrays then resize
@@ -111,27 +106,12 @@ class VoltamogramPlot(QMainWindow):
             x = x.reshape(x.shape[0])
             y = np.array(pd.DataFrame(rep[g.R_DATA])[[g.R_DATA_CURR]].values)
             y = y.reshape(y.shape[0])
-            '''x = self.resize_data(x, g.VOG_RESIZE)
-            y = self.resize_data(y, g.VOG_RESIZE)'''
 
             if rep[g.R_BACKGROUND]:
                 x_back = np.array(pd.DataFrame(rep[g.R_BACKGROUND])[[g.R_DATA_VOLT]].values)
                 x_back = x_back.reshape(x_back.shape[0])
                 y_back = np.array(pd.DataFrame(rep[g.R_BACKGROUND])[[g.R_DATA_CURR]].values)
                 y_back = y_back.reshape(y_back.shape[0])
-
-                ###### DO NOT RESIZE EITHER SIGNAL OR BACKGROUND
-                #
-                '''
-                if x.size > x_back.size:
-                    x_back = self.resize_data(x_back, x.size)
-                    y_back = self.resize_data(y_back, x.size)
-                elif x.size < x_back.size:
-                    x = self.resize_data(x, x_back.size)
-                    y = self.resize_data(y, x_back.size)
-                '''
-                #
-                ##################################################
 
             else:
                 x_back, y_back = (np.zeros(0), np.zeros(0))
