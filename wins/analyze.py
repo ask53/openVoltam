@@ -60,7 +60,6 @@ class WindowAnalyze(QMainWindow):
         #Create pane in stack for each task
         for task in self.tasks:
 
-            #title = QLabel('<b>'+task[0]+'  |  '+task[1]+'</b>')
             title = QLabel('')
             title.setObjectName('analysis-title-txt')
             vgram = VoltamogramPlot(self, self.settings)
@@ -161,8 +160,7 @@ class WindowAnalyze(QMainWindow):
 
     def show_results(self):
         i, r = self.get_results()
-        lang = self.settings[g.SET_LANG]
-        #types_eng = ('Peak ht (from base)', 'Peak ht (from 0)', 'Deriv (L)', 'Derv (R)', 'Deriv (avg)', 'Area')
+        lang = get_lang(self)
         msg = ''
         for i, t in enumerate(g.C_TYPES):
             val = str(round(get_analyzed_value(r, t), 4))
@@ -214,14 +212,14 @@ class WindowAnalyze(QMainWindow):
         
 
     def update_buttons(self, i):
-        lang = self.settings[g.SET_LANG]
+        lang = get_lang(self)
         if i == len(self.tasks)-1:  # if we are on the final task
             txt(self.but_next, l.ANA_BUT_SAVE, lang)
         else:                       # if we are on any other task
             txt(self.but_next, l.ANA_BUT_NEXT, lang)
         
     def refresh_progress(self, i):
-        lang = self.settings[g.SET_LANG]
+        lang = get_lang(self)
         for j,but in enumerate(self.buts):
             # set progress pane element color/border
             if j==i: but.setObjectName('task-selected') 
@@ -256,7 +254,7 @@ class WindowAnalyze(QMainWindow):
             to_write.append(rep)   
 
         # 2. run async save
-        lang = self.settings[g.SET_LANG]
+        lang = get_lang(self)
         self.status.showMessage(get_text(l.SB_SAVE_STRT, lang))
 
         cb_suc = self.save_success          # callback on success of final async save
@@ -267,13 +265,13 @@ class WindowAnalyze(QMainWindow):
             
 
     def save_success(self, event=False):
-        lang = self.settings[g.SET_LANG]
+        lang = get_lang(self)
         self.status.showMessage(get_text(l.SB_SAVE_GOOD, lang))
         self.saved = True
         self.close()
 
     def save_error(self, event=False):
-        lang = self.settings[g.SET_LANG]
+        lang = get_lang(self)
         self.status.showMessage(get_text(l.SB_SAVE_ERRR, lang), g.SB_DURATION)
         
             
@@ -336,7 +334,7 @@ class WindowAnalyze(QMainWindow):
         if self.force_close:
             self.accept_close(event)
         elif not self.saved:
-            lang = self.settings[g.SET_LANG]
+            lang = get_lang(self)
             confirm = saveMessageBox(lang)
             resp = confirm.exec()
             if resp == QMessageBox.StandardButton.Save:
