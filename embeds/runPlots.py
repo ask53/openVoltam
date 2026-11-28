@@ -1,15 +1,21 @@
 """
-runVoltagePlot.py
+runPlots.py
 
+Realtime viewer of voltage and current data from a potentiostat
+Includes two plots stacked vertically, Voltage v. time on the top,
+Current v. time on the bottom. Designed to be embedded in a PyQt
+application. Enjoy :)
 
 """
+
+
 from global_scripts import ov_globals as g
 from global_scripts import ov_lang as l
 from global_scripts.ov_functions import *
 
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT, FigureCanvasQTAgg  
 from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 import numpy as np
 
@@ -20,16 +26,29 @@ class SubsetToolbar(NavigationToolbar2QT):
     toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in ('Home', 'Pan', 'Zoom')]
 
 class RunPlotCanvas(FigureCanvasQTAgg):
-    def __init__(self, parent=None, width=5, height=4, dpi=100):
-        fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes_v = fig.add_subplot(211)
-        self.axes_I = fig.add_subplot(212, sharex=self.axes_v)
-        fig.suptitle('Live potentiostat readings')
-        super().__init__(fig)
+    def __init__(self, parent, width=5, height=4, dpi=100):
+        self.parent = parent
+        self.fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes_v = self.fig.add_subplot(211)
+        self.axes_I = self.fig.add_subplot(212, sharex=self.axes_v)
+        self.set_text()
+        super().__init__(self.fig)
+    
+    def get_settings(self):
+        self.settings = self.parent.settings
+        
+    def set_text(self):
+        self.get_settings()
+        lang = get_lang(self)
+        print('Setting text for RUN PLOT CANVAS in '+lang)
+        self.fig.suptitle(get_text(l.LRD_TTL, lang))
+        
 
 class RunPlots(QMainWindow):
-    def __init__(self):
+    def __init__(self, parent):
         super().__init__()
+        self.parent = parent
+        self.settings = self.parent.settings
 
         size_mm = g.APP.primaryScreen().physicalSize()                          # get desired dimensions of plots
         width_in = size_mm.width() * g.MM2IN
@@ -44,6 +63,8 @@ class RunPlots(QMainWindow):
         layout.addWidget(toolbar)
         layout.addWidget(self.canvas)
 
+        self.set_text()
+        
         widget = QWidget()              # Add layout to central widget of QMainWindow and show!
         widget.setLayout(layout)
         self.setCentralWidget(widget)
@@ -71,15 +92,12 @@ class RunPlots(QMainWindow):
         self.canvas.draw()
 
     def set_axis_labels(self):
-        self.canvas.axes_v.set_ylabel('Voltage [V]')
-        self.canvas.axes_I.set_ylabel('Current [uA]')
-        self.canvas.axes_I.set_xlabel('Time [s]')
+        lang = get_lang(self)
+        self.canvas.axes_v.set_ylabel(get_text(l.LRD_VOLT, lang))
+        self.canvas.axes_I.set_ylabel(get_text(l.LRD_CURR, lang))
+        self.canvas.axes_I.set_xlabel(get_text(l.LRD_TIME, lang))
 
     def update_plots(self, t, v, I):
-        
-        #for line in list(self.canvas.axes_v.lines):     # remove all existing lines from plot
-        #    line.remove()
-
         self.remove_all_lines()
             
         self.canvas.axes_v.plot(t, v, 'grey')
@@ -96,4 +114,15 @@ class RunPlots(QMainWindow):
         for axes in self.axes:
             for line in list(axes.lines):
                 line.remove()
+                
+    def get_settings(self):
+        self.settings = self.parent.settings
         
+    def set_text(self):
+        self.get_settings()
+        lang = get_lang(self)
+        print('Setting text for RUN PLOTS in '+lang)
+        
+        self.canvas.set_text()
+        self.set_axis_labels()
+        self.canvas.draw_idle()

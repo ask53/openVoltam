@@ -627,6 +627,7 @@ def get_lang(win):
 
 
 
+
 # Classes!
 
 class QVLine(QFrame):

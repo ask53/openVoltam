@@ -44,10 +44,14 @@ class SubsetToolbar(NavigationToolbar2QT):
 
 class VoltamogramCanvas(FigureCanvasQTAgg):
     def __init__(self, parent, width=5, height=4, dpi=100, title=False):
-        fig = Figure(figsize=(width, height), dpi=dpi)
-        if title:
-            fig.suptitle(title)
-        self.axes = fig.add_subplot(111)
+        self. parent = parent
+        self.show_title = title
+        self.get_settings()
+        self.fig = Figure(figsize=(width, height), dpi=dpi)
+        super().__init__(self.fig)
+        
+        self.set_text()
+        self.axes = self.fig.add_subplot(111)
         
         ####### FIGURE OUT PLOTS IN DARK MODE ######
         #
@@ -57,8 +61,17 @@ class VoltamogramCanvas(FigureCanvasQTAgg):
         #fig.patch.set_facecolor('#000000')
         #
         ################################################
+          
+    def set_text(self):
+        self.get_settings()
+        lang = get_lang(self)
+        print('setting text for CANVAS in '+lang)
         
-        super().__init__(fig)
+        if self.show_title:
+            self.fig.suptitle(get_text(l.VGM_TTL, lang))
+    
+    def get_settings(self):
+        self.settings = self.parent.settings
 
 class VoltamogramPlot(QMainWindow):
     def __init__(self, parent, settings, title=False):
@@ -93,10 +106,14 @@ class VoltamogramPlot(QMainWindow):
         widget = QWidget()              # Add layout to central widget of QMainWindow and show!
         widget.setLayout(layout)
         
-        self.set_text(self.settings[g.SET_LANG])
+        
+        self.set_text()
         
         self.setCentralWidget(widget)
         self.show()
+        
+    def get_settings(self):
+        self.settings = self.parent.settings
 
     def plot_rep(self, rep, subbackground=True, showsmoothed=False, showraw=True, predictpeak=False, color='black', linestyle='solid', lbl=''):
         if rep[g.R_DATA]:
@@ -744,9 +761,6 @@ class VoltamogramPlot(QMainWindow):
                     method_id = run[g.R_UID_METHOD]
                     method = get_method_from_file_data(all_data, method_id)
                     
-
-
-
                     for fullrep in fullrun[g.R_REPLICATES]:
                         if fullrep[g.R_UID_SELF] == rep_id:
                             found = True
@@ -932,9 +946,12 @@ class VoltamogramPlot(QMainWindow):
                 g.A_DERIV_MEAN: deriv_avg,
                 g.A_AREA: area}
                 
-    def set_text(self, lang):
-        print('setting text on VOLTAM-O-GRAM embed in '+lang)
+    def set_text(self, lang=None):
         
+        self.get_settings()
+        lang = get_lang(self)
+        print('setting text on VOLTAM-O-GRAM embed in '+lang)
+        self.canvas.set_text()
         self.canvas.axes.set_xlabel(get_text(l.VGM_XLBL, lang))
         self.canvas.axes.set_ylabel(get_text(l.VGM_YLBL, lang))
         self.canvas.draw_idle()

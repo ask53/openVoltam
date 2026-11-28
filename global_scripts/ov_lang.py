@@ -395,57 +395,6 @@ SAM_NOT = {'eng': 'Notes',
 SAM_VALID_MSG = {'eng': 'The name is too short.\nPlease enter a sample name that contains at least three characters.',
                  'esp': 'El nombre es demaciado corto.\nFavor de ingresar un nombre de la muestra que contenga al menos tres carácteres.'}
           
-
-#################################
-#                               #           
-#  Window: Results View (Graph) #
-#                               #
-#################################
-
-RVW_HEAD = {'eng': 'Results viewer',
-            'esp': 'Ver resultados'}
-            
-
-#################################
-#                               #           
-#       Window: Analyze         #
-#                               #
-#################################
-
-ANA_HEAD = {'eng': 'Analyze',
-            'esp': 'Analizar'}
-ANA_TITL = {'eng': 'Runs to analyze:',
-            'esp': 'Mediciones para analizar:'}
-ANA_HELP = {'eng': "Press 'z' on the keyboard to toggle between baseline endpoints.",
-            'esp': "Omprimir la 'z' en el teclado para cambiar entre los puntos extremos."}
-ANA_RLTS =  {'eng': 'Show results',
-             'esp': 'Mostrar resultados'}
-ANA_CPLT =  {'eng': 'Complete',
-             'esp': 'Hecho'}
-       
-ANA_RUN_ABRV = MAI_TAB_RUN_ABRV
-ANA_REP_ABRV = MAI_TAB_REP_ABRV
-
-ANA_BUT_NEXT = {'eng': 'Accept && next',
-                'esp': 'Aceptar y seguir'}
-ANA_BUT_SAVE = {'eng': 'Save all',
-                'esp': 'Guardar todo'}
-
-ANA_C_TYPES = {
-    g.C_TYPE_PEAKBASE: {'eng': 'Peak ht (from base)',
-                        'esp': 'Altura (de la base)'}, 
-    g.C_TYPE_PEAKZERO: {'eng': 'Peak ht (from 0)',
-                        'esp': 'Altura (de 0)'}, 
-    g.C_TYPE_SLOPE_L: {'eng': 'Deriv (L)',
-                       'esp': 'Deriv (izq.)'}, 
-    g.C_TYPE_SLOPE_R: {'eng': 'Deriv (R)',
-                       'esp': 'Deriv (der.)'}, 
-    g.C_TYPE_SLOPE_AVG: {'eng': 'Deriv (avg)',
-                         'esp': 'Deriv (prom.)'}, 
-    g.C_TYPE_AREA: {'eng': 'Area',
-                    'esp': 'Área'}}
-                  
-                  
 #################################
 #                               #           
 #       Window: Run Config      #
@@ -528,6 +477,69 @@ RCF_VLD_IRNG = {'eng': 'The selected device is not compatible with the current r
                 'esp': 'El dispositivo seleccionado no es compatible con el rango del corriente del método seleccionado.'}
 RCF_VLD_VMAX = {'eng': 'The max voltages in the method are too large for the selected device.',
                 'esp': 'Los voltajes máximos del método son demaciado grandes para el dispositivo seleccionado.'}
+
+#################################
+#                               #           
+#    Window: Runner/Run View    #
+#                               #
+#################################
+
+RUN_TTL = {'eng': 'Run viewer',
+           'esp': 'Medidor'}
+
+
+
+
+#################################
+#                               #           
+#  Window: Results View (Graph) #
+#                               #
+#################################
+
+RVW_HEAD = {'eng': 'Results viewer',
+            'esp': 'Ver resultados'}
+            
+
+#################################
+#                               #           
+#       Window: Analyze         #
+#                               #
+#################################
+
+ANA_HEAD = {'eng': 'Analyze',
+            'esp': 'Analizar'}
+ANA_TITL = {'eng': 'Runs to analyze:',
+            'esp': 'Mediciones para analizar:'}
+ANA_HELP = {'eng': "Press 'z' on the keyboard to toggle between baseline endpoints.",
+            'esp': "Omprimir la 'z' en el teclado para cambiar entre los puntos extremos."}
+ANA_RLTS =  {'eng': 'Show results',
+             'esp': 'Mostrar resultados'}
+ANA_CPLT =  {'eng': 'Complete',
+             'esp': 'Hecho'}
+       
+ANA_RUN_ABRV = MAI_TAB_RUN_ABRV
+ANA_REP_ABRV = MAI_TAB_REP_ABRV
+
+ANA_BUT_NEXT = {'eng': 'Accept && next',
+                'esp': 'Aceptar y seguir'}
+ANA_BUT_SAVE = {'eng': 'Save all',
+                'esp': 'Guardar todo'}
+
+ANA_C_TYPES = {
+    g.C_TYPE_PEAKBASE: {'eng': 'Peak ht (from base)',
+                        'esp': 'Altura (de la base)'}, 
+    g.C_TYPE_PEAKZERO: {'eng': 'Peak ht (from 0)',
+                        'esp': 'Altura (de 0)'}, 
+    g.C_TYPE_SLOPE_L: {'eng': 'Deriv (L)',
+                       'esp': 'Deriv (izq.)'}, 
+    g.C_TYPE_SLOPE_R: {'eng': 'Deriv (R)',
+                       'esp': 'Deriv (der.)'}, 
+    g.C_TYPE_SLOPE_AVG: {'eng': 'Deriv (avg)',
+                         'esp': 'Deriv (prom.)'}, 
+    g.C_TYPE_AREA: {'eng': 'Area',
+                    'esp': 'Área'}}
+                  
+                  
 
 
 #################################
@@ -689,10 +701,22 @@ VGM_YLBL = {'eng': 'Current [uA]',
             'esp': 'Corriente [uA]'}
 VGM_RUN_ABRV = MAI_TAB_RUN_ABRV
 VGM_REP_ABRV = MAI_TAB_REP_ABRV
-
+VGM_TTL = {'eng': 'Voltam-O-Gram',
+           'esp': 'Voltamperograma'}
  
-           
-            
+#################################
+#                               #           
+#       Embed: Live run data    #
+#                               #
+#################################
+
+LRD_TTL = {'eng': 'Potentiostat data',
+           'esp': 'Datos del potenciostato'}
+LRD_VOLT = VGM_XLBL
+LRD_CURR = VGM_YLBL
+LRD_TIME = {'eng': 'Time [s]',
+            'esp': 'Tiempo [s]'}
+      
 
 
 

@@ -50,7 +50,7 @@ class WindowRunView(QMainWindow):
     def __init__(self, parent, tasks):
         super().__init__()
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        self.setWindowTitle("OpenVoltam | Run Viewer")
+        #self.setWindowTitle("OpenVoltam | Run Viewer")
         
         self.parent = parent
         self.tasks = tasks
@@ -67,8 +67,13 @@ class WindowRunView(QMainWindow):
         self.relays = []
         self.stopped = False
         self.force_close = False
+        self.settings = None
+        self.get_settings()
+        
         self.q = Queue()
         self.status = self.statusBar()
+        
+        lang = get_lang(self)
         
         # Stacked layout in upper left
         self.msg_box = QStackedLayout()
@@ -211,14 +216,13 @@ class WindowRunView(QMainWindow):
         but_stop_run.setEnabled(False)
         #
         ##############################
-        self.graphs = RunPlots()
-        self.voltamogram = VoltamogramPlot(self, title='VOLTAM-O-GRAM')
-
+        self.graphs = RunPlots(self)
+        
+        self.voltamogram = VoltamogramPlot(self, self.settings, title=True)
+        
         self.set_voltamogram()
 
-
         v_left = QVBoxLayout()
-
 
         h_split = QSplitter()
         h_split.setChildrenCollapsible(False)
@@ -278,6 +282,8 @@ class WindowRunView(QMainWindow):
         w_perm_status = QWidget()
         w_perm_status.setLayout(h2)
         self.status.addPermanentWidget(w_perm_status)
+        
+        self.set_text()
 
         self.setCentralWidget(h_split)
 
@@ -850,11 +856,34 @@ class WindowRunView(QMainWindow):
         except Exception as e:
             print(e)
         
-        
+    
                 
     '''def get_uid_of_current_rep(self):
         return g.R_REPLICATE_UID_PREFIX + str(self.rep_current)'''
+        
+    def get_settings(self):
+        self.settings = self.parent.parent.settings
+        
+    def set_text(self, lang=None):
 
+        self.get_settings()
+        lang = get_lang(self)
+        print('setting text in '+lang+' for run viewer.')
+        
+        # Set title to "[sample name] | Run viewer"
+        d = self.parent.data
+        run_id = self.tasks[0][0]
+        run = get_run_from_file_data(d, run_id)
+        s_name = get_sample_from_file_data(d, run[g.R_UID_SAMPLE])[g.SA_NAME]
+        self.setWindowTitle(s_name + ' | ' + get_text(l.RUN_TTL, lang))
+        
+        # Set voltamogram text in lang
+        self.voltamogram.set_text()
+        
+        #Set realtime plotter text
+        self.graphs.set_text()
+        
+        
     def update_win(self):
         """This is necessary for parent window to call this one to update.
         Please do not delete!"""
